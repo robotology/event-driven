@@ -38,7 +38,7 @@ public:
     virtual ~vEvent();
 
     virtual void encode(yarp::os::Bottle &b) const;
-    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
     virtual int getChannel() const;
@@ -54,12 +54,13 @@ public:
     AddressEvent(const AddressEvent &v);
 
     virtual void encode(yarp::os::Bottle &b) const;
-    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
     virtual int getChannel() const;
     virtual void setChannel(const int channel);
 };
+
 class FlowEvent : public AddressEvent
 {
 public:
@@ -72,7 +73,7 @@ public:
     FlowEvent(const FlowEvent &v);
 
     virtual void encode(yarp::os::Bottle &b) const;
-    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 
@@ -90,7 +91,7 @@ public:
     LabelledAE(const LabelledAE &v);
 
     virtual void encode(yarp::os::Bottle &b) const;
-    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 };
@@ -108,7 +109,7 @@ public:
     GaussianAE(const GaussianAE &v);
 
     virtual void encode(yarp::os::Bottle &b) const;
-    virtual bool decode(const yarp::os::Bottle &packet, int &pos);
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 };

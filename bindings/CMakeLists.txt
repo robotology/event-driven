@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.5)
 
 option(BUILD_BINDINGS "Build python bindings" OFF)
 
@@ -9,8 +9,7 @@ if(BUILD_BINDINGS)
 
     file(GLOB source *.i)
 
-    include_directories(${YARP_INCLUDE_DIRS}
-                        ${EVENTDRIVENLIBS_INCLUDE_DIRS}
+    include_directories(${EVENTDRIVENLIBS_INCLUDE_DIRS}
                         ${PYTHON_INCLUDE_PATH}
                         ${CMAKE_CURRENT_SOURCE_DIR})
     set(CMAKE_SWIG_FLAGS "")
