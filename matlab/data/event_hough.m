@@ -1,4 +1,4 @@
-function [x_best, y_best, r_best] = event_hough(input_events, r_min, r_max, height, width)
+function [x_best, y_best, r_best, v_best] = event_hough(input_events, r_min, r_max, height, width)
 %EVENT_HOUGH Summary of this function goes here
 %   Detailed explanation goes here
     v_best = -1e10;

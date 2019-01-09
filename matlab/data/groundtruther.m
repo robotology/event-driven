@@ -85,7 +85,7 @@ while(~finishedGT)
         
         if(runHough)
             runHough = false;
-            [x, y, r] = event_hough(window, r-5, r+5, 240, 304);
+            [x, y, r, h_score] = event_hough(window, r-5, r+5, 240, 304);
         end
         
         figure(1); clf; hold on;
@@ -96,21 +96,25 @@ while(~finishedGT)
         axis([0 sensor_width 0 sensor_height]);
         drawnow;
         
-        try
-            c = waitforbuttonpress;
-            if c
-                c = get(1, 'CurrentCharacter');
-                %uint32(get(1, 'currentcharacter'))
-            else
-                mousep = get(gca, 'currentpoint');
-                y = round(mousep(2, 2));
-                x = round(mousep(2, 1));
+        if(h_score > 400)
+            c = 13;
+        else        
+            try
+                c = waitforbuttonpress;
+                if c
+                    c = get(1, 'CurrentCharacter');
+                    %uint32(get(1, 'currentcharacter'))
+                else
+                    mousep = get(gca, 'currentpoint');
+                    y = round(mousep(2, 2));
+                    x = round(mousep(2, 1));
+                    c = -1;
+                end
+            catch
                 c = -1;
+                finishedLOG = true;
+                finishedGT = true;
             end
-        catch
-            c = -1;
-            finishedLOG = true;
-            finishedGT = true;
         end
         
         if c == 13 %enter
