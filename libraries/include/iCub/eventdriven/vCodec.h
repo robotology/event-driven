@@ -20,7 +20,8 @@
 #define __VCODEC__
 
 
-#include <yarp/os/Bottle.h>
+//#include "vBottle.h"
+#include "vtsHelper.h"
 #include <memory>
 #include <deque>
 #include <math.h>
@@ -70,6 +71,9 @@ unsigned int packetSize(const std::string &type);
 
 /// \brief camera values for stereo set-up
 enum { VLEFT = 0, VRIGHT = 1 } ;
+
+
+
 
 //event declarations
 /// \brief base event class which defines the time the event occurs
@@ -185,6 +189,27 @@ public:
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 };
+
+/// \brief count the events in a vQueue
+template <class T> size_t countEvents(const T &q) { return q.size(); }
+//template <> size_t countEvents<vQueue>(const T &q) { return q.size(); }
+
+/// \brief count the time within a vQueue
+template <typename T> inline int countTime(const T &q)
+{
+    int dt = q.back().stamp - q.front().stamp;
+    if(dt < 0) dt += vtsHelper::max_stamp;
+    return dt;
+}
+
+template <> inline int countTime<vQueue> (const vQueue &q)
+{
+    int dt = q.back()->stamp - q.front()->stamp;
+    if(dt < 0) dt += vtsHelper::max_stamp;
+    return dt;
+}
+
+
 
 }
 

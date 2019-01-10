@@ -51,11 +51,11 @@ private:
     vGenWritePort outPortSkin;
     vGenWritePort outPortSkinSamples;
 #else
-    vReadPort<AE> inPort;
-    vWritePort<AE> outPortCamLeft;
-    vWritePort<AE> outPortCamRight;
-    vWritePort<AE> outPortSkin;
-    vWritePort<AE> outPortSkinSamples;
+    vReadPort< vector<AE> > inPort;
+    vWritePort outPortCamLeft;
+    vWritePort outPortCamRight;
+    vWritePort outPortSkin;
+    vWritePort outPortSkinSamples;
 #endif
 
     //parameters

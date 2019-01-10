@@ -63,7 +63,7 @@ void  device2yarp::run() {
         return;
     }
 
-    vGenPortInterface external_storage;
+    vPortableInterface external_storage;
     external_storage.setHeader(AE::tag);
 
     unsigned int event_count = 0;

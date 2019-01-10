@@ -271,7 +271,7 @@ int device2yarp::applysaltandpepperfilter(std::vector<unsigned char> &data, int 
 
 void  device2yarp::run() {
 
-    ev::vGenPortInterface external_storage;
+    ev::vPortableInterface external_storage;
     external_storage.setHeader(ev::AE::tag);
 
     while(!isStopping()) {

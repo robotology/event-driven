@@ -48,7 +48,7 @@ private:
     string channel_name;
     unsigned int limit_time;
 
-    map<string, vGenReadPort> read_ports;
+    map<string, vReadPort<vQueue> > read_ports;
     map<string, vQueue> event_qs;
     vector<vDraw *> drawers;
     BufferedPort< ImageOf<PixelBgr> > image_port;

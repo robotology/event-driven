@@ -93,7 +93,7 @@ bool channelInstance::updateQs()
     Stamp yarp_stamp;
     //fill up the q's as much as possible
     map<string, int> qs_available;
-    std::map<string, vGenReadPort>::iterator port_i;
+    std::map<string, vReadPort<vQueue> >::iterator port_i;
     for(port_i = read_ports.begin(); port_i != read_ports.end(); port_i++) {
         qs_available[port_i->first] = port_i->second.queryunprocessed();
         if(qs_available[port_i->first]) updated = true;
@@ -162,7 +162,7 @@ void channelInstance::run()
 void channelInstance::threadRelease()
 {
     //close input ports
-    std::map<string, vGenReadPort>::iterator port_i;
+    std::map<string, vReadPort<vQueue> >::iterator port_i;
     for(port_i = read_ports.begin(); port_i != read_ports.end(); port_i++) {
         port_i->second.close();
     }
