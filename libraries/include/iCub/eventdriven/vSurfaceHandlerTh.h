@@ -586,7 +586,7 @@ class tWinThread : public yarp::os::Thread
 {
 private:
 
-    ev::vGenReadPort allocatorCallback;
+    ev::vReadPort<vQueue> allocatorCallback;
     //ev::queueAllocator allocatorCallback;
     vTempWindow windowleft;
     vTempWindow windowright;

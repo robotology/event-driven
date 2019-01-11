@@ -180,8 +180,6 @@ public:
         return true;
     }
 
-
-
     bool decodePacket(vector<int32_t> &read_q)
     {
         read_q = internaldata;
@@ -239,6 +237,15 @@ protected:
     vPortableInterface internal_storage;
     Port port;
 
+    bool _internal_write(Stamp &envelope)
+    {
+        if(!port.setEnvelope(envelope))
+            return false;
+        if(!port.write(internal_storage))
+            return false;
+        return true;
+    }
+
 public:
 
     bool open(std::string name)
@@ -260,40 +267,23 @@ public:
         return port.getOutputCount();
     }
 
-    bool write(const vector<int32_t> &q, Stamp envelope)
+    bool write(const vector<int32_t> &q, Stamp &envelope)
     {
         internal_storage.setExternalData((const char *)q.data(),
                                          q.size() * sizeof(int32_t));
-
-        if(!port.setEnvelope(envelope))
-            return false;
-        if(!port.write(internal_storage))
-            return false;
-        return true;
-
-
+        return _internal_write(envelope);
     }
 
-    bool write(const vQueue &q, Stamp envelope)
+    bool write(const vQueue &q, Stamp &envelope)
     {
         internal_storage.setInternalData(q);
-        if(!port.setEnvelope(envelope))
-            return false;
-        if(!port.write(internal_storage))
-            return false;
-        return true;
-
+        return _internal_write(envelope);
     }
 
-    template <class T> bool write(const std::deque<T> &q, Stamp envelope)
+    template <class T> bool write(const std::deque<T> &q, Stamp &envelope)
     {
         internal_storage.setInternalData<T>(q);
-        if(!port.setEnvelope(envelope))
-            return false;
-        if(!port.write(internal_storage))
-            return false;
-        return true;
-
+        return _internal_write(envelope);
     }
 
 };
@@ -511,345 +501,6 @@ public:
 
 };
 
-///// \brief an asynchronous reading port that accepts vBottles and decodes them
-//class vGenReadPort : public yarp::os::Thread
-//{
-//protected:
-
-//    vPortableInterface internal_storage;
-//    Port port;
-
-//    std::deque< vQueue* > qq;
-//    std::deque<yarp::os::Stamp> sq;
-//    vQueue *working_queue;
-
-//    yarp::os::Mutex m;
-//    yarp::os::Semaphore dataavailable;
-//    Mutex read_mutex;
-
-//    unsigned int qlimit;
-//    unsigned int unprocdqs;
-//    unsigned int delay_nv;
-//    long unsigned int delay_t;
-//    double event_rate;
-
-
-//public:
-
-//    /// \brief constructor
-//    vGenReadPort()
-//    {
-//        qlimit = 0;
-//        delay_nv = 0;
-//        delay_t = 0;
-//        event_rate = 0;
-//        unprocdqs = 0;
-//        working_queue = nullptr;
-
-//        setPriority(99, SCHED_FIFO);
-
-//        dataavailable.wait(); //init counter to 0
-//    }
-
-//    /// \brief desctructor
-//    ~vGenReadPort()
-//    {
-//        m.lock();
-//        std::deque< vQueue* >::iterator i;
-//        for(i = qq.begin(); i != qq.end(); i++)
-//            delete *i;
-//        qq.clear();
-//        m.unlock();
-//    }
-
-//    bool open(std::string name)
-//    {
-//        //port.setTimeout(1.0);
-//        if(!port.open(name)) {
-//            yError() << "Could not open vGenReadPort input port: " << name;
-//            return false;
-//        }
-//        start();
-//        return true;
-//    }
-
-//    void interrupt()
-//    {
-//        read_mutex.lock();
-//        port.interrupt();
-//    }
-
-//    void resume()
-//    {
-//        port.resume();
-//        read_mutex.unlock();
-//    }
-
-//    void close()
-//    {
-//        this->stop(); //make sure the isStopping() is true
-//        port.close(); //close the port connections
-//    }
-
-//    void onStop()
-//    {
-//        port.interrupt(); //port.read() will return false
-//        read_mutex.unlock(); //allow port.read() to be called
-//        dataavailable.post(); //all a this->read() to return
-//    }
-
-//    void run()
-//    {
-//        while(true) {
-
-//            vQueue *next_queue = new vQueue;
-//            internal_storage.setReadContainer(*next_queue);
-
-//            read_mutex.lock();
-//            if(!port.read(internal_storage)) {
-//                read_mutex.unlock();
-//                if(!isStopping())
-//                    yWarning() << "vGenReadPort read return false!";
-//                delete next_queue;
-//                break;
-
-//            }
-//            read_mutex.unlock();
-
-//            yarp::os::Stamp yarp_stamp;
-//            port.getEnvelope(yarp_stamp);
-
-//            if(qlimit && qq.size() >= qlimit) {
-//                delete next_queue;
-//                continue;
-//            }
-
-//            m.lock();
-
-//            qq.push_back(next_queue);
-//            sq.push_back(yarp_stamp);
-
-//            unprocdqs++;
-
-//            delay_nv += qq.back()->size();
-//            int dt = qq.back()->back()->stamp - qq.back()->front()->stamp;
-//            if(dt < 0) dt += vtsHelper::max_stamp;
-//            delay_t += dt;
-//            if(dt)
-//                event_rate = qq.back()->size() / (double)dt;
-
-//            m.unlock();
-//            dataavailable.post();
-
-//        }
-
-//    }
-
-//    /// \brief ask for a pointer to the next vQueue. Blocks if no data is ready.
-//    const vQueue* read(yarp::os::Stamp &yarpstamp)
-//    {
-//        if(working_queue) {
-//            m.lock();
-
-//            delay_nv -= qq.front()->size();
-//            int dt = qq.front()->back()->stamp - qq.front()->front()->stamp;
-//            if(dt < 0) dt += vtsHelper::max_stamp;
-//            delay_t -= dt;
-
-//            delete qq.front();
-//            qq.pop_front();
-//            sq.pop_front();
-//            m.unlock();
-//        }
-
-//        dataavailable.wait();
-
-//        if(qq.size()) {
-//            yarpstamp = sq.front();
-//            working_queue = qq.front();
-//            m.lock();
-//            unprocdqs--;
-//            m.unlock();
-//        }  else {
-//            working_queue =  0;
-//        }
-
-//        return working_queue;
-
-//    }
-
-//    /// \brief set the maximum number of qs that can be stored in the buffer.
-//    /// A value of 0 keeps all qs.
-//    void setQLimit(unsigned int number_of_qs)
-//    {
-//        qlimit = number_of_qs;
-//    }
-
-//    /// \brief unBlocks the blocking call in getNextQ. Useful to ensure a
-//    /// graceful shutdown. No guarantee the return of getNextQ will be valid.
-//    void releaseDataLock()
-//    {
-//        dataavailable.post();
-//    }
-
-//    /// \brief ask for the number of vQueues currently allocated.
-//    unsigned int queryunprocessed()
-//    {
-//        return unprocdqs;
-//    }
-
-//    /// \brief ask for the number of events in all vQueues.
-//    unsigned int queryDelayN()
-//    {
-//        return delay_nv;
-//    }
-
-//    /// \brief ask for the total time spanned by all vQueues.
-//    double queryDelayT()
-//    {
-//        return delay_t * vtsHelper::tsscaler;
-//    }
-
-//    /// \brief ask for the high precision event rate
-//    double queryRate()
-//    {
-//        return event_rate * vtsHelper::vtsscaler;
-//    }
-
-//    std::string delayStatString()
-//    {
-//        std::ostringstream oss;
-//        oss << "qs: " << queryunprocessed() << " events: " << queryDelayN() <<
-//               " time(s): " << queryDelayT() << " rate: " << queryRate();
-//        return oss.str();
-//    }
-
-//};
-
-
-//template <class T> class vReadPort : private vGenReadPort
-//{
-//protected:
-
-//    vPortInterface<T> internal_storage;
-//    std::deque< std::vector<T>* > qq;
-//    std::vector<T> *working_queue;
-
-//public:
-
-//    /// \brief constructor
-//    vReadPort() : vGenReadPort()
-//    {
-//        working_queue = nullptr;
-//    }
-
-//    /// \brief desctructor
-//    ~vReadPort()
-//    {
-
-//        m.lock();
-//        typename std::deque< std::vector<T>* >::iterator i;
-//        for(i = qq.begin(); i != qq.end(); i++)
-//            delete *i;
-//        qq.clear();
-//        m.unlock();
-//    }
-
-//    void run()
-//    {
-//        while(!isStopping()) {
-
-//            std::vector<T> *next_queue = new std::vector<T>;
-//            internal_storage.setReadContainer(*next_queue);
-//            //internal_storage.setReadQueue(*next_queue);
-//            read_mutex.lock();
-//            if(!port.read(internal_storage)) {
-//                read_mutex.unlock();
-//                if(!isStopping())
-//                    yWarning() << "vReadPort<> read return false!";
-//                delete next_queue;
-//                break;
-//            }
-//            read_mutex.unlock();
-
-//            yarp::os::Stamp yarp_stamp;
-//            port.getEnvelope(yarp_stamp);
-
-//            if(qlimit && qq.size() >= qlimit) {
-//                delete next_queue;
-//                continue;
-//            }
-
-//            m.lock();
-
-//            qq.push_back(next_queue);
-//            sq.push_back(yarp_stamp);
-
-//            unprocdqs++;
-
-//            delay_nv += qq.back()->size();
-//            int dt = qq.back()->back().stamp - qq.back()->front().stamp;
-//            if(dt < 0) dt += vtsHelper::max_stamp;
-//            delay_t += dt;
-//            if(dt)
-//                event_rate = qq.back()->size() / (double)dt;
-//            m.unlock();
-
-//            //if getNextQ is blocking - let it get the new data
-//            dataavailable.post();
-
-//        }
-
-
-
-//    }
-
-//    /// \brief ask for a pointer to the next vQueue. Blocks if no data is ready.
-//    const std::vector<T>* read(yarp::os::Stamp &yarpstamp)
-//    {
-
-//        if(working_queue) {
-//            m.lock();
-
-//            delay_nv -= qq.front()->size();
-//            int dt = qq.front()->back().stamp - qq.front()->front().stamp;
-//            if(dt < 0) dt += vtsHelper::max_stamp;
-//            delay_t -= dt;
-
-//            delete qq.front();
-//            qq.pop_front();
-//            sq.pop_front();
-//            m.unlock();
-//        }
-
-//        dataavailable.wait();
-
-//        if(qq.size()) {
-//            yarpstamp = sq.front();
-//            working_queue = qq.front();
-//            m.lock();
-//            unprocdqs--;
-//            m.unlock();
-//        }  else {
-//            working_queue =  0;
-//        }
-//        return working_queue;
-
-//    }
-
-//    using vGenReadPort::open;
-//    using vGenReadPort::close;
-//    using vGenReadPort::setQLimit;
-//    using vGenReadPort::queryunprocessed;
-//    using vGenReadPort::releaseDataLock;
-//    using vGenReadPort::queryDelayN;
-//    using vGenReadPort::queryDelayT;
-//    using vGenReadPort::queryRate;
-//    using vGenReadPort::delayStatString;
-//    using vGenReadPort::interrupt;
-//    using vGenReadPort::resume;
-
-//};
 
 } //end namespace ev
 

@@ -131,10 +131,6 @@ public:
 
     bool read(yarp::os::ConnectionReader& reader);
 
-
-
-
-
 };
 
 

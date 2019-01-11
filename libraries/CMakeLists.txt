@@ -19,10 +19,7 @@ if(TOOMANYBITSINCOUNTER)
   message( FATAL_ERROR "Maximum bits useable is 31 (VLIB_TIMER_BITS)")
 endif()
 
-set(VLIB_EXTRA ON CACHE BOOL "Build only necessary libraries")
-if(VLIB_EXTRA)
-    add_definitions(-DVLIB_EXTRA)
-endif()
+set(VLIB_DEPRECATED OFF CACHE BOOL "Also build old classes")
 
 project(${EVENTDRIVEN_LIBRARIES})
 
@@ -33,7 +30,7 @@ file(GLOB folder_source
         src/vCodec.cpp
 )
 
-if(VLIB_EXTRA)
+if(VLIB_DEPRECATED)
     list(APPEND folder_source src/vWindow_adv.cpp src/vWindow_basic.cpp)
 endif()
 
@@ -42,15 +39,16 @@ file(GLOB folder_header
   include/iCub/eventdriven/vCodec.h
   include/iCub/eventdriven/vFilters.h
   include/iCub/eventdriven/vPort.h
+  include/iCub/eventdriven/vCollectSend.h
   include/iCub/eventdriven/all.h
 )
 
-if(VLIB_EXTRA)
+if(VLIB_DEPRECATED)
     list(APPEND folder_header   include/iCub/eventdriven/vBottle.h
                                 include/iCub/eventdriven/vWindow_adv.h
                                 include/iCub/eventdriven/vWindow_basic.h
                                 include/iCub/eventdriven/vSurfaceHandlerTh.h
-                                include/iCub/eventdriven/vCollectSend.h)
+                                include/iCub/eventdriven/deprecated.h)
 endif()
 
 # Declare groups of source and header files -- makes things pretty in MSVC.

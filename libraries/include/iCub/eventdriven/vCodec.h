@@ -19,8 +19,6 @@
 #ifndef __VCODEC__
 #define __VCODEC__
 
-
-//#include "vBottle.h"
 #include "vtsHelper.h"
 #include <memory>
 #include <deque>

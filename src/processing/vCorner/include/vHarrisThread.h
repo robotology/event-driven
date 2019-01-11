@@ -28,6 +28,7 @@
 #include <yarp/sig/all.h>
 #include <yarp/math/Math.h>
 #include <iCub/eventdriven/all.h>
+#include <iCub/eventdriven/deprecated.h>
 #include <filters.h>
 #include <fstream>
 #include <math.h>
