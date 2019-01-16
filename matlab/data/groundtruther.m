@@ -96,9 +96,11 @@ while(~finishedGT)
         axis([0 sensor_width 0 sensor_height]);
         drawnow;
         
-        if(h_score > 400)
+        if(h_score > 350)
             c = 13;
-        else        
+        else
+            rectangle('curvature', [1 1], 'position', [x-r y-r r*2 r*2], 'edgecolor', 'r');
+            drawnow;
             try
                 c = waitforbuttonpress;
                 if c
