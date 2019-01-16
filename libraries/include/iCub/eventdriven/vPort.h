@@ -93,8 +93,8 @@ public:
     /// into a single contiguous memory space. Faster than a standard vBottle.
     void setInternalData(const vQueue &q) {
 
-        if(header2 != q.front()->tag)
-            setHeader(q.front()->tag);
+        if(header2 != q.front()->getType())
+            setHeader(q.front()->getType());
 
         header3[1] = elementINTS * q.size(); //number of ints
 
@@ -190,13 +190,13 @@ public:
     {
         int event_size = packetSize(event_type);
         if(!event_size) {
-            yError() << "Do not know event-type";
+            yError() << "Cannot get event-size of" << event_type;
             return false;
         }
 
         event<> v = createEvent(event_type);
         if(v == nullptr) {
-            yError() << "Do not know event-type";
+            yError() << "Cannot create new event of type:" << event_type;
             return false;
         }
 
