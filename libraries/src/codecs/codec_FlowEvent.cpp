@@ -48,36 +48,31 @@ event<> FlowEvent::clone()
 void FlowEvent::encode(yarp::os::Bottle &b) const
 {
     AddressEvent::encode(b);
-    b.addInt(*(int*)(&vx));
-    b.addInt(*(int*)(&vy));
+    b.addInt32(_fei[0]);
+    b.addInt32(_fei[1]);
 }
 
 void FlowEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
 {
     AddressEvent::encode(b, pos);
-    b[pos++] = (*(int*)(&vx));
-    b[pos++] = (*(int*)(&vy));
+    b[pos++] = _fei[0];
+    b[pos++] = _fei[1];
 }
 
 void FlowEvent::decode(int *&data)
 {
     AddressEvent::decode(data);
-    vx=*(float*)(data++);
-    vy=*(float*)(data++);
+    _fei[0]=*(data++);
+    _fei[1]=*(data++);
 }
 
 bool FlowEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     // check length
-    if (AddressEvent::decode(packet, pos) &&
-            pos + 2 <= packet.size())
+    if (AddressEvent::decode(packet, pos) && pos + 2 <= packet.size())
     {
-        int word1=packet.get(pos).asInt();
-        vx=*(float*)(&word1);
-        int word2=packet.get(pos+1).asInt();
-        vy=*(float*)(&word2);
-
-        pos+=2;
+        _fei[0] = packet.get(pos++).asInt();
+        _fei[1] = packet.get(pos++).asInt();
         return true;
     }
     return false;

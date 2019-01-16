@@ -23,29 +23,19 @@ namespace ev {
 
 const std::string AddressEvent::tag = "AE";
 
-AddressEvent::AddressEvent() : vEvent(), x(0), y(0), channel(0), polarity(0), type(0) {}
+AddressEvent::AddressEvent() : vEvent(), polarity(0), x(0), y(0), channel(0), type(0), skin(0) {}
 
 AddressEvent::AddressEvent(const vEvent &v) : vEvent(v)
 {
     const AddressEvent *v2 = dynamic_cast<const AddressEvent *>(&v);
     if(v2) {
-        x = v2->x;
-        y = v2->y;
-        channel = v2->channel;
-        polarity = v2->polarity;
-        type = v2->type;
-        skin = v2->skin;
+        _coded_data = v2->_coded_data;
     }
 }
 
 AddressEvent::AddressEvent(const AddressEvent &v) : vEvent(v)
 {
-    x = v.x;
-    y = v.y;
-    channel = v.channel;
-    polarity = v.polarity;
-    type = v.type;
-    skin = v.skin;
+    _coded_data = v._coded_data;
 }
 
 event<> AddressEvent::clone()
@@ -56,51 +46,19 @@ event<> AddressEvent::clone()
 void AddressEvent::encode(yarp::os::Bottle &b) const
 {
     vEvent::encode(b);
-#if defined CODEC_128x128
-    b.addInt(((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
-#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-    b.addInt(((skin&0x01)<<21)|((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
-#else //CODEC_304x240_24
-    b.addInt(((channel&0x01)<<22)|((type&0x1)<<23)|((y&0x0FF)<<12)|((x&0x1FF)<<1)|(polarity&0x01));
-#endif
+    b.addInt32(_coded_data);
 }
 
 void AddressEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
 {
     vEvent::encode(b, pos);
-#if defined CODEC_128x128
-    b[pos++] = (((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
-#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-    b[pos++] = (((skin&0x01)<<21)|((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
-#else
-    b[pos++] = (((channel&0x01)<<22)|((type&0x1)<<23)|((y&0x0FF)<<12)|((x&0x1FF)<<1)|(polarity&0x01));
-#endif
+    b[pos++] = _coded_data;
 }
 
 void AddressEvent::decode(int *&data)
 {
     vEvent::decode(data);
-
-#if defined CODEC_128x128
-    polarity = (*data >> 0) & 0x0001;
-    y = 127 - (*data >> 1) & 0x007F;
-    x = (*data >> 8) & 0x007F;
-    channel = (*data >> 15) & 0x0001;
-#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-    polarity = (*data >> 0) & 0x0001;
-    x = (*data >> 1) & 0x01FF;
-    y = (*data >> 10) & 0x00FF;
-    type = (*data >> 18) & 0x0001;
-    channel = (*data >> 20) & 0x0001;
-    skin = (*data >> 21) & 0x0001;
-#else
-    polarity = (*data >> 0) & 0x0001;
-    x = (*data >> 1) & 0x01FF;
-    y = (*data >> 12) & 0x00FF;
-    type = (*data >> 23) & 0x0001;
-    channel = (*data >> 22) & 0x0001;
-#endif
-    data++;
+    _coded_data = *(data++);
 }
 
 bool AddressEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
@@ -108,29 +66,7 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
     // check length
     if (vEvent::decode(packet, pos) && pos + 1 <= packet.size())
     {
-        int data=packet.get(pos).asInt();
-
-#if defined CODEC_128x128
-        polarity = (data >> 0) & 0x0001;
-        y = 127 - (data >> 1) & 0x007F;
-        x = (data >> 8) & 0x007F;
-        channel = (data >> 15) & 0x0001;
-#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-        polarity = (data >> 0) & 0x0001;
-        x = (data >> 1) & 0x001FF;
-        y = (data >> 10) & 0x00FF;
-        type = (data >> 18) & 0x0001;
-        channel = (data >> 20) & 0x0001;
-        skin = (data >> 21) & 0x0001;
-#else
-        polarity = (data >> 0) & 0x0001;
-        x = (data >> 1) & 0x001FF;
-        y = (data >> 12) & 0x00FF;
-        type = (data >> 23) & 0x0001;
-        channel = (data >> 22) & 0x0001;
-#endif
-
-        pos += 1;
+        _coded_data = packet.get(pos++).asInt();
         return true;
     }
     return false;

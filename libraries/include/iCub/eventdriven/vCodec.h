@@ -100,12 +100,33 @@ class AddressEvent : public vEvent
 {
 public:
     static const std::string tag;
-    unsigned int x:10;
-    unsigned int y:10;
-    unsigned int channel:1;
-    unsigned int polarity:1;
-    unsigned int skin:1;
-    unsigned int type:1;
+
+    union
+    {
+        uint32_t _coded_data;
+        struct {
+#if defined CODEC_128x128
+            unsigned int polarity:1;
+            unsigned int x:7;
+            unsigned int y:7;
+            unsigned int channel:1;
+#elif defined CODEC_304x240_20
+            unsigned int polarity:1;
+            unsigned int x:9;
+            unsigned int y:8;
+            unsigned int type:2;
+            unsigned int channel:1;
+            unsigned int skin:1;
+#else
+            unsigned int polarity:1;
+            unsigned int x:11;
+            unsigned int y:10;
+            unsigned int channel:1;
+            unsigned int type:1;
+            unsigned int skin:1;
+#endif
+        };
+    };
 
     AddressEvent();
     AddressEvent(const vEvent &v);
@@ -128,8 +149,14 @@ class FlowEvent : public AddressEvent
 {
 public:
     static const std::string tag;
-    float vx;
-    float vy;
+    union {
+        uint32_t _fei[2];
+        struct {
+            float vx;
+            float vy;
+        };
+    };
+
 
     FlowEvent();
     FlowEvent(const vEvent &v);
@@ -171,9 +198,14 @@ class GaussianAE : public LabelledAE
 {
 public:
     static const std::string tag;
-    float sigx;
-    float sigy;
-    float sigxy;
+    union {
+        uint32_t _gaei[3];
+        struct {
+            float sigx;
+            float sigy;
+            float sigxy;
+        };
+    };
 
     GaussianAE();
     GaussianAE(const vEvent &v);
