@@ -292,8 +292,9 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         spinn_keys_t ss_keys = {0x80000000, 0x40000000};
         ioctl(fd, HPU_SET_SPINN_KEYS, &ss_keys);
 
-        spinn_start_stop_policy_t ss_mode = KEY_ENABLE;
-        ioctl(fd, HPU_SPINN_ST_SP, &ss_mode);
+        spinn_keys_enable_t ss_policy = {0, 0, 1};
+        //spinn_start_stop_policy_t ss_mode = KEY_ENABLE;
+        ioctl(fd, HPU_SPINN_KEYS_EN, &ss_policy);
 
         hpu_regs_t hpu_regs;
 

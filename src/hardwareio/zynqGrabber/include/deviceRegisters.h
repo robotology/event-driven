@@ -209,6 +209,12 @@ typedef struct {
     uint32_t stop;
 } spinn_keys_t;
 
+typedef struct {
+    int enable_l;
+    int enable_r;
+    int enable_aux;
+} spinn_keys_enable_t;
+
 typedef enum {
     LOOP_NONE,
     LOOP_LNEAR,
@@ -239,14 +245,6 @@ typedef struct {
     enum rx_err err;
     uint8_t cnt_val;
 } aux_cnt_t;
-
-typedef enum {
-    FORCE_START_KEY_ENABLE,
-    FORCE_STOP_KEY_ENABLE,
-    FORCE_START_KEY_DISABLE,
-    FORCE_STOP_KEY_DISABLE,
-    KEY_ENABLE,
-} spinn_start_stop_policy_t;
 
 typedef enum {
     MASK_20BIT,
@@ -334,13 +332,13 @@ typedef struct {
 #define HPU_SET_BLK_RX_THR  _IOW (MAGIC_NUM, 22, unsigned int *)
 #define HPU_SET_SPINN_KEYS  _IOW (MAGIC_NUM, 23, spinn_keys_t *)
 //#define HPU_SPINN_KEYS_EN   _IOW (MAGIC_NUM, 24, unsigned int *)
-//#define HPU_SPINN_DUMPOFF   _IOR (MAGIC_NUM, 25, unsigned int *)
+#define HPU_SPINN_STA_STO   _IOR (MAGIC_NUM, 25, unsigned int *)
 #define HPU_RX_INTERFACE    _IOW (MAGIC_NUM, 26, hpu_rx_interface_ioctl_t *)
 #define HPU_TX_INTERFACE    _IOW (MAGIC_NUM, 27, hpu_tx_interface_ioctl_t *)
 #define HPU_AXIS_LATENCY    _IOW (MAGIC_NUM, 28, unsigned int *)
 
 #define HPU_GET_RX_PN       _IOR (MAGIC_NUM, 29, unsigned int *)
-#define HPU_SPINN_ST_SP     _IOW (MAGIC_NUM, 30, spinn_start_stop_policy_t *)
+//#define HPU_SPINN_ST_SP     _IOW (MAGIC_NUM, 30, spinn_start_stop_policy_t *)
 #define HPU_TS_MASK         _IOW (MAGIC_NUM, 31, hpu_timestamp_mask_t *)
 #define HPU_TX_TIMING_MODE  _IOW (MAGIC_NUM, 32, hpu_tx_timing_mode_t *)
 #define HPU_SET_TX_RESYNC   _IOW (MAGIC_NUM, 33, hpu_tx_resync_time_t *)
@@ -349,5 +347,6 @@ typedef struct {
 #define HPU_SPINN_TX_MASK   _IOW (MAGIC_NUM, 36, unsigned int *)
 #define HPU_SPINN_RX_MASK   _IOW (MAGIC_NUM, 37, unsigned int *)
 #define HPU_GET_HW_STATUS   _IOR (MAGIC_NUM, 38, hpu_hw_status_t *)
+#define HPU_SPINN_KEYS_EN   _IOW (MAGIC_NUM, 39, spinn_keys_enable_t *)
 
 #endif
