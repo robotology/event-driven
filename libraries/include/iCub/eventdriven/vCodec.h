@@ -105,26 +105,12 @@ public:
     {
         uint32_t _coded_data;
         struct {
-#if defined CODEC_128x128
-            unsigned int polarity:1;
-            unsigned int x:7;
-            unsigned int y:7;
-            unsigned int channel:1;
-#elif defined CODEC_304x240_20
-            unsigned int polarity:1;
-            unsigned int x:9;
-            unsigned int y:8;
-            unsigned int type:2;
-            unsigned int channel:1;
-            unsigned int skin:1;
-#else
             unsigned int polarity:1;
             unsigned int x:11;
             unsigned int y:10;
             unsigned int channel:1;
             unsigned int type:1;
             unsigned int skin:1;
-#endif
         };
     };
 
