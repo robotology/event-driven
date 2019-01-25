@@ -398,13 +398,14 @@ void vPreProcess::run()
                         mapPix = leftMap.at<cv::Vec2i>(v->y, v->x);
                     else
                         mapPix = rightMap.at<cv::Vec2i>(v->y, v->x);
-                    v->x = mapPix[0];
-                    v->y = mapPix[1];
 
                     //truncate to sensor bounds after mapping?
-                    if(truncate && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
+                    if(truncate && (mapPix[0] < 0 || mapPix[0] > resmod.width || mapPix[1] < 0 || mapPix[1] > resmod.height)) {
                         continue;
                     }
+
+                    v->x = mapPix[0];
+                    v->y = mapPix[1];
 
                 }
             }
