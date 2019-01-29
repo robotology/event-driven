@@ -55,7 +55,7 @@ void GaussianAE::encode(yarp::os::Bottle &b) const
     b.addInt32(_gaei[2]);
 }
 
-void GaussianAE::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
+void GaussianAE::encode(std::vector<int32_t> &b, unsigned int &pos) const
 {
     LabelledAE::encode(b, pos);
     b[pos++] = _gaei[0];
@@ -63,7 +63,7 @@ void GaussianAE::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
     b[pos++] = _gaei[2];
 }
 
-void GaussianAE::decode(int *&data)
+void GaussianAE::decode(const int32_t *&data)
 {
     LabelledAE::decode(data);
     _gaei[0] = *(data++);

@@ -52,14 +52,14 @@ void FlowEvent::encode(yarp::os::Bottle &b) const
     b.addInt32(_fei[1]);
 }
 
-void FlowEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
+void FlowEvent::encode(std::vector<int32_t> &b, unsigned int &pos) const
 {
     AddressEvent::encode(b, pos);
     b[pos++] = _fei[0];
     b[pos++] = _fei[1];
 }
 
-void FlowEvent::decode(int *&data)
+void FlowEvent::decode(const int32_t *&data)
 {
     AddressEvent::decode(data);
     _fei[0]=*(data++);

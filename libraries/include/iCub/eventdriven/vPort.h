@@ -180,12 +180,6 @@ public:
         return true;
     }
 
-    bool decodePacket(vector<int32_t> &read_q)
-    {
-        read_q = internaldata;
-        return true;
-    }
-
     bool decodePacket(vQueue &read_q)
     {
         int event_size = packetSize(event_type);
@@ -200,7 +194,7 @@ public:
             return false;
         }
 
-        int *data = internaldata.data();
+        const int32_t *data = internaldata.data();
         for(unsigned int i = 0; i < ints_to_read / event_size; i++) {
             v->decode(data);
             read_q.push_back(v->clone());
@@ -209,7 +203,7 @@ public:
 
     }
 
-    template <class T> bool decodePacket(vector<T> &read_q)
+    template <typename T> bool decodePacket(vector<T> &read_q)
     {
 
         if(event_type != T::tag) {
@@ -217,11 +211,17 @@ public:
             return false;
         }
 
-        int *data = internaldata.data();
+        const int32_t *data = internaldata.data();
         read_q.resize(ints_to_read / packetSize(event_type));
         for(unsigned int i = 0; i < read_q.size(); i++) {
             read_q[i].decode(data);
         }
+        return true;
+    }
+
+    bool decodePacket(vector<int32_t> &read_q)
+    {
+        read_q = internaldata;
         return true;
     }
 

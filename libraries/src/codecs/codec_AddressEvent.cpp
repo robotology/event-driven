@@ -90,7 +90,7 @@ void AddressEvent::encode(yarp::os::Bottle &b) const
 
 }
 
-void AddressEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
+void AddressEvent::encode(std::vector<int32_t> &b, unsigned int &pos) const
 {
     vEvent::encode(b, pos);
 #if defined CODEC_128x128
@@ -113,7 +113,7 @@ void AddressEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
 
 }
 
-void AddressEvent::decode(int *&data)
+void AddressEvent::decode(const int32_t *&data)
 {
     vEvent::decode(data);
 #if defined CODEC_128x128
