@@ -74,15 +74,6 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
     if(split)
         yInfo() << "Splitting into left/right streams";
 
-#if DECODE_METHOD == 0
-    yInfo() << "Decoding with vBottle";
-#elif DECODE_METHOD == 1
-    yInfo() << "Decoding with shared_ptrs";
-#else
-    yInfo() << "Decoding with fixed AE";
-#endif
-
-
     eventManager.initBasic(rf.check("name", yarp::os::Value("/vPreProcess")).asString(),
                            rf.check("height", yarp::os::Value(240)).asInt(),
                            rf.check("width", yarp::os::Value(304)).asInt(),
@@ -186,6 +177,11 @@ vPreProcess::vPreProcess(): name("/vPreProcess")
     rightMap.deallocate();
     v_total = 0;
     v_dropped = 0;
+
+    outPortCamLeft.setWriteType(AE::tag);
+    outPortCamRight.setWriteType(AE::tag);
+    outPortSkin.setWriteType(SkinEvent::tag);
+    outPortSkinSamples.setWriteType(SkinSample::tag);
 }
 
 
@@ -318,34 +314,22 @@ void vPreProcess::run()
     resmod.height -= 1;
     resmod.width -= 1;
     int nm0 = 0, nm1 = 0, nm2 = 0, nm3 = 0, nm4 = 0;
-
-#if DECODE_METHOD != 2
-    outPortCamLeft.setWriteType(AE::tag);
-    outPortCamRight.setWriteType(AE::tag);
-    outPortSkin.setWriteType(AE::tag);
-    outPortSkinSamples.setWriteType(AE::tag);
-#endif
+    AE v;
+    SkinEvent se;
+    SkinSample ss;
 
     while(true) {
 
         double pyt = ystamp.getTime();
 
-#if DECODE_METHOD != 2
-        vQueue qleft, qright, qskin, qskinsamples;
-        const vQueue *q = inPort.read(ystamp);
-#else
-        std::deque<AE> qleft, qright, qskin, qskinsamples;
-        const std::vector<AE> *q = inPort.read(ystamp);
-#endif
+        std::deque<AE> qleft, qright;
+        std::deque<SkinEvent> qskin;
+        std::deque<SkinSample> qskinsamples;
+        const std::vector<int32_t> *q = inPort.read(ystamp);
         if(!q) break;
+
         delays.push_back((Time::now() - ystamp.getTime()));
         if(pyt) intervals.push_back(ystamp.getTime() - pyt);
-
-#if DECODE_METHOD != 2
-        rates.push_back((double)q->size() / (q->back()->stamp - q->front()->stamp));
-#else
-        rates.push_back((double)q->size() / (q->back().stamp - q->front().stamp));
-#endif
 
         if(precheck) {
             nm0 = ystamp.getCount();
@@ -360,33 +344,39 @@ void vPreProcess::run()
             nm1 = nm0;
         }
 
+        unsigned int events_in_packet = 0;
+        const int32_t *qi = q->data();
 
-        v_total += q->size();
-        //std::cout << q->size() << std::endl;
-#if DECODE_METHOD != 2
-        for(ev::vQueue::const_iterator qi = q->begin(); qi != q->end(); qi++) {
-            auto v = is_event<AE>(*qi);
-#else
-        for(std::vector<AE>::const_iterator qi = q->begin(); qi != q->end(); qi++) {
-            AE vcopy = *qi;
-            AE *v = &vcopy;
+        while ((size_t)(qi - q->data()) < q->size()) {
 
-            if(!v->skin) {
-#endif
+            events_in_packet++;
 
-//                //precheck
-//                if(precheck && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
-//                    yWarning() << "Event Corruption:" << v->getContent().toString();
-//                    continue;
-//                }
+            if(IS_SKIN(*(qi+1))) {
+                if(IS_SAMPLE(*(qi+1))) {
+                    //might need safety here if the event can be split across packets
+                    ss.decode(qi);
+                    qskinsamples.push_back(ss);
+                } else {
+                    se.decode(qi);
+                    qskin.push_back(se);
+                }
+            } else { // IS_VISION
+
+                v.decode(qi);
+
+                //precheck
+                if(precheck && (v.x < 0 || v.x > resmod.width || v.y < 0 || v.y > resmod.height)) {
+                    yWarning() << "Event Corruption:" << v.getContent().toString();
+                    continue;
+                }
 
                 //flipx
-                if(flipx) v->x = resmod.width - v->x;
+                if(flipx) v.x = resmod.width - v.x;
                 //flipy
-                if(flipy) v->y = resmod.height - v->y;
+                if(flipy) v.y = resmod.height - v.y;
 
                 //salt and pepper filter
-                if(pepper && !thefilter.check(v->x, v->y, v->polarity, v->channel, v->stamp)) {
+                if(pepper && !thefilter.check(v.x, v.y, v.polarity, v.channel, v.stamp)) {
                     v_dropped++;
                     continue;
                 }
@@ -394,55 +384,35 @@ void vPreProcess::run()
                 //undistortion
                 if(undistort) {
                     cv::Vec2i mapPix;
-                    if(v->getChannel() == 0)
-                        mapPix = leftMap.at<cv::Vec2i>(v->y, v->x);
+                    if(v.getChannel() == 0)
+                        mapPix = leftMap.at<cv::Vec2i>(v.y, v.x);
                     else
-                        mapPix = rightMap.at<cv::Vec2i>(v->y, v->x);
+                        mapPix = rightMap.at<cv::Vec2i>(v.y, v.x);
 
                     //truncate to sensor bounds after mapping?
                     if(truncate && (mapPix[0] < 0 || mapPix[0] > resmod.width || mapPix[1] < 0 || mapPix[1] > resmod.height)) {
                         continue;
                     }
 
-                    v->x = mapPix[0];
-                    v->y = mapPix[1];
+                    v.x = mapPix[0];
+                    v.y = mapPix[1];
 
                 }
-            }
 
-#if DECODE_METHOD != 2
-            if(split) {
-                if(v->skin) {
-                    if(v->type)
-                        qskinsamples.push_back(v);
-                    else
-                        qskin.push_back(v);
-                } else {
-                    if(v->channel)
-                        qright.push_back(v);
-                    else
-                        qleft.push_back(v);
-                }
-            } else {
-                qleft.push_back(v);
-#else
-            if(split) {
-                if(v->skin) {
-                    //if(v->type)
-                    //    qskinsamples.push_back(*v);
-                    //else
-                        qskin.push_back(*v);
-                } else {
-                    if(v->channel)
-                        qright.push_back(*v);
-                    else
-                        qleft.push_back(*v);
-                }
-            } else {
-                qleft.push_back(*v);
+                if(split && v.channel)
+                    qright.push_back(v);
+                else
+                    qleft.push_back(v);
+
             }
-#endif
         }
+
+//        static int p_ts = (*q)[0] & vtsHelper::max_stamp;
+//        int final_ts = (*q)[q->size()-2] & vtsHelper::max_stamp;
+//        double dt = final_ts - p_ts;
+//        if(dt < 0) dt += vtsHelper::max_stamp;
+//        rates.push_back(events_in_packet / dt);
+        v_total += events_in_packet;
 
         if(qleft.size()) {
             outPortCamLeft.write(qleft, ystamp);
@@ -467,8 +437,6 @@ void vPreProcess::onStop()
     outPortCamRight.close();
     outPortSkin.close();
     outPortSkinSamples.close();
-
-    //inPort.releaseDataLock();
 }
 
 bool vPreProcess::threadInit()
@@ -478,15 +446,15 @@ bool vPreProcess::threadInit()
             return false;
         if(!outPortCamRight.open(name + "/right:o"))
             return false;
-        if(!outPortSkin.open(name + "/skin:o"))
-            return false;
-        if(!outPortSkinSamples.open(name + "/skinsamples:o"))
-            return false;
     } else {
-        if(!outPortCamLeft.open(name + "/vBottle:o"))
+        if(!outPortCamLeft.open(name + "/stereo:o"))
             return false;
     }
-    if(!inPort.open(name + "/vBottle:i"))
+    if(!outPortSkin.open(name + "/skin:o"))
+        return false;
+    if(!outPortSkinSamples.open(name + "/skinsamples:o"))
+        return false;
+    if(!inPort.open(name + "/AE:i"))
         return false;
     return true;
 }

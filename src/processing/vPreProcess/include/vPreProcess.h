@@ -38,25 +38,11 @@ private:
 
     //output port for the vBottle with the new events computed by the module
 
-#if DECODE_METHOD == 0
-    ev::queueAllocator inPort;
-    vGenWritePort outPortCamLeft;
-    vGenWritePort outPortCamRight;
-    vGenWritePort outPortSkin;
-    vGenWritePort outPortSkinSamples;
-#elif DECODE_METHOD == 1
-    vGenReadPort inPort;
-    vGenWritePort outPortCamLeft;
-    vGenWritePort outPortCamRight;
-    vGenWritePort outPortSkin;
-    vGenWritePort outPortSkinSamples;
-#else
-    vReadPort< vector<AE> > inPort;
+    vReadPort < vector<int32_t> > inPort;
     vWritePort outPortCamLeft;
     vWritePort outPortCamRight;
     vWritePort outPortSkin;
     vWritePort outPortSkinSamples;
-#endif
 
     //parameters
     std::string name;
