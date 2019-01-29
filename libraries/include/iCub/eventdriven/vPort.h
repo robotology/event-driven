@@ -221,7 +221,10 @@ public:
 
     bool decodePacket(vector<int32_t> &read_q)
     {
-        read_q = internaldata;
+        read_q.resize(ints_to_read);
+        for(size_t i = 0; i < ints_to_read; i++)
+            read_q[i] = internaldata.at(i);
+
         return true;
     }
 
