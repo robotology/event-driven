@@ -48,6 +48,8 @@ vDraw * createDrawer(std::string tag)
         return new blobDraw();
     if(tag == skinDraw::drawtype)
         return new skinDraw();
+    if(tag == skinsampleDraw::drawtype)
+        return new skinsampleDraw();
     if(tag == accDraw::drawtype)
         return new accDraw();
     if(tag == isoInterestDraw::drawtype)

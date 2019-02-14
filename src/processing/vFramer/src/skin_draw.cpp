@@ -31,7 +31,7 @@ std::string skinDraw::getDrawType()
 
 std::string skinDraw::getEventType()
 {
-    return AddressEvent::tag;
+    return SkinEvent::tag;
 }
 
 void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
@@ -57,18 +57,73 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if((unsigned int)dt > display_window) break;
 
 
-        auto aep = is_event<AddressEvent>(*qi);
-        int y = aep->y;
-        int x = aep->x;
+        auto aep = is_event<SkinEvent>(*qi);
+        int x = aep->taxel;
 
         if((x & 0xF) == 0xD) //accelerometer
             continue;
-        if(aep->type == 0)
-            y = Ylimit - radius;
-        else {
-            y = radius + y * 200.0 / 255.0;
-            //x = x;
+        int y = Ylimit - radius;
+
+        // decode the event here: i.e. do the mapping from the x value to x,y location on the image
+
+        // get the pixel: substitute with code to draw a circle from circleDrawer
+        y = radius - 1;
+        cv::Point centr(x, y);
+
+        if(!aep->polarity)
+        {
+            cv::circle(image, centr, radius, pos, CV_FILLED);
         }
+        else
+        {
+            cv::circle(image, centr, radius, neg, CV_FILLED);
+        }
+    }
+}
+
+const std::string skinsampleDraw::drawtype = "SAMPLE";
+
+std::string skinsampleDraw::getDrawType()
+{
+    return skinsampleDraw::drawtype;
+}
+
+std::string skinsampleDraw::getEventType()
+{
+    return SkinSample::tag;
+}
+
+void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    cv::Scalar pos = CV_RGB(160, 0, 160);
+    cv::Scalar neg = CV_RGB(0, 60, 1);
+
+    int radius = 4;
+
+    if(image.empty()) {
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+        image.setTo(255);
+    }
+
+    if(eSet.empty()) return;
+
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+
+        int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+
+        auto aep = is_event<SkinSample>(*qi);
+        int x = aep->taxel;
+        int y = aep->value;
+
+        if((x & 0xF) == 0xD) //accelerometer
+            continue;
+        y = radius + y * 200.0 / 255.0;
+
 
         // decode the event here: i.e. do the mapping from the x value to x,y location on the image
 
