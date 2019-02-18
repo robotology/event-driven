@@ -48,6 +48,7 @@ private:
 
     yarp::sig::Vector leftTarget;
     yarp::sig::Vector rightTarget;
+    Mutex m;
 
 public:
 
@@ -60,18 +61,23 @@ public:
         leftTarget[3] = 0;
         rightTarget[3] = 0;
         useCallback();
+        setStrict();
     }
 
     void onRead(vBottle &vBottleIn)
     {
 
         //get the Q
+        if(this->getPendingReads() > 1) {
+            yInfo() << "Backed up port:" << this->getPendingReads();
+        }
         vQueue q = vBottleIn.get<GaussianAE>();
         if(q.empty()) {
             yWarning() << "q empty in callback function?";
             return;
         }
 
+        m.lock();
         //update our current best position of the ball in both cameras
         bool leftupdated = false, rightupdated = false;
         vQueue::reverse_iterator qi = q.rbegin();
@@ -100,13 +106,16 @@ public:
             }
             qi++;
         }
+        m.unlock();
 
     }
 
     void getTargets(yarp::sig::Vector &left, yarp::sig::Vector &right)
     {
+        m.lock();
         left = leftTarget;
         right = rightTarget;
+        m.unlock();
     }
 
 
@@ -214,14 +223,20 @@ public:
             controllers[i] = new PID;
 
         // set up our controllers
-        controllers[0]->set(3.0, 0.1);
+        controllers[0]->set(1.0, 0.0);
         controllers[1]->set(0.0, 0.0);
-        controllers[2]->set(3.0, 0.1);
-        controllers[3]->set(2.0, 0.1);
-        controllers[4]->set(2.0, 0.1);
+        controllers[2]->set(1.0, 0.0);
+        controllers[3]->set(1.5, 0.0);
+        controllers[4]->set(1.5, 0.0);
         controllers[5]->set(0.2, 0.0);
 
         //set velocity control mode
+        return setVelocityControl();
+
+    }
+
+    bool setVelocityControl()
+    {
         yarp::dev::IControlMode *imod;
         if(!driver.view(imod)) {
             yError() << "Driver does not implement control mode";
@@ -233,9 +248,23 @@ public:
             yError() << "Could not set velocity control mode";
             return false;
         }
-
         return true;
+    }
 
+    bool resetToPositionControl()
+    {
+        yarp::dev::IControlMode *imod;
+        if(!driver.view(imod)) {
+            yError() << "Driver does not implement control mode";
+            return false;
+        }
+
+        std::vector<int> modes(nAxes, VOCAB_CM_POSITION);
+        if(!imod->setControlModes(modes.data())) {
+            yError() << "Could not set velocity control mode";
+            return false;
+        }
+        return true;
     }
 
     void controlMono(int u, int v, double dt)
@@ -244,6 +273,14 @@ public:
 
         double eyes_pan=-controllers[4]->command(u_fixation, u, dt);
         double eyes_tilt=controllers[3]->command(v_fixation, v, dt);
+        if(encs[3] < -6 && (v_fixation - v) < 0) {
+            eyes_tilt = 0.0;
+            controllers[3]->reset();
+        }
+        if(encs[3] > 20 && (v_fixation - v) > 0) {
+            eyes_tilt = 0.0;
+            controllers[3]->reset();
+        }
         controllers[2]->reset();
         double eyes_ver=-controllers[5]->command(0, 0, dt);
 
@@ -266,6 +303,14 @@ public:
 
         double eyes_pan=-controllers[4]->command(u_fixation, ul, dt);
         double eyes_tilt=controllers[3]->command(v_fixation, vl, dt);
+        if(encs[3] < -6 && (v_fixation - vl) < 0) {
+            eyes_tilt = 0.0;
+            controllers[3]->reset();
+        }
+        if(encs[3] > 20 && (v_fixation - vl) > 0) {
+            eyes_tilt = 0.0;
+            controllers[3]->reset();
+        }
         double eyes_ver=-controllers[5]->command(0,ul-ur, dt);
 
         // feed-forward correction to reduce
