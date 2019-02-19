@@ -317,6 +317,7 @@ void vPreProcess::run()
     AE v;
     SkinEvent se;
     SkinSample ss;
+    int32_t salvage_sample[4] = {-1, 0, 0, 0};
 
     while(true) {
 
@@ -347,14 +348,31 @@ void vPreProcess::run()
         unsigned int events_in_packet = 0;
         const int32_t *qi = q->data();
 
-        while ((size_t)(qi - q->data()) < q->size()) {
-
+        //salvage the skin sample that started last packet.
+        if(salvage_sample[0] > 0) {
+            salvage_sample[2] = *qi; qi++;
+            salvage_sample[3] = *qi; qi++;
+            const int32_t *temp = salvage_sample;
+            ss.decode(temp);
+            qskinsamples.push_back(ss);
+            salvage_sample[0] = -1;
             events_in_packet++;
+        }
+
+        while ((size_t)(qi - q->data()) < q->size()) {
 
             if(IS_SKIN(*(qi+1))) {
                 if(IS_SAMPLE(*(qi+1))) {
+                    //skin samples can be split over 2 packets
+                    if(qi + 4 > (q->data() + q->size())) {
+                        salvage_sample[0] = *qi; qi++;
+                        salvage_sample[1] = *qi; qi++;
+                        continue;
+                    }
                     //might need safety here if the event can be split across packets
                     ss.decode(qi);
+                    if(qi > (q->data() + q->size()))
+                        yError() << "skin sample packet overrun";
                     qskinsamples.push_back(ss);
                 } else {
                     se.decode(qi);
@@ -405,6 +423,9 @@ void vPreProcess::run()
                     qleft.push_back(v);
 
             }
+
+            events_in_packet++;
+
         }
 
 //        static int p_ts = (*q)[0] & vtsHelper::max_stamp;
