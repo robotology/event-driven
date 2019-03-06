@@ -28,8 +28,10 @@
 
 namespace ev {
 
-#define IS_SKIN(x) x&0x01000000
-#define IS_SAMPLE(x) x&0x00800000
+#define IS_SKIN(x)   x&0x01000000
+#define IS_SAMPLE(x) x&0x00804000
+#define IS_SSA(x)    x&0x00004000
+#define IS_SSV(x)    x&0x00800000
 
 //macros
 class vEvent;

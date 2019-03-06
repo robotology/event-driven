@@ -114,7 +114,7 @@ public:
 
     /// \brief send an entire vQueue. The queue is encoded and allocated
     /// into a single contiguous memory space. Faster than a standard vBottle.
-    template <class T> void setInternalData(const std::deque<T> &q) {
+    template <typename T> void setInternalData(const std::deque<T> &q) {
 
         if(header2 != T::tag)
             setHeader(T::tag);
@@ -130,6 +130,20 @@ public:
 
         if(pos != (unsigned int)header3[1])
             yError() << "vPortInterface: encoding incorrect";
+
+        this->datablock = (const char *)internaldata.data();
+        this->datalength = elementBYTES * q.size();
+    }
+
+    void setInternalData(const deque<int32_t> &q) {
+
+        header3[1] = q.size();
+
+        if((int)internaldata.size() < header3[1]) //increase internal mem if needed
+            internaldata.resize(header3[1]);
+
+        for(unsigned int i = 0; i < q.size(); i++)  //decode the data into
+            internaldata[i] = q[i];
 
         this->datablock = (const char *)internaldata.data();
         this->datalength = elementBYTES * q.size();
@@ -274,6 +288,12 @@ public:
     {
         internal_storage.setExternalData((const char *)q.data(),
                                          q.size() * sizeof(int32_t));
+        return _internal_write(envelope);
+    }
+
+    bool write(const deque<int32_t> &q, Stamp &envelope)
+    {
+        internal_storage.setInternalData(q);
         return _internal_write(envelope);
     }
 
