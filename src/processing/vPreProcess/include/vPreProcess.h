@@ -65,6 +65,7 @@ private:
     cv::Mat leftMap;
     cv::Mat rightMap;
     bool truncate;
+    bool use_local_stamp;
 
     //output
     bool split;
@@ -81,7 +82,7 @@ public:
 
     void initBasic(std::string name, int height, int width, bool precheck,
                    bool flipx, bool flipy, bool pepper, bool undistort,
-                   bool split);
+                   bool split, bool local_stamp);
     void initPepper(int spatialSize, int temporalSize);
     void initUndistortion(const yarp::os::Bottle &left,
                           const yarp::os::Bottle &right, bool truncate);

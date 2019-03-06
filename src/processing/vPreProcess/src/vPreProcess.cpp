@@ -58,6 +58,8 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("precheck", yarp::os::Value(true)).asBool();
     bool split = rf.check("split") &&
             rf.check("split", yarp::os::Value(true)).asBool();
+    bool local_stamp = rf.check("local_stamp") &&
+            rf.check("local_stamp", yarp::os::Value(true)).asBool();
 
     if(precheck)
         yInfo() << "Performing precheck for event corruption";
@@ -77,7 +79,7 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
     eventManager.initBasic(rf.check("name", yarp::os::Value("/vPreProcess")).asString(),
                            rf.check("height", yarp::os::Value(240)).asInt(),
                            rf.check("width", yarp::os::Value(304)).asInt(),
-                           precheck, flipx, flipy, pepper, undistort, split);
+                           precheck, flipx, flipy, pepper, undistort, split, local_stamp);
 
     if(pepper) {
         eventManager.initPepper(rf.check("spatialSize", yarp::os::Value(1)).asDouble(),
@@ -196,7 +198,8 @@ vPreProcess::~vPreProcess()
 
 void vPreProcess::initBasic(std::string name, int height, int width,
                             bool precheck, bool flipx, bool flipy,
-                            bool pepper, bool undistort, bool split)
+                            bool pepper, bool undistort, bool split,
+                            bool local_stamp)
 {
 
     this->name = name;
@@ -208,6 +211,7 @@ void vPreProcess::initBasic(std::string name, int height, int width,
     this->pepper = pepper;
     this->undistort = undistort;
     this->split = split;
+    this->use_local_stamp = local_stamp;
 
 }
 
@@ -308,7 +312,8 @@ std::deque<double> vPreProcess::getIntervals()
 
 void vPreProcess::run()
 {
-    yarp::os::Stamp ystamp;
+    Stamp zynq_stamp;
+    Stamp local_stamp;
 
     resolution resmod = res;
     resmod.height -= 1;
@@ -321,19 +326,19 @@ void vPreProcess::run()
 
     while(true) {
 
-        double pyt = ystamp.getTime();
+        double pyt = zynq_stamp.getTime();
 
         std::deque<AE> qleft, qright;
         std::deque<SkinEvent> qskin;
         std::deque<SkinSample> qskinsamples;
-        const std::vector<int32_t> *q = inPort.read(ystamp);
+        const std::vector<int32_t> *q = inPort.read(zynq_stamp);
         if(!q) break;
 
-        delays.push_back((Time::now() - ystamp.getTime()));
-        if(pyt) intervals.push_back(ystamp.getTime() - pyt);
+        delays.push_back((Time::now() - zynq_stamp.getTime()));
+        if(pyt) intervals.push_back(zynq_stamp.getTime() - pyt);
 
         if(precheck) {
-            nm0 = ystamp.getCount();
+            nm0 = zynq_stamp.getCount();
             if(nm3 && nm0 - nm1 == 1 && nm1 - nm2 > 1 && nm1 - nm3 > 2) {
                 yWarning() << "LOST" << nm1-nm2-1 << "PACKETS ["
                            << nm4 << nm3 << nm2 << nm1 << nm0 << "]"
@@ -435,17 +440,22 @@ void vPreProcess::run()
 //        rates.push_back(events_in_packet / dt);
         v_total += events_in_packet;
 
+        if(use_local_stamp) {
+            local_stamp.update();
+            zynq_stamp = local_stamp;
+        }
+
         if(qleft.size()) {
-            outPortCamLeft.write(qleft, ystamp);
+            outPortCamLeft.write(qleft, zynq_stamp);
         }
         if(qright.size()) {
-            outPortCamRight.write(qright, ystamp);
+            outPortCamRight.write(qright, zynq_stamp);
         }
         if(qskin.size()) {
-            outPortSkin.write(qskin, ystamp);
+            outPortSkin.write(qskin, zynq_stamp);
         }
         if(qskinsamples.size()) {
-            outPortSkinSamples.write(qskinsamples, ystamp);
+            outPortSkinSamples.write(qskinsamples, zynq_stamp);
         }
     }
 
