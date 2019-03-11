@@ -155,24 +155,24 @@ bool vSkinCtrl::configure(bool verbose)
     return true;
 }
 
-bool select_generator(int type, int neural_mask = 0)
+bool vSkinCtrl::select_generator(int type, int neural_mask)
 {
     unsigned char reg_val = type | neural_mask << 2;
 
-    if(i2cWrite(SKCTRL_GEN_SELECT, &regVal, 1) < 0)
+    if(i2cWrite(SKCTRL_GEN_SELECT, &reg_val, 1) < 0)
        return false;
 
     return true;
 }
 
-bool config_generator(int type, float p1, float p2, float p3, float p4)
+bool vSkinCtrl::config_generator(int type, float p1, float p2, float p3, float p4)
 {
 
     unsigned char reg_val;
     if(i2cRead(SKCTRL_GEN_SELECT, &reg_val, 1) < 0)
         return false;
 
-    reg_val = (reg_val & 0x1F | type << 5);
+    reg_val = (reg_val & 0x1F) | (type << 5);
     if(i2cWrite(SKCTRL_GEN_SELECT, &reg_val, 1) < 0)
         return false;
 
@@ -477,13 +477,13 @@ void vSkinCtrl::printConfiguration()
     printf("Dummy Generator Increment and Decrement: 0x%08X\n", regval);
     i2cRead(SKCTRL_RES_TO_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Resampling Time Out: 0x%08X\n", regval);
-    i2cRead(SKCTRL_EG_UPTHR_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(SKCTRL_EG_PARAM1_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Event generator up threshold: 0x%08X\n", regval);
-    i2cRead(SKCTRL_EG_DWTHR_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(SKCTRL_EG_PARAM2_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Event generator down threshold: 0x%08X\n", regval);
-    i2cRead(SKCTRL_EG_NOISE_RISE_THR_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(SKCTRL_EG_PARAM3_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Event generator noise rising threshold: 0x%08X\n", regval);
-    i2cRead(SKCTRL_EG_NOISE_FALL_THR_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(SKCTRL_EG_PARAM4_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Event generator noise falling threshold: 0x%08X\n", regval);
     i2cRead(SKCTRL_EG_FILTER_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Resampling/evgen filter address: 0x%08X\n", regval);
