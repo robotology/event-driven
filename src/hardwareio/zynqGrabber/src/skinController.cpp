@@ -299,10 +299,36 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
         if(mask) yInfo() << "Skin Generator Nerual Type" << mask;
     }
 
-//    regName = "evgenWRSel";
-//    if(!config_generator(type, p1, p2, p3, p4))
-//        return false;
 
+    config_generator(EV_GEN_1,
+                     FIXED_UINT(cnfgReg.check("G1upthresh", Value(0.1)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G1downthresh", Value(0.1)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G1upnoise", Value(0.1)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G1downnoise", Value(0.1)).asDouble()));
+
+    config_generator(EV_GEN_2,
+                     FIXED_UINT(cnfgReg.check("G1upthresh", Value(0.1)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G1downthresh", Value(0.1)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G1upnoise", Value(0.1)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G1downnoise", Value(0.1)).asDouble()));
+
+    config_generator(EV_GEN_SA1,
+                     cnfgReg.check("G1upthresh", Value(0x00080000)).asInt(),
+                     cnfgReg.check("G1downthresh", Value(0x00000148)).asInt(),
+                     cnfgReg.check("G1upnoise", Value(0xFFFFFEB8)).asInt(),
+                     cnfgReg.check("G1downnoise", Value(0x00000A3D)).asInt());
+
+    config_generator(EV_GEN_RA1,
+                     cnfgReg.check("G1upthresh", Value(0x00050000)).asInt(),
+                     cnfgReg.check("G1downthresh", Value(0x00000003)).asInt(),
+                     cnfgReg.check("G1upnoise", Value(0xFFFFF668)).asInt(),
+                     cnfgReg.check("G1downnoise", Value(0x00010000)).asInt());
+
+    config_generator(EV_GEN_RA2,
+                     cnfgReg.check("G1upthresh", Value(0x00050000)).asInt(),
+                     cnfgReg.check("G1downthresh", Value(0x00000003)).asInt(),
+                     cnfgReg.check("G1upnoise", Value(0xFFFFF334)).asInt(),
+                     cnfgReg.check("G1downnoise", Value(0x00000A3D)).asInt());
 
     regAddr = SKCTRL_RES_TO_ADDR;
     regName = "resamplingTimeout";
