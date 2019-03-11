@@ -67,6 +67,7 @@ void  device2yarp::run() {
     external_storage.setHeader(AE::tag);
 
     unsigned int event_count = 0;
+    unsigned int prev_ts = 0;
 
     while(!isStopping()) {
 
@@ -81,6 +82,12 @@ void  device2yarp::run() {
         }
 
         if(n_bytes_read == 0) continue;
+        
+        unsigned int first_ts = *(unsigned int *)data.data();
+        if(prev_ts > first_ts)
+            yWarning() << prev_ts << "->" << first_ts;
+        prev_ts = first_ts;
+        
 
         external_storage.setExternalData((const char *)data.data(), n_bytes_read);
         yarp_stamp.update();
