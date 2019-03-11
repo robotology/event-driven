@@ -167,9 +167,9 @@
 // register SKCTRL_EG_DWTHR_ADDR            0x1C
 #define EG_DWN_THR_DEFAULT                      0x00001999 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
 // register SKCTRL_EG_NOISE_RISE_THR_ADDR      0x20
-#define EG_NOISE_RISE_THR_DEFAULT               0x000C0000 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
+#define EG_NOISE_RISE_THR_DEFAULT               0x000C0000 // 32b unsigned fixed point (16b fractional); default value approx. 12
 // register SKCTRL_EG_NOISE_FALL_THR_ADDR      0x24
-#define EG_NOISE_FALL_THR_DEFAULT               0x000C0000 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
+#define EG_NOISE_FALL_THR_DEFAULT               0x000C0000 // 32b unsigned fixed point (16b fractional); default value approx. 12
 // register SKCTRL_I2C_ACQ_SOFT_RST_ADDR    0x34
 #define I2C_ACQ_SOFT_RST_DEFAULT                0x00 // write only value???
 

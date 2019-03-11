@@ -91,20 +91,15 @@ void vSkinCtrl::disconnect()
 int vSkinCtrl::i2cWrite(unsigned char reg, unsigned int data)
 {
     int ret = ioctl(fd, I2C_SLAVE, I2CAddress);
-    int n_bits = sizeof (unsigned int) + sizeof(unsigned char);
-    int n_bytes = n_bits/sizeof(unsigned char);
-    unsigned char *tmp = (unsigned char *) malloc (n_bits);
+    unsigned char tmp[5];
 
     tmp[0]= reg|AUTOINCR;
-    tmp[1]=data & 0xFF;
-    tmp[2]=data>>8 & 0xFF;
-    tmp[3]=data>>16 & 0xFF;
-    tmp[4]=data>>24 & 0xFF;
+    tmp[1]= data & 0xFF;
+    tmp[2]= data>>8 & 0xFF;
+    tmp[3]= data>>16 & 0xFF;
+    tmp[4]= data>>24 & 0xFF;
 
-    ret = write (fd, tmp, n_bytes);
-
-    free(tmp);
-
+    ret = write (fd, tmp, 5);
     return (ret-1); // -1 because of one is the starting register
 
 }
@@ -178,18 +173,16 @@ bool vSkinCtrl::config_generator(int type, uint32_t  p1, uint32_t p2, uint32_t p
     if(i2cWrite(SKCTRL_GEN_SELECT, &reg_val, 1) < 0)
         return false;
 
-    unsigned int param_val;
-    param_val = p1;
-    if(i2cWrite(SKCTRL_EG_PARAM1_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
+    if(i2cWrite(SKCTRL_EG_PARAM1_ADDR, p1) < 0)
         return false;
-    param_val = p2;
-    if(i2cWrite(SKCTRL_EG_PARAM2_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
+
+    if(i2cWrite(SKCTRL_EG_PARAM2_ADDR, p2) < 0)
         return false;
-    param_val = p3;
-    if(i2cWrite(SKCTRL_EG_PARAM3_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
+
+    if(i2cWrite(SKCTRL_EG_PARAM3_ADDR, p3) < 0)
         return false;
-    param_val = p4;
-    if(i2cWrite(SKCTRL_EG_PARAM4_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
+
+    if(i2cWrite(SKCTRL_EG_PARAM4_ADDR, p4) < 0)
         return false;
 
     return true;
@@ -451,17 +444,23 @@ bool vSkinCtrl::configureRegisters()
     // --- configure SKCTRL_RES_TO_ADDR --- //
     if(i2cWrite(SKCTRL_RES_TO_ADDR, RESAMPLING_TIMEOUT_DEFAULT) < 0) return false;
 
-    // --- configure SKCTRL_EG_UPTHR_ADDR --- //
-    if(i2cWrite(SKCTRL_EG_PARAM1_ADDR, FIXED_UINT(EG_UP_THR_DEFAULT)) < 0) return false;
+//    // --- configure SKCTRL_EG_UPTHR_ADDR --- //
+//    if(i2cWrite(SKCTRL_EG_PARAM1_ADDR, FIXED_UINT(EG_UP_THR_DEFAULT)) < 0) return false;
 
-    // --- configure SKCTRL_EG_DWTHR_ADDR --- //
-    if(i2cWrite(SKCTRL_EG_PARAM2_ADDR, FIXED_UINT(EG_DWN_THR_DEFAULT)) < 0) return false;
+//    // --- configure SKCTRL_EG_DWTHR_ADDR --- //
+//    if(i2cWrite(SKCTRL_EG_PARAM2_ADDR, FIXED_UINT(EG_DWN_THR_DEFAULT)) < 0) return false;
 
-    // --- configure SKCTRL_EG_NOISE_RISE_THR_ADDR --- //
-    if(i2cWrite(SKCTRL_EG_PARAM3_ADDR, FIXED_UINT(EG_NOISE_RISE_THR_DEFAULT)) < 0) return false;
+//    // --- configure SKCTRL_EG_NOISE_RISE_THR_ADDR --- //
+//    if(i2cWrite(SKCTRL_EG_PARAM3_ADDR, FIXED_UINT(EG_NOISE_RISE_THR_DEFAULT)) < 0) return false;
 
-    // --- configure SKCTRL_EG_NOISE_FALL_THR_ADDR --- //
-    if(i2cWrite(SKCTRL_EG_PARAM4_ADDR, FIXED_UINT(EG_NOISE_FALL_THR_DEFAULT)) < 0) return false;
+//    // --- configure SKCTRL_EG_NOISE_FALL_THR_ADDR --- //
+//    if(i2cWrite(SKCTRL_EG_PARAM4_ADDR, FIXED_UINT(EG_NOISE_FALL_THR_DEFAULT)) < 0) return false;
+
+    this->config_generator(EV_GEN_1,
+                           FIXED_UINT(EG_UP_THR_DEFAULT),
+                           FIXED_UINT(EG_DWN_THR_DEFAULT),
+                           FIXED_UINT(EG_NOISE_RISE_THR_DEFAULT),
+                           FIXED_UINT(EG_NOISE_FALL_THR_DEFAULT));
 
     // --- configure SKCTRL_I2C_ACQ_SOFT_RST_ADDR --- //
     if(i2cWrite(SKCTRL_I2C_ACQ_SOFT_RST_ADDR, I2C_ACQ_SOFT_RST_DEFAULT) < 0) return false;
