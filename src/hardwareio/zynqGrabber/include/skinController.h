@@ -48,7 +48,7 @@ private:
     //WRAPPERS?
     bool configureRegisters(); //new initDevice
     bool select_generator(int type, int neural_mask = 0);
-    bool config_generator(int type, float p1, float p2, float p3, float p4);
+    bool config_generator(int type, uint32_t p1, uint32_t p2, uint32_t p3, uint32_t p4);
 
 
 public:

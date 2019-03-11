@@ -28,6 +28,8 @@
 #include <iostream>
 #include <yarp/os/LogStream.h>
 
+using yarp::os::Value;
+
 vSkinCtrl::vSkinCtrl(std::string deviceName, unsigned char i2cAddress)
 {
 
@@ -165,7 +167,7 @@ bool vSkinCtrl::select_generator(int type, int neural_mask)
     return true;
 }
 
-bool vSkinCtrl::config_generator(int type, float p1, float p2, float p3, float p4)
+bool vSkinCtrl::config_generator(int type, uint32_t  p1, uint32_t p2, uint32_t p3, uint32_t p4)
 {
 
     unsigned char reg_val;
@@ -177,16 +179,16 @@ bool vSkinCtrl::config_generator(int type, float p1, float p2, float p3, float p
         return false;
 
     unsigned int param_val;
-    param_val = FIXED_UINT(p1);
+    param_val = p1;
     if(i2cWrite(SKCTRL_EG_PARAM1_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
         return false;
-    param_val = FIXED_UINT(p2);
+    param_val = p2;
     if(i2cWrite(SKCTRL_EG_PARAM2_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
         return false;
-    param_val = FIXED_UINT(p3);
+    param_val = p3;
     if(i2cWrite(SKCTRL_EG_PARAM3_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
         return false;
-    param_val = FIXED_UINT(p4);
+    param_val = p4;
     if(i2cWrite(SKCTRL_EG_PARAM4_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
         return false;
 
@@ -299,6 +301,7 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
         if(mask) yInfo() << "Skin Generator Nerual Type" << mask;
     }
 
+    cnfgReg.check("G1upthresh", Value(0x00080000)).asInt();
 
     config_generator(EV_GEN_1,
                      FIXED_UINT(cnfgReg.check("G1upthresh", Value(0.1)).asDouble()),
@@ -312,22 +315,24 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
                      FIXED_UINT(cnfgReg.check("G1upnoise", Value(0.1)).asDouble()),
                      FIXED_UINT(cnfgReg.check("G1downnoise", Value(0.1)).asDouble()));
 
+    //there might be a bug with G1upnoise because YARP doesn't like unsigned
+    //ints in the config file / bottles
     config_generator(EV_GEN_SA1,
                      cnfgReg.check("G1upthresh", Value(0x00080000)).asInt(),
                      cnfgReg.check("G1downthresh", Value(0x00000148)).asInt(),
-                     cnfgReg.check("G1upnoise", Value(0xFFFFFEB8)).asInt(),
+                     cnfgReg.check("G1upnoise", Value(0x7FFFFEB8)).asInt(),
                      cnfgReg.check("G1downnoise", Value(0x00000A3D)).asInt());
 
     config_generator(EV_GEN_RA1,
                      cnfgReg.check("G1upthresh", Value(0x00050000)).asInt(),
                      cnfgReg.check("G1downthresh", Value(0x00000003)).asInt(),
-                     cnfgReg.check("G1upnoise", Value(0xFFFFF668)).asInt(),
+                     cnfgReg.check("G1upnoise", Value(0x7FFFF668)).asInt(),
                      cnfgReg.check("G1downnoise", Value(0x00010000)).asInt());
 
     config_generator(EV_GEN_RA2,
                      cnfgReg.check("G1upthresh", Value(0x00050000)).asInt(),
                      cnfgReg.check("G1downthresh", Value(0x00000003)).asInt(),
-                     cnfgReg.check("G1upnoise", Value(0xFFFFF334)).asInt(),
+                     cnfgReg.check("G1upnoise", Value(0x7FFFF334)).asInt(),
                      cnfgReg.check("G1downnoise", Value(0x00000A3D)).asInt());
 
     regAddr = SKCTRL_RES_TO_ADDR;
