@@ -295,6 +295,8 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
         }
         if(!select_generator(type, mask))
             return false;
+        yInfo() << "Skin Event Generator" << type;
+        if(mask) yInfo() << "Skin Generator Nerual Type" << mask;
     }
 
 //    regName = "evgenWRSel";

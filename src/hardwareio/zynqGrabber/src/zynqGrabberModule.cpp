@@ -134,28 +134,30 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     if(rf.check("skinCtrl")) {
 
-        std::string skinCtrl = rf.find("skinCtrl").asString();
-
-        skctrlMng = vSkinCtrl(skinCtrl, I2C_ADDRESS_AUX);
+        skctrlMng = vSkinCtrl(rf.find("skinCtrl").asString(), I2C_ADDRESS_AUX);
 
         if(!skctrlMng.connect())
         {
-            std::cerr << "Could not connect to skin controller" << std::endl;
+            yError() << "Could not connect to skin controller";
             if(lwo) logwriter << "Could not connect to skin" << std::endl;
             return false;
         }
 
         if(!skctrlMng.configure(verbose)) {
-            std::cerr << "Could not configure skin" << std::endl;
-            if(lwo) logwriter << "Could not configure skin" << std::endl;
+            yError() << "Could not set skin defaults";
+            if(lwo) logwriter << "Could not set skin defaults" << std::endl;
             return false;
         }
 
         //config values
-        yarp::os::Bottle cnfglists = rf.findGroup("SKIN_CNFG");
-        if(!skctrlMng.configureRegisters(cnfglists)) {
-            std::cerr << "Config file required to run zynqGrabber" << std::endl;
-            if(lwo) logwriter << "Could not find config file" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
+        yarp::os::Bottle &cnfglists = rf.findGroup("SKIN_CNFG");
+        if(cnfglists.isNull()) {
+            yWarning() << "No Skin Parameters Found";
+            if(lwo) logwriter << "No Skin Parameters Found" << std::endl;
+        } else if(!skctrlMng.configureRegisters(cnfglists)) {
+            yError() << "Could not configure ini parameters";
+            if(lwo) logwriter << "Could not configure ini parameters" << std::endl
+                              << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
             return false;
         }
 
