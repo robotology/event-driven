@@ -356,7 +356,7 @@ bool vSkinCtrl::setRegister(int byte, unsigned int mask, unsigned char regAddr, 
     if (regVal == true) {
         val |= (mask << 8*byte);
     } else {
-        val &= !(mask << 8*byte);
+        val &= ~(mask << 8*byte);
     }
 
     if(i2cWrite(regAddr, (unsigned char *)(&val), sizeof(int)) < 0)
