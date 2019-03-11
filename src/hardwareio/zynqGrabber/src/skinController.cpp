@@ -155,8 +155,49 @@ bool vSkinCtrl::configure(bool verbose)
     return true;
 }
 
+bool select_generator(int type, int neural_mask = 0)
+{
+    unsigned char reg_val = type | neural_mask << 2;
+
+    if(i2cWrite(SKCTRL_GEN_SELECT, &regVal, 1) < 0)
+       return false;
+
+    return true;
+}
+
+bool config_generator(int type, float p1, float p2, float p3, float p4)
+{
+
+    unsigned char reg_val;
+    if(i2cRead(SKCTRL_GEN_SELECT, &reg_val, 1) < 0)
+        return false;
+
+    reg_val = (reg_val & 0x1F | type << 5);
+    if(i2cWrite(SKCTRL_GEN_SELECT, &reg_val, 1) < 0)
+        return false;
+
+    unsigned int param_val;
+    param_val = FIXED_UINT(p1);
+    if(i2cWrite(SKCTRL_EG_PARAM1_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
+        return false;
+    param_val = FIXED_UINT(p2);
+    if(i2cWrite(SKCTRL_EG_PARAM2_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
+        return false;
+    param_val = FIXED_UINT(p3);
+    if(i2cWrite(SKCTRL_EG_PARAM3_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
+        return false;
+    param_val = FIXED_UINT(p4);
+    if(i2cWrite(SKCTRL_EG_PARAM4_ADDR, (unsigned char *)&param_val, sizeof(param_val)) < 0)
+        return false;
+
+    return true;
+
+
+}
+
 bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
 {
+    //SKIN CONTROL ENABLE REGISTER
     unsigned char regAddr = SKCTRL_EN_ADDR;
     std::string regName = "forceCalib";
     if (cnfgReg.check(regName)){
@@ -239,6 +280,28 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
         }
     }
 
+    //EVENT GENERATION SELECT
+    regName = "evGenSel";
+    if(cnfgReg.check(regName)) {
+        int type = cnfgReg.find(regName).asInt();
+        int mask = 0;
+        if(type == EV_GEN_NEURAL) {
+            if(cnfgReg.check("evNeuralUseSA1"))
+                mask |= EV_MASK_SA1;
+            if(cnfgReg.check("evNeuralUseRA1"))
+                mask |= EV_MASK_RA1;
+            if(cnfgReg.check("evNeuralUseRA2"))
+                mask |= EV_MASK_RA2;
+        }
+        if(!select_generator(type, mask))
+            return false;
+    }
+
+//    regName = "evgenWRSel";
+//    if(!config_generator(type, p1, p2, p3, p4))
+//        return false;
+
+
     regAddr = SKCTRL_RES_TO_ADDR;
     regName = "resamplingTimeout";
     if (cnfgReg.check(regName)){
@@ -247,7 +310,7 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
            return false;
     }
 
-    regAddr = SKCTRL_EG_UPTHR_ADDR;
+    regAddr = SKCTRL_EG_PARAM1_ADDR;
     regName = "egUpThr";
     if (cnfgReg.check(regName)){
         bool regVal = cnfgReg.find(regName).asDouble();
@@ -255,7 +318,7 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
            return false;
     }
 
-    regAddr = SKCTRL_EG_DWTHR_ADDR;
+    regAddr = SKCTRL_EG_PARAM2_ADDR;
     regName = "egDownThr";
     if (cnfgReg.check(regName)){
         bool regVal = cnfgReg.find(regName).asDouble();
@@ -263,7 +326,7 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
            return false;
     }
 
-    regAddr = SKCTRL_EG_NOISE_RISE_THR_ADDR;
+    regAddr = SKCTRL_EG_PARAM3_ADDR;
     regName = "egNoiseRisingThr";
     if (cnfgReg.check(regName)){
         bool regVal = cnfgReg.find(regName).asDouble();
@@ -271,7 +334,7 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
            return false;
     }
 
-    regAddr = SKCTRL_EG_NOISE_FALL_THR_ADDR;
+    regAddr = SKCTRL_EG_PARAM4_ADDR;
     regName = "egNoiseFallingThr";
     if (cnfgReg.check(regName)){
         bool regVal = cnfgReg.find(regName).asDouble();
@@ -325,6 +388,10 @@ bool vSkinCtrl::configureRegisters()
     valReg[3] = rshift|SAMPLES_SEL|AUX_TX_EN|SAMPLES_TX_EN|EVENTS_TX_EN;
     if(i2cWrite(SKCTRL_EN_ADDR, valReg, 4) < 0) return false;
 
+    // --- configure SKCTRL_EN_ADDR --- //
+    valReg[0] = EV_GEN_SELECT_DEFAULT;
+    if(i2cWrite(SKCTRL_GEN_SELECT, valReg, 1) < 0) return false;
+
     // --- configure SKCTRL_DUMMY_PERIOD_ADDR --- //
     if(i2cWrite(SKCTRL_DUMMY_PERIOD_ADDR, DUMMY_PERIOD_DEFAULT) < 0) return false;
 
@@ -354,16 +421,16 @@ bool vSkinCtrl::configureRegisters()
     if(i2cWrite(SKCTRL_RES_TO_ADDR, RESAMPLING_TIMEOUT_DEFAULT) < 0) return false;
 
     // --- configure SKCTRL_EG_UPTHR_ADDR --- //
-    if(i2cWrite(SKCTRL_EG_UPTHR_ADDR, FIXED_UINT(EG_UP_THR_DEFAULT)) < 0) return false;
+    if(i2cWrite(SKCTRL_EG_PARAM1_ADDR, FIXED_UINT(EG_UP_THR_DEFAULT)) < 0) return false;
 
     // --- configure SKCTRL_EG_DWTHR_ADDR --- //
-    if(i2cWrite(SKCTRL_EG_DWTHR_ADDR, FIXED_UINT(EG_DWN_THR_DEFAULT)) < 0) return false;
+    if(i2cWrite(SKCTRL_EG_PARAM2_ADDR, FIXED_UINT(EG_DWN_THR_DEFAULT)) < 0) return false;
 
     // --- configure SKCTRL_EG_NOISE_RISE_THR_ADDR --- //
-    if(i2cWrite(SKCTRL_EG_NOISE_RISE_THR_ADDR, FIXED_UINT(EG_NOISE_RISE_THR_DEFAULT)) < 0) return false;
+    if(i2cWrite(SKCTRL_EG_PARAM3_ADDR, FIXED_UINT(EG_NOISE_RISE_THR_DEFAULT)) < 0) return false;
 
     // --- configure SKCTRL_EG_NOISE_FALL_THR_ADDR --- //
-    if(i2cWrite(SKCTRL_EG_NOISE_FALL_THR_ADDR, FIXED_UINT(EG_NOISE_FALL_THR_DEFAULT)) < 0) return false;
+    if(i2cWrite(SKCTRL_EG_PARAM4_ADDR, FIXED_UINT(EG_NOISE_FALL_THR_DEFAULT)) < 0) return false;
 
     // --- configure SKCTRL_I2C_ACQ_SOFT_RST_ADDR --- //
     if(i2cWrite(SKCTRL_I2C_ACQ_SOFT_RST_ADDR, I2C_ACQ_SOFT_RST_DEFAULT) < 0) return false;

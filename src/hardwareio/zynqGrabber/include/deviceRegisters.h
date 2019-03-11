@@ -107,15 +107,16 @@
 
 // --- addresses of the registers --- //
 #define SKCTRL_EN_ADDR                  0x00
-#define SKCTRL_DUMMY_PERIOD_ADDR        0x04
-#define SKCTRL_DUMMY_CFG_ADDR           0x08
-#define SKCTRL_DUMMY_BOUND_ADDR         0x0C
-#define SKCTRL_DUMMY_INC_ADDR           0x10
-#define SKCTRL_RES_TO_ADDR              0x14
-#define SKCTRL_EG_UPTHR_ADDR            0x18
-#define SKCTRL_EG_DWTHR_ADDR            0x1C
-#define SKCTRL_EG_NOISE_RISE_THR_ADDR   0x20
-#define SKCTRL_EG_NOISE_FALL_THR_ADDR   0x24
+#define SKCTRL_GEN_SELECT               0x04
+#define SKCTRL_DUMMY_PERIOD_ADDR        0x08
+#define SKCTRL_DUMMY_CFG_ADDR           0x0C
+#define SKCTRL_DUMMY_BOUND_ADDR         0x10
+#define SKCTRL_DUMMY_INC_ADDR           0x14
+#define SKCTRL_RES_TO_ADDR              0x18
+#define SKCTRL_EG_PARAM1_ADDR           0x1C
+#define SKCTRL_EG_PARAM2_ADDR           0x20
+#define SKCTRL_EG_PARAM3_ADDR           0x24
+#define SKCTRL_EG_PARAM4_ADDR           0x28
 #define SKCTRL_I2C_ACQ_SOFT_RST_ADDR    0x34 // write only
 #define SKCTRL_EG_FILTER_ADDR           0x38 // read only
 #define SKCTRL_STATUS_ADDR              0x3A // read only
@@ -147,6 +148,7 @@
 //#define EG_CFG = ASR_FILTER_TYPE|ASR_FILTER_EN|EVGEN_NTHR_EN|PREPROC_SAMPLES|PREPROC_EVGEN|DRIFT_COMP_EN;
 #define SAMPLES_RSHIFT_DEFAULT          2
 // register SKCTRL_DUMMY_PERIOD_ADDR        0x04
+#define EV_GEN_SELECT_DEFAULT 0x01
 #define DUMMY_PERIOD_DEFAULT                          0x60
 // register SKCTRL_DUMMY_CFG_ADDR           0x08
 #define DUMMY_CALIB_DEFAULT                        0x00
@@ -181,6 +183,18 @@
 #define SKCTRL_I2C_CFG_SDA_N_MSK            0x0000C000
 #define SKCTRL_MINOR_MSK                    0x00FF0000
 #define SKCTRL_MAJOR_MSK                    0xFF000000
+
+#define EV_GEN_1 0x00
+#define EV_GEN_2 0x01
+#define EV_GEN_NEURAL 0x02
+
+#define EV_MASK_SA1 0x01
+#define EV_MASK_RA1 0x02
+#define EV_MASK_RA2 0x04
+
+#define EV_GEN_SA1 0x02
+#define EV_GEN_RA1 0x03
+#define EV_GEN_RA2 0x04
 
 
 //HPU IOCTL STRUCTS/ENUMS
