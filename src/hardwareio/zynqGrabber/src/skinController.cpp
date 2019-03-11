@@ -294,17 +294,18 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
         if(mask) yInfo() << "Skin Generator Nerual Type" << mask;
     }
 
-//    config_generator(EV_GEN_1,
-//                     FIXED_UINT(cnfgReg.check("G1upthresh", Value(0.1)).asDouble()),
-//                     FIXED_UINT(cnfgReg.check("G1downthresh", Value(0.1)).asDouble()),
-//                     FIXED_UINT(cnfgReg.check("G1upnoise", Value(0.1)).asDouble()),
-//                     FIXED_UINT(cnfgReg.check("G1downnoise", Value(0.1)).asDouble()));
+    config_generator(EV_GEN_1,
+                     FIXED_UINT(cnfgReg.check("G1upthresh", Value(0.1)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G1downthresh", Value(0.1)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G1upnoise", Value(12.0)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G1downnoise", Value(12.0)).asDouble()));
 
-//    config_generator(EV_GEN_2,
-//                     FIXED_UINT(cnfgReg.check("G2upthresh", Value(0.1)).asDouble()),
-//                     FIXED_UINT(cnfgReg.check("G2downthresh", Value(0.1)).asDouble()),
-//                     FIXED_UINT(cnfgReg.check("G2upnoise", Value(0.1)).asDouble()),
-//                     FIXED_UINT(cnfgReg.check("G2downnoise", Value(0.1)).asDouble()));
+
+    config_generator(EV_GEN_2,
+                     FIXED_UINT(cnfgReg.check("G2upthresh", Value(50.0)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G2downthresh", Value(50.0)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G2upnoise", Value(50.0)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("G2downnoise", Value(50.0)).asDouble()));
 
 //    //there might be a bug with decay because YARP doesn't like unsigned
 //    //ints in the config file / bottles
@@ -444,23 +445,12 @@ bool vSkinCtrl::configureRegisters()
     // --- configure SKCTRL_RES_TO_ADDR --- //
     if(i2cWrite(SKCTRL_RES_TO_ADDR, RESAMPLING_TIMEOUT_DEFAULT) < 0) return false;
 
-//    // --- configure SKCTRL_EG_UPTHR_ADDR --- //
-//    if(i2cWrite(SKCTRL_EG_PARAM1_ADDR, FIXED_UINT(EG_UP_THR_DEFAULT)) < 0) return false;
 
-//    // --- configure SKCTRL_EG_DWTHR_ADDR --- //
-//    if(i2cWrite(SKCTRL_EG_PARAM2_ADDR, FIXED_UINT(EG_DWN_THR_DEFAULT)) < 0) return false;
-
-//    // --- configure SKCTRL_EG_NOISE_RISE_THR_ADDR --- //
-//    if(i2cWrite(SKCTRL_EG_PARAM3_ADDR, FIXED_UINT(EG_NOISE_RISE_THR_DEFAULT)) < 0) return false;
-
-//    // --- configure SKCTRL_EG_NOISE_FALL_THR_ADDR --- //
-//    if(i2cWrite(SKCTRL_EG_PARAM4_ADDR, FIXED_UINT(EG_NOISE_FALL_THR_DEFAULT)) < 0) return false;
-
-    this->config_generator(EV_GEN_1,
-                           FIXED_UINT(EG_UP_THR_DEFAULT),
-                           FIXED_UINT(EG_DWN_THR_DEFAULT),
-                           FIXED_UINT(EG_NOISE_RISE_THR_DEFAULT),
-                           FIXED_UINT(EG_NOISE_FALL_THR_DEFAULT));
+    config_generator(EV_GEN_1,
+                       FIXED_UINT(EG_UP_THR_DEFAULT),
+                       FIXED_UINT(EG_DWN_THR_DEFAULT),
+                       FIXED_UINT(EG_NOISE_RISE_THR_DEFAULT),
+                       FIXED_UINT(EG_NOISE_FALL_THR_DEFAULT));
 
     // --- configure SKCTRL_I2C_ACQ_SOFT_RST_ADDR --- //
     if(i2cWrite(SKCTRL_I2C_ACQ_SOFT_RST_ADDR, I2C_ACQ_SOFT_RST_DEFAULT) < 0) return false;
