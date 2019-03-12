@@ -307,25 +307,23 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
                      FIXED_UINT(cnfgReg.check("G2upnoise", Value(50.0)).asDouble()),
                      FIXED_UINT(cnfgReg.check("G2downnoise", Value(50.0)).asDouble()));
 
-//    //there might be a bug with decay because YARP doesn't like unsigned
-//    //ints in the config file / bottles
-//    config_generator(EV_GEN_SA1,
-//                     cnfgReg.check("SA1inhibit", Value(0x00080000)).asInt(),
-//                     cnfgReg.check("SA1adapt", Value(0x00000148)).asInt(),
-//                     cnfgReg.check("SA1decay", Value(0x7FFFFEB8)).asInt(),
-//                     cnfgReg.check("SA1rest", Value(0x00000A3D)).asInt());
+    config_generator(EV_GEN_SA1,
+                     FIXED_UINT(cnfgReg.check("SA1inhibit", Value(8.0)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("SA1adapt", Value(0.005)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("SA1decay", Value(65535.96)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("SA1rest", Value(0.04)).asDouble()));
 
-//    config_generator(EV_GEN_RA1,
-//                     cnfgReg.check("RA1inhibit", Value(0x00050000)).asInt(),
-//                     cnfgReg.check("RA1adapt", Value(0x00000003)).asInt(),
-//                     cnfgReg.check("RA1decay", Value(0x7FFFF668)).asInt(),
-//                     cnfgReg.check("RA1rest", Value(0x00010000)).asInt());
+    config_generator(EV_GEN_RA1,
+                     FIXED_UINT(cnfgReg.check("RA1inhibit", Value(5.0)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("RA1adapt", Value(0.0000457)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("RA1decay", Value(65535.96)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("RA1rest", Value(1.0)).asDouble()));
 
-//    config_generator(EV_GEN_RA2,
-//                     cnfgReg.check("RA2inhibit", Value(0x00050000)).asInt(),
-//                     cnfgReg.check("RA2adapt", Value(0x00000003)).asInt(),
-//                     cnfgReg.check("RA2decay", Value(0x7FFFF334)).asInt(),
-//                     cnfgReg.check("RA2rest", Value(0x00000A3D)).asInt());
+    config_generator(EV_GEN_RA2,
+                     FIXED_UINT(cnfgReg.check("RA2inhibit", Value(5.0)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("RA2adapt", Value(0.0000457)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("RA2decay", Value(65535.95)).asDouble()),
+                     FIXED_UINT(cnfgReg.check("RA2rest", Value(0.04)).asDouble()));
 
     regAddr = SKCTRL_RES_TO_ADDR;
     regName = "resamplingTimeout";
