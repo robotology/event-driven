@@ -26,6 +26,8 @@
 #define LOW8(x) x&0xFF
 #define HIGH8(x) (x&0xFF00)>>8
 #define FIXED_UINT(x) (unsigned int)(x*65536)
+#define UNSIGN_BITS(x) *(reinterpret_cast<uint32_t *>(&x))
+//#define UNSIGN_BITS(x) (uint32_t)(*((uint32_t *)(&x)))
 
  // da mettere su zynq
 //#define I2C_SLAVE 0x00 // da togliere su zynq
