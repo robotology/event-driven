@@ -223,11 +223,11 @@ public:
             controllers[i] = new PID;
 
         // set up our controllers
-        controllers[0]->set(1.0, 0.0);
+        controllers[0]->set(1.8, 0.0);
         controllers[1]->set(0.0, 0.0);
-        controllers[2]->set(1.0, 0.0);
-        controllers[3]->set(1.5, 0.0);
-        controllers[4]->set(1.5, 0.0);
+        controllers[2]->set(1.8, 0.0);
+        controllers[3]->set(2.0, 0.0);
+        controllers[4]->set(2.0, 0.0);
         controllers[5]->set(0.2, 0.0);
 
         //set velocity control mode
