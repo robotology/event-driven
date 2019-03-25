@@ -79,7 +79,7 @@ public:
     //CONNECTION
     bool connect(void);
     bool configure(bool verbose = false);
-    void disconnect(bool andturnoff = true);
+    void disconnect(bool andturnoff = false);
     bool activate(bool active = true);
     bool suspend(void); //wraps activate(false);
 
