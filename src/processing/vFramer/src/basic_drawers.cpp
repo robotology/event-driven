@@ -290,17 +290,11 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         auto aep = is_event<SkinSample>(*qi);
         int x = aep->taxel;
-        int y = aep->value;
 
         if((x & 0xF) == 0xD) //accelerometer
             continue;
-        y = radius + y * 200.0 / 255.0;
+        int y = Ylimit - (radius + 200.0 * aep->value / 65535.0);
 
-
-        // decode the event here: i.e. do the mapping from the x value to x,y location on the image
-
-        // get the pixel: substitute with code to draw a circle from circleDrawer
-        y = Ylimit - y - 1;
         cv::Point centr(x, y);
 
         if(!aep->polarity)
