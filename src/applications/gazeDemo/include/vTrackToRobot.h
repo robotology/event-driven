@@ -223,12 +223,12 @@ public:
             controllers[i] = new PID;
 
         // set up our controllers
-        controllers[0]->set(1.8, 0.0);
+        controllers[0]->set(2.0, 0.0);
         controllers[1]->set(0.0, 0.0);
-        controllers[2]->set(1.8, 0.0);
-        controllers[3]->set(2.0, 0.0);
-        controllers[4]->set(2.0, 0.0);
-        controllers[5]->set(0.2, 0.0);
+        controllers[2]->set(2.0, 0.0);
+        controllers[3]->set(2.5, 0.0);
+        controllers[4]->set(2.5, 0.0);
+        controllers[5]->set(1.0, 0.0);
 
         //set velocity control mode
         return setVelocityControl();
@@ -352,7 +352,8 @@ private:
 
     ev::resolution res;
     //the event bottle input and output handler
-    positionReader inputPort;
+    //positionReader inputPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> inputPort;
     yarp::os::BufferedPort<yarp::os::Bottle> cartOutPort;
     yarp::os::BufferedPort<yarp::sig::Vector> debugOutPort;
     yarp::sig::Vector arm_target_position;

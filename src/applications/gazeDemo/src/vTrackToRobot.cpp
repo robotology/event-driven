@@ -22,6 +22,7 @@
 #include <cmath>
 
 using namespace yarp::math;
+using yarp::sig::Vector;
 using namespace ev;
 
 int main(int argc, char * argv[])
@@ -139,7 +140,6 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
     } else {
         yInfo() << "Position-based cartesian control";
     }
-
 
     return true ;
 }
@@ -425,7 +425,14 @@ bool vTrackToRobotModule::updateModule()
 
     //get the targets from the input ports
     yarp::sig::Vector leftTarget, rightTarget;
-    inputPort.getTargets(leftTarget, rightTarget);
+    Vector *dataIn = inputPort.read();
+
+    //yInfo() << dataIn->toString();
+
+    leftTarget = dataIn->subVector(0, 2);
+    leftTarget.push_back(!(leftTarget[0] == -1.0));
+    rightTarget = dataIn->subVector(3, 5);
+    rightTarget.push_back(!(rightTarget[0] == -1.0));
 
     //perform the type of control as specified
     bool gazePerformed = false;
