@@ -153,7 +153,7 @@ while(ischar(l))
     end
     
     %post process the yarp_stamps
-    time_deltas = textformat(:, TS) - textformat(end, TS);
+    time_deltas = (textformat(:, TS) - textformat(end, TS))*CLOCK_PERIOD;
     
     if(p_yarp_stamp > 0 && length(time_deltas) > 1) %if our clocks are completely correct we need to re-align things
         time_deltas = time_deltas * (yarp_stamp - p_yarp_stamp) / (textformat(end, TS) - p_clock_tick);
