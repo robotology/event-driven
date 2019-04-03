@@ -23,6 +23,57 @@
 
 using namespace ev;
 
+// BLOB DRAW //
+// ========= //
+
+const std::string blobDraw::drawtype = "BLOB";
+
+std::string blobDraw::getDrawType()
+{
+    return blobDraw::drawtype;
+}
+
+std::string blobDraw::getEventType()
+{
+    return AE::tag;
+}
+
+void blobDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+        auto aep = as_event<AE>(*qi);
+        if(!aep) continue;
+
+        int y = aep->y;
+        int x = aep->x;
+
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
+        if(!aep->polarity)
+            image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+    }
+
+    cv::medianBlur(image, image, 5);
+    cv::blur(image, image, cv::Size(5, 5));
+}
+
+// CIRCLE DRAW //
+// =========== //
+
 const std::string circleDraw::drawtype = "CIRC";
 
 std::string circleDraw::getDrawType()
@@ -90,3 +141,58 @@ void circleDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
     }
 
 }
+
+// GRAY DRAW //
+// =========== //
+
+const std::string grayDraw::drawtype = "GRAY";
+
+std::string grayDraw::getDrawType()
+{
+    return grayDraw::drawtype;
+}
+
+std::string grayDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void grayDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    image = cv::Scalar(127, 127, 127);
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+
+        auto aep = is_event<AddressEvent>(*qi);
+        int y = aep->y;
+        int x = aep->x;
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
+        cv::Vec3b &cpc = image.at<cv::Vec3b>(y, x);
+
+        if(!aep->polarity)
+        {
+            cpc[0] = 0;
+            cpc[1] = 0;
+            cpc[2] = 0;
+        }
+        else
+        {
+            cpc[0] = 255;
+            cpc[1] = 255;
+            cpc[2] = 255;
+
+        }
+    }
+}
+

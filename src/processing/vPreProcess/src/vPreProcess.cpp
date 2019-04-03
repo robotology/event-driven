@@ -281,8 +281,9 @@ int vPreProcess::queryUnprocessed()
 void vPreProcess::printFilterStats()
 {
     if(v_total) {
-        double pc = 100.0 * (double)v_dropped / (double)v_total;
-        yInfo() << v_dropped << "/" << v_total << "(" << pc << "%)";
+        double pc = 100.0 * (double)v_total / (double)(v_total + v_dropped);
+        yInfo() << "Using" << v_total << "/" << (v_total + v_dropped)
+                << "(" << pc << "%)" << "of events.";
     }
     v_total = 0;
     v_dropped = 0;
@@ -322,15 +323,16 @@ void vPreProcess::run()
     AE v;
     SkinEvent se;
     SkinSample ss;
-    int32_t salvage_sample[4] = {-1, 0, 0, 0};
+    bool received_half_sample = false;
+    int32_t salvage_sample[2] = {-1, 0};
 
     while(true) {
 
         double pyt = zynq_stamp.getTime();
 
         std::deque<AE> qleft, qright;
-        std::deque<SkinEvent> qskin;
-        std::deque<SkinSample> qskinsamples;
+        std::deque<int32_t> qskin;
+        std::deque<int32_t> qskinsamples;
         const std::vector<int32_t> *q = inPort.read(zynq_stamp);
         if(!q) break;
 
@@ -350,38 +352,18 @@ void vPreProcess::run()
             nm1 = nm0;
         }
 
-        unsigned int events_in_packet = 0;
+        //unsigned int events_in_packet = 0;
         const int32_t *qi = q->data();
-
-        //salvage the skin sample that started last packet.
-        if(salvage_sample[0] > 0) {
-            salvage_sample[2] = *qi; qi++;
-            salvage_sample[3] = *qi; qi++;
-            const int32_t *temp = salvage_sample;
-            ss.decode(temp);
-            qskinsamples.push_back(ss);
-            salvage_sample[0] = -1;
-            events_in_packet++;
-        }
 
         while ((size_t)(qi - q->data()) < q->size()) {
 
             if(IS_SKIN(*(qi+1))) {
                 if(IS_SAMPLE(*(qi+1))) {
-                    //skin samples can be split over 2 packets
-                    if(qi + 4 > (q->data() + q->size())) {
-                        salvage_sample[0] = *qi; qi++;
-                        salvage_sample[1] = *qi; qi++;
-                        continue;
-                    }
-                    //might need safety here if the event can be split across packets
-                    ss.decode(qi);
-                    if(qi > (q->data() + q->size()))
-                        yError() << "skin sample packet overrun";
-                    qskinsamples.push_back(ss);
+                    qskinsamples.push_back(*(qi++)); //TS
+                    qskinsamples.push_back(*(qi++)); //VALUE/TAXEL
                 } else {
-                    se.decode(qi);
-                    qskin.push_back(se);
+                    qskin.push_back(*(qi++)); //TS
+                    qskin.push_back(*(qi++)); //TAXEL
                 }
             } else { // IS_VISION
 
@@ -393,9 +375,8 @@ void vPreProcess::run()
                     continue;
                 }
 
-                //flipx
+                //flipx and flipy
                 if(flipx) v.x = resmod.width - v.x;
-                //flipy
                 if(flipy) v.y = resmod.height - v.y;
 
                 //salt and pepper filter
@@ -413,7 +394,10 @@ void vPreProcess::run()
                         mapPix = rightMap.at<cv::Vec2i>(v.y, v.x);
 
                     //truncate to sensor bounds after mapping?
-                    if(truncate && (mapPix[0] < 0 || mapPix[0] > resmod.width || mapPix[1] < 0 || mapPix[1] > resmod.height)) {
+                    if(truncate && (mapPix[0] < 0 ||
+                                    mapPix[0] > resmod.width ||
+                                    mapPix[1] < 0 ||
+                                    mapPix[1] > resmod.height)) {
                         continue;
                     }
 
@@ -429,16 +413,35 @@ void vPreProcess::run()
 
             }
 
-            events_in_packet++;
-
         }
 
-//        static int p_ts = (*q)[0] & vtsHelper::max_stamp;
-//        int final_ts = (*q)[q->size()-2] & vtsHelper::max_stamp;
-//        double dt = final_ts - p_ts;
-//        if(dt < 0) dt += vtsHelper::max_stamp;
-//        rates.push_back(events_in_packet / dt);
-        v_total += events_in_packet;
+        if(qskinsamples.size() > 2) { //if we have skin samples
+            //check if we need to fix the ordering
+            if(IS_SSV(qskinsamples[1])) { // missing address
+                    if(received_half_sample) { // but we have it from last bottle
+                        qskinsamples.push_front(salvage_sample[1]);
+                        qskinsamples.push_front(salvage_sample[0]);
+                    } else { // otherwise we are misaligned due to missing data
+                        qskinsamples.pop_front();
+                        qskinsamples.pop_front();
+                    }
+            }
+            received_half_sample = false; //either case the half sample is no longer valid
+
+            //check if we now have a cut event
+            int samples_overrun = qskinsamples.size() % packetSize(SkinSample::tag);
+            if(samples_overrun == 2) {
+                salvage_sample[1] = qskinsamples.back();
+                qskinsamples.pop_back();
+                salvage_sample[0] = qskinsamples.back();
+                qskinsamples.pop_back();
+                received_half_sample = true;
+            } else if(samples_overrun) {
+                yError() << "samples cut by " << samples_overrun;
+            }
+        }
+
+        v_total += qleft.size() + qright.size();
 
         if(use_local_stamp) {
             local_stamp.update();

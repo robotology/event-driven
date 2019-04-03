@@ -170,12 +170,9 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         yError() << "Could not connect to YARP network";
 
     if(!yarppresent || biaswrite) {
-        vsctrlMngLeft.disconnect(true);
-        std::cout << "Left camera off" << std::endl;
-        vsctrlMngRight.disconnect(true);
-        std::cout << "Right camera off" << std::endl;
+        vsctrlMngLeft.disconnect(false);
+        vsctrlMngRight.disconnect(false);
         skctrlMng.disconnect();
-        std::cout << "Skin off" << std::endl;
         if(lwo) logwriter << "Only writing biases, or YARP not present" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
         return false;
     }
@@ -228,8 +225,8 @@ bool zynqGrabberModule::interruptModule() {
     std::cout << "done" << std::endl;
 
     std::cout << "closing device drivers.. ";
-    vsctrlMngLeft.disconnect(true);
-    vsctrlMngRight.disconnect(true);
+    vsctrlMngLeft.disconnect(false);
+    vsctrlMngRight.disconnect(false);
     std::cout << "done" << std::endl;
     return true;
 }

@@ -180,17 +180,6 @@ public:
 
 };
 
-class lifeDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
 class clusterDraw : public vDraw {
 
 protected:

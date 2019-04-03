@@ -40,8 +40,6 @@ vDraw * createDrawer(std::string tag)
         return new circleDraw();
     if(tag == flowDraw::drawtype)
         return new flowDraw();
-    if(tag == lifeDraw::drawtype)
-        return new lifeDraw();
     if(tag == clusterDraw::drawtype)
         return new clusterDraw();
     if(tag == blobDraw::drawtype)

@@ -24,7 +24,7 @@ cmake_minimum_required(VERSION 2.6)
 set(MODULENAME vFramerLite)
 project(${MODULENAME})
 
-file(GLOB source src/vFramerLite.cpp src/vDraw.cpp src/*_draw.cpp )
+file(GLOB source src/vFramerLite.cpp src/vDraw.cpp src/*_drawers.cpp)
 file(GLOB header include/vFramerLite.h include/vDraw.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include
