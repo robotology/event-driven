@@ -27,6 +27,7 @@
 #define DECODE_METHOD 2
 
 #include <yarp/os/all.h>
+#include <yarp/sig/all.h>
 #include <iCub/eventdriven/all.h>
 //#include <opencv/cv.h>
 #include <opencv2/opencv.hpp>
@@ -85,7 +86,9 @@ public:
                    bool split, bool local_stamp);
     void initPepper(int spatialSize, int temporalSize);
     void initUndistortion(const yarp::os::Bottle &left,
-                          const yarp::os::Bottle &right, bool truncate);
+                          const yarp::os::Bottle &right,
+                          const yarp::os::Bottle &stereo,
+                          bool truncate);
     int queryUnprocessed();
     std::deque<double> getDelays();
     std::deque<double> getRates();
@@ -115,4 +118,3 @@ public:
 
 
 #endif
-

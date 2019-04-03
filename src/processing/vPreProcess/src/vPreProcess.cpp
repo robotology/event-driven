@@ -18,6 +18,7 @@
 
 #include "vPreProcess.h"
 #include <iomanip>
+#include <stdio.h>
 
 int main(int argc, char * argv[])
 {
@@ -89,19 +90,21 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
     if(undistort) {
         yarp::os::ResourceFinder calibfinder;
         calibfinder.setVerbose();
-        calibfinder.setDefaultContext(rf.check("calibContext", yarp::os::Value("cameraCalibration")).asString().c_str());
-        calibfinder.setDefaultConfigFile(rf.check("calibFile", yarp::os::Value("cameraCalibration")).asString().c_str());
+        calibfinder.setDefaultContext(rf.check("calibContext", yarp::os::Value("SumanContext")).asString().c_str());
+        calibfinder.setDefaultConfigFile(rf.check("calibFile", yarp::os::Value("iCubEyes-ATIS.ini")).asString().c_str());
         calibfinder.configure(0, 0);
 
         yarp::os::Bottle &leftParams = calibfinder.findGroup("CAMERA_CALIBRATION_LEFT");
         yarp::os::Bottle &rightParams = calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT");
-        if(leftParams.isNull() || rightParams.isNull()) {
+        yarp::os::Bottle &stereoParams = calibfinder.findGroup("STEREO_DISPARITY");
+        if(leftParams.isNull() || rightParams.isNull() || stereoParams.isNull()) {
             yError() << "Could not load camera parameters";
             return false;
         }
         std::cout << leftParams.toString() << std::endl;
         std::cout << rightParams.toString() << std::endl;
-        eventManager.initUndistortion(leftParams, rightParams, truncate);
+        std::cout << stereoParams.toString() << std::endl;
+        eventManager.initUndistortion(leftParams, rightParams, stereoParams, truncate);
     }
 
     return eventManager.start();
@@ -221,33 +224,70 @@ void vPreProcess::initPepper(int spatialSize, int temporalSize)
 }
 
 void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
-                               const yarp::os::Bottle &right, bool truncate)
+                               const yarp::os::Bottle &right,
+                               const yarp::os::Bottle &stereo, bool truncate)
 {
-    this->truncate = truncate;
-    const yarp::os::Bottle *coeffs[2] = { &left, &right};
-    cv::Mat *maps[2] = {&leftMap, &rightMap};
+    bool rectify = true;
 
-    //create camera matrix
+    this->truncate = truncate;
+    const yarp::os::Bottle *coeffs[3] = { &left, &right, &stereo};
+    cv::Mat *maps[2] = {&leftMap, &rightMap};
+    cv::Mat cameraMatrix[2];
+    cv::Mat distCoeffs[2];
+
+    //create camera and distortion matrices
     for(int i = 0; i < 2; i++) {
 
         double scaley = res.height / (double)(coeffs[i]->find("h").asInt());
         double scalex = res.width  / (double)(coeffs[i]->find("w").asInt());
 
-        cv::Mat cameraMatrix(3, 3, CV_64FC1);
-        cameraMatrix.setTo(0);
-        cameraMatrix.at<double>(0, 0) = coeffs[i]->find("fx").asDouble()*scalex;
-        cameraMatrix.at<double>(1, 1) = coeffs[i]->find("fy").asDouble()*scaley;
-        cameraMatrix.at<double>(2, 2) = 1.0;
-        cameraMatrix.at<double>(0, 2) = coeffs[i]->find("cx").asDouble()*scalex;
-        cameraMatrix.at<double>(1, 2) = coeffs[i]->find("cy").asDouble()*scaley;
+        cameraMatrix[i] = cv::Mat(3, 3, CV_64FC1);
+        cameraMatrix[i].setTo(0);
+        cameraMatrix[i].at<double>(0, 0) = coeffs[i]->find("fx").asDouble()*scalex;
+        cameraMatrix[i].at<double>(1, 1) = coeffs[i]->find("fy").asDouble()*scaley;
+        cameraMatrix[i].at<double>(2, 2) = 1.0;
+        cameraMatrix[i].at<double>(0, 2) = coeffs[i]->find("cx").asDouble()*scalex;
+        cameraMatrix[i].at<double>(1, 2) = coeffs[i]->find("cy").asDouble()*scaley;
 
-        cv::Mat distCoeffs(4, 1, CV_64FC1);
-        distCoeffs.at<double>(0, 0) = coeffs[i]->find("k1").asDouble();
-        distCoeffs.at<double>(0, 1) = coeffs[i]->find("k2").asDouble();
-        distCoeffs.at<double>(0, 2) = coeffs[i]->find("p1").asDouble();
-        distCoeffs.at<double>(0, 3) = coeffs[i]->find("p2").asDouble();
+        distCoeffs[i] = cv::Mat(4, 1, CV_64FC1);
+        distCoeffs[i].at<double>(0, 0) = coeffs[i]->find("k1").asDouble();
+        distCoeffs[i].at<double>(0, 1) = coeffs[i]->find("k2").asDouble();
+        distCoeffs[i].at<double>(0, 2) = coeffs[i]->find("p1").asDouble();
+        distCoeffs[i].at<double>(0, 3) = coeffs[i]->find("p2").asDouble();
+      }
+std::cout<<"Before loading extrinsic parameters"<<std::endl;
+      //Loading extrinsic stereo parameters
+      // yarp::sig::VectorOf<double> RT;
+      yarp::os::Bottle *a = coeffs[2]->find("HN").asList();
+      std::cout<<"After extracting list from bottle value HN: "<<(a->toString())<<std::endl;
+
+      // a->write(RT);
+      // std::cout<<"Stored in Vector RT "<<RT.toString()<<std::endl;
+
+      cv::Mat R(3, 3, CV_64FC1);
+      cv::Mat T(3, 1, CV_64FC1);
+      for (int row=0; row<3; row++)
+      {
+        for(int col=0; col<3; col++)
+        {
+          R.at<double>(row, col) = a->get(row*4 + col).asDouble();
+        }
+        T.at<double>(row) = a->get(row*4+3).asDouble();
+      }
+      std::cout<<"R and T values stored properly; R:"<<R<<"T: "<<T<<std::endl;
+
+      cv::Mat R_left(3, 3, CV_64FC1);
+      cv::Mat R_right(3, 3, CV_64FC1);
+      cv::Mat P_left(3, 4, CV_64FC1);
+      cv::Mat P_right(3, 4, CV_64FC1);
+      cv::Mat Q(4, 4, CV_64FC1);
+      //Computing homographies for left and right image
+      cv::stereoRectify(cameraMatrix[0], distCoeffs[0], cameraMatrix[1], distCoeffs[1],
+        cv::Size(res.height, res.width), R, T, R_left, R_right, P_left, P_right, Q);
+      cv::Mat Rot[2] = {R_left, R_right};
 
 
+      for(int i=0; i<2; i++) {
         cv::Mat allpoints(res.height * res.width, 1, CV_32FC2);
         for(unsigned int y = 0; y < res.height; y++) {
             for(unsigned int x = 0; x < res.width; x++) {
@@ -257,10 +297,13 @@ void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
 
         cv::Mat mappoints(res.height * res.width, 1, CV_32FC2);
         cv::Size s(res.height, res.width);
-        cv::Mat defCamMat = cv::getDefaultNewCameraMatrix(cameraMatrix, s,
-                                                          true);
-        cv::undistortPoints(allpoints, mappoints, cameraMatrix, distCoeffs,
-                            cv::noArray(), defCamMat);
+        cv::Mat defCamMat = cv::getDefaultNewCameraMatrix(cameraMatrix[0], s, true);
+std::cout<<"homographies "<<i<<": "<<Rot[i]<<std::endl;
+        cv::Mat H;
+        if(rectify)
+          H = Rot[i].clone();
+        cv::undistortPoints(allpoints, mappoints, cameraMatrix[i], distCoeffs[i],
+                            H, defCamMat);
 
         *(maps[i]) = cv::Mat(res.height, res.width, CV_32SC2);
         for(unsigned int y = 0; y < res.height; y++) {
@@ -270,7 +313,6 @@ void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
             }
         }
     }
-
 }
 
 int vPreProcess::queryUnprocessed()
@@ -403,14 +445,17 @@ void vPreProcess::run()
 
                     v.x = mapPix[0];
                     v.y = mapPix[1];
+                    std::cout.precision(30);
+                    std::cout<<v.channel<<mapPix<<"timestamp:"<<pyt<<std::endl;
 
                 }
 
                 if(split && v.channel)
+            {
                     qright.push_back(v);
-                else
+             }   else {
                     qleft.push_back(v);
-
+}
             }
 
         }
@@ -476,12 +521,15 @@ void vPreProcess::onStop()
 bool vPreProcess::threadInit()
 {
     if(split) {
-        if(!outPortCamLeft.open(name + "/left:o"))
+      std::cout<<"Reaching here"<<std::endl;
+        if(!outPortCamLeft.open(name + "/left:o")){
+          std::cout<<"Can't open port:"<<name<<std::endl;
             return false;
+          }
         if(!outPortCamRight.open(name + "/right:o"))
             return false;
     } else {
-        if(!outPortCamLeft.open(name + "/stereo:o"))
+        if(!outPortCamLeft.open(name + "/left:o"))
             return false;
     }
     if(!outPortSkin.open(name + "/skin:o"))
@@ -492,4 +540,3 @@ bool vPreProcess::threadInit()
         return false;
     return true;
 }
-
