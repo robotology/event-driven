@@ -196,3 +196,68 @@ void grayDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
 }
 
+// OVERLAP DRAW //
+// ============ //
+
+const std::string overlapDraw::drawtype = "OVERLAP";
+
+std::string overlapDraw::getDrawType()
+{
+    return overlapDraw::drawtype;
+}
+
+std::string overlapDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void overlapDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+
+        auto aep = is_event<AddressEvent>(*qi);
+        int y = aep->y;
+        int x = aep->x;
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
+
+        cv::Vec3b &cpc = image.at<cv::Vec3b>(y, x);
+
+        if(!aep->channel)
+        {
+            //blue
+            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
+            else cpc[0] = 160;            //if only positive
+            //green
+            if(cpc[1] == 60) cpc[1] = 255;
+            else cpc[1] = 0;
+            //red
+            if(cpc[2] == 0) cpc[2] = 255;
+            else cpc[2] = 160;
+        }
+        else
+        {
+            //blue
+            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
+            else cpc[0] = 1;                //negative only
+            //green
+            if(cpc[1] == 0) cpc[1] = 255;
+            else cpc[1] = 60;
+            //red
+            if(cpc.val[2] == 160) cpc[2] = 255;
+            else cpc[2] = 0;
+        }
+    }
+}
+

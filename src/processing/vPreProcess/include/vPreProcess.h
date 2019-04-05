@@ -62,6 +62,7 @@ private:
 
     //we store an openCV map to use as a look-up table for the undistortion
     //given the camera parameters provided
+    bool rectify;
     bool undistort;
     cv::Mat leftMap;
     cv::Mat rightMap;
@@ -82,7 +83,7 @@ public:
     ~vPreProcess();
 
     void initBasic(std::string name, int height, int width, bool precheck,
-                   bool flipx, bool flipy, bool pepper, bool undistort,
+                   bool flipx, bool flipy, bool pepper, bool rectify, bool undistort,
                    bool split, bool local_stamp);
     void initPepper(int spatialSize, int temporalSize);
     void initUndistortion(const yarp::os::Bottle &left,

@@ -54,6 +54,8 @@ vDraw * createDrawer(std::string tag)
         return new isoInterestDraw();
     if(tag == isoCircDraw::drawtype)
         return new isoCircDraw();
+    if(tag == overlapDraw::drawtype)
+        return new overlapDraw();
     return 0;
 
 }

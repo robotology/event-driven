@@ -47,6 +47,8 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
 {
     bool pepper = rf.check("pepper") &&
             rf.check("pepper", yarp::os::Value(true)).asBool();
+    bool rectify = rf.check("rectify") &&
+            rf.check("rectify", yarp::os::Value(true)).asBool();
     bool undistort = rf.check("undistort") &&
             rf.check("undistort", yarp::os::Value(true)).asBool();
     bool truncate = rf.check("truncate") &&
@@ -61,7 +63,8 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("split", yarp::os::Value(true)).asBool();
     bool local_stamp = rf.check("local_stamp") &&
             rf.check("local_stamp", yarp::os::Value(true)).asBool();
-
+    std::cout<<"pepper:"<<pepper<<" rectify:"<<rectify<<" undistort:"<<undistort<<
+               " flipx:"<<flipx<<" flipy:"<<flipy<<" split:"<<split<<" precheck:"<<precheck<<std::endl;
     if(precheck)
         yInfo() << "Performing precheck for event corruption";
     if(flipx)
@@ -70,6 +73,8 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
         yInfo() << "Flipping vision vertically";
     if(pepper)
         yInfo() << "Applying salt and pepper filter";
+    if(rectify)
+        yInfo() << "Rectifying image pairs using extrinsic parameters";
     if(undistort && truncate)
         yInfo() << "Applying camera undistortion - truncating to sensor size";
     if(undistort && !truncate)
@@ -80,7 +85,7 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
     eventManager.initBasic(rf.check("name", yarp::os::Value("/vPreProcess")).asString(),
                            rf.check("height", yarp::os::Value(240)).asInt(),
                            rf.check("width", yarp::os::Value(304)).asInt(),
-                           precheck, flipx, flipy, pepper, undistort, split, local_stamp);
+                           precheck, flipx, flipy, pepper, rectify, undistort, split, local_stamp);
 
     if(pepper) {
         eventManager.initPepper(rf.check("spatialSize", yarp::os::Value(1)).asDouble(),
@@ -90,14 +95,14 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
     if(undistort) {
         yarp::os::ResourceFinder calibfinder;
         calibfinder.setVerbose();
-        calibfinder.setDefaultContext(rf.check("calibContext", yarp::os::Value("SumanContext")).asString().c_str());
+        calibfinder.setDefaultContext(rf.check("calibContext", yarp::os::Value("cameraCalib")).asString().c_str());
         calibfinder.setDefaultConfigFile(rf.check("calibFile", yarp::os::Value("iCubEyes-ATIS.ini")).asString().c_str());
         calibfinder.configure(0, 0);
 
         yarp::os::Bottle &leftParams = calibfinder.findGroup("CAMERA_CALIBRATION_LEFT");
         yarp::os::Bottle &rightParams = calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT");
         yarp::os::Bottle &stereoParams = calibfinder.findGroup("STEREO_DISPARITY");
-        if(leftParams.isNull() || rightParams.isNull() || stereoParams.isNull()) {
+        if(leftParams.isNull() || rightParams.isNull() || (stereoParams.isNull() && rectify)) {
             yError() << "Could not load camera parameters";
             return false;
         }
@@ -201,7 +206,7 @@ vPreProcess::~vPreProcess()
 
 void vPreProcess::initBasic(std::string name, int height, int width,
                             bool precheck, bool flipx, bool flipy,
-                            bool pepper, bool undistort, bool split,
+                            bool pepper, bool rectify, bool undistort, bool split,
                             bool local_stamp)
 {
 
@@ -212,6 +217,7 @@ void vPreProcess::initBasic(std::string name, int height, int width,
     this->flipx = flipx;
     this->flipy = flipy;
     this->pepper = pepper;
+    this->rectify = rectify;
     this->undistort = undistort;
     this->split = split;
     this->use_local_stamp = local_stamp;
@@ -224,11 +230,9 @@ void vPreProcess::initPepper(int spatialSize, int temporalSize)
 }
 
 void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
-                               const yarp::os::Bottle &right,
-                               const yarp::os::Bottle &stereo, bool truncate)
+                                   const yarp::os::Bottle &right,
+                                   const yarp::os::Bottle &stereo, bool truncate)
 {
-    bool rectify = true;
-
     this->truncate = truncate;
     const yarp::os::Bottle *coeffs[3] = { &left, &right, &stereo};
     cv::Mat *maps[2] = {&leftMap, &rightMap};
@@ -254,40 +258,44 @@ void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
         distCoeffs[i].at<double>(0, 1) = coeffs[i]->find("k2").asDouble();
         distCoeffs[i].at<double>(0, 2) = coeffs[i]->find("p1").asDouble();
         distCoeffs[i].at<double>(0, 3) = coeffs[i]->find("p2").asDouble();
-      }
-std::cout<<"Before loading extrinsic parameters"<<std::endl;
-      //Loading extrinsic stereo parameters
-      // yarp::sig::VectorOf<double> RT;
-      yarp::os::Bottle *a = coeffs[2]->find("HN").asList();
-      std::cout<<"After extracting list from bottle value HN: "<<(a->toString())<<std::endl;
-
-      // a->write(RT);
-      // std::cout<<"Stored in Vector RT "<<RT.toString()<<std::endl;
-
-      cv::Mat R(3, 3, CV_64FC1);
-      cv::Mat T(3, 1, CV_64FC1);
-      for (int row=0; row<3; row++)
-      {
-        for(int col=0; col<3; col++)
+    }
+    cv::Mat rectRot[2];
+    if(rectify)
+    {
+        //Loading extrinsic stereo parameters
+        yarp::os::Bottle *HN = coeffs[2]->find("HN").asList();
+        if(HN == nullptr || HN->size() != 16)
+            yError() << "Rototranslation matrix HN is absent or without required number of values: 16)";
+        else
         {
-          R.at<double>(row, col) = a->get(row*4 + col).asDouble();
+            std::cout<<"After extracting list from bottle value HN: "<<(HN->toString())<<std::endl;
+
+            cv::Mat R(3, 3, CV_64FC1); //Rotation matrix between stereo cameras
+            cv::Mat T(3, 1, CV_64FC1); //Translation vector of right wrt left camera center
+            for (int row=0; row<3; row++)
+            {
+                for(int col=0; col<3; col++)
+                {
+                    R.at<double>(row, col) = HN->get(row*4 + col).asDouble();
+                }
+                T.at<double>(row) = HN->get(row*4+3).asDouble();
+            }
+            std::cout<<"R and T values stored properly; R:"<<R<<"T: "<<T<<std::endl;
+
+            cv::Mat R_left(3, 3, CV_64FC1);
+            cv::Mat R_right(3, 3, CV_64FC1);
+            cv::Mat P_left(3, 4, CV_64FC1);
+            cv::Mat P_right(3, 4, CV_64FC1);
+            cv::Mat Q(4, 4, CV_64FC1);
+            //Computing homographies for left and right image
+            cv::stereoRectify(cameraMatrix[0], distCoeffs[0], cameraMatrix[1], distCoeffs[1],
+                    cv::Size(res.height, res.width), R, T, R_left, R_right, P_left, P_right, Q, CV_CALIB_ZERO_DISPARITY);
+            rectRot[0] = R_left.clone();
+            rectRot[1] = R_right.clone();
         }
-        T.at<double>(row) = a->get(row*4+3).asDouble();
-      }
-      std::cout<<"R and T values stored properly; R:"<<R<<"T: "<<T<<std::endl;
+    }
 
-      cv::Mat R_left(3, 3, CV_64FC1);
-      cv::Mat R_right(3, 3, CV_64FC1);
-      cv::Mat P_left(3, 4, CV_64FC1);
-      cv::Mat P_right(3, 4, CV_64FC1);
-      cv::Mat Q(4, 4, CV_64FC1);
-      //Computing homographies for left and right image
-      cv::stereoRectify(cameraMatrix[0], distCoeffs[0], cameraMatrix[1], distCoeffs[1],
-        cv::Size(res.height, res.width), R, T, R_left, R_right, P_left, P_right, Q);
-      cv::Mat Rot[2] = {R_left, R_right};
-
-
-      for(int i=0; i<2; i++) {
+    for(int i=0; i<2; i++) {
         cv::Mat allpoints(res.height * res.width, 1, CV_32FC2);
         for(unsigned int y = 0; y < res.height; y++) {
             for(unsigned int x = 0; x < res.width; x++) {
@@ -298,12 +306,9 @@ std::cout<<"Before loading extrinsic parameters"<<std::endl;
         cv::Mat mappoints(res.height * res.width, 1, CV_32FC2);
         cv::Size s(res.height, res.width);
         cv::Mat defCamMat = cv::getDefaultNewCameraMatrix(cameraMatrix[0], s, true);
-std::cout<<"homographies "<<i<<": "<<Rot[i]<<std::endl;
-        cv::Mat H;
-        if(rectify)
-          H = Rot[i].clone();
+
         cv::undistortPoints(allpoints, mappoints, cameraMatrix[i], distCoeffs[i],
-                            H, defCamMat);
+                            rectRot[i], defCamMat);
 
         *(maps[i]) = cv::Mat(res.height, res.width, CV_32SC2);
         for(unsigned int y = 0; y < res.height; y++) {
@@ -427,7 +432,7 @@ void vPreProcess::run()
                     continue;
                 }
 
-                //undistortion
+                //undistortion (including rectification)
                 if(undistort) {
                     cv::Vec2i mapPix;
                     if(v.getChannel() == 0)
@@ -445,17 +450,17 @@ void vPreProcess::run()
 
                     v.x = mapPix[0];
                     v.y = mapPix[1];
-                    std::cout.precision(30);
-                    std::cout<<v.channel<<mapPix<<"timestamp:"<<pyt<<std::endl;
+                    //std::cout.precision(30);
+                    //std::cout<<v.channel<<mapPix<<"timestamp:"<<pyt<<std::endl;
 
                 }
 
                 if(split && v.channel)
-            {
+                {
                     qright.push_back(v);
-             }   else {
+                }   else {
                     qleft.push_back(v);
-}
+                }
             }
 
         }
@@ -463,13 +468,13 @@ void vPreProcess::run()
         if(qskinsamples.size() > 2) { //if we have skin samples
             //check if we need to fix the ordering
             if(IS_SSV(qskinsamples[1])) { // missing address
-                    if(received_half_sample) { // but we have it from last bottle
-                        qskinsamples.push_front(salvage_sample[1]);
-                        qskinsamples.push_front(salvage_sample[0]);
-                    } else { // otherwise we are misaligned due to missing data
-                        qskinsamples.pop_front();
-                        qskinsamples.pop_front();
-                    }
+                if(received_half_sample) { // but we have it from last bottle
+                    qskinsamples.push_front(salvage_sample[1]);
+                    qskinsamples.push_front(salvage_sample[0]);
+                } else { // otherwise we are misaligned due to missing data
+                    qskinsamples.pop_front();
+                    qskinsamples.pop_front();
+                }
             }
             received_half_sample = false; //either case the half sample is no longer valid
 
@@ -521,15 +526,15 @@ void vPreProcess::onStop()
 bool vPreProcess::threadInit()
 {
     if(split) {
-      std::cout<<"Reaching here"<<std::endl;
+        std::cout<<"Reaching here"<<std::endl;
         if(!outPortCamLeft.open(name + "/left:o")){
-          std::cout<<"Can't open port:"<<name<<std::endl;
+            std::cout<<"Can't open port:"<<name<<std::endl;
             return false;
-          }
+        }
         if(!outPortCamRight.open(name + "/right:o"))
             return false;
     } else {
-        if(!outPortCamLeft.open(name + "/left:o"))
+        if(!outPortCamLeft.open(name + "/stereo:o"))
             return false;
     }
     if(!outPortSkin.open(name + "/skin:o"))
