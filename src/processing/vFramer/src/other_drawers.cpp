@@ -196,3 +196,75 @@ void grayDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
 }
 
+// STEREO OVERLAY DRAW //
+// =================== //
+
+const std::string overlayStereoDraw::drawtype = "OVERLAY";
+
+std::string overlayStereoDraw::getDrawType()
+{
+    return overlayStereoDraw::drawtype;
+}
+
+std::string overlayStereoDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void overlayStereoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+
+        auto aep = is_event<AddressEvent>(*qi);
+        int y = aep->y;
+        int x = aep->x;
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
+
+        cv::Vec3b &cpc = image.at<cv::Vec3b>(y, x);
+
+        if(cpc[0]==0 && cpc[1]==255 && cpc[2]==255) //skip marking already overlapping pixels
+            continue;
+        if(!aep->channel)
+        {
+            if(cpc[0]==0 && cpc[1]==0 && cpc[2]==255) //both left and right channel, mark YELLOW
+            {
+                cpc[0]=0;
+                cpc[1]=255;
+                cpc[2]=255;
+            }
+            else   //only left channel, mark BLUE
+            {
+                cpc[0]=255;
+                cpc[1]=0;
+                cpc[2]=0;
+            }
+        }
+        else
+        {
+            if(cpc[0]==255 && cpc[1]==0 && cpc[2]==0)   //both left and right channel, mark YELLOW
+            {
+                cpc[0]=0;
+                cpc[1]=255;
+                cpc[2]=255;
+            }
+            else    //only right channel, mark RED
+            {
+                cpc[0]=0;
+                cpc[1]=0;
+                cpc[2]=255;
+            }
+        }
+    }
+}

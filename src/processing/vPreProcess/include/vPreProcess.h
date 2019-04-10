@@ -27,6 +27,7 @@
 #define DECODE_METHOD 2
 
 #include <yarp/os/all.h>
+#include <yarp/sig/all.h>
 #include <iCub/eventdriven/all.h>
 //#include <opencv/cv.h>
 #include <opencv2/opencv.hpp>
@@ -61,6 +62,7 @@ private:
 
     //we store an openCV map to use as a look-up table for the undistortion
     //given the camera parameters provided
+    bool rectify;
     bool undistort;
     cv::Mat leftMap;
     cv::Mat rightMap;
@@ -81,11 +83,13 @@ public:
     ~vPreProcess();
 
     void initBasic(std::string name, int height, int width, bool precheck,
-                   bool flipx, bool flipy, bool pepper, bool undistort,
+                   bool flipx, bool flipy, bool pepper, bool rectify, bool undistort,
                    bool split, bool local_stamp);
     void initPepper(int spatialSize, int temporalSize);
     void initUndistortion(const yarp::os::Bottle &left,
-                          const yarp::os::Bottle &right, bool truncate);
+                          const yarp::os::Bottle &right,
+                          const yarp::os::Bottle &stereo,
+                          bool truncate);
     int queryUnprocessed();
     std::deque<double> getDelays();
     std::deque<double> getRates();
@@ -115,4 +119,3 @@ public:
 
 
 #endif
-
