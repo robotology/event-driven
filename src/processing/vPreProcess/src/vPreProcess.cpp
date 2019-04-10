@@ -63,8 +63,6 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("split", yarp::os::Value(true)).asBool();
     bool local_stamp = rf.check("local_stamp") &&
             rf.check("local_stamp", yarp::os::Value(true)).asBool();
-    std::cout<<"pepper:"<<pepper<<" rectify:"<<rectify<<" undistort:"<<undistort<<
-               " flipx:"<<flipx<<" flipy:"<<flipy<<" split:"<<split<<" precheck:"<<precheck<<std::endl;
     if(precheck)
         yInfo() << "Performing precheck for event corruption";
     if(flipx)
@@ -102,10 +100,15 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
         yarp::os::Bottle &leftParams = calibfinder.findGroup("CAMERA_CALIBRATION_LEFT");
         yarp::os::Bottle &rightParams = calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT");
         yarp::os::Bottle &stereoParams = calibfinder.findGroup("STEREO_DISPARITY");
-        if(leftParams.isNull() || rightParams.isNull() || (stereoParams.isNull() && rectify)) {
-            yError() << "Could not load camera parameters";
+        if(leftParams.isNull() || rightParams.isNull()) {
+            yError() << "Could not load intrinsic camera parameters";
             return false;
         }
+        if (rectify && stereoParams.isNull()) {
+            yError() << "Could not load extrinsic camera parameters";
+            return false;
+        }
+
         std::cout << leftParams.toString() << std::endl;
         std::cout << rightParams.toString() << std::endl;
         std::cout << stereoParams.toString() << std::endl;
@@ -238,6 +241,9 @@ void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
     cv::Mat *maps[2] = {&leftMap, &rightMap};
     cv::Mat cameraMatrix[2];
     cv::Mat distCoeffs[2];
+    cv::Mat rectRot[2];
+    cv::Size s(res.height, res.width);
+    cv::Mat Proj[2];
 
     //create camera and distortion matrices
     for(int i = 0; i < 2; i++) {
@@ -258,8 +264,11 @@ void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
         distCoeffs[i].at<double>(0, 1) = coeffs[i]->find("k2").asDouble();
         distCoeffs[i].at<double>(0, 2) = coeffs[i]->find("p1").asDouble();
         distCoeffs[i].at<double>(0, 3) = coeffs[i]->find("p2").asDouble();
+
+        cv::Mat defCamMat = cv::getDefaultNewCameraMatrix(cameraMatrix[i], s, true);
+        Proj[i] = defCamMat;
     }
-    cv::Mat rectRot[2];
+
     if(rectify)
     {
         //Loading extrinsic stereo parameters
@@ -289,9 +298,12 @@ void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
             cv::Mat Q(4, 4, CV_64FC1);
             //Computing homographies for left and right image
             cv::stereoRectify(cameraMatrix[0], distCoeffs[0], cameraMatrix[1], distCoeffs[1],
-                    cv::Size(res.height, res.width), R, T, R_left, R_right, P_left, P_right, Q, CV_CALIB_ZERO_DISPARITY);
+                    s, R, T, R_left, R_right, P_left, P_right, Q, CV_CALIB_ZERO_DISPARITY);
             rectRot[0] = R_left.clone();
             rectRot[1] = R_right.clone();
+            Proj[0] = P_left.clone();
+            Proj[1] = P_right.clone();
+
         }
     }
 
@@ -304,12 +316,9 @@ void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
         }
 
         cv::Mat mappoints(res.height * res.width, 1, CV_32FC2);
-        cv::Size s(res.height, res.width);
-        cv::Mat defCamMat = cv::getDefaultNewCameraMatrix(cameraMatrix[0], s, true);
 
         cv::undistortPoints(allpoints, mappoints, cameraMatrix[i], distCoeffs[i],
-                            rectRot[i], defCamMat);
-
+                            rectRot[i], Proj[i]);
         *(maps[i]) = cv::Mat(res.height, res.width, CV_32SC2);
         for(unsigned int y = 0; y < res.height; y++) {
             for(unsigned int x = 0; x < res.width; x++) {
@@ -526,11 +535,8 @@ void vPreProcess::onStop()
 bool vPreProcess::threadInit()
 {
     if(split) {
-        std::cout<<"Reaching here"<<std::endl;
-        if(!outPortCamLeft.open(name + "/left:o")){
-            std::cout<<"Can't open port:"<<name<<std::endl;
+        if(!outPortCamLeft.open(name + "/left:o"))
             return false;
-        }
         if(!outPortCamRight.open(name + "/right:o"))
             return false;
     } else {

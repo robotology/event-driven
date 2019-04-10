@@ -301,7 +301,7 @@ public:
 
 };
 
-class overlapDraw : public vDraw {
+class overlayStereoDraw : public vDraw {
 
 public:
 

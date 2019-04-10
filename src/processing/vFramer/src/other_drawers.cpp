@@ -196,22 +196,22 @@ void grayDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
 }
 
-// OVERLAP DRAW //
-// ============ //
+// STEREO OVERLAY DRAW //
+// =================== //
 
-const std::string overlapDraw::drawtype = "OVERLAP";
+const std::string overlayStereoDraw::drawtype = "OVERLAY";
 
-std::string overlapDraw::getDrawType()
+std::string overlayStereoDraw::getDrawType()
 {
-    return overlapDraw::drawtype;
+    return overlayStereoDraw::drawtype;
 }
 
-std::string overlapDraw::getEventType()
+std::string overlayStereoDraw::getEventType()
 {
     return AddressEvent::tag;
 }
 
-void overlapDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+void overlayStereoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
@@ -234,30 +234,37 @@ void overlapDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         cv::Vec3b &cpc = image.at<cv::Vec3b>(y, x);
 
+        if(cpc[0]==0 && cpc[1]==255 && cpc[2]==255) //skip marking already overlapping pixels
+            continue;
         if(!aep->channel)
         {
-            //blue
-            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
-            else cpc[0] = 160;            //if only positive
-            //green
-            if(cpc[1] == 60) cpc[1] = 255;
-            else cpc[1] = 0;
-            //red
-            if(cpc[2] == 0) cpc[2] = 255;
-            else cpc[2] = 160;
+            if(cpc[0]==0 && cpc[1]==0 && cpc[2]==255) //both left and right channel, mark YELLOW
+            {
+                cpc[0]=0;
+                cpc[1]=255;
+                cpc[2]=255;
+            }
+            else   //only left channel, mark BLUE
+            {
+                cpc[0]=255;
+                cpc[1]=0;
+                cpc[2]=0;
+            }
         }
         else
         {
-            //blue
-            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
-            else cpc[0] = 1;                //negative only
-            //green
-            if(cpc[1] == 0) cpc[1] = 255;
-            else cpc[1] = 60;
-            //red
-            if(cpc.val[2] == 160) cpc[2] = 255;
-            else cpc[2] = 0;
+            if(cpc[0]==255 && cpc[1]==0 && cpc[2]==0)   //both left and right channel, mark YELLOW
+            {
+                cpc[0]=0;
+                cpc[1]=255;
+                cpc[2]=255;
+            }
+            else    //only right channel, mark RED
+            {
+                cpc[0]=0;
+                cpc[1]=0;
+                cpc[2]=255;
+            }
         }
     }
 }
-
