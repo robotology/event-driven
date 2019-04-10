@@ -30,6 +30,8 @@ vDraw * createDrawer(std::string tag)
 
     if(tag == addressDraw::drawtype)
         return new addressDraw();
+    if(tag == grayDraw::drawtype)
+        return new grayDraw();
     if(tag == isoDraw::drawtype)
         return new isoDraw();
     if(tag == interestDraw::drawtype)
@@ -38,18 +40,22 @@ vDraw * createDrawer(std::string tag)
         return new circleDraw();
     if(tag == flowDraw::drawtype)
         return new flowDraw();
-    if(tag == lifeDraw::drawtype)
-        return new lifeDraw();
     if(tag == clusterDraw::drawtype)
         return new clusterDraw();
     if(tag == blobDraw::drawtype)
         return new blobDraw();
     if(tag == skinDraw::drawtype)
         return new skinDraw();
+    if(tag == skinsampleDraw::drawtype)
+        return new skinsampleDraw();
+    if(tag == accDraw::drawtype)
+        return new accDraw();
     if(tag == isoInterestDraw::drawtype)
         return new isoInterestDraw();
     if(tag == isoCircDraw::drawtype)
         return new isoCircDraw();
+    if(tag == overlayStereoDraw::drawtype)
+        return new overlayStereoDraw();
     return 0;
 
 }

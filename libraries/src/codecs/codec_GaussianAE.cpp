@@ -50,39 +50,35 @@ event<> GaussianAE::clone()
 void GaussianAE::encode(yarp::os::Bottle &b) const
 {
     LabelledAE::encode(b);
-    b.addInt(*(int*)(&sigx));
-    b.addInt(*(int*)(&sigy));
-    b.addInt(*(int*)(&sigxy));
+    b.addInt32(_gaei[0]);
+    b.addInt32(_gaei[1]);
+    b.addInt32(_gaei[2]);
 }
 
-void GaussianAE::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
+void GaussianAE::encode(std::vector<int32_t> &b, unsigned int &pos) const
 {
     LabelledAE::encode(b, pos);
-    b[pos++] = (*(int*)(&sigx));
-    b[pos++] = (*(int*)(&sigy));
-    b[pos++] = (*(int*)(&sigxy));
+    b[pos++] = _gaei[0];
+    b[pos++] = _gaei[1];
+    b[pos++] = _gaei[2];
 }
 
-void GaussianAE::decode(int *&data)
+void GaussianAE::decode(const int32_t *&data)
 {
     LabelledAE::decode(data);
-    sigx=*(float*)(data++);
-    sigy=*(float*)(data++);
-    sigxy=*(float*)(data++);
+    _gaei[0] = *(data++);
+    _gaei[1] = *(data++);
+    _gaei[2] = *(data++);
 }
 
 bool GaussianAE::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     if (LabelledAE::decode(packet, pos) && pos + 3 <= packet.size())
     {
-        int word;
-        word = packet.get(pos).asInt();
-        sigx=*(float*)(&word);
-        word = packet.get(pos+1).asInt();
-        sigy=*(float*)(&word);
-        word = packet.get(pos+2).asInt();
-        sigxy=*(float*)(&word);
-        pos+=3;
+
+        _gaei[0] = packet.get(pos++).asInt();
+        _gaei[1] = packet.get(pos++).asInt();
+        _gaei[2] = packet.get(pos++).asInt();
         return true;
     }
     return false;

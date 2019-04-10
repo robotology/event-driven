@@ -185,10 +185,10 @@ bool AutoSaccadeModule::close() {
 void AutoSaccadeModule::performSaccade() {
     for ( double theta = 0; theta < 2*M_PI; theta+= M_PI/36 ) {
         ipos->positionMove( 3, cos( theta ) );
-        ipos->positionMove( 4, sin( theta ) );
+        ipos->positionMove( 4, 2* sin( theta ) );
         Time::delay(0.005);
     }
-    bool motionDone;
+    bool motionDone = false;
     int joints[2] = {3,4};
     while (!motionDone){
         ipos ->checkMotionDone(2,joints, &motionDone);
@@ -213,6 +213,8 @@ double AutoSaccadeModule::computeEventRate() {
 }
 
 bool AutoSaccadeModule::updateModule() {
+    performSaccade();
+    return true;
     //collect events for some time
     eventBottleManager.start();
     Time::delay(timeout);

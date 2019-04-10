@@ -114,7 +114,29 @@ public:
 
 };
 
+class accDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
 class addressDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class grayDraw : public vDraw {
 
 public:
 
@@ -136,7 +158,7 @@ public:
 
 };
 
-class flowDraw : public vDraw {
+class skinsampleDraw : public vDraw {
 
 public:
 
@@ -147,7 +169,7 @@ public:
 
 };
 
-class lifeDraw : public vDraw {
+class flowDraw : public vDraw {
 
 public:
 
@@ -279,7 +301,16 @@ public:
 
 };
 
+class overlayStereoDraw : public vDraw {
 
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
 
 #endif
 

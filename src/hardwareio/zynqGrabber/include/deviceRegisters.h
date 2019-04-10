@@ -20,11 +20,14 @@
 #ifndef _VDEVICEREGISTERS_
 #define _VDEVICEREGISTERS_
 
+#include <cstdint>
+
 
 #define LOW8(x) x&0xFF
 #define HIGH8(x) (x&0xFF00)>>8
 #define FIXED_UINT(x) (unsigned int)(x*65536)
-
+#define UNSIGN_BITS(x) *(reinterpret_cast<uint32_t *>(&x))
+//#define UNSIGN_BITS(x) (uint32_t)(*((uint32_t *)(&x)))
 
  // da mettere su zynq
 //#define I2C_SLAVE 0x00 // da togliere su zynq
@@ -106,15 +109,16 @@
 
 // --- addresses of the registers --- //
 #define SKCTRL_EN_ADDR                  0x00
-#define SKCTRL_DUMMY_PERIOD_ADDR        0x04
-#define SKCTRL_DUMMY_CFG_ADDR           0x08
-#define SKCTRL_DUMMY_BOUND_ADDR         0x0C
-#define SKCTRL_DUMMY_INC_ADDR           0x10
-#define SKCTRL_RES_TO_ADDR              0x14
-#define SKCTRL_EG_UPTHR_ADDR            0x18
-#define SKCTRL_EG_DWTHR_ADDR            0x1C
-#define SKCTRL_EG_NOISE_RISE_THR_ADDR   0x20
-#define SKCTRL_EG_NOISE_FALL_THR_ADDR   0x24
+#define SKCTRL_GEN_SELECT               0x04
+#define SKCTRL_DUMMY_PERIOD_ADDR        0x08
+#define SKCTRL_DUMMY_CFG_ADDR           0x0C
+#define SKCTRL_DUMMY_BOUND_ADDR         0x10
+#define SKCTRL_DUMMY_INC_ADDR           0x14
+#define SKCTRL_RES_TO_ADDR              0x18
+#define SKCTRL_EG_PARAM1_ADDR           0x1C
+#define SKCTRL_EG_PARAM2_ADDR           0x20
+#define SKCTRL_EG_PARAM3_ADDR           0x24
+#define SKCTRL_EG_PARAM4_ADDR           0x28
 #define SKCTRL_I2C_ACQ_SOFT_RST_ADDR    0x34 // write only
 #define SKCTRL_EG_FILTER_ADDR           0x38 // read only
 #define SKCTRL_STATUS_ADDR              0x3A // read only
@@ -146,6 +150,7 @@
 //#define EG_CFG = ASR_FILTER_TYPE|ASR_FILTER_EN|EVGEN_NTHR_EN|PREPROC_SAMPLES|PREPROC_EVGEN|DRIFT_COMP_EN;
 #define SAMPLES_RSHIFT_DEFAULT          2
 // register SKCTRL_DUMMY_PERIOD_ADDR        0x04
+#define EV_GEN_SELECT_DEFAULT 0x01
 #define DUMMY_PERIOD_DEFAULT                          0x60
 // register SKCTRL_DUMMY_CFG_ADDR           0x08
 #define DUMMY_CALIB_DEFAULT                        0x00
@@ -160,13 +165,13 @@
 // register SKCTRL_RES_TO_ADDR              0x14
 #define RESAMPLING_TIMEOUT_DEFAULT                   0x32
 // register SKCTRL_EG_UPTHR_ADDR            0x18
-#define EG_UP_THR_DEFAULT                       0x00001999 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
+#define EG_UP_THR_DEFAULT                       0.1
 // register SKCTRL_EG_DWTHR_ADDR            0x1C
-#define EG_DWN_THR_DEFAULT                      0x00001999 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
+#define EG_DWN_THR_DEFAULT                      0.1
 // register SKCTRL_EG_NOISE_RISE_THR_ADDR      0x20
-#define EG_NOISE_RISE_THR_DEFAULT               0x000C0000 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
+#define EG_NOISE_RISE_THR_DEFAULT               12.0 // 32b unsigned fixed point (16b fractional); default value approx. 12
 // register SKCTRL_EG_NOISE_FALL_THR_ADDR      0x24
-#define EG_NOISE_FALL_THR_DEFAULT               0x000C0000 // 32b unsigned fixed point (16b fractional); default value approx. 0.1
+#define EG_NOISE_FALL_THR_DEFAULT               12.0 // 32b unsigned fixed point (16b fractional); default value approx. 12
 // register SKCTRL_I2C_ACQ_SOFT_RST_ADDR    0x34
 #define I2C_ACQ_SOFT_RST_DEFAULT                0x00 // write only value???
 
@@ -181,66 +186,183 @@
 #define SKCTRL_MINOR_MSK                    0x00FF0000
 #define SKCTRL_MAJOR_MSK                    0xFF000000
 
+#define EV_GEN_1 0x00
+#define EV_GEN_2 0x01
+#define EV_GEN_NEURAL 0x02
+
+#define EV_MASK_SA1 0x01
+#define EV_MASK_RA1 0x02
+#define EV_MASK_RA2 0x04
+
+#define EV_GEN_SA1 0x02
+#define EV_GEN_RA1 0x03
+#define EV_GEN_RA2 0x04
 
 
+//HPU IOCTL STRUCTS/ENUMS
 
-// hpu_core & spinn2neu
+typedef enum {
+    INTERFACE_EYE_R,
+    INTERFACE_EYE_L,
+    INTERFACE_AUX
+} hpu_interface_t;
+
+typedef struct {
+    int hssaer[4];
+    int gtp;
+    int paer;
+    int spinn;
+} hpu_interface_cfg_t;
+
+typedef struct {
+    hpu_interface_t interface;
+    hpu_interface_cfg_t cfg;
+} hpu_rx_interface_ioctl_t;
+
+
+typedef struct {
+    uint32_t start;
+    uint32_t stop;
+} spinn_keys_t;
+
+typedef struct {
+    int enable_l;
+    int enable_r;
+    int enable_aux;
+} spinn_keys_enable_t;
+
+typedef enum {
+    LOOP_NONE,
+    LOOP_LNEAR,
+    LOOP_LSPINN,
+} spinn_loop_t;
+
+typedef enum {
+    ROUTE_FIXED,
+    ROUTE_MSG,
+} hpu_tx_route_t;
+
+typedef struct {
+    hpu_interface_cfg_t cfg;
+    hpu_tx_route_t route;
+} hpu_tx_interface_ioctl_t;
+
+typedef struct {
+
+    uint32_t reg_offset;
+    char rw;
+    uint32_t data;
+
+} hpu_regs_t;
+
+enum rx_err { ko_err = 0, rx_err, to_err, of_err, nomeaning_err };
+
+typedef struct {
+    enum rx_err err;
+    uint8_t cnt_val;
+} aux_cnt_t;
+
+typedef enum {
+    MASK_20BIT,
+    MASK_24BIT,
+    MASK_28BIT,
+    MASK_32BIT,
+} hpu_timestamp_mask_t;
+
+typedef enum {
+    TIMINGMODE_DELTA,
+    TIMINGMODE_ASAP,
+    TIMINGMODE_ABS,
+} hpu_tx_timing_mode_t;
+
+typedef enum {
+    TIME_1mS,
+    TIME_5mS,
+    TIME_10mS,
+    TIME_50mS,
+    TIME_100mS,
+    TIME_500mS,
+    TIME_1000mS,
+    TIME_2500mS,
+    TIME_5000mS,
+    TIME_10S,
+    TIME_25S,
+    TIME_50S,
+    TIME_100S,
+    TIME_250S,
+    TIME_500S,
+    TIME_DISABLE,
+} hpu_tx_resync_time_t;
+
+typedef enum {
+    EMPTY,
+    ALMOST_EMPTY,
+    FULL,
+    ALMOST_FULL,
+    NOT_EMPTY
+} fifo_status_t;
+
+typedef struct {
+    fifo_status_t rx_fifo_status;
+    fifo_status_t tx_fifo_status;
+    int rx_buffer_ready;
+    int lrx_paer_fifo_full;
+    int rrx_paer_fifo_full;
+    int auxrx_paer_fifo_full;
+    int rx_fifo_over_threshold;
+    int global_rx_err_ko;
+    int global_rx_err_tx;
+    int global_rx_err_to;
+    int global_rx_err_of;
+    int tx_spinn_dump;
+    int lspinn_parity_err;
+    int rspinn_parity_err;
+    int auxspinn_parity_err;
+    int lspinn_rx_err;
+    int rspinn_rx_err;
+    int auxspinn_rx_err;
+} hpu_hw_status_t;
+
+
+// HPU CORE IOCTLS
 
 #define MAGIC_NUM 0
-#define IOC_READ_TS         _IOR (MAGIC_NUM,  1, void *)
-#define IOC_CLEAR_TS        _IOW (MAGIC_NUM,  2, void *)
-#define AER_VERSION         _IOR (MAGIC_NUM,  3, void *)
-#define IOC_SET_TS_TYPE     _IOW (MAGIC_NUM,  7, void *)
-//#define AER_TIMESTAMP       _IOR (MAGIC_NUM,  8, void *)
-#define AER_GEN_REG         _IOWR(MAGIC_NUM,  8, void *)
-#define IOC_GET_PS          _IOR (MAGIC_NUM,  9, void *)
-#define AER_SET_LOC_LBCK    _IOW (MAGIC_NUM, 10, void *)
-#define AER_SET_REM_LBCK    _IOW (MAGIC_NUM, 11, void *)
-#define AER_SET_FAR_LBCK    _IOW (MAGIC_NUM, 12, void *)
+#define HPU_READ_TS         _IOR (MAGIC_NUM,  1, unsigned int *)
+#define HPU_CLEAR_TS        _IOW (MAGIC_NUM,  2, unsigned int *)
+#define HPU_VERSION         _IOR (MAGIC_NUM,  3, unsigned int *)
+#define HPU_TS_MODE         _IOW (MAGIC_NUM,  7, unsigned int *)
+#define HPU_GEN_REG         _IOWR(MAGIC_NUM,  8, hpu_regs_t *)
+#define HPU_GET_RX_PS       _IOR (MAGIC_NUM,  9, unsigned int *)
 
-#define CTRL_REG         0x00
-#define RXDATA_REG       0x08
-#define RXTIME_REG       0x0C
-#define TXDATA_REG       0x10
-#define DMA_REG          0x14
-#define RAWI_REG         0x18
-#define IRQ_REG          0x1C
-#define MASK_REG         0x20
-#define STMP_REG         0x28
-#define RX_CTRL_REG      0x40
-#define TX_CTRL_REG      0x44
-#define IP_CFNG_REG      0x50
-#define ID_REG           0x5C
-#define AUX_RX_CTRL_REG  0x60
+#define HPU_SET_AUX_THRS    _IOW (MAGIC_NUM, 10, aux_cnt_t *)
+#define HPU_GET_AUX_THRS    _IOR (MAGIC_NUM, 11, unsigned int *)
+#define HPU_GET_AUX_CNT0    _IOR (MAGIC_NUM, 12, unsigned int *)
+#define HPU_GET_AUX_CNT1    _IOR (MAGIC_NUM, 13, unsigned int *)
+#define HPU_GET_AUX_CNT2    _IOR (MAGIC_NUM, 14, unsigned int *)
+#define HPU_GET_AUX_CNT3    _IOR (MAGIC_NUM, 15, unsigned int *)
 
-// CTRL register bit field
-//#define CTRL_ENABLEIP         0x00000001
-#define CTRL_ENABLEINTERRUPT    0x00000004
-#define CTRL_FLUSHFIFO          0x00000010
-#define CTRL_ENABLE_REM_LBCK    0x01000000
-#define CTRL_ENABLE_LOC_LBCK    0x02000000
-#define CTRL_ENABLE_FAR_LBCK    0x04000000
-#define CTRL_32BITCLOCK         0x00008000
-#define AUX_RX_ENABLE_SKIN      0x00000F01
-#define RX_REG_ENABLE_CAMERAS   0x07010701
+#define HPU_GET_LOSTCNT     _IOR (MAGIC_NUM, 16, unsigned int *)
+#define HPU_SET_LOOPBACK    _IOW (MAGIC_NUM, 18, spinn_loop_t *)
+#define HPU_GET_TX_PS       _IOR (MAGIC_NUM, 20, unsigned int *)
+#define HPU_SET_BLK_TX_THR  _IOW (MAGIC_NUM, 21, unsigned int *)
+#define HPU_SET_BLK_RX_THR  _IOW (MAGIC_NUM, 22, unsigned int *)
+#define HPU_SET_SPINN_KEYS  _IOW (MAGIC_NUM, 23, spinn_keys_t *)
+//#define HPU_SPINN_KEYS_EN   _IOW (MAGIC_NUM, 24, unsigned int *)
+#define HPU_SPINN_STA_STO   _IOR (MAGIC_NUM, 25, unsigned int *)
+#define HPU_RX_INTERFACE    _IOW (MAGIC_NUM, 26, hpu_rx_interface_ioctl_t *)
+#define HPU_TX_INTERFACE    _IOW (MAGIC_NUM, 27, hpu_tx_interface_ioctl_t *)
+#define HPU_AXIS_LATENCY    _IOW (MAGIC_NUM, 28, unsigned int *)
 
-// INterrupt Mask register bit field
-#define MSK_RXBUF_EMPTY     0x00000001
-#define MSK_RXBUF_AEMPTY    0x00000002
-#define MSK_RXBUF_FULL      0x00000004
-#define MSK_TXBUF_EMPTY     0x00000008
-#define MSK_TXBUF_AFULL     0x00000010
-#define MSK_TXBUF_FULL      0x00000020
-#define MSK_TIMEWRAPPING    0x00000080
-#define MSK_RXBUF_READY     0x00000100
-#define MSK_RX_NOT_EMPTY    0x00000200
-#define MSK_TX_DUMPMODE     0x00001000
-#define MSK_RX_PAER_ERR     0x00007000 // fifo full from left, right, aux
-#define MSK_RX_MOD_ERR      0x00004000
-//#define MASK_RX_EMPTY    0x01
-//#define MASK_RX_FULL     0x04
-#define MSK_RX_CTRL_REG      0xF070F07
-#define MSK_AUX_RX_CTRL_REG  0x0000F07
-
+#define HPU_GET_RX_PN       _IOR (MAGIC_NUM, 29, unsigned int *)
+//#define HPU_SPINN_ST_SP     _IOW (MAGIC_NUM, 30, spinn_start_stop_policy_t *)
+#define HPU_TS_MASK         _IOW (MAGIC_NUM, 31, hpu_timestamp_mask_t *)
+#define HPU_TX_TIMING_MODE  _IOW (MAGIC_NUM, 32, hpu_tx_timing_mode_t *)
+#define HPU_SET_TX_RESYNC   _IOW (MAGIC_NUM, 33, hpu_tx_resync_time_t *)
+#define HPU_RESET_TX_RESYNC _IOW (MAGIC_NUM, 34, unsigned int *)
+#define HPU_FORCE_TX_RESYNC _IOW (MAGIC_NUM, 35, unsigned int *)
+#define HPU_SPINN_TX_MASK   _IOW (MAGIC_NUM, 36, unsigned int *)
+#define HPU_SPINN_RX_MASK   _IOW (MAGIC_NUM, 37, unsigned int *)
+#define HPU_GET_HW_STATUS   _IOR (MAGIC_NUM, 38, hpu_hw_status_t *)
+#define HPU_SPINN_KEYS_EN   _IOW (MAGIC_NUM, 39, spinn_keys_enable_t *)
 
 #endif

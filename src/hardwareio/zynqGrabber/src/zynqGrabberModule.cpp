@@ -134,30 +134,33 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     if(rf.check("skinCtrl")) {
 
-        std::string skinCtrl = rf.find("skinCtrl").asString();
-
-        skctrlMng = vSkinCtrl(skinCtrl, I2C_ADDRESS_AUX);
-
-        //config values
-        yarp::os::Bottle cnfglists = rf.findGroup("SKIN_CNFG");
-
-        if(!skctrlMng.configureRegisters(cnfglists)) {
-            std::cerr << "Config file required to run zynqGrabber" << std::endl;
-            if(lwo) logwriter << "Could not find config file" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
-            return false;
-        }
+        skctrlMng = vSkinCtrl(rf.find("skinCtrl").asString(), I2C_ADDRESS_AUX);
 
         if(!skctrlMng.connect())
         {
-            std::cerr << "Could not connect to skin controller" << std::endl;
+            yError() << "Could not connect to skin controller";
             if(lwo) logwriter << "Could not connect to skin" << std::endl;
             return false;
         }
+
         if(!skctrlMng.configure(verbose)) {
-            std::cerr << "Could not configure skin" << std::endl;
-            if(lwo) logwriter << "Could not configure skin" << std::endl;
+            yError() << "Could not set skin defaults";
+            if(lwo) logwriter << "Could not set skin defaults" << std::endl;
             return false;
         }
+
+        //config values
+        yarp::os::Bottle &cnfglists = rf.findGroup("SKIN_CNFG");
+        if(cnfglists.isNull()) {
+            yWarning() << "No Skin Parameters Found";
+            if(lwo) logwriter << "No Skin Parameters Found" << std::endl;
+        } else if(!skctrlMng.configureRegisters(cnfglists)) {
+            yError() << "Could not configure ini parameters";
+            if(lwo) logwriter << "Could not configure ini parameters" << std::endl
+                              << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
+            return false;
+        }
+
         if(lwo) logwriter << "Connected to and configured skin" << std::endl;
 
     }
@@ -167,12 +170,9 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         yError() << "Could not connect to YARP network";
 
     if(!yarppresent || biaswrite) {
-        vsctrlMngLeft.disconnect(true);
-        std::cout << "Left camera off" << std::endl;
-        vsctrlMngRight.disconnect(true);
-        std::cout << "Right camera off" << std::endl;
+        vsctrlMngLeft.disconnect(false);
+        vsctrlMngRight.disconnect(false);
         skctrlMng.disconnect();
-        std::cout << "Skin off" << std::endl;
         if(lwo) logwriter << "Only writing biases, or YARP not present" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
         return false;
     }
@@ -195,14 +195,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                 rf.check("hpu_read", yarp::os::Value(true)).asBool();
         bool write_flag = rf.check("hpu_write") &&
                 rf.check("hpu_write", yarp::os::Value(true)).asBool();
-        int packet_size     = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt();
-        int buffer_size  = 8 * rf.check("buffer_size", yarp::os::Value("5120000")).asInt();
-        bool direct_read = rf.check("direct_read") &&
-                rf.check("direct_read", yarp::os::Value(true)).asBool();
+        int packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt();
 
         if(read_flag)
-            if(!hpu.openReadPort(moduleName, direct_read, packet_size,
-                                 buffer_size))
+            if(!hpu.openReadPort(moduleName, packet_size))
                 return false;
 
         if(write_flag)
@@ -210,7 +206,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                 return false;
 
 
-        //hpu.start();
+        hpu.start();
     }
 
     if (!handlerPort.open(moduleName)) {
@@ -229,8 +225,8 @@ bool zynqGrabberModule::interruptModule() {
     std::cout << "done" << std::endl;
 
     std::cout << "closing device drivers.. ";
-    vsctrlMngLeft.disconnect(true);
-    vsctrlMngRight.disconnect(true);
+    vsctrlMngLeft.disconnect(false);
+    vsctrlMngRight.disconnect(false);
     std::cout << "done" << std::endl;
     return true;
 }

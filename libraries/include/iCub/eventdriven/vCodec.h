@@ -19,8 +19,7 @@
 #ifndef __VCODEC__
 #define __VCODEC__
 
-
-#include <yarp/os/Bottle.h>
+#include "vtsHelper.h"
 #include <memory>
 #include <deque>
 #include <math.h>
@@ -28,6 +27,11 @@
 #include <iostream>
 
 namespace ev {
+
+#define IS_SKIN(x)   x&0x01000000
+#define IS_SAMPLE(x) x&0x00804000
+#define IS_SSA(x)    x&0x00004000
+#define IS_SSV(x)    x&0x00800000
 
 //macros
 class vEvent;
@@ -71,6 +75,9 @@ unsigned int packetSize(const std::string &type);
 /// \brief camera values for stereo set-up
 enum { VLEFT = 0, VRIGHT = 1 } ;
 
+
+
+
 //event declarations
 /// \brief base event class which defines the time the event occurs
 class vEvent
@@ -84,9 +91,9 @@ public:
 
     virtual event<> clone();
     virtual void encode(yarp::os::Bottle &b) const;
-    virtual void encode(std::vector<std::int32_t> &b, unsigned int &pos) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
-    virtual void decode(int *&data);
+    virtual void decode(const int32_t *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
     virtual int getChannel() const;
@@ -98,11 +105,21 @@ class AddressEvent : public vEvent
 {
 public:
     static const std::string tag;
-    unsigned int x:10;
-    unsigned int y:10;
-    unsigned int channel:1;
-    unsigned int polarity:1;
-    unsigned int type:1;
+
+    union
+    {
+        uint32_t _coded_data;
+        struct {
+            unsigned int polarity:1;
+            unsigned int x:9;
+            unsigned int _xfill:2;
+            unsigned int y:8;
+            unsigned int _yfill:2;
+            unsigned int channel:1;
+            unsigned int type:1;
+            unsigned int skin:1;
+        };
+    };
 
     AddressEvent();
     AddressEvent(const vEvent &v);
@@ -110,9 +127,9 @@ public:
 
     virtual event<> clone();
     virtual void encode(yarp::os::Bottle &b) const;
-    virtual void encode(std::vector<std::int32_t> &b, unsigned int &pos) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
-    virtual void decode(int *&data);
+    virtual void decode(const int32_t *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
     virtual int getChannel() const;
@@ -120,13 +137,80 @@ public:
 };
 using AE = AddressEvent;
 
+/// \brief an event with a taxel location, body-part and polarity
+class SkinEvent : public vEvent
+{
+public:
+    static const std::string tag;
+
+    union
+    {
+        uint32_t _skei;
+        struct {
+            unsigned int polarity:1;
+            unsigned int taxel:10;
+            unsigned int _reserved1:2;
+            unsigned int cross_base:1;
+            unsigned int _sample:1;
+            unsigned int _error:1;
+            unsigned int body_part:3;
+            unsigned int _reserved2:3;
+            unsigned int side:1;
+            unsigned int type:1;
+            unsigned int skin:1;
+        };
+    };
+
+    SkinEvent();
+    SkinEvent(const vEvent &v);
+    SkinEvent(const SkinEvent &v);
+
+    virtual event<> clone();
+    virtual void encode(yarp::os::Bottle &b) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
+    virtual void decode(const int32_t *&data);
+    virtual yarp::os::Property getContent() const;
+    virtual std::string getType() const;
+
+};
+
+/// \brief an event with a taxel location, body-part and polarity
+class SkinSample : public SkinEvent
+{
+public:
+    static const std::string tag;
+
+    unsigned int _ts:31;
+    unsigned int value:16;
+
+    SkinSample();
+    SkinSample(const vEvent &v);
+    SkinSample(const SkinSample &v);
+
+    virtual event<> clone();
+    virtual void encode(yarp::os::Bottle &b) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
+    virtual void decode(const int32_t *&data);
+    virtual yarp::os::Property getContent() const;
+    virtual std::string getType() const;
+
+};
+
 /// \brief an AddressEvent with a velocity in visual space
 class FlowEvent : public AddressEvent
 {
 public:
     static const std::string tag;
-    float vx;
-    float vy;
+    union {
+        uint32_t _fei[2];
+        struct {
+            float vx;
+            float vy;
+        };
+    };
+
 
     FlowEvent();
     FlowEvent(const vEvent &v);
@@ -134,9 +218,9 @@ public:
 
     virtual event<> clone();
     virtual void encode(yarp::os::Bottle &b) const;
-    virtual void encode(std::vector<std::int32_t> &b, unsigned int &pos) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
-    virtual void decode(int *&data);
+    virtual void decode(const int32_t *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 
@@ -156,9 +240,9 @@ public:
 
     virtual event<> clone();
     virtual void encode(yarp::os::Bottle &b) const;
-    virtual void encode(std::vector<std::int32_t> &b, unsigned int &pos) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
-    virtual void decode(int *&data);
+    virtual void decode(const int32_t *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 };
@@ -168,9 +252,14 @@ class GaussianAE : public LabelledAE
 {
 public:
     static const std::string tag;
-    float sigx;
-    float sigy;
-    float sigxy;
+    union {
+        uint32_t _gaei[3];
+        struct {
+            float sigx;
+            float sigy;
+            float sigxy;
+        };
+    };
 
     GaussianAE();
     GaussianAE(const vEvent &v);
@@ -178,12 +267,40 @@ public:
 
     virtual event<> clone();
     virtual void encode(yarp::os::Bottle &b) const;
-    virtual void encode(std::vector<std::int32_t> &b, unsigned int &pos) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
     virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
-    virtual void decode(int *&data);
+    virtual void decode(const int32_t *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 };
+
+/// \brief count the events in a vQueue
+template <class T> size_t countEvents(const T &q) { return q.size(); }
+//template <> size_t countEvents<vQueue>(const T &q) { return q.size(); }
+
+/// \brief count the time within a vQueue
+template <typename T> inline int countTime(const T &q)
+{
+    int dt = q.back().stamp - q.front().stamp;
+    if(dt < 0) dt += vtsHelper::max_stamp;
+    return dt;
+}
+
+template <> inline int countTime<vQueue> (const vQueue &q)
+{
+    int dt = q.back()->stamp - q.front()->stamp;
+    if(dt < 0) dt += vtsHelper::max_stamp;
+    return dt;
+}
+
+template <> inline int countTime< std::vector<int32_t> > (const std::vector<int32_t> &q)
+{
+    int dt = (q[q.size()-2] & vtsHelper::max_stamp) - (q[0] & vtsHelper::max_stamp);
+    if(dt < 0) dt += vtsHelper::max_stamp;
+    return dt;
+}
+
+
 
 }
 

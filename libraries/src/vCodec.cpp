@@ -28,6 +28,10 @@ event<> createEvent(const std::string &type)
 
     if(type == AddressEvent::tag)
         return make_event<AE>();
+    if(type == SkinEvent::tag)
+        return make_event<SkinEvent>();
+    if(type == SkinSample::tag)
+        return make_event<SkinSample>();
     if(type == LabelledAE::tag)
         return make_event<LabelledAE>();
     if(type == FlowEvent::tag)
@@ -44,6 +48,10 @@ unsigned int packetSize(const std::string &type)
         return 2;
     if(type == vEvent::tag)
         return 1;
+    if(type == SkinEvent::tag)
+        return 2;
+    if(type == SkinSample::tag)
+        return 4;
     if(type == LabelledAE::tag)
         return 3;
     if(type == FlowEvent::tag)

@@ -54,8 +54,8 @@ class delayControl : public yarp::os::Thread
 private:
 
     //data structures and ports
-    vGenReadPort inputPort;
-    vGenWritePort outputPort;
+    vReadPort<vQueue> inputPort;
+    vWritePort outputPort;
     roiq qROI;
     vParticlefilter vpf;
     //yarp::os::BufferedPort<vBottle> outputPort;

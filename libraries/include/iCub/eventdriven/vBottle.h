@@ -22,6 +22,7 @@
 #include <yarp/os/Bottle.h>
 #include <yarp/os/Log.h>
 #include <yarp/os/LogStream.h>
+#include <yarp/os/ConnectionWriter.h>
 #include "iCub/eventdriven/vCodec.h"
 #include <iostream>
 

@@ -23,6 +23,9 @@
 
 using namespace ev;
 
+// ISO (AE) //
+// ======== //
+
 const std::string isoDraw::drawtype = "ISO";
 
 std::string isoDraw::getDrawType()
@@ -229,5 +232,157 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 
     image = isoimage - baseimage;
+
+}
+
+// ISO (LAE) //
+// ========= //
+
+const std::string isoInterestDraw::drawtype = "ISO-INT";
+
+std::string isoInterestDraw::getDrawType()
+{
+    return isoInterestDraw::drawtype;
+}
+
+std::string isoInterestDraw::getEventType()
+{
+    return LabelledAE::tag;
+}
+
+void isoInterestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+
+    cv::Mat isoimage = baseimage.clone();
+    isoimage.setTo(255);
+
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+
+    int skip = 1 + eSet.size() / 50000;
+
+    int r = 1;
+    CvScalar c1 = CV_RGB(255, 0, 0);
+    CvScalar c2 = CV_RGB(0, 255, 255);
+
+    //ev::vQueue::const_iterator qi;
+    //for(qi = eSet.begin(); qi != eSet.end(); qi += skip) {
+    for(int i = eSet.size() - 1; i >= 0; i -= skip) {
+
+        LabelledAE *cep = read_as<LabelledAE>(eSet[i]);
+
+        //transform values
+        int dt = vTime - cep->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > max_window) continue;
+        dt = dt * ts_to_axis + 0.5;
+        int px = cep->x;
+        int py = cep->y;
+        if(flip) {
+            px = Xlimit - 1 - px;
+            py = Ylimit - 1 - py;
+        }
+        int pz = dt;
+        pttr(px, py, pz);
+        px += imagexshift;
+        py += imageyshift;
+
+        if(px < 0 || px >= imagewidth || py < 0 || py >= imageheight) {
+            continue;
+        }
+
+        cv::Point centr(px, py);
+        if(cep->ID == 1)
+            cv::circle(image, centr, r, c1);
+        else
+            cv::circle(image, centr, r, c2);
+    }
+
+    if(!image.empty()) {
+        for(int y = 0; y < image.rows; y++) {
+            for(int x = 0; x < image.cols; x++) {
+                cv::Vec3b &pixel = image.at<cv::Vec3b>(y, x);
+
+                if(pixel[0] != 255 || pixel[1] != 255 || pixel[2] != 255) {
+
+                    int px = x, py = y;
+                    if(px < 0 || px >= imagewidth || py < 0 || py >= imageheight)
+                        continue;
+
+                    isoimage.at<cv::Vec3b>(py, px) = pixel;
+                }
+            }
+        }
+    }
+
+    image = isoimage - baseimage;
+
+}
+
+// ISO (CIRC) //
+// ========= //
+
+
+const std::string isoCircDraw::drawtype = "ISO-CIRC";
+std::string isoCircDraw::getDrawType()
+{
+    return isoCircDraw::drawtype;
+}
+std::string isoCircDraw::getEventType()
+{
+    return ev::GaussianAE::tag;
+}
+void isoCircDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    cv::Scalar blue = CV_RGB(0, 0, 255);
+    cv::Scalar red = CV_RGB(255, 0, 0);
+
+    if(eSet.empty()) return;
+
+    if(image.rows != imageheight || image.cols != imagewidth) {
+        yWarning() << "Could not draw isoCircDraw. Please draw ISO first";
+        return;
+    }
+
+    auto v = is_event<GaussianAE>(eSet.back());
+    //if(v->x < 0 || v->x >= Xlimit || v->y < 0 || v->y >= Ylimit) continue;
+
+    int px1 = v->x;
+    int py1 = v->y;
+    int pz1 = 0;
+
+    if(flip) {
+        px1 = Xlimit - 1 - px1;
+        py1 = Ylimit - 1 - py1;
+    }
+
+    int px2 = px1;
+    int py2 = py1;
+    int pz2 = Zlimit * (v->sigy / ev::vtsHelper::max_stamp) + 0.5;
+
+    pttr(px1, py1, pz1);
+    pttr(px2, py2, pz2);
+
+    px1 += imagexshift;
+    py1 += imageyshift;
+    px2 += imagexshift;
+    py2 += imageyshift;
+
+    if(px1 < 0) px1 = 0;
+    if(px1 >= imagewidth) px1 = imagewidth -1;
+    if(py1 < 0) py1 = 0;
+    if(py1 >= imageheight) py1 = imageheight -1;
+    if(px2 < 0) px2 = 0;
+    if(px2 >= imagewidth) px2 = imagewidth -1;
+    if(py2 < 0) py2 = 0;
+    if(py2 >= imageheight) py2 = imageheight -1;
+
+    cv::Point p1(px1, py1);
+    cv::Point p2(px2, py2);
+
+    if(v->polarity)
+        cv::line(image, p1, p2, blue, 2.0);
+    else
+        cv::line(image, p1, p2, red, 2.0);
 
 }

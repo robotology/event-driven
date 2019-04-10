@@ -45,10 +45,10 @@ bool vDevCtrl::connect()
 
     std::cout << "connecting" << std::endl;
     atis = Chronocam::IS_BoardDiscoveryRepository::open("", "");
-     if (!atis) {
-	    std::cerr << "Cannot open device" << std::endl;
+    if (!atis) {
+        std::cerr << "Cannot open device" << std::endl;
         return false;
-    } 
+    }
     cam = atis->get_facility<Chronocam::I_CCam>();
 
     cam->start();
@@ -66,14 +66,14 @@ bool vDevCtrl::connect()
 Chronocam::I_EventsStream &vDevCtrl::getStream()
 {
     if (!stream) {
-	std::cerr << "stream getter called before cam was initialized!" << std::endl;
+        std::cerr << "stream getter called before cam was initialized!" << std::endl;
     }
     return *this->stream;
 }
 
 void vDevCtrl::disconnect(bool andturnoff)
 {
-   return; 
+    return;
 }
 
 
@@ -121,16 +121,15 @@ bool vDevCtrl::configureBiases(){
 
     suspend();
 
-    
+
     // Flash biases if requested
 
     std::cout << "Programming " << bias.size() << " biases:" << std::endl;
     double vref, voltage;
     int header;
-    int i;
     std::string toChange;
 
-    for(i = 1; i < bias.size(); i++) {
+    for(size_t i = 1; i < bias.size(); i++) {
         yarp::os::Bottle *biasdata = bias.get(i).asList();
         toChange = biasdata->get(0).asString();
         vref = biasdata->get(1).asInt();
@@ -141,8 +140,8 @@ bool vDevCtrl::configureBiases(){
         // bridging differences in the naming conventions
         if (toChange == "APSVrefL") toChange = "APSvrefL";
         if (toChange == "APSVrefH") toChange = "APSvrefH";
-	    std::cout << i << " " << toChange << " " << voltage << std::endl;
-    	biases->set(toChange, voltage);	
+        std::cout << i << " " << toChange << " " << voltage << std::endl;
+        biases->set(toChange, voltage);
     }
     // Flash the biases
     Chronocam::I_Biases* i_biases = atis->get_facility<Chronocam::I_Biases>();
@@ -164,9 +163,9 @@ bool vDevCtrl::suspend()
 bool vDevCtrl::activate(bool active)
 {
     if (active) {
-    
+
         std::cout << "starting!" << std::endl;
-        
+
         cam->start();
         cam->reset();
         // select if camera generate APS

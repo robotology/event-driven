@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fno-strict-aliasing -std=c++11 -f
 set(EVENTDRIVENLIBS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libraries/include)
 set(EVENTDRIVEN_LIBRARIES eventdriven)
 
-option(USE_QTCREATOR "Add apps/drivers to QtCreator IDE" OFF)
+option(ADD_DOCS_TO_IDE "Add apps/documentation to IDE" OFF)
 
 #YARP
 find_package(YARP REQUIRED)
@@ -32,9 +32,9 @@ add_subdirectory(libraries)
 add_subdirectory(src)
 add_subdirectory(bindings)
 
-if(USE_QTCREATOR)
+if(ADD_DOCS_TO_IDE)
     file(GLOB tutorialfiles documentation/*.md)
-    add_custom_target(README_token SOURCES README.md ${tutorialfiles})
-endif(USE_QTCREATOR)
+    add_custom_target(project_documentation SOURCES README.md ${tutorialfiles})
+endif(ADD_DOCS_TO_IDE)
 
 icubcontrib_add_uninstall_target()     #macro added 13/11/2013

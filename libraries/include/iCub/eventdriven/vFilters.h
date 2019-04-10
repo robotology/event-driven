@@ -83,8 +83,14 @@ public:
         x += Ssize;
         y += Ssize;
 
-
         bool add = false;
+
+        int dt = ts - (*active)(x, y);
+        if(dt < 0)
+            dt += vtsHelper::max_stamp;
+        if(dt < Tsize)
+            return add;
+
         (*active)(x, y) = ts;
         for(int xi = x - Ssize; xi <= x + Ssize; xi++) {
             for(int yi = y - Ssize; yi <= y + Ssize; yi++) {

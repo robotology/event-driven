@@ -18,6 +18,7 @@
 
 #include "vPreProcess.h"
 #include <iomanip>
+#include <stdio.h>
 
 int main(int argc, char * argv[])
 {
@@ -46,6 +47,8 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
 {
     bool pepper = rf.check("pepper") &&
             rf.check("pepper", yarp::os::Value(true)).asBool();
+    bool rectify = rf.check("rectify") &&
+            rf.check("rectify", yarp::os::Value(true)).asBool();
     bool undistort = rf.check("undistort") &&
             rf.check("undistort", yarp::os::Value(true)).asBool();
     bool truncate = rf.check("truncate") &&
@@ -58,7 +61,8 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("precheck", yarp::os::Value(true)).asBool();
     bool split = rf.check("split") &&
             rf.check("split", yarp::os::Value(true)).asBool();
-
+    bool local_stamp = rf.check("local_stamp") &&
+            rf.check("local_stamp", yarp::os::Value(true)).asBool();
     if(precheck)
         yInfo() << "Performing precheck for event corruption";
     if(flipx)
@@ -67,6 +71,8 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
         yInfo() << "Flipping vision vertically";
     if(pepper)
         yInfo() << "Applying salt and pepper filter";
+    if(rectify)
+        yInfo() << "Rectifying image pairs using extrinsic parameters";
     if(undistort && truncate)
         yInfo() << "Applying camera undistortion - truncating to sensor size";
     if(undistort && !truncate)
@@ -74,41 +80,39 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
     if(split)
         yInfo() << "Splitting into left/right streams";
 
-#if DECODE_METHOD == 0
-    yInfo() << "Decoding with vBottle";
-#elif DECODE_METHOD == 1
-    yInfo() << "Decoding with shared_ptrs";
-#else
-    yInfo() << "Decoding with fixed AE";
-#endif
-
-
     eventManager.initBasic(rf.check("name", yarp::os::Value("/vPreProcess")).asString(),
                            rf.check("height", yarp::os::Value(240)).asInt(),
                            rf.check("width", yarp::os::Value(304)).asInt(),
-                           precheck, flipx, flipy, pepper, undistort, split);
+                           precheck, flipx, flipy, pepper, rectify, undistort, split, local_stamp);
 
     if(pepper) {
         eventManager.initPepper(rf.check("spatialSize", yarp::os::Value(1)).asDouble(),
-                                rf.check("temporalSize", yarp::os::Value(100000)).asDouble());
+                                rf.check("temporalSize", yarp::os::Value(0.1)).asDouble() * vtsHelper::vtsscaler);
     }
 
     if(undistort) {
         yarp::os::ResourceFinder calibfinder;
         calibfinder.setVerbose();
-        calibfinder.setDefaultContext(rf.check("calibContext", yarp::os::Value("cameraCalibration")).asString().c_str());
-        calibfinder.setDefaultConfigFile(rf.check("calibFile", yarp::os::Value("cameraCalibration")).asString().c_str());
+        calibfinder.setDefaultContext(rf.check("calibContext", yarp::os::Value("cameraCalib")).asString().c_str());
+        calibfinder.setDefaultConfigFile(rf.check("calibFile", yarp::os::Value("iCubEyes-ATIS.ini")).asString().c_str());
         calibfinder.configure(0, 0);
 
         yarp::os::Bottle &leftParams = calibfinder.findGroup("CAMERA_CALIBRATION_LEFT");
         yarp::os::Bottle &rightParams = calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT");
+        yarp::os::Bottle &stereoParams = calibfinder.findGroup("STEREO_DISPARITY");
         if(leftParams.isNull() || rightParams.isNull()) {
-            yError() << "Could not load camera parameters";
+            yError() << "Could not load intrinsic camera parameters";
             return false;
         }
+        if (rectify && stereoParams.isNull()) {
+            yError() << "Could not load extrinsic camera parameters";
+            return false;
+        }
+
         std::cout << leftParams.toString() << std::endl;
         std::cout << rightParams.toString() << std::endl;
-        eventManager.initUndistortion(leftParams, rightParams, truncate);
+        std::cout << stereoParams.toString() << std::endl;
+        eventManager.initUndistortion(leftParams, rightParams, stereoParams, truncate);
     }
 
     return eventManager.start();
@@ -123,6 +127,7 @@ bool vPreProcessModule::close()
 
 bool vPreProcessModule::updateModule()
 {
+    eventManager.printFilterStats();
     //unprocessed data
     static int puqs = 0;
     int uqs = this->eventManager.queryUnprocessed();
@@ -176,26 +181,36 @@ bool vPreProcessModule::updateModule()
 
 double vPreProcessModule::getPeriod()
 {
-    return 0.1;
+    return 2.0;
 }
 /******************************************************************************/
 vPreProcess::vPreProcess(): name("/vPreProcess")
 {
     leftMap.deallocate();
     rightMap.deallocate();
+    v_total = 0;
+    v_dropped = 0;
+
+    outPortCamLeft.setWriteType(AE::tag);
+    outPortCamRight.setWriteType(AE::tag);
+    outPortSkin.setWriteType(SkinEvent::tag);
+    outPortSkinSamples.setWriteType(SkinSample::tag);
 }
 
 
 vPreProcess::~vPreProcess()
 {
     inPort.close();
-    outPort.close();
-    outPort2.close();
+    outPortCamLeft.close();
+    outPortCamRight.close();
+    outPortSkin.close();
+    outPortSkinSamples.close();
 }
 
 void vPreProcess::initBasic(std::string name, int height, int width,
                             bool precheck, bool flipx, bool flipy,
-                            bool pepper, bool undistort, bool split)
+                            bool pepper, bool rectify, bool undistort, bool split,
+                            bool local_stamp)
 {
 
     this->name = name;
@@ -205,8 +220,10 @@ void vPreProcess::initBasic(std::string name, int height, int width,
     this->flipx = flipx;
     this->flipy = flipy;
     this->pepper = pepper;
+    this->rectify = rectify;
     this->undistort = undistort;
     this->split = split;
+    this->use_local_stamp = local_stamp;
 
 }
 
@@ -216,33 +233,81 @@ void vPreProcess::initPepper(int spatialSize, int temporalSize)
 }
 
 void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
-                               const yarp::os::Bottle &right, bool truncate)
+                                   const yarp::os::Bottle &right,
+                                   const yarp::os::Bottle &stereo, bool truncate)
 {
     this->truncate = truncate;
-    const yarp::os::Bottle *coeffs[2] = { &left, &right};
+    const yarp::os::Bottle *coeffs[3] = { &left, &right, &stereo};
     cv::Mat *maps[2] = {&leftMap, &rightMap};
+    cv::Mat cameraMatrix[2];
+    cv::Mat distCoeffs[2];
+    cv::Mat rectRot[2];
+    cv::Size s(res.height, res.width);
+    cv::Mat Proj[2];
 
-    //create camera matrix
+    //create camera and distortion matrices
     for(int i = 0; i < 2; i++) {
 
         double scaley = res.height / (double)(coeffs[i]->find("h").asInt());
         double scalex = res.width  / (double)(coeffs[i]->find("w").asInt());
 
-        cv::Mat cameraMatrix(3, 3, CV_64FC1);
-        cameraMatrix.setTo(0);
-        cameraMatrix.at<double>(0, 0) = coeffs[i]->find("fx").asDouble()*scalex;
-        cameraMatrix.at<double>(1, 1) = coeffs[i]->find("fy").asDouble()*scaley;
-        cameraMatrix.at<double>(2, 2) = 1.0;
-        cameraMatrix.at<double>(0, 2) = coeffs[i]->find("cx").asDouble()*scalex;
-        cameraMatrix.at<double>(1, 2) = coeffs[i]->find("cy").asDouble()*scaley;
+        cameraMatrix[i] = cv::Mat(3, 3, CV_64FC1);
+        cameraMatrix[i].setTo(0);
+        cameraMatrix[i].at<double>(0, 0) = coeffs[i]->find("fx").asDouble()*scalex;
+        cameraMatrix[i].at<double>(1, 1) = coeffs[i]->find("fy").asDouble()*scaley;
+        cameraMatrix[i].at<double>(2, 2) = 1.0;
+        cameraMatrix[i].at<double>(0, 2) = coeffs[i]->find("cx").asDouble()*scalex;
+        cameraMatrix[i].at<double>(1, 2) = coeffs[i]->find("cy").asDouble()*scaley;
 
-        cv::Mat distCoeffs(4, 1, CV_64FC1);
-        distCoeffs.at<double>(0, 0) = coeffs[i]->find("k1").asDouble();
-        distCoeffs.at<double>(0, 1) = coeffs[i]->find("k2").asDouble();
-        distCoeffs.at<double>(0, 2) = coeffs[i]->find("p1").asDouble();
-        distCoeffs.at<double>(0, 3) = coeffs[i]->find("p2").asDouble();
+        distCoeffs[i] = cv::Mat(4, 1, CV_64FC1);
+        distCoeffs[i].at<double>(0, 0) = coeffs[i]->find("k1").asDouble();
+        distCoeffs[i].at<double>(0, 1) = coeffs[i]->find("k2").asDouble();
+        distCoeffs[i].at<double>(0, 2) = coeffs[i]->find("p1").asDouble();
+        distCoeffs[i].at<double>(0, 3) = coeffs[i]->find("p2").asDouble();
 
+        cv::Mat defCamMat = cv::getDefaultNewCameraMatrix(cameraMatrix[i], s, true);
+        Proj[i] = defCamMat;
+    }
 
+    if(rectify)
+    {
+        //Loading extrinsic stereo parameters
+        yarp::os::Bottle *HN = coeffs[2]->find("HN").asList();
+        if(HN == nullptr || HN->size() != 16)
+            yError() << "Rototranslation matrix HN is absent or without required number of values: 16)";
+        else
+        {
+            std::cout<<"After extracting list from bottle value HN: "<<(HN->toString())<<std::endl;
+
+            cv::Mat R(3, 3, CV_64FC1); //Rotation matrix between stereo cameras
+            cv::Mat T(3, 1, CV_64FC1); //Translation vector of right wrt left camera center
+            for (int row=0; row<3; row++)
+            {
+                for(int col=0; col<3; col++)
+                {
+                    R.at<double>(row, col) = HN->get(row*4 + col).asDouble();
+                }
+                T.at<double>(row) = HN->get(row*4+3).asDouble();
+            }
+            std::cout<<"R and T values stored properly; R:"<<R<<"T: "<<T<<std::endl;
+
+            cv::Mat R_left(3, 3, CV_64FC1);
+            cv::Mat R_right(3, 3, CV_64FC1);
+            cv::Mat P_left(3, 4, CV_64FC1);
+            cv::Mat P_right(3, 4, CV_64FC1);
+            cv::Mat Q(4, 4, CV_64FC1);
+            //Computing homographies for left and right image
+            cv::stereoRectify(cameraMatrix[0], distCoeffs[0], cameraMatrix[1], distCoeffs[1],
+                    s, R, T, R_left, R_right, P_left, P_right, Q, CV_CALIB_ZERO_DISPARITY);
+            rectRot[0] = R_left.clone();
+            rectRot[1] = R_right.clone();
+            Proj[0] = P_left.clone();
+            Proj[1] = P_right.clone();
+
+        }
+    }
+
+    for(int i=0; i<2; i++) {
         cv::Mat allpoints(res.height * res.width, 1, CV_32FC2);
         for(unsigned int y = 0; y < res.height; y++) {
             for(unsigned int x = 0; x < res.width; x++) {
@@ -251,12 +316,9 @@ void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
         }
 
         cv::Mat mappoints(res.height * res.width, 1, CV_32FC2);
-        cv::Size s(res.height, res.width);
-        cv::Mat defCamMat = cv::getDefaultNewCameraMatrix(cameraMatrix, s,
-                                                          true);
-        cv::undistortPoints(allpoints, mappoints, cameraMatrix, distCoeffs,
-                            cv::noArray(), defCamMat);
 
+        cv::undistortPoints(allpoints, mappoints, cameraMatrix[i], distCoeffs[i],
+                            rectRot[i], Proj[i]);
         *(maps[i]) = cv::Mat(res.height, res.width, CV_32SC2);
         for(unsigned int y = 0; y < res.height; y++) {
             for(unsigned int x = 0; x < res.width; x++) {
@@ -265,12 +327,23 @@ void vPreProcess::initUndistortion(const yarp::os::Bottle &left,
             }
         }
     }
-
 }
 
 int vPreProcess::queryUnprocessed()
 {
     return inPort.queryunprocessed();
+}
+
+void vPreProcess::printFilterStats()
+{
+    if(v_total) {
+        double pc = 100.0 * (double)v_total / (double)(v_total + v_dropped);
+        yInfo() << "Using" << v_total << "/" << (v_total + v_dropped)
+                << "(" << pc << "%)" << "of events.";
+    }
+    v_total = 0;
+    v_dropped = 0;
+
 }
 
 std::deque<double> vPreProcess::getDelays()
@@ -296,113 +369,155 @@ std::deque<double> vPreProcess::getIntervals()
 
 void vPreProcess::run()
 {
-    yarp::os::Stamp ystamp;
+    Stamp zynq_stamp;
+    Stamp local_stamp;
 
     resolution resmod = res;
     resmod.height -= 1;
     resmod.width -= 1;
-    int prev_bottle_n = 0;
-
-#if DECODE_METHOD != 2
-    outPort.setWriteType(AE::tag);
-    outPort2.setWriteType(AE::tag);
-#endif
+    int nm0 = 0, nm1 = 0, nm2 = 0, nm3 = 0, nm4 = 0;
+    AE v;
+    SkinEvent se;
+    SkinSample ss;
+    bool received_half_sample = false;
+    int32_t salvage_sample[2] = {-1, 0};
 
     while(true) {
 
-        double pyt = ystamp.getTime();
+        double pyt = zynq_stamp.getTime();
 
-#if DECODE_METHOD != 2
-        vQueue qleft, qright;
-        const vQueue *q = inPort.read(ystamp);
-#else
         std::deque<AE> qleft, qright;
-        const std::vector<AE> *q = inPort.read(ystamp);
-#endif
+        std::deque<int32_t> qskin;
+        std::deque<int32_t> qskinsamples;
+        const std::vector<int32_t> *q = inPort.read(zynq_stamp);
         if(!q) break;
-        delays.push_back((Time::now() - ystamp.getTime()));
-        if(pyt) intervals.push_back(ystamp.getTime() - pyt);
 
-#if DECODE_METHOD != 2
-        rates.push_back((double)q->size() / (q->back()->stamp - q->front()->stamp));
-#else
-        rates.push_back((double)q->size() / (q->back().stamp - q->front().stamp));
-#endif
+        delays.push_back((Time::now() - zynq_stamp.getTime()));
+        if(pyt) intervals.push_back(zynq_stamp.getTime() - pyt);
 
-
-
-//        ev::vQueue *q = 0;
-//        while(!q && !isStopping()) {
-//            q = inPort.getNextQ(ystamp);
-//        }
-//        if(isStopping()) break;
-
-        if(precheck && prev_bottle_n + 1 != ystamp.getCount() && ystamp.getCount() && prev_bottle_n) {
-            yWarning() << "Dropped bottle:" << prev_bottle_n << "to" << ystamp.getCount();
-        }
-        prev_bottle_n = ystamp.getCount();
-
-
-#if DECODE_METHOD != 2
-        for(ev::vQueue::const_iterator qi = q->begin(); qi != q->end(); qi++) {
-            auto v = is_event<AE>(*qi);
-#else
-        for(std::vector<AE>::const_iterator qi = q->begin(); qi != q->end(); qi++) {
-            AE vcopy = *qi;
-            AE *v = &vcopy;
-#endif
-
-            //precheck
-            if(precheck && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
-                yWarning() << "Event Corruption:" << v->getContent().toString();
-                continue;
+        if(precheck) {
+            nm0 = zynq_stamp.getCount();
+            if(nm3 && nm0 - nm1 == 1 && nm1 - nm2 > 1 && nm1 - nm3 > 2) {
+                yWarning() << "LOST" << nm1-nm2-1 << "PACKETS ["
+                           << nm4 << nm3 << nm2 << nm1 << nm0 << "]"
+                           << q->size() << "packet size";
             }
+            nm4 = nm3;
+            nm3 = nm2;
+            nm2 = nm1;
+            nm1 = nm0;
+        }
 
-            //flipx
-            if(flipx) v->x = resmod.width - v->x;
-            //flipy
-            if(flipy) v->y = resmod.height - v->y;
+        //unsigned int events_in_packet = 0;
+        const int32_t *qi = q->data();
 
-            //salt and pepper filter
-            if(pepper && !thefilter.check(v->x, v->y, v->polarity, v->channel, v->stamp))
-                continue;
+        while ((size_t)(qi - q->data()) < q->size()) {
 
-            //undistortion
-            if(undistort) {
-                cv::Vec2i mapPix;
-                if(v->getChannel() == 0)
-                    mapPix = leftMap.at<cv::Vec2i>(v->y, v->x);
-                else
-                    mapPix = rightMap.at<cv::Vec2i>(v->y, v->x);
-                v->x = mapPix[0];
-                v->y = mapPix[1];
+            if(IS_SKIN(*(qi+1))) {
+                if(IS_SAMPLE(*(qi+1))) {
+                    qskinsamples.push_back(*(qi++)); //TS
+                    qskinsamples.push_back(*(qi++)); //VALUE/TAXEL
+                } else {
+                    qskin.push_back(*(qi++)); //TS
+                    qskin.push_back(*(qi++)); //TAXEL
+                }
+            } else { // IS_VISION
 
-                //truncate to sensor bounds after mapping?
-                if(truncate && (v->x < 0 || v->x > resmod.width || v->y < 0 || v->y > resmod.height)) {
+                v.decode(qi);
+
+                //precheck
+                if(precheck && (v.x < 0 || v.x > resmod.width || v.y < 0 || v.y > resmod.height)) {
+                    yWarning() << "Event Corruption:" << v.getContent().toString();
                     continue;
                 }
 
+                //flipx and flipy
+                if(flipx) v.x = resmod.width - v.x;
+                if(flipy) v.y = resmod.height - v.y;
+
+                //salt and pepper filter
+                if(pepper && !thefilter.check(v.x, v.y, v.polarity, v.channel, v.stamp)) {
+                    v_dropped++;
+                    continue;
+                }
+
+                //undistortion (including rectification)
+                if(undistort) {
+                    cv::Vec2i mapPix;
+                    if(v.getChannel() == 0)
+                        mapPix = leftMap.at<cv::Vec2i>(v.y, v.x);
+                    else
+                        mapPix = rightMap.at<cv::Vec2i>(v.y, v.x);
+
+                    //truncate to sensor bounds after mapping?
+                    if(truncate && (mapPix[0] < 0 ||
+                                    mapPix[0] > resmod.width ||
+                                    mapPix[1] < 0 ||
+                                    mapPix[1] > resmod.height)) {
+                        continue;
+                    }
+
+                    v.x = mapPix[0];
+                    v.y = mapPix[1];
+                    //std::cout.precision(30);
+                    //std::cout<<v.channel<<mapPix<<"timestamp:"<<pyt<<std::endl;
+
+                }
+
+                if(split && v.channel)
+                {
+                    qright.push_back(v);
+                }   else {
+                    qleft.push_back(v);
+                }
             }
 
+        }
 
-#if DECODE_METHOD != 2
-            if(split && v->channel)
-                qright.push_back(v);
-            else
-                qleft.push_back(v);
-#else
-            if(split && v->channel)
-                qright.push_back(*v);
-            else
-                qleft.push_back(*v);
-#endif
+        if(qskinsamples.size() > 2) { //if we have skin samples
+            //check if we need to fix the ordering
+            if(IS_SSV(qskinsamples[1])) { // missing address
+                if(received_half_sample) { // but we have it from last bottle
+                    qskinsamples.push_front(salvage_sample[1]);
+                    qskinsamples.push_front(salvage_sample[0]);
+                } else { // otherwise we are misaligned due to missing data
+                    qskinsamples.pop_front();
+                    qskinsamples.pop_front();
+                }
+            }
+            received_half_sample = false; //either case the half sample is no longer valid
+
+            //check if we now have a cut event
+            int samples_overrun = qskinsamples.size() % packetSize(SkinSample::tag);
+            if(samples_overrun == 2) {
+                salvage_sample[1] = qskinsamples.back();
+                qskinsamples.pop_back();
+                salvage_sample[0] = qskinsamples.back();
+                qskinsamples.pop_back();
+                received_half_sample = true;
+            } else if(samples_overrun) {
+                yError() << "samples cut by " << samples_overrun;
+            }
+        }
+
+        v_total += qleft.size() + qright.size();
+
+        if(use_local_stamp) {
+            local_stamp.update();
+            zynq_stamp = local_stamp;
         }
 
         if(qleft.size()) {
-            outPort.write(qleft, ystamp);
+            outPortCamLeft.write(qleft, zynq_stamp);
         }
         if(qright.size()) {
-            outPort2.write(qright, ystamp);
+            outPortCamRight.write(qright, zynq_stamp);
+        }
+        if(qskin.size()) {
+            outPortSkin.write(qskin, zynq_stamp);
+        }
+        if(qskinsamples.size()) {
+            outPortSkinSamples.write(qskinsamples, zynq_stamp);
         }
     }
 
@@ -411,25 +526,28 @@ void vPreProcess::run()
 void vPreProcess::onStop()
 {
     inPort.close();
-    outPort.close();
-    outPort2.close();
-
-    //inPort.releaseDataLock();
+    outPortCamLeft.close();
+    outPortCamRight.close();
+    outPortSkin.close();
+    outPortSkinSamples.close();
 }
 
 bool vPreProcess::threadInit()
 {
     if(split) {
-        if(!outPort.open(name + "/left:o"))
+        if(!outPortCamLeft.open(name + "/left:o"))
             return false;
-        if(!outPort2.open(name + "/right:o"))
+        if(!outPortCamRight.open(name + "/right:o"))
             return false;
     } else {
-        if(!outPort.open(name + "/vBottle:o"))
+        if(!outPortCamLeft.open(name + "/stereo:o"))
             return false;
     }
-    if(!inPort.open(name + "/vBottle:i"))
+    if(!outPortSkin.open(name + "/skin:o"))
+        return false;
+    if(!outPortSkinSamples.open(name + "/skinsamples:o"))
+        return false;
+    if(!inPort.open(name + "/AE:i"))
         return false;
     return true;
 }
-

@@ -19,31 +19,47 @@
 #include <yarp/os/Bottle.h>
 #include "iCub/eventdriven/vCodec.h"
 
+#if defined CODEC_128x128
+union {
+    uint32_t _coded_data;
+    struct {
+        unsigned int polarity:1;
+        unsigned int x:7;
+        unsigned int y:7;
+        unsigned int channel:1;
+    };
+} _bitorder128;
+#elif defined CODEC_304x240_20
+union {
+    uint32_t _coded_data;
+    struct {
+        unsigned int polarity:1;
+        unsigned int x:9;
+        unsigned int y:8;
+        unsigned int type:2;
+        unsigned int channel:1;
+        unsigned int skin:1;
+    };
+} _bitorder20;
+#endif
+
 namespace ev {
 
 const std::string AddressEvent::tag = "AE";
 
-AddressEvent::AddressEvent() : vEvent(), x(0), y(0), channel(0), polarity(0), type(0) {}
+AddressEvent::AddressEvent() : vEvent(), polarity(0), x(0), y(0), channel(0), type(0), skin(0) {}
 
 AddressEvent::AddressEvent(const vEvent &v) : vEvent(v)
 {
     const AddressEvent *v2 = dynamic_cast<const AddressEvent *>(&v);
     if(v2) {
-        x = v2->x;
-        y = v2->y;
-        channel = v2->channel;
-        polarity = v2->polarity;
-        type = v2->type;
+        _coded_data = v2->_coded_data;
     }
 }
 
 AddressEvent::AddressEvent(const AddressEvent &v) : vEvent(v)
 {
-    x = v.x;
-    y = v.y;
-    channel = v.channel;
-    polarity = v.polarity;
-    type = v.type;
+    _coded_data = v._coded_data;
 }
 
 event<> AddressEvent::clone()
@@ -55,49 +71,68 @@ void AddressEvent::encode(yarp::os::Bottle &b) const
 {
     vEvent::encode(b);
 #if defined CODEC_128x128
-    b.addInt(((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
-#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-    b.addInt(((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
-#else //CODEC_304x240_24
-    b.addInt(((channel&0x01)<<22)|((type&0x1)<<23)|((y&0x0FF)<<12)|((x&0x1FF)<<1)|(polarity&0x01));
+    _bitorder128.polarity = polarity;
+    _bitorder128.x = x;
+    _bitorder128.y = y;
+    _bitorder128.channel = channel;
+    b.addInt32(_bitorder128._coded_data);
+#elif defined CODEC_304x240_20
+    _bitorder20.polarity = polarity;
+    _bitorder20.x = x;
+    _bitorder20.y = y;
+    _bitorder20.type = type;
+    _bitorder20.channel = channel;
+    _bitorder20.skin = skin;
+    b.addInt32(_bitorder20._coded_data);
+#else
+    b.addInt32(_coded_data);
 #endif
+
 }
 
-void AddressEvent::encode(std::vector<std::int32_t> &b, unsigned int &pos) const
+void AddressEvent::encode(std::vector<int32_t> &b, unsigned int &pos) const
 {
     vEvent::encode(b, pos);
 #if defined CODEC_128x128
-    b[pos++] = (((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
-#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-    b[pos++] = (((channel&0x01)<<20)|((type&0x1)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
+    _bitorder128.polarity = polarity;
+    _bitorder128.x = x;
+    _bitorder128.y = y;
+    _bitorder128.channel = channel;
+    b[pos++] = _bitorder128._coded_data;
+#elif defined CODEC_304x240_20
+    _bitorder20.polarity = polarity;
+    _bitorder20.x = x;
+    _bitorder20.y = y;
+    _bitorder20.type = type;
+    _bitorder20.channel = channel;
+    _bitorder20.skin = skin;
+    b[pos++] = _bitorder20._coded_data;
 #else
-    b[pos++] = (((channel&0x01)<<22)|((type&0x1)<<23)|((y&0x0FF)<<12)|((x&0x1FF)<<1)|(polarity&0x01));
+    b[pos++] = _coded_data;
 #endif
+
 }
 
-void AddressEvent::decode(int *&data)
+void AddressEvent::decode(const int32_t *&data)
 {
     vEvent::decode(data);
-
 #if defined CODEC_128x128
-    polarity = (*data >> 0) & 0x0001;
-    y = 127 - (*data >> 1) & 0x007F;
-    x = (*data >> 8) & 0x007F;
-    channel = (*data >> 15) & 0x0001;
-#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-    polarity = (*data >> 0) & 0x0001;
-    x = (*data >> 1) & 0x01FF;
-    y = (*data >> 10) & 0x00FF;
-    type = (*data >> 18) & 0x0001;
-    channel = (*data >> 20) & 0x0001;
+    _bitorder128._coded_data = *(data++);
+    polarity = _bitorder128.polarity;
+    x = _bitorder128.x;
+    y = _bitorder128.y;
+    channel = _bitorder128.channel;
+#elif defined CODEC_304x240_20
+    _bitorder20._coded_data = *(data++);
+    polarity = _bitorder20.polarity;
+    x = _bitorder20.x;
+    y = _bitorder20.y;
+    type = _bitorder20.type;
+    channel  = _bitorder20.channel;
+    skin = _bitorder20.skin;
 #else
-    polarity = (*data >> 0) & 0x0001;
-    x = (*data >> 1) & 0x01FF;
-    y = (*data >> 12) & 0x00FF;
-    type = (*data >> 23) & 0x0001;
-    channel = (*data >> 22) & 0x0001;
+    _coded_data = *(data++);
 #endif
-    data++;
 }
 
 bool AddressEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
@@ -105,28 +140,23 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
     // check length
     if (vEvent::decode(packet, pos) && pos + 1 <= packet.size())
     {
-        int data=packet.get(pos).asInt();
-
 #if defined CODEC_128x128
-        polarity = (data >> 0) & 0x0001;
-        y = 127 - (data >> 1) & 0x007F;
-        x = (data >> 8) & 0x007F;
-        channel = (data >> 15) & 0x0001;
-#elif defined CODEC_304x240_20 //ATIS 20 bits encoding
-        polarity = (data >> 0) & 0x0001;
-        x = (data >> 1) & 0x001FF;
-        y = (data >> 10) & 0x00FF;
-        type = (data >> 18) & 0x0001;
-        channel = (data >> 20) & 0x0001;
+        _bitorder128._coded_data = packet.get(pos++).asInt();
+        polarity = _bitorder128.polarity;
+        x = _bitorder128.x;
+        y = _bitorder128.y;
+        channel = _bitorder128.channel;
+#elif defined CODEC_304x240_20
+        _bitorder20._coded_data = packet.get(pos++).asInt();
+        polarity = _bitorder20.polarity;
+        x = _bitorder20.x;
+        y = _bitorder20.y;
+        type = _bitorder20.type;
+        channel  = _bitorder20.channel;
+        skin = _bitorder20.skin;
 #else
-        polarity = (data >> 0) & 0x0001;
-        x = (data >> 1) & 0x001FF;
-        y = (data >> 12) & 0x00FF;
-        type = (data >> 23) & 0x0001;
-        channel = (data >> 22) & 0x0001;
+        _coded_data = packet.get(pos++).asInt();
 #endif
-
-        pos += 1;
         return true;
     }
     return false;
@@ -138,6 +168,7 @@ yarp::os::Property AddressEvent::getContent() const
     prop.put("channel", (int)channel);
     prop.put("polarity", (int)polarity);
     prop.put("type", (int)type);
+    prop.put("skin", (int)skin);
     prop.put("x", (int)x);
     prop.put("y", (int)y);
 

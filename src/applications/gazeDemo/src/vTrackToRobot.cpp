@@ -22,6 +22,7 @@
 #include <cmath>
 
 using namespace yarp::math;
+using yarp::sig::Vector;
 using namespace ev;
 
 int main(int argc, char * argv[])
@@ -63,6 +64,7 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
     velocityControl = rf.check("velocity", yarp::os::Value(false)).asBool();
     res.height = rf.check("height", yarp::os::Value(240)).asDouble();
     res.width = rf.check("width", yarp::os::Value(304)).asDouble();
+    arm_traj_time = rf.check("arm_traj_time", yarp::os::Value(1.0)).asDouble();
     usearm = rf.check("arm") && rf.check("arm", yarp::os::Value(true)).asBool();
 
     arm_target_position = yarp::sig::Vector(3);
@@ -103,11 +105,12 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
 //    options.put("remote","/icub/cartesianController/right_arm");
 //    options.put("local","/cartesian_client/right_arm");
 
-    if(usearm) armdriver.open(options);
+    if(usearm)
+        armdriver.open(options);
     if(armdriver.isValid()) {
         armdriver.view(arm);
         arm->storeContext(&startup_context_id);
-        arm->setTrajTime(1.0);
+        arm->setTrajTime(arm_traj_time);
         // get the torso dofs
         yarp::sig::Vector newDof, curDof;
         arm->getDOF(curDof);
@@ -137,7 +140,6 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
     } else {
         yInfo() << "Position-based cartesian control";
     }
-
 
     return true ;
 }
@@ -170,12 +172,28 @@ bool vTrackToRobotModule::controlCartesian(yarp::sig::Vector ltarget,
     yarp::sig::Vector tp;
     gazecontrol->triangulate3DPoint(pleft, pright, tp);
 
+    //yarp::sig::Vector pos(3);
+    //yarp::sig::Vector ori(3);
+
+    //gazecontrol->getHeadPose(pos, ori);
+
+    //std::cout << "head pos = " << pos.toString() << std::endl;
+    //std::cout << "head ori = " << ori.toString() << std::endl;
+
+    //std::cout << tp.toString() << std::endl;
+
     //target too close to body?
-//    if(tp[0] > -0.10) {
-//        return false;
-//    }
+    if(tp[0] > -0.10) {
+        return false;
+    }
 
     gazecontrol->lookAtStereoPixels(pleft, pright);
+
+    //gazecontrol->lookAtMonoPixel(0, pleft, 0.5);
+    //yarp::sig::Vector mono_pos_left, mono_pos_right;
+    //gazecontrol->get3DPoint(0, pleft, 0.5, mono_pos_left);
+    //gazecontrol->get3DPoint(1, pright, 0.5, mono_pos_right);
+    //yInfo() << mono_pos_left.toString() << mono_pos_right.toString();
 
     return true;
 
@@ -188,15 +206,15 @@ bool vTrackToRobotModule::controlArm(yarp::sig::Vector ltarget,
     if(!rtarget[3] || !ltarget[3])
         return false;
 
-    //do our stereo target check
-    if(std::abs(rtarget[1] - ltarget[1]) > yThresh) {
-        //yWarning() << "Y values not consistent for target";
-        return false;
-    }
-    if(std::abs(rtarget[2] - ltarget[2]) > rThresh) {
-        //yWarning() << "Radius not consistent for target";
-        return false;
-    }
+//    //do our stereo target check
+//    if(std::abs(rtarget[1] - ltarget[1]) > yThresh) {
+//        //yWarning() << "Y values not consistent for target";
+//        return false;
+//    }
+//    if(std::abs(rtarget[2] - ltarget[2]) > rThresh) {
+//        //yWarning() << "Radius not consistent for target";
+//        return false;
+//    }
 
     if(!gazingActive || !gazedriver.isValid()) {
         //yInfo() << "Gaze valid (gazing blocked)";
@@ -210,7 +228,8 @@ bool vTrackToRobotModule::controlArm(yarp::sig::Vector ltarget,
     yarp::sig::Vector pright = rtarget.subVector(0, 1);
 
     yarp::sig::Vector tp;
-    gazecontrol->triangulate3DPoint(pleft, pright, tp);
+    //gazecontrol->triangulate3DPoint(pleft, pright, tp);
+    gazecontrol->getFixationPoint(tp);
 
 
 
@@ -229,6 +248,7 @@ bool vTrackToRobotModule::controlArm(yarp::sig::Vector ltarget,
     }
 
     //tp[0] += 0.1;
+    tp[1] -= 0.1;
     tp[2] += -0.15;
     tp[2] = std::max(tp[2], 0.0);
 
@@ -399,13 +419,20 @@ bool vTrackToRobotModule::updateModule()
         }
         yarp::sig::Vector homefix(3);
         homefix[0] = -10; homefix[1] = 0; homefix[2] = 0.3;
-        gazecontrol->lookAtFixationPoint(homefix);
+        //gazecontrol->lookAtFixationPoint(homefix);
         htimeout = yarp::os::Time::now();
     }
 
     //get the targets from the input ports
     yarp::sig::Vector leftTarget, rightTarget;
-    inputPort.getTargets(leftTarget, rightTarget);
+    Vector *dataIn = inputPort.read();
+
+    //yInfo() << dataIn->toString();
+
+    leftTarget = dataIn->subVector(0, 2);
+    leftTarget.push_back(!(leftTarget[0] == -1.0));
+    rightTarget = dataIn->subVector(3, 5);
+    rightTarget.push_back(!(rightTarget[0] == -1.0));
 
     //perform the type of control as specified
     bool gazePerformed = false;
@@ -413,9 +440,10 @@ bool vTrackToRobotModule::updateModule()
         controlExternal(leftTarget, rightTarget);
         gazePerformed = true; //let the external function do all control
     } else {
-        if(velocityControl)
-            gazePerformed = controlVelocity(leftTarget, rightTarget);
-        else
+        if(velocityControl) {
+            if(velocityController.setVelocityControl())
+                gazePerformed = controlVelocity(leftTarget, rightTarget);
+       }  else
             gazePerformed = controlCartesian(leftTarget, rightTarget);
         if(usearm)
             controlArm(leftTarget, rightTarget);
@@ -427,9 +455,12 @@ bool vTrackToRobotModule::updateModule()
         yarp::sig::Vector pleft = leftTarget.subVector(0, 1);
         yarp::sig::Vector pright = rightTarget.subVector(0, 1);
         yarp::sig::Vector xrobref;
+        yarp::sig::Vector fixation;
         gazecontrol->triangulate3DPoint(pleft, pright, xrobref);
+        gazecontrol->getFixationPoint(fixation);
         values[0] = xrobref[0]; values[1] = xrobref[1]; values[2] = xrobref[2];
-        values[0] = arm_target_position[0]; values[1] = arm_target_position[1]; values[2] = arm_target_position[2];
+        values[3] = fixation[0]; values[4] = fixation[1]; values[5] = fixation[2];
+        //values[0] = arm_target_position[0]; values[1] = arm_target_position[1]; values[2] = arm_target_position[2];
         if(armdriver.isValid()) {
             yarp::sig::Vector x_arm, o_arm;
             arm->getPose(x_arm, o_arm);
@@ -444,6 +475,12 @@ bool vTrackToRobotModule::updateModule()
     //reset the timeout if needed
     if(gazePerformed)
         htimeout = yarp::os::Time::now();
+
+
+//    static double pyt = Time::now();
+//    double cyt = Time::now();
+//    yInfo() << "thread time = " << (cyt - pyt)*1000 << "ms";
+//    pyt = cyt;
 
     return !isStopping();
 }

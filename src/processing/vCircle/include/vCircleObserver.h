@@ -21,6 +21,7 @@
 
 #include <yarp/sig/all.h>
 #include <iCub/eventdriven/all.h>
+#include <iCub/eventdriven/deprecated.h>
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //VCIRCLETHREAD

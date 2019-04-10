@@ -27,6 +27,7 @@
 #define DECODE_METHOD 2
 
 #include <yarp/os/all.h>
+#include <yarp/sig/all.h>
 #include <iCub/eventdriven/all.h>
 //#include <opencv/cv.h>
 #include <opencv2/opencv.hpp>
@@ -38,19 +39,11 @@ private:
 
     //output port for the vBottle with the new events computed by the module
 
-#if DECODE_METHOD == 0
-    ev::queueAllocator inPort;
-    vGenWritePort outPort;
-    vGenWritePort outPort2;
-#elif DECODE_METHOD == 1
-    vGenReadPort inPort;
-    vGenWritePort outPort;
-    vGenWritePort outPort2;
-#else
-    vReadPort<AE> inPort;
-    vWritePort<AE> outPort;
-    vWritePort<AE> outPort2;
-#endif
+    vReadPort < vector<int32_t> > inPort;
+    vWritePort outPortCamLeft;
+    vWritePort outPortCamRight;
+    vWritePort outPortSkin;
+    vWritePort outPortSkinSamples;
 
     //parameters
     std::string name;
@@ -64,13 +57,17 @@ private:
     //filter class
     bool pepper;
     ev::vNoiseFilter thefilter;
+    int v_total;
+    int v_dropped;
 
     //we store an openCV map to use as a look-up table for the undistortion
     //given the camera parameters provided
+    bool rectify;
     bool undistort;
     cv::Mat leftMap;
     cv::Mat rightMap;
     bool truncate;
+    bool use_local_stamp;
 
     //output
     bool split;
@@ -86,15 +83,18 @@ public:
     ~vPreProcess();
 
     void initBasic(std::string name, int height, int width, bool precheck,
-                   bool flipx, bool flipy, bool pepper, bool undistort,
-                   bool split);
+                   bool flipx, bool flipy, bool pepper, bool rectify, bool undistort,
+                   bool split, bool local_stamp);
     void initPepper(int spatialSize, int temporalSize);
     void initUndistortion(const yarp::os::Bottle &left,
-                          const yarp::os::Bottle &right, bool truncate);
+                          const yarp::os::Bottle &right,
+                          const yarp::os::Bottle &stereo,
+                          bool truncate);
     int queryUnprocessed();
     std::deque<double> getDelays();
     std::deque<double> getRates();
     std::deque<double> getIntervals();
+    void printFilterStats();
     void run();
     void onStop();
     bool threadInit();
@@ -119,4 +119,3 @@ public:
 
 
 #endif
-
