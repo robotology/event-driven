@@ -59,6 +59,7 @@ public:
     //CONNECTION
     bool connect(void);
     bool configure(bool verbose = false);
+    bool calibrate();
     //void disconnect(bool andturnoff = true);
     void disconnect();
 

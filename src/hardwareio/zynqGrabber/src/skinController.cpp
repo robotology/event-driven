@@ -19,7 +19,7 @@
 
 #include "skinController.h"
 #include "deviceRegisters.h"
-
+#include <yarp/os/Time.h>
 #include <iostream>
 
 #include <unistd.h>
@@ -397,14 +397,39 @@ bool vSkinCtrl::setRegister(unsigned char regAddr, double regVal)
     return true;
 }
 
+bool vSkinCtrl::calibrate()
+{
+    yInfo() << "Performing Skin Calibration ... (don't touch!)";
+    unsigned char valReg;
+    if(i2cRead(SKCTRL_GEN_SELECT, &valReg, 1) < 0)
+        return false;
+
+    unsigned char reg_with_calib = valReg;
+    reg_with_calib |= FORCE_CALIB_EN;
+    if(i2cWrite(SKCTRL_GEN_SELECT, &reg_with_calib, 1) < 0)
+        return false;
+
+    yarp::os::Time::delay(2.0);
+
+    if(i2cWrite(SKCTRL_GEN_SELECT, &valReg, 1) < 0)
+        return false;
+
+    yInfo() << "Calibration done";
+
+    return true;
+
+}
 
 bool vSkinCtrl::configureRegisters()
 {
 
+    if(!calibrate())
+        return false;
+
     unsigned char valReg[4];
 
     // --- configure SKCTRL_EN_ADDR --- //
-    valReg[0] = I2C_ACQ_EN|FORCE_CALIB_EN;
+    valReg[0] = I2C_ACQ_EN;
     // I2C acquisition enable | force calibration | Dummy generators general enable | Current dummy generator select
     valReg[1] = 0;  // Disable dummy generator (e.g. which dummy generator you want to enable, from 0 to 7)
     valReg[2] = EVGEN_NTHR_EN|PREPROC_SAMPLES|PREPROC_EVGEN;
