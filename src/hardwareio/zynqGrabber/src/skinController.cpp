@@ -368,6 +368,8 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
            return false;
     }
 
+    printConfiguration();
+
     return true;
 }
 
@@ -436,7 +438,7 @@ bool vSkinCtrl::configureRegisters()
     // Event Generator configuration
     // Enable and configure events and Samples
     unsigned char rshift = (SAMPLES_RSHIFT_DEFAULT << SAMPLES_RSHIFT_SHIFT)&SAMPLES_RSHIFT;
-    valReg[3] = rshift|SAMPLES_SEL|AUX_TX_EN|SAMPLES_TX_EN|EVENTS_TX_EN;
+    valReg[3] = rshift|SAMPLES_SEL;
     if(i2cWrite(SKCTRL_EN_ADDR, valReg, 4) < 0) return false;
 
     // --- configure SKCTRL_EN_ADDR --- //
