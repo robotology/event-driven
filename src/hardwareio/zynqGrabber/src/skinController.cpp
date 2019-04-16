@@ -192,6 +192,7 @@ bool vSkinCtrl::config_generator(int type, uint32_t  p1, uint32_t p2, uint32_t p
 
 bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
 {
+    yInfo() << cnfgReg.toString();
     //SKIN CONTROL ENABLE REGISTER
     unsigned char regAddr = SKCTRL_EN_ADDR;
     std::string regName = "forceCalib";
@@ -275,6 +276,14 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
         }
     }
 
+    regAddr = SKCTRL_RES_TO_ADDR;
+    regName = "resamplingTimeout";
+    if (cnfgReg.check(regName)){
+        bool regVal = cnfgReg.find(regName).asDouble();
+        if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
+           return false;
+    }
+
     //EVENT GENERATION SELECT
     regName = "evGenSel";
     if(cnfgReg.check(regName)) {
@@ -294,79 +303,40 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
         if(mask) yInfo() << "Skin Generator Nerual Type" << mask;
     }
 
-    config_generator(EV_GEN_1,
-                     FIXED_UINT(cnfgReg.check("G1upthresh", Value(0.1)).asDouble()),
-                     FIXED_UINT(cnfgReg.check("G1downthresh", Value(0.1)).asDouble()),
-                     FIXED_UINT(cnfgReg.check("G1upnoise", Value(12.0)).asDouble()),
-                     FIXED_UINT(cnfgReg.check("G1downnoise", Value(12.0)).asDouble()));
+  //  config_generator(EV_GEN_1,
+  //                   FIXED_UINT(cnfgReg.check("G1upthresh", Value(0.1)).asDouble()),
+  //                   FIXED_UINT(cnfgReg.check("G1downthresh", Value(0.1)).asDouble()),
+  //                   FIXED_UINT(cnfgReg.check("G1upnoise", Value(12.0)).asDouble()),
+  //                   FIXED_UINT(cnfgReg.check("G1downnoise", Value(12.0)).asDouble()));
 
+    uint32_t p1 = FIXED_UINT(cnfgReg.check("G2upthresh", Value(50.0)).asDouble());
+    uint32_t p2 = FIXED_UINT(cnfgReg.check("G2downthresh", Value(50.0)).asDouble());
+    uint32_t p3 = FIXED_UINT(cnfgReg.check("G2upnoise", Value(50.0)).asDouble());
+    uint32_t p4 = FIXED_UINT(cnfgReg.check("G2downnoise", Value(50.0)).asDouble());
+    yInfo() << p1 << p2 << p3 << p4;
+    config_generator(EV_GEN_2, p1, p2, p3, p4);
 
-    config_generator(EV_GEN_2,
-                     FIXED_UINT(cnfgReg.check("G2upthresh", Value(50.0)).asDouble()),
-                     FIXED_UINT(cnfgReg.check("G2downthresh", Value(50.0)).asDouble()),
-                     FIXED_UINT(cnfgReg.check("G2upnoise", Value(50.0)).asDouble()),
-                     FIXED_UINT(cnfgReg.check("G2downnoise", Value(50.0)).asDouble()));
+    //int32_t sa1i = cnfgReg.check("SA1inhibit", Value(524288)).asInt32();
+    //int32_t sa1a = cnfgReg.check("SA1adapt", Value(328)).asInt32();
+    //int32_t sa1d = cnfgReg.check("SA1decay", Value(-328)).asInt32();
+    //int32_t sa1r = cnfgReg.check("SA1rest", Value(2621)).asInt32();
+    //config_generator(EV_GEN_SA1, UNSIGN_BITS(sa1i), UNSIGN_BITS(sa1a),
+    //                UNSIGN_BITS(sa1d), UNSIGN_BITS(sa1r));
 
-    int32_t sa1i = cnfgReg.check("SA1inhibit", Value(524288)).asInt32();
-    int32_t sa1a = cnfgReg.check("SA1adapt", Value(328)).asInt32();
-    int32_t sa1d = cnfgReg.check("SA1decay", Value(-328)).asInt32();
-    int32_t sa1r = cnfgReg.check("SA1rest", Value(2621)).asInt32();
-    config_generator(EV_GEN_SA1, UNSIGN_BITS(sa1i), UNSIGN_BITS(sa1a),
-                     UNSIGN_BITS(sa1d), UNSIGN_BITS(sa1r));
+    //int32_t ra1i = cnfgReg.check("RA1inhibit", Value(327680)).asInt32();
+   // int32_t ra1a = cnfgReg.check("RA1adapt", Value(3)).asInt32();
+   // int32_t ra1d = cnfgReg.check("RA1decay", Value(-6552)).asInt32();
+   // int32_t ra1r = cnfgReg.check("RA1rest", Value(65536)).asInt32();
+   // config_generator(EV_GEN_RA1, UNSIGN_BITS(ra1i), UNSIGN_BITS(ra1a),
+     //                UNSIGN_BITS(ra1d), UNSIGN_BITS(ra1r));
 
-    int32_t ra1i = cnfgReg.check("RA1inhibit", Value(327680)).asInt32();
-    int32_t ra1a = cnfgReg.check("RA1adapt", Value(3)).asInt32();
-    int32_t ra1d = cnfgReg.check("RA1decay", Value(-6552)).asInt32();
-    int32_t ra1r = cnfgReg.check("RA1rest", Value(65536)).asInt32();
-    config_generator(EV_GEN_RA1, UNSIGN_BITS(ra1i), UNSIGN_BITS(ra1a),
-                     UNSIGN_BITS(ra1d), UNSIGN_BITS(ra1r));
+   // int32_t ra2i = cnfgReg.check("RA2inhibit", Value(327680)).asInt32();
+    //int32_t ra2a = cnfgReg.check("RA2adapt", Value(3328)).asInt32();
+    //int32_t ra2d = cnfgReg.check("RA2decay", Value(-3276)).asInt32();
+    //int32_t ra2r = cnfgReg.check("RA2rest", Value(2621)).asInt32();
+   // config_generator(EV_GEN_RA2, UNSIGN_BITS(ra2i), UNSIGN_BITS(ra2a),
+    //                 UNSIGN_BITS(ra2d), UNSIGN_BITS(ra2r));
 
-    int32_t ra2i = cnfgReg.check("RA2inhibit", Value(327680)).asInt32();
-    int32_t ra2a = cnfgReg.check("RA2adapt", Value(3328)).asInt32();
-    int32_t ra2d = cnfgReg.check("RA2decay", Value(-3276)).asInt32();
-    int32_t ra2r = cnfgReg.check("RA2rest", Value(2621)).asInt32();
-    config_generator(EV_GEN_RA2, UNSIGN_BITS(ra2i), UNSIGN_BITS(ra2a),
-                     UNSIGN_BITS(ra2d), UNSIGN_BITS(ra2r));
-
-    regAddr = SKCTRL_RES_TO_ADDR;
-    regName = "resamplingTimeout";
-    if (cnfgReg.check(regName)){
-        bool regVal = cnfgReg.find(regName).asDouble();
-        if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
-           return false;
-    }
-
-    regAddr = SKCTRL_EG_PARAM1_ADDR;
-    regName = "egUpThr";
-    if (cnfgReg.check(regName)){
-        bool regVal = cnfgReg.find(regName).asDouble();
-        if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
-           return false;
-    }
-
-    regAddr = SKCTRL_EG_PARAM2_ADDR;
-    regName = "egDownThr";
-    if (cnfgReg.check(regName)){
-        bool regVal = cnfgReg.find(regName).asDouble();
-        if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
-           return false;
-    }
-
-    regAddr = SKCTRL_EG_PARAM3_ADDR;
-    regName = "egNoiseRisingThr";
-    if (cnfgReg.check(regName)){
-        bool regVal = cnfgReg.find(regName).asDouble();
-        if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
-           return false;
-    }
-
-    regAddr = SKCTRL_EG_PARAM4_ADDR;
-    regName = "egNoiseFallingThr";
-    if (cnfgReg.check(regName)){
-        bool regVal = cnfgReg.find(regName).asDouble();
-        if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
-           return false;
-    }
 
     printConfiguration();
 
@@ -483,6 +453,7 @@ bool vSkinCtrl::configureRegisters()
     // --- configure SKCTRL_I2C_ACQ_SOFT_RST_ADDR --- //
     if(i2cWrite(SKCTRL_I2C_ACQ_SOFT_RST_ADDR, I2C_ACQ_SOFT_RST_DEFAULT) < 0) return false;
 
+    yInfo() << "Finished Default Register Configuration";
     return true;
 }
 
@@ -512,9 +483,12 @@ void vSkinCtrl::printConfiguration()
 // to be updated
     std::cout << "== FPGA Register Values ==" << std::endl;
     unsigned int regval = 0;
+    unsigned char small_reg_val = 0;
 
     i2cRead(SKCTRL_EN_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Enable Register: 0x%08X\n", regval);
+    i2cRead(SKCTRL_GEN_SELECT, &small_reg_val, sizeof(small_reg_val));
+    printf("Generator Select Register: 0x%02X\n", small_reg_val);
     i2cRead(SKCTRL_DUMMY_PERIOD_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Dummy Generator Period: 0x%08X\n", regval);
     i2cRead(SKCTRL_DUMMY_CFG_ADDR, (unsigned char *)&regval, sizeof(regval));
