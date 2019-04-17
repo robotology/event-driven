@@ -55,38 +55,10 @@ bool vSkinCtrl::connect()
 //void vSkinCtrl::disconnect(bool andturnoff)
 void vSkinCtrl::disconnect()
 {
-    //if(andturnoff) suspend();
     if(fd > 0) {
         close(fd);
     }
 }
-
-//bool vSkinCtrl::suspend()
-//{
-//    return activate(false);
-//}
-
-
-//bool vSkinCtrl::activate(bool active)
-//{
-
-//    unsigned int val;
-
-//    //get current config state
-//    if(i2cRead(VSCTRL_BG_CNFG_ADDR, (unsigned char *)&val, sizeof(val)) != sizeof(val))
-//        return false;
-
-//    //alter the correct bit
-//    if(active)
-//        val &= ~BG_PWRDWN_MSK;
-//    else
-//        val |= BG_PWRDWN_MSK;
-
-//    //rewrite the new config status
-//    return i2cWrite(VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), sizeof(unsigned int));
-//    return true;
-//}
-
 
 int vSkinCtrl::i2cWrite(unsigned char reg, unsigned int data)
 {
@@ -142,7 +114,7 @@ int vSkinCtrl::i2cRead(unsigned char reg, unsigned char *data, unsigned int size
 
 bool vSkinCtrl::configure(bool verbose)
 {
-    if(!configureRegisters())
+    if(!setDefaultRegisterValues())
         return false;
     std::cout << deviceName << ":" << (int)I2CAddress << " registers configured." << std::endl;
     if(verbose) {
@@ -402,17 +374,17 @@ bool vSkinCtrl::calibrate()
 {
     yInfo() << "Performing Skin Calibration ... (don't touch!)";
     unsigned char valReg;
-    if(i2cRead(SKCTRL_GEN_SELECT, &valReg, 1) < 0)
+    if(i2cRead(SKCTRL_EN_ADDR, &valReg, 1) < 0)
         return false;
 
     unsigned char reg_with_calib = valReg;
     reg_with_calib |= FORCE_CALIB_EN;
-    if(i2cWrite(SKCTRL_GEN_SELECT, &reg_with_calib, 1) < 0)
+    if(i2cWrite(SKCTRL_EN_ADDR, &reg_with_calib, 1) < 0)
         return false;
 
     yarp::os::Time::delay(1.0);
 
-    if(i2cWrite(SKCTRL_GEN_SELECT, &valReg, 1) < 0)
+    if(i2cWrite(SKCTRL_EN_ADDR, &valReg, 1) < 0)
         return false;
 
     yInfo() << "Calibration done";
@@ -421,7 +393,7 @@ bool vSkinCtrl::calibrate()
 
 }
 
-bool vSkinCtrl::configureRegisters()
+bool vSkinCtrl::setDefaultRegisterValues()
 {
 
     if(!calibrate())
