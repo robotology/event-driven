@@ -296,8 +296,8 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
 
                 p1 = cnfgReg.check("SA1inhibit", Value(524288)).asInt32();
                 p2 = cnfgReg.check("SA1adapt", Value(328)).asInt32();
-                p4 = cnfgReg.check("SA1decay", Value(-328)).asInt32();
-                p3 = cnfgReg.check("SA1rest", Value(2621)).asInt32();
+                p3 = cnfgReg.check("SA1decay", Value(-328)).asInt32();
+                p4 = cnfgReg.check("SA1rest", Value(2621)).asInt32();
                 config_generator(EV_GEN_SA1, UNSIGN_BITS(p1), UNSIGN_BITS(p2),
                                 UNSIGN_BITS(p3), UNSIGN_BITS(p4));
                 yInfo() << "Setting Event Generator SA1" << p1 << p2 << p3 << p4;
@@ -317,7 +317,7 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
             } else if(cnfgReg.check("evNeuralUseRA2")) {
 
                  p1 = cnfgReg.check("RA2inhibit", Value(327680)).asInt32();
-                 p2 = cnfgReg.check("RA2adapt", Value(3328)).asInt32();
+                 p2 = cnfgReg.check("RA2adapt", Value(3)).asInt32();
                  p3 = cnfgReg.check("RA2decay", Value(-3276)).asInt32();
                  p4 = cnfgReg.check("RA2rest", Value(2621)).asInt32();
                  config_generator(EV_GEN_RA2, UNSIGN_BITS(p1), UNSIGN_BITS(p2),
