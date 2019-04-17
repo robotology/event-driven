@@ -122,6 +122,8 @@
 #define SKCTRL_I2C_ACQ_SOFT_RST_ADDR    0x34 // write only
 #define SKCTRL_EG_FILTER_ADDR           0x38 // read only
 #define SKCTRL_STATUS_ADDR              0x3A // read only
+#define SKCTRL_VERSION_MIN              0x3C
+#define SKCTRL_VERSION_MAJ              0x3D
 
 // -- addresses of the registers bits/bytes for the skin -- //
 

@@ -82,12 +82,12 @@ void  device2yarp::run() {
         }
 
         if(n_bytes_read == 0) continue;
-        
+
         unsigned int first_ts = *(unsigned int *)data.data();
         if(prev_ts > first_ts)
             yWarning() << prev_ts << "->" << first_ts;
         prev_ts = first_ts;
-        
+
 
         external_storage.setExternalData((const char *)data.data(), n_bytes_read);
         yarp_stamp.update();
@@ -233,11 +233,12 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     //READ ID
     unsigned int version = 0;
     ioctl(fd, HPU_VERSION, &version);
-    char version_word[4];
+    char version_word[5];
     version_word[0] = (char)(version >> 24);
     version_word[1] = (char)(version >> 16);
     version_word[2] = (char)(version >> 8);
     version_word[3] = '-';
+    version_word[4] = '\0';
     yInfo() << "ID and Version " << version_word
             << (int)((version >> 4) & 0xF) << "." << (int)((version >> 0) & 0xF);
 
