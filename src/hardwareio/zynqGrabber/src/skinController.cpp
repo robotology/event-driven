@@ -171,12 +171,7 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
     yInfo() << cnfgReg.toString();
     //SKIN CONTROL ENABLE REGISTER
     unsigned char regAddr = SKCTRL_EN_ADDR;
-    std::string regName = "forceCalib";
-    if (cnfgReg.check(regName)){
-        bool regVal = cnfgReg.find(regName).asBool();
-        if(!setRegister(0,FORCE_CALIB_EN,regAddr,regVal))
-            return false;
-    }
+
     regName = "asrFilterType";
     if (cnfgReg.check(regName)){
         bool regVal = cnfgReg.find(regName).asBool();
