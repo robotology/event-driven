@@ -172,7 +172,7 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
     //SKIN CONTROL ENABLE REGISTER
     unsigned char regAddr = SKCTRL_EN_ADDR;
 
-    regName = "asrFilterType";
+    std::string regName = "asrFilterType";
     if (cnfgReg.check(regName)){
         bool regVal = cnfgReg.find(regName).asBool();
         if(!setRegister(3,ASR_FILTER_TYPE,regAddr,regVal))
