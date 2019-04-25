@@ -20,7 +20,7 @@
 #define __VCOLLECTSEND__
 
 #include <iCub/eventdriven/vCodec.h>
-#include <iCub/eventdriven/vBottle.h>
+#include <iCub/eventdriven/vPort.h>
 #include <yarp/os/all.h>
 
 namespace ev {
@@ -31,8 +31,8 @@ class collectorPort : public yarp::os::RateThread
 {
 private:
 
-    vBottle filler;
-    yarp::os::BufferedPort<vBottle> sendPort;
+    vQueue filler;
+    ev::vWritePort sendPort;
     yarp::os::Mutex m;
     yarp::os::Stamp ystamp;
 
@@ -54,7 +54,7 @@ public:
     void pushevent(event<> v, yarp::os::Stamp y) {
 
         m.lock();
-        filler.addEvent(v);
+        filler.push_back(v);
         ystamp = y;
         m.unlock();
 
@@ -66,15 +66,11 @@ public:
     void run() {
 
         if(filler.size()) {
-            vBottle &b = sendPort.prepare();
 
             m.lock();
-            b = filler;
+            sendPort.write(filler, ystamp);
             filler.clear();
-            sendPort.setEnvelope(ystamp);
             m.unlock();
-
-            sendPort.write();
 
         }
     }
