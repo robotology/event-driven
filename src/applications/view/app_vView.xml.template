@@ -6,7 +6,7 @@
 
 <module>
     <name> vPreProcess </name>
-    <parameters>--undistort false --flipx --flipy </parameters>
+    <parameters>--undistort false --flipx --flipy --split </parameters>
     <node> localhost </node>
 </module>
 
