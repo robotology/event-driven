@@ -461,6 +461,7 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 
         auto v = ci->second;
 
+
         //polarity indicates the cluster has died.
         if(!v->polarity) continue;
 
@@ -478,7 +479,7 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
         double l_min = 0.5*(sig_x2_ + sig_y2_ - tmp);
 
         if(l_min < -5) {
-            std::cout << "l_min error: shape distorted" << std::endl;
+            yWarning() << "l_min error: shape distorted";
         }
 
         double a = sqrt(std::fabs(l_max)) * 5;
