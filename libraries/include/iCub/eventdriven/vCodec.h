@@ -118,7 +118,7 @@ public:
             unsigned int channel:1;
             unsigned int type:1;
             unsigned int skin:1;
-            unsigned int _fill:5;
+            unsigned int _fill:7;
         };
     };
 
