@@ -17,11 +17,9 @@ class skinInterface : public yarp::os::Thread
 private:
 
     //data structures and ports
-    queueAllocator inputPort;
-    yarp::os::Port outEvPort;
-    yarp::os::Port outRawPort;
+    vReadPort< std::vector<ev::SkinEvent> > inputPort;
 
-    //variables
+    double count;
 
     //diagnostics
     yarp::os::BufferedPort<yarp::os::Bottle> scopePort;

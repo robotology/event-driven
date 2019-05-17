@@ -20,7 +20,7 @@ int main(int argc, char * argv[])
 {
     /* initialize yarp network */
     yarp::os::Network yarp;
-    if(!yarp.checkNetwork()) {
+    if(!yarp.checkNetwork(2.0)) {
         std::cout << "Could not connect to YARP" << std::endl;
         return false;
     }
@@ -46,30 +46,43 @@ bool module::configure(yarp::os::ResourceFinder &rf)
 {
     //administrative options
     setName((rf.check("name", yarp::os::Value("/skinInterface")).asString()).c_str());
-    //int nthread = rf.check("threads", yarp::os::Value(1)).asInt();
-    
-    //flags
-    //bool adaptivesampling = rf.check("adaptive") &&
-    //        rf.check("adaptive", yarp::os::Value(true)).asBool();
 
-
-    
-    if(!skinterface.open(getName()))
+    if(!skinevents_in.open(getName() + "/SKE:i")) {
+        yError() << "Could not open events port";
         return false;
-    return skinterface.start();
+    }
+
+    if(!skinsamples_in.open(getName() + "/SKS:i")) {
+        yError() << "Could not open samples port";
+        return false;
+    }
+
+    if(!scope_out.open(getName() + "scope:o")) {
+        yError() << "Could not open scope port";
+        return false;
+    }
+
+    return true;
 
 }
 
 /******************************************************************************/
 bool module::interruptModule()
 {
-    skinterface.stop();
+
+    skinevents_in.close();
+    skinsamples_in.close();
+    scope_out.close();
+
     return true;
 }
 
 /******************************************************************************/
 bool module::close()
 {
+    skinevents_in.close();
+    skinsamples_in.close();
+    scope_out.close();
 
     return true;
 }
@@ -77,14 +90,35 @@ bool module::close()
 /******************************************************************************/
 bool module::updateModule()
 {
+    Bottle rates;
+    yarp::os::Stamp yarp_stamp;
+
+    unsigned int eventpackets = skinevents_in.queryunprocessed();
+    if(eventpackets)
+        rates.addInt(skinevents_in.queryRate());
+    else
+        rates.addInt(0);
+    for(unsigned int i = 0; i < eventpackets; i++)
+        const std::vector<ev::SkinEvent> *q = skinevents_in.read(yarp_stamp);
+
+    unsigned int samplepackets = skinsamples_in.queryunprocessed();
+    if(samplepackets)
+        rates.addInt(skinsamples_in.queryRate());
+    else
+        rates.addInt(0);
+    for(unsigned int i = 0; i < samplepackets; i++)
+        const std::vector<ev::SkinSample> *q = skinsamples_in.read(yarp_stamp);
+
+    scope_out.prepare() = rates;
+    scope_out.write();
+
     return true;
 }
 
 /******************************************************************************/
 double module::getPeriod()
 {
-    return 1;
-
+    return 0.2;
 }
 
 
