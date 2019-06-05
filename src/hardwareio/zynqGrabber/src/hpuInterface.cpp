@@ -102,7 +102,7 @@ void  device2yarp::run() {
 
             yInfo() << "[READ ]"
                     << (int)(event_count/(1000.0*update_period))
-                    << "kV/s";
+                    << "k events/s";
 
             prev_ts += update_period;
             event_count = 0;
@@ -188,10 +188,10 @@ void yarp2device::run()
             }
 
             if(hpu_regs.data & 0x00100000) {
-                yInfo() << "[DUMP ] " << (int)(0.001 * total_events / dt) << " kV/s ("
+                yInfo() << "[DUMP ] " << (int)(0.001 * total_events / dt) << " k events/s ("
                     << input_port.getPendingReads() << " delayed packets)";
             } else {
-                yInfo() << "[WRITE] " << (int)(0.001 * total_events / dt) << " kV/s ("
+                yInfo() << "[WRITE] " << (int)(0.001 * total_events / dt) << " k events/s ("
                     << input_port.getPendingReads() << " delayed packets)";
             }
 
