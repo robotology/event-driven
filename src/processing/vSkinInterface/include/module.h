@@ -22,8 +22,10 @@
 #ifndef __V_SKINMODULE__
 #define __V_SKINMODULE__
 
-#include <yarp/os/RFModule.h>
-#include "vSkinInterface.h"
+#include <yarp/os/all.h>
+#include <iCub/eventdriven/all.h>
+#include <vector>
+//#include "vSkinInterface.h"
 
 
 /*////////////////////////////////////////////////////////////////////////////*/
@@ -32,7 +34,10 @@
 class module : public yarp::os::RFModule
 {
 
-    skinInterface skinterface;
+    //skinInterface skinterface;
+    ev::vReadPort< std::vector<ev::SkinEvent> > skinevents_in;
+    ev::vReadPort< std::vector<ev::SkinSample> > skinsamples_in;
+    yarp::os::BufferedPort< yarp::os::Bottle > scope_out;
 
 public:
 

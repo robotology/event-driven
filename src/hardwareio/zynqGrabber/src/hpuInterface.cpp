@@ -82,12 +82,12 @@ void  device2yarp::run() {
         }
 
         if(n_bytes_read == 0) continue;
-        
+
         unsigned int first_ts = *(unsigned int *)data.data();
         if(prev_ts > first_ts)
             yWarning() << prev_ts << "->" << first_ts;
         prev_ts = first_ts;
-        
+
 
         external_storage.setExternalData((const char *)data.data(), n_bytes_read);
         yarp_stamp.update();
@@ -102,7 +102,7 @@ void  device2yarp::run() {
 
             yInfo() << "[READ ]"
                     << (int)(event_count/(1000.0*update_period))
-                    << "kV/s";
+                    << "k events/s";
 
             prev_ts += update_period;
             event_count = 0;
@@ -188,10 +188,10 @@ void yarp2device::run()
             }
 
             if(hpu_regs.data & 0x00100000) {
-                yInfo() << "[DUMP ] " << (int)(0.001 * total_events / dt) << " kV/s ("
+                yInfo() << "[DUMP ] " << (int)(0.001 * total_events / dt) << " k events/s ("
                     << input_port.getPendingReads() << " delayed packets)";
             } else {
-                yInfo() << "[WRITE] " << (int)(0.001 * total_events / dt) << " kV/s ("
+                yInfo() << "[WRITE] " << (int)(0.001 * total_events / dt) << " k events/s ("
                     << input_port.getPendingReads() << " delayed packets)";
             }
 
@@ -233,11 +233,12 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     //READ ID
     unsigned int version = 0;
     ioctl(fd, HPU_VERSION, &version);
-    char version_word[4];
+    char version_word[5];
     version_word[0] = (char)(version >> 24);
     version_word[1] = (char)(version >> 16);
     version_word[2] = (char)(version >> 8);
     version_word[3] = '-';
+    version_word[4] = '\0';
     yInfo() << "ID and Version " << version_word
             << (int)((version >> 4) & 0xF) << "." << (int)((version >> 0) & 0xF);
 

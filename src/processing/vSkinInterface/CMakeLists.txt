@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 2.6)
 set(MODULENAME vSkinInterface)
 project(${MODULENAME})
 
-file(GLOB source src/*.cpp)
-file(GLOB header include/*.h)
+file(GLOB source src/module.cpp)
+file(GLOB header include/module.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${EVENTDRIVENLIBS_INCLUDE_DIRS})

@@ -540,7 +540,7 @@ bool vPreProcess::threadInit()
         if(!outPortCamRight.open(name + "/right:o"))
             return false;
     } else {
-        if(!outPortCamLeft.open(name + "/stereo:o"))
+        if(!outPortCamLeft.open(name + "/AE:o"))
             return false;
     }
     if(!outPortSkin.open(name + "/skin:o"))

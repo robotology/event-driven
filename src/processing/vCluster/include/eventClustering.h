@@ -22,6 +22,7 @@
 
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
+#include <iCub/eventdriven/deprecated.h>
 
 #include "trackerPool.h"
 
