@@ -205,7 +205,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             if(!hpu.openWritePort(moduleName))
                 return false;
 
-
+        yInfo() << "Starting HPU read/write threads";
         hpu.start();
     }
 
