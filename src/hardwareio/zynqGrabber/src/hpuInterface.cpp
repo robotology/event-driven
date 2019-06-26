@@ -271,48 +271,31 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     if(ioctl(fd, HPU_GET_RX_PN, &pool_count) < 0)
         { yError() << "Could not read pool count"; return false; }
 
-    if(!spinnaker) {
+    hpu_rx_interface_ioctl_t rx_config;
+    rx_config = {INTERFACE_EYE_R, {{1, 1, 1, 1}, 0, 0, 0}};
+    if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
+        { yError() << "Could not write EYE_R config"; return false; }
 
-        yInfo() << "Configuring Cameras/Skin";
+    rx_config = {INTERFACE_EYE_L, {{1, 1, 1, 1}, 0, 0, 0}};
+    if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
+        { yError() << "Could not write EYE_L config"; return false; }
 
-        hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 0, 0}, ROUTE_FIXED};
-        if(ioctl(fd, HPU_TX_INTERFACE, &tx_config) < 0)
-            { yError() << "Could not write hpu tx config"; return false; }
+    rx_config = {INTERFACE_AUX, {{1, 1, 1, 1}, 1, 1, 1}};
+    if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
+        { yError() << "Could not write AUX config"; return false; }
 
-        hpu_rx_interface_ioctl_t rx_config;
-        rx_config = {INTERFACE_EYE_R, {{1, 1, 1, 1}, 0, 0, 0}};
-        if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
-            { yError() << "Could not write EYE_R config"; return false; }
+    hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 1, 1}, ROUTE_FIXED};
+    if(ioctl(fd, HPU_TX_INTERFACE, &tx_config) < 0)
+        { yError() << "Could not write hpu tx config"; return false; }
 
-        rx_config = {INTERFACE_EYE_L, {{1, 1, 1, 1}, 0, 0, 0}};
-        if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
-            { yError() << "Could not write EYE_L config"; return false; }
-
-        rx_config = {INTERFACE_AUX, {{1, 1, 1, 1}, 0, 0, 0}};
-        if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
-            { yError() << "Could not write AUX config"; return false; }
-
-    } else {
+    if(spinnaker) {
 
         yInfo() << "Configuring SpiNNaker";
-
-        hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 0, 1}, ROUTE_FIXED};
-        ioctl(fd, HPU_TX_INTERFACE, &tx_config);
-
-        hpu_rx_interface_ioctl_t rx_config = {INTERFACE_AUX, {{0, 0, 0, 0}, 0, 0, 1}};
-        ioctl(fd, HPU_RX_INTERFACE, &rx_config);
-
-        //unsigned int ss_protection = 1;
-        //ioctl(fd, HPU_SPINN_KEYS_EN, &ss_protection);
-
-        //unsigned int dump_off = 1;
-        //ioctl(fd, HPU_SPINN_DUMPOFF, &dump_off);
 
         spinn_keys_t ss_keys = {0x80000000, 0x40000000};
         ioctl(fd, HPU_SET_SPINN_KEYS, &ss_keys);
 
         spinn_keys_enable_t ss_policy = {0, 0, 1};
-        //spinn_start_stop_policy_t ss_mode = KEY_ENABLE;
         ioctl(fd, HPU_SPINN_KEYS_EN, &ss_policy);
 
         hpu_regs_t hpu_regs;
@@ -320,14 +303,10 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         //SPNN_TX_MASK_REG
         unsigned int tx_mask = 0x00FFFFFF;
         ioctl(fd, HPU_SPINN_TX_MASK, &tx_mask);
-        //hpu_regs = {0x88, 1, 0x00FFFFFF};
-        //ioctl(fd, HPU_GEN_REG, &hpu_regs);
 
         //SPNN_RX_MASK_REG
         unsigned int rx_mask = 0x00FFFFFF;
         ioctl(fd, HPU_SPINN_TX_MASK, &rx_mask);
-        //hpu_regs = {0x8C, 1, 0x00FFFFFF};
-        //ioctl(fd, HPU_GEN_REG, &hpu_regs);
 
         //ENABLE loopback
         spinn_loop_t lbmode = LOOP_NONE;
@@ -351,7 +330,6 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         hpu_regs.rw = 1;
         ioctl(fd, HPU_GEN_REG, &hpu_regs); //write
 
-
         //READ CTRL_REG status
         hpu_regs = {0, 0, 0};
         ioctl(fd, HPU_GEN_REG, &hpu_regs);
@@ -365,17 +343,12 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         std::cout << "Raw Status: ";
         std::cout << "0x" << std::hex << std::setw(8)
                   << std::setfill('0') << hpu_regs.data << std::endl;
-
-
     }
 
     yInfo() << "DMA pool size:" << pool_size;
     yInfo() << "DMA pool count:" << pool_count;
     yInfo() << "DMA latency:" << 1 << "ms";
     yInfo() << "Mimumum driver read:" << 8 << "bytes";
-
-
-
 
     return true;
 }
