@@ -284,13 +284,17 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
         { yError() << "Could not write AUX config"; return false; }
 
-    hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 1, 1}, ROUTE_FIXED};
+    hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 1, 0}, ROUTE_FIXED};
     if(ioctl(fd, HPU_TX_INTERFACE, &tx_config) < 0)
         { yError() << "Could not write hpu tx config"; return false; }
 
     if(spinnaker) {
 
         yInfo() << "Configuring SpiNNaker";
+
+        hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 0, 1}, ROUTE_FIXED};
+        if(ioctl(fd, HPU_TX_INTERFACE, &tx_config) < 0)
+            { yError() << "Could not write hpu tx config"; return false; }
 
         spinn_keys_t ss_keys = {0x80000000, 0x40000000};
         ioctl(fd, HPU_SET_SPINN_KEYS, &ss_keys);
