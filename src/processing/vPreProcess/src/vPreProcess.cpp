@@ -86,8 +86,9 @@ bool vPreProcessModule::configure(yarp::os::ResourceFinder &rf)
                            precheck, flipx, flipy, pepper, rectify, undistort, split, local_stamp);
 
     if(pepper) {
-        eventManager.initPepper(rf.check("spatialSize", yarp::os::Value(1)).asDouble(),
-                                rf.check("temporalSize", yarp::os::Value(0.1)).asDouble() * vtsHelper::vtsscaler);
+        eventManager.initPepper(rf.check("sf_size", yarp::os::Value(1)).asDouble(),
+                                rf.check("sf_time", yarp::os::Value(0.05)).asDouble() * vtsHelper::vtsscaler,
+                                rf.check("tf_time", yarp::os::Value(0.1)).asDouble() * vtsHelper::vtsscaler);
     }
 
     if(undistort) {
@@ -227,9 +228,9 @@ void vPreProcess::initBasic(std::string name, int height, int width,
 
 }
 
-void vPreProcess::initPepper(int spatialSize, int temporalSize)
+void vPreProcess::initPepper(int sf_spat_size, int sf_temp_size, int tf_temp_size)
 {
-    thefilter.initialise(res.width, res.height, temporalSize, spatialSize);
+    thefilter.initialise(res.width, res.height, sf_temp_size, sf_spat_size, tf_temp_size);
 }
 
 void vPreProcess::initUndistortion(const yarp::os::Bottle &left,

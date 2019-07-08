@@ -28,8 +28,9 @@ class vNoiseFilter
 {
 private:
 
-    int Tsize;
-    int Ssize;
+    int t_sfilter;
+    int s_sfilter;
+    int t_tfilter;
 
     yarp::sig::ImageOf <yarp::sig::PixelInt> TSleftL;
     yarp::sig::ImageOf <yarp::sig::PixelInt> TSleftH;
@@ -39,30 +40,31 @@ private:
 public:
 
     /// \brief constructor
-    vNoiseFilter() : Tsize(0), Ssize(0) {}
+    vNoiseFilter() : t_sfilter(0), s_sfilter(0), t_tfilter(0) {}
 
     /// \brief initialise the sensor size and the filter parameters.
-    void initialise(double width, double height, int Tsize, unsigned int Ssize)
+    void initialise(double width, double height, int t_sfilter,
+                    unsigned int s_sfilter, int t_tfilter)
     {
-        TSleftL.resize(width + 2 * Ssize, height + 2 * Ssize);
-        TSleftH.resize(width + 2 * Ssize, height + 2 * Ssize);
-        TSrightL.resize(width + 2 * Ssize, height + 2 * Ssize);
-        TSrightH.resize(width + 2 * Ssize, height + 2 * Ssize);
+        this->t_sfilter = t_sfilter;
+        this->s_sfilter = s_sfilter;
+        this->t_tfilter = t_tfilter;
+
+        TSleftL.resize(width + 2 * s_sfilter, height + 2 * s_sfilter);
+        TSleftH.resize(width + 2 * s_sfilter, height + 2 * s_sfilter);
+        TSrightL.resize(width + 2 * s_sfilter, height + 2 * s_sfilter);
+        TSrightH.resize(width + 2 * s_sfilter, height + 2 * s_sfilter);
 
         TSleftL.zero();
         TSleftH.zero();
         TSrightL.zero();
         TSrightH.zero();
-
-        this->Tsize = Tsize;
-        this->Ssize = Ssize;
     }
 
     /// \brief classifies the event as noise or signal
     /// \returns false if the event is noise
     bool check(int x, int y, int p, int c, int ts)
     {
-        if(!Ssize) return false;
 
         yarp::sig::ImageOf<yarp::sig::PixelInt> *active = 0;
         if(c == 0) {
@@ -80,26 +82,26 @@ public:
         }
         if(!active) return false;
 
-        x += Ssize;
-        y += Ssize;
+        x += s_sfilter;
+        y += s_sfilter;
 
         bool add = false;
 
         int dt = ts - (*active)(x, y);
         if(dt < 0)
             dt += vtsHelper::max_stamp;
-        if(dt < Tsize)
+        if(dt < t_tfilter)
             return add;
 
         (*active)(x, y) = ts;
-        for(int xi = x - Ssize; xi <= x + Ssize; xi++) {
-            for(int yi = y - Ssize; yi <= y + Ssize; yi++) {
+        for(int xi = x - s_sfilter; xi <= x + s_sfilter; xi++) {
+            for(int yi = y - s_sfilter; yi <= y + s_sfilter; yi++) {
                 int dt = ts - (*active)(xi, yi);
                 if(dt < 0) {
                     dt += vtsHelper::max_stamp;
                     (*active)(xi, yi) -= vtsHelper::max_stamp;
                 }
-                if(dt && dt < Tsize) {
+                if(dt && dt < t_sfilter) {
                     add = true;
                     break;
                 }

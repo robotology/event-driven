@@ -85,7 +85,7 @@ public:
     void initBasic(std::string name, int height, int width, bool precheck,
                    bool flipx, bool flipy, bool pepper, bool rectify, bool undistort,
                    bool split, bool local_stamp);
-    void initPepper(int spatialSize, int temporalSize);
+    void initPepper(int sf_spat_size, int sf_temp_size, int tf_temp_size);
     void initUndistortion(const yarp::os::Bottle &left,
                           const yarp::os::Bottle &right,
                           const yarp::os::Bottle &stereo,

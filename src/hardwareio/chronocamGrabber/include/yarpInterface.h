@@ -56,7 +56,7 @@ private:
     std::vector<unsigned char> buffer1;
     std::vector<unsigned char> buffer2;
     std::vector<unsigned char> discardbuffer;
-    
+
     uint32_t *ev_buffer;
 
     yarp::os::Semaphore safety;
@@ -70,7 +70,7 @@ public:
     vDevReadBuffer();
 
     bool initialise(Chronocam::I_EventsStream &stream,
-		            unsigned int bufferSize = 0,
+                    unsigned int bufferSize = 0,
                     unsigned int readSize = 0);
 
     virtual long getEventChunk(unsigned char *target);
@@ -90,7 +90,7 @@ class device2yarp : public yarp::os::Thread {
 private:
 
     // we need an instance which we can read events from here.
-    
+
     //parameters
     bool strict;
     bool errorchecking;
@@ -126,7 +126,7 @@ public:
     void initialiseFilter(bool applyfilter, int width, int height, int temporalsize, int spatialSize)
     {
         this->applyfilter = applyfilter;
-        vfilter.initialise(width, height, temporalsize, spatialSize);
+        vfilter.initialise(width, height, temporalsize, spatialSize, temporalsize);
     }
 
     void checkForTSJumps()
