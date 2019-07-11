@@ -230,7 +230,10 @@ void vPreProcess::initBasic(std::string name, int height, int width,
 
 void vPreProcess::initPepper(int sf_spat_size, int sf_temp_size, int tf_temp_size)
 {
-    thefilter.initialise(res.width, res.height, sf_temp_size, sf_spat_size, tf_temp_size);
+    thefilter.initialise(res.width, res.height);
+    thefilter.use_temporal_filter(tf_temp_size);
+    thefilter.use_spatial_filter(sf_temp_size, sf_spat_size);
+
 }
 
 void vPreProcess::initUndistortion(const yarp::os::Bottle &left,

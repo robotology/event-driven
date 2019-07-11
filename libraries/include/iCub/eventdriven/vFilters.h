@@ -28,6 +28,9 @@ class vNoiseFilter
 {
 private:
 
+    bool x_sfilter;
+    bool x_tfilter;
+
     int t_sfilter;
     int s_sfilter;
     int t_tfilter;
@@ -40,15 +43,12 @@ private:
 public:
 
     /// \brief constructor
-    vNoiseFilter() : t_sfilter(0), s_sfilter(0), t_tfilter(0) {}
+    vNoiseFilter() : x_sfilter(false), x_tfilter(false), t_sfilter(0),
+        s_sfilter(0), t_tfilter(0) {}
 
     /// \brief initialise the sensor size and the filter parameters.
-    void initialise(double width, double height, int t_sfilter,
-                    unsigned int s_sfilter, int t_tfilter)
+    void initialise(double width, double height)
     {
-        this->t_sfilter = t_sfilter;
-        this->s_sfilter = s_sfilter;
-        this->t_tfilter = t_tfilter;
 
         TSleftL.resize(width + 2 * s_sfilter, height + 2 * s_sfilter);
         TSleftH.resize(width + 2 * s_sfilter, height + 2 * s_sfilter);
@@ -59,6 +59,19 @@ public:
         TSleftH.zero();
         TSrightL.zero();
         TSrightH.zero();
+    }
+
+    void use_temporal_filter(int t_param)
+    {
+        x_tfilter = true;
+        t_tfilter = t_param;
+    }
+
+    void use_spatial_filter(int t_param, unsigned int s_param)
+    {
+        x_sfilter = true;
+        t_sfilter = t_param;
+        s_sfilter = s_param;
     }
 
     /// \brief classifies the event as noise or signal
@@ -85,25 +98,30 @@ public:
         x += s_sfilter;
         y += s_sfilter;
 
-        bool add = false;
-
-        int dt = ts - (*active)(x, y);
-        if(dt < 0)
-            dt += vtsHelper::max_stamp;
-        if(dt < t_tfilter)
-            return add;
+        if(x_tfilter) {
+            int dt = ts - (*active)(x, y);
+            if(dt < 0)
+                dt += vtsHelper::max_stamp;
+            if(dt < t_tfilter)
+                return false;
+        }
 
         (*active)(x, y) = ts;
-        for(int xi = x - s_sfilter; xi <= x + s_sfilter; xi++) {
-            for(int yi = y - s_sfilter; yi <= y + s_sfilter; yi++) {
-                int dt = ts - (*active)(xi, yi);
-                if(dt < 0) {
-                    dt += vtsHelper::max_stamp;
-                    (*active)(xi, yi) -= vtsHelper::max_stamp;
-                }
-                if(dt && dt < t_sfilter) {
-                    add = true;
-                    break;
+
+        auto add = false;
+
+        if(x_sfilter) {
+            for(int xi = x - s_sfilter; xi <= x + s_sfilter; xi++) {
+                for(int yi = y - s_sfilter; yi <= y + s_sfilter; yi++) {
+                    int dt = ts - (*active)(xi, yi);
+                    if(dt < 0) {
+                        dt += vtsHelper::max_stamp;
+                        (*active)(xi, yi) -= vtsHelper::max_stamp;
+                    }
+                    if(dt && dt < t_sfilter) {
+                        add = true;
+                        break;
+                    }
                 }
             }
         }

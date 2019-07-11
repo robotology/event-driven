@@ -126,7 +126,9 @@ public:
     void initialiseFilter(bool applyfilter, int width, int height, int temporalsize, int spatialSize)
     {
         this->applyfilter = applyfilter;
-        vfilter.initialise(width, height, temporalsize, spatialSize, temporalsize);
+        vfilter.initialise(width, height);
+        vfilter.use_spatial_filter(temporalsize, spatialSize);
+        vfilter.use_temporal_filter(temporalsize);
     }
 
     void checkForTSJumps()
