@@ -20,6 +20,7 @@
 #define __VFILTER__
 
 #include <yarp/sig/Image.h>
+#include <iCub/eventdriven/vtsHelper.h>
 
 namespace ev {
 
@@ -40,6 +41,8 @@ private:
     yarp::sig::ImageOf <yarp::sig::PixelInt> TSrightL;
     yarp::sig::ImageOf <yarp::sig::PixelInt> TSrightH;
 
+    resolution res;
+
 public:
 
     /// \brief constructor
@@ -47,18 +50,22 @@ public:
         s_sfilter(0), t_tfilter(0) {}
 
     /// \brief initialise the sensor size and the filter parameters.
-    void initialise(double width, double height)
+    void initialise(unsigned int width, unsigned int height)
     {
+        res.height = height;
+        res.width = width;
 
-        TSleftL.resize(width + 2 * s_sfilter, height + 2 * s_sfilter);
-        TSleftH.resize(width + 2 * s_sfilter, height + 2 * s_sfilter);
-        TSrightL.resize(width + 2 * s_sfilter, height + 2 * s_sfilter);
-        TSrightH.resize(width + 2 * s_sfilter, height + 2 * s_sfilter);
+        TSleftL.resize(width, height);
+        TSleftH.resize(width, height);
+        TSrightL.resize(width, height);
+        TSrightH.resize(width, height);
 
         TSleftL.zero();
         TSleftH.zero();
         TSrightL.zero();
         TSrightH.zero();
+
+
     }
 
     void use_temporal_filter(int t_param)
@@ -79,7 +86,7 @@ public:
     bool check(int x, int y, int p, int c, int ts)
     {
 
-        yarp::sig::ImageOf<yarp::sig::PixelInt> *active = 0;
+        yarp::sig::ImageOf<yarp::sig::PixelInt> *active = nullptr;
         if(c == 0) {
             if(p == 0) {
                 active = &TSleftL;
@@ -93,10 +100,8 @@ public:
                 active = &TSrightH;
             }
         }
-        if(!active) return false;
 
-        x += s_sfilter;
-        y += s_sfilter;
+        auto add = true;
 
         if(x_tfilter) {
             int dt = ts - (*active)(x, y);
@@ -108,11 +113,15 @@ public:
 
         (*active)(x, y) = ts;
 
-        auto add = false;
-
         if(x_sfilter) {
-            for(int xi = x - s_sfilter; xi <= x + s_sfilter; xi++) {
-                for(int yi = y - s_sfilter; yi <= y + s_sfilter; yi++) {
+            add = false;
+            auto xl = std::max(x-s_sfilter, 0);
+            auto xh = std::min(x+s_sfilter+1, (int)(res.width)); //+1 becuase I use < sign
+            auto yl = std::max(y-s_sfilter, 0);
+            auto yh = std::min(y+s_sfilter+1, (int)(res.height)); //+1 becuase I use < sign
+
+            for(auto xi = xl; xi < xh; ++xi) {
+                for(auto yi = yl; yi < yh; ++yi) {
                     int dt = ts - (*active)(xi, yi);
                     if(dt < 0) {
                         dt += vtsHelper::max_stamp;
