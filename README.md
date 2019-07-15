@@ -7,7 +7,17 @@
 Click to watch the [video](https://youtu.be/xS-7xYRYSLc)!
 
 Libraries that handle neuromorphic sensors, such as the dynamic vision sensor, installed on the iCub can be found here, along with algorithms to process the event-based data. Examples include, optical flow, corner detection and ball detection. Demo applications for the iCub robot, and tutorials for running them, include saccading and attention, gaze following a ball, and vergence control.
-
+```
+@article{Glover2017b,
+author = {Glover, Arren and Vasco, Valentina and Iacono, Massimiliano and Bartolozzi, Chiara},
+doi = {10.3389/frobt.2017.00073},
+journal = {Frontiers in Robotics and AI},
+pages = {73},
+title = {{The event-driven Software Library for YARP — With Algorithms and iCub Applications}},
+volume = {4},
+year = {2018}
+}
+```
 ## Libraries
 
 Event-driven libraries provide basic functionality for handling events in a YARP environment. The library has definitions for:
