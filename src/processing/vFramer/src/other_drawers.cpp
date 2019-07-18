@@ -295,18 +295,18 @@ void saeDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
         if((unsigned int)dt > display_window) break;
 
-        auto I = 255.0 * (display_window - dt) / display_window;
+        double decay = (double)dt / (double)display_window;
 
         auto aep = is_event<AddressEvent>(*qi);
 
         cv::Vec3b &cpc = image.at<cv::Vec3b>(aep->y, aep->x);
-        if(cpc[0] || cpc[1] || cpc[2])
+        if(cpc != white)
             continue;
 
         if(aep->polarity)
-            cpc = aqua * I;
+            cpc = aqua + (white - aqua) * decay;
         else
-            cpc = violet * I;
+            cpc = violet + (white - violet) * decay;
 
     }
 }
