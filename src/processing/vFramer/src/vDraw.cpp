@@ -56,6 +56,8 @@ vDraw * createDrawer(std::string tag)
         return new isoCircDraw();
     if(tag == overlayStereoDraw::drawtype)
         return new overlayStereoDraw();
+    if(tag == saeDraw::drawtype)
+        return new saeDraw();
     return 0;
 
 }
