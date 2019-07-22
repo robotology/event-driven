@@ -52,6 +52,12 @@ protected:
     unsigned int max_window;
     bool flip;
 
+    cv::Vec3b violet {151, 174, 6};
+    cv::Vec3b aqua  {180, 10, 155};
+    cv::Vec3b orange {9, 111, 255};
+    cv::Vec3b lime   {9, 250, 222};
+    cv::Vec3b white{255, 255, 255};
+
 public:
 
     vDraw() : Xlimit(304), Ylimit(240), flip(false)
@@ -302,6 +308,17 @@ public:
 };
 
 class overlayStereoDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class saeDraw : public vDraw {
 
 public:
 

@@ -268,3 +268,45 @@ void overlayStereoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         }
     }
 }
+
+// SAE DRAW //
+// =========== //
+
+const std::string saeDraw::drawtype = "SAE";
+
+std::string saeDraw::getDrawType()
+{
+    return saeDraw::drawtype;
+}
+
+std::string saeDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void saeDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+        double decay = (double)dt / (double)display_window;
+
+        auto aep = is_event<AddressEvent>(*qi);
+
+        cv::Vec3b &cpc = image.at<cv::Vec3b>(aep->y, aep->x);
+        if(cpc != white)
+            continue;
+
+        if(aep->polarity)
+            cpc = aqua + (white - aqua) * decay;
+        else
+            cpc = violet + (white - violet) * decay;
+
+    }
+}
