@@ -25,7 +25,7 @@ if(ICUBcontrib_FOUND)
     include(ICUBcontribHelpers)
     icubcontrib_set_default_prefix()
 else(ICUBcontrib_FOUND)
-    message("Warning: ICUBcontrib not found. Make Install may not install to the correct location")
+    message("Warning: ICUBcontrib not found. Make Install may not install to the correct location!")
 endif(ICUBcontrib_FOUND)
 
 add_subdirectory(libraries)
