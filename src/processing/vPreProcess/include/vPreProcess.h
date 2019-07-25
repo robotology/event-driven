@@ -40,6 +40,8 @@ private:
     ev::vWritePort outPortCamRight;
     ev::vWritePort outPortSkin;
     ev::vWritePort outPortSkinSamples;
+    ev::vWritePort out_port_aps_left;
+    ev::vWritePort out_port_aps_right;
 
     //parameters
     std::string name;

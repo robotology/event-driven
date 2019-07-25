@@ -75,9 +75,6 @@ unsigned int packetSize(const std::string &type);
 /// \brief camera values for stereo set-up
 enum { VLEFT = 0, VRIGHT = 1 } ;
 
-
-
-
 //event declarations
 /// \brief base event class which defines the time the event occurs
 class vEvent

@@ -58,6 +58,8 @@ vPreProcess::vPreProcess(): name("/vPreProcess")
     outPortCamRight.setWriteType(AE::tag);
     outPortSkin.setWriteType(SkinEvent::tag);
     outPortSkinSamples.setWriteType(SkinSample::tag);
+    out_port_aps_left.setWriteType(AE::tag);
+    out_port_aps_right.setWriteType(AE::tag);
 }
 
 
@@ -68,6 +70,8 @@ vPreProcess::~vPreProcess()
     outPortCamRight.close();
     outPortSkin.close();
     outPortSkinSamples.close();
+    out_port_aps_left.close();
+    out_port_aps_right.close();
 }
 
 bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
@@ -173,8 +177,14 @@ bool vPreProcess::threadInit()
             return false;
         if(!outPortCamRight.open(getName() + "/right:o"))
             return false;
+        if(!out_port_aps_left.open(getName() + "/aps_left:o"))
+            return false;
+        if(!out_port_aps_right.open(getName() + "/aps_right:o"))
+            return false;
     } else {
         if(!outPortCamLeft.open(getName() + "/AE:o"))
+            return false;
+        if(!out_port_aps_left.open(getName() + "/APS:o"))
             return false;
     }
     if(!outPortSkin.open(getName() + "/skin:o"))
@@ -265,6 +275,7 @@ void vPreProcess::run()
         std::deque<AE> qleft, qright;
         std::deque<int32_t> qskin;
         std::deque<int32_t> qskinsamples;
+        std::deque<AE> qleft_aps, qright_aps;
 
         const std::vector<int32_t> *q = inPort.read(zynq_stamp);
         if(!q) break;
@@ -314,8 +325,8 @@ void vPreProcess::run()
                 if(flipx) v.x = resmod.width - v.x;
                 if(flipy) v.y = resmod.height - v.y;
 
-                //salt and pepper filter
-                if(apply_filter && !thefilter.check(v.x, v.y, v.polarity, v.channel, v.stamp)) {
+                //salt and pepper filter (only to TD events)
+                if(apply_filter && !v.type && !thefilter.check(v.x, v.y, v.polarity, v.channel, v.stamp)) {
                     v_dropped++;
                     continue;
                 }
@@ -343,9 +354,15 @@ void vPreProcess::run()
 
                 if(split && v.channel)
                 {
-                    qright.push_back(v);
-                }   else {
-                    qleft.push_back(v);
+                    if(v.type)
+                        qright_aps.push_back(v);
+                    else
+                        qright.push_back(v);
+                } else {
+                    if(v.type)
+                        qleft_aps.push_back(v);
+                    else
+                        qleft.push_back(v);
                 }
             }
 
@@ -397,6 +414,12 @@ void vPreProcess::run()
         }
         if(qskinsamples.size()) {
             outPortSkinSamples.write(qskinsamples, zynq_stamp);
+        }
+        if(qleft_aps.size()) {
+            out_port_aps_left.write(qleft_aps, zynq_stamp);
+        }
+        if(qright_aps.size()) {
+            out_port_aps_right.write(qright_aps, zynq_stamp);
         }
     }
 }

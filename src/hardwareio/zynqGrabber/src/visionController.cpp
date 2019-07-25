@@ -41,6 +41,7 @@ vVisionCtrl::vVisionCtrl(std::string deviceName, unsigned char i2cAddress)
     fpgaStat.crcErr        = false;
 
     iBias = false;
+    aps = false;
 
 }
 
@@ -154,6 +155,10 @@ bool vVisionCtrl::configureRegisters()
 
     // --- configure Source Destination Control --- //
     valReg[0] =  TD_APS_CTRL;  // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
+    if(aps) {
+        std::cout << "APS events enabled";
+        valReg[0] |= APS_CTRL;
+    }
     valReg[1] = SRC_CTRL;   // Flush FIFOs = 0, Ignore FIFO Full = 0, PAER En = 0, SAER En = 1, GTP En = 0, Sel DEST = 01 (HSSAER)
     valReg[2] = 0;      // reserved
     valReg[3] = 0;      // reserved
@@ -168,10 +173,10 @@ bool vVisionCtrl::configureRegisters()
     if(i2cWrite(VSCTRL_HSSAER_CNFG_ADDR, valReg, 4) < 0) return false;
 
     // --- configure GPO register --- //
-    valReg[0] = 0x2;
-    valReg[1] = 0x4;
-    valReg[2] = 0x0;
-    valReg[3] = 0x0;
+    valReg[0] = 0x00;// 0x2;
+    valReg[1] = 0x00; //0x4;
+    valReg[2] = 0x00;
+    valReg[3] = 0x00;
     if(i2cWrite(VSCTRL_GPO_ADDR, valReg, 4) < 0) return false;
 
     return true;
@@ -206,6 +211,23 @@ unsigned int vVisionCtrl::getBias(std::string biasName)
 void vVisionCtrl::useCurrentBias(bool flag)
 {
     iBias = flag;
+}
+
+void vVisionCtrl::turnOnAPS(bool flag)
+{
+    aps = flag;
+}
+
+bool vVisionCtrl::activateAPSShutter()
+{
+    unsigned char valReg[4];
+    valReg[0] = 0x00;
+    valReg[1] = 0x20;
+    valReg[2] = 0x00;
+    valReg[3] = 0x00;
+    if(i2cWrite(VSCTRL_GPO_ADDR, valReg, 4) < 0)
+        return false;
+    return true;
 }
 
 bool vVisionCtrl::configureBiases(){
