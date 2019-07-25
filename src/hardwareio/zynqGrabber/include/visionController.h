@@ -77,6 +77,7 @@ public:
     unsigned int getBias(std::string biasName);
     void useCurrentBias(bool flag = true);
     void turnOnAPS(bool flag = true);
+    bool activateAPSShutter();
 
     //CONNECTION
     bool connect(void);
