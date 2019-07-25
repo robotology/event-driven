@@ -1,3 +1,21 @@
+/*
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "iCub/eventdriven/vCodec.h"
 #include "iCub/eventdriven/vtsHelper.h"
 
@@ -30,29 +48,31 @@ event<> FlowEvent::clone()
 void FlowEvent::encode(yarp::os::Bottle &b) const
 {
     AddressEvent::encode(b);
-    b.addInt(*(int*)(&vx));
-    b.addInt(*(int*)(&vy));
+    b.addInt32(_fei[0]);
+    b.addInt32(_fei[1]);
 }
 
-void FlowEvent::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
+void FlowEvent::encode(std::vector<int32_t> &b, unsigned int &pos) const
 {
     AddressEvent::encode(b, pos);
-    b[pos++] = (*(int*)(&vx));
-    b[pos++] = (*(int*)(&vy));
+    b[pos++] = _fei[0];
+    b[pos++] = _fei[1];
 }
 
-bool FlowEvent::decode(const yarp::os::Bottle &packet, int &pos)
+void FlowEvent::decode(const int32_t *&data)
+{
+    AddressEvent::decode(data);
+    _fei[0]=*(data++);
+    _fei[1]=*(data++);
+}
+
+bool FlowEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     // check length
-    if (AddressEvent::decode(packet, pos) &&
-            pos + 2 <= packet.size())
+    if (AddressEvent::decode(packet, pos) && pos + 2 <= packet.size())
     {
-        int word1=packet.get(pos).asInt();
-        vx=*(float*)(&word1);
-        int word2=packet.get(pos+1).asInt();
-        vy=*(float*)(&word2);
-
-        pos+=2;
+        _fei[0] = packet.get(pos++).asInt();
+        _fei[1] = packet.get(pos++).asInt();
         return true;
     }
     return false;

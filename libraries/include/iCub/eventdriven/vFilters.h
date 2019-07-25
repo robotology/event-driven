@@ -1,23 +1,26 @@
 /*
- * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
-*/
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef __VFILTER__
 #define __VFILTER__
 
 #include <yarp/sig/Image.h>
+#include <iCub/eventdriven/vtsHelper.h>
 
 namespace ev {
 
@@ -26,43 +29,64 @@ class vNoiseFilter
 {
 private:
 
-    int Tsize;
-    int Ssize;
+    bool x_sfilter;
+    bool x_tfilter;
+
+    int t_sfilter;
+    int s_sfilter;
+    int t_tfilter;
 
     yarp::sig::ImageOf <yarp::sig::PixelInt> TSleftL;
     yarp::sig::ImageOf <yarp::sig::PixelInt> TSleftH;
     yarp::sig::ImageOf <yarp::sig::PixelInt> TSrightL;
     yarp::sig::ImageOf <yarp::sig::PixelInt> TSrightH;
 
+    resolution res;
+
 public:
 
     /// \brief constructor
-    vNoiseFilter() : Tsize(0), Ssize(0) {}
+    vNoiseFilter() : x_sfilter(false), x_tfilter(false), t_sfilter(0),
+        s_sfilter(0), t_tfilter(0) {}
 
     /// \brief initialise the sensor size and the filter parameters.
-    void initialise(double width, double height, int Tsize, unsigned int Ssize)
+    void initialise(unsigned int width, unsigned int height)
     {
-        TSleftL.resize(width + 2 * Ssize, height + 2 * Ssize);
-        TSleftH.resize(width + 2 * Ssize, height + 2 * Ssize);
-        TSrightL.resize(width + 2 * Ssize, height + 2 * Ssize);
-        TSrightH.resize(width + 2 * Ssize, height + 2 * Ssize);
+        res.height = height;
+        res.width = width;
+
+        TSleftL.resize(width, height);
+        TSleftH.resize(width, height);
+        TSrightL.resize(width, height);
+        TSrightH.resize(width, height);
 
         TSleftL.zero();
         TSleftH.zero();
         TSrightL.zero();
         TSrightH.zero();
 
-        this->Tsize = Tsize;
-        this->Ssize = Ssize;
+
+    }
+
+    void use_temporal_filter(int t_param)
+    {
+        x_tfilter = true;
+        t_tfilter = t_param;
+    }
+
+    void use_spatial_filter(int t_param, unsigned int s_param)
+    {
+        x_sfilter = true;
+        t_sfilter = t_param;
+        s_sfilter = s_param;
     }
 
     /// \brief classifies the event as noise or signal
     /// \returns false if the event is noise
     bool check(int x, int y, int p, int c, int ts)
     {
-        if(!Ssize) return false;
 
-        yarp::sig::ImageOf<yarp::sig::PixelInt> *active = 0;
+        yarp::sig::ImageOf<yarp::sig::PixelInt> *active = nullptr;
         if(c == 0) {
             if(p == 0) {
                 active = &TSleftL;
@@ -76,24 +100,37 @@ public:
                 active = &TSrightH;
             }
         }
-        if(!active) return false;
 
-        x += Ssize;
-        y += Ssize;
+        auto add = true;
 
+        if(x_tfilter) {
+            int dt = ts - (*active)(x, y);
+            if(dt < 0)
+                dt += vtsHelper::max_stamp;
+            if(dt < t_tfilter)
+                return false;
+        }
 
-        bool add = false;
         (*active)(x, y) = ts;
-        for(int xi = x - Ssize; xi <= x + Ssize; xi++) {
-            for(int yi = y - Ssize; yi <= y + Ssize; yi++) {
-                int dt = ts - (*active)(xi, yi);
-                if(dt < 0) {
-                    dt += vtsHelper::max_stamp;
-                    (*active)(xi, yi) -= vtsHelper::max_stamp;
-                }
-                if(dt && dt < Tsize) {
-                    add = true;
-                    break;
+
+        if(x_sfilter) {
+            add = false;
+            auto xl = std::max(x-s_sfilter, 0);
+            auto xh = std::min(x+s_sfilter+1, (int)(res.width)); //+1 becuase I use < sign
+            auto yl = std::max(y-s_sfilter, 0);
+            auto yh = std::min(y+s_sfilter+1, (int)(res.height)); //+1 becuase I use < sign
+
+            for(auto xi = xl; xi < xh; ++xi) {
+                for(auto yi = yl; yi < yh; ++yi) {
+                    int dt = ts - (*active)(xi, yi);
+                    if(dt < 0) {
+                        dt += vtsHelper::max_stamp;
+                        (*active)(xi, yi) -= vtsHelper::max_stamp;
+                    }
+                    if(dt && dt < t_sfilter) {
+                        add = true;
+                        break;
+                    }
                 }
             }
         }

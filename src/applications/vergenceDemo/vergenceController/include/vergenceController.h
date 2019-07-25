@@ -21,12 +21,13 @@
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
 #include <iCub/eventdriven/all.h>
+#include <iCub/eventdriven/deprecated.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/GazeControl.h>
 #include <yarp/dev/IEncoders.h>
 #include <yarp/dev/IPositionControl.h>
 #include <yarp/dev/IVelocityControl.h>
-#include <yarp/dev/IControlMode2.h>
+#include <yarp/dev/IControlMode.h>
 #include "gaborfilters.h"
 
 class vVergenceManager : public yarp::os::BufferedPort<ev::vBottle>
@@ -59,7 +60,7 @@ private:
     yarp::dev::IEncoders *enccontrol;
     yarp::dev::IPositionControl *poscontrol;
     yarp::dev::IVelocityControl *velcontrol;
-    yarp::dev::IControlMode2 *controlmode;
+    yarp::dev::IControlMode *controlmode;
     std::vector<double> encs;
 //    double desiredvergence;
     double currvel;

@@ -1,17 +1,20 @@
 /*
- * Copyright (C) 2017 iCub Facility - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it, chiara.bartolozzi@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *           chiara.bartolozzi@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 /**
@@ -22,6 +25,11 @@
 #include <zynqGrabberModule.h>
 #include <fstream>
 #include <ctime>
+#include <string>
+
+using namespace ev;
+using namespace yarp::os;
+using std::string;
 
 int main(int argc, char * argv[])
 {
@@ -46,20 +54,14 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     std::string moduleName = rf.check("name", yarp::os::Value("/zynqGrabber")).asString();
     setName(moduleName.c_str());
-    bool errorcheck = rf.check("errorcheck") && rf.check("errorcheck", yarp::os::Value(true)).asBool();
     bool verbose = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
     bool biaswrite = rf.check("biaswrite") && rf.check("biaswrite", yarp::os::Value(true)).asBool();
-    bool jumpcheck = rf.check("jumpcheck") && rf.check("jumpcheck", yarp::os::Value(true)).asBool();
     bool iBias = rf.check("iBias") && rf.check("iBias", yarp::os::Value(true)).asBool();
     bool useAPS = rf.check("aps") && rf.check("aps", yarp::os::Value(true)).asBool();
     std::string logfile = rf.check("logfile", yarp::os::Value("/home/icub/zynqGrabberlog.txt")).asString();
 
     time_t t = std::time(0);   // get date now
     struct tm * curdate = std::localtime(&t);
-//        cout << (now->tm_year + 1900) << '-'
-//             << (now->tm_mon + 1) << '-'
-//             <<  now->tm_mday
-//             << endl;
     std::ofstream logwriter;
     logwriter.open(logfile.c_str(), std::ios_base::app);
     bool lwo = logwriter.is_open();
@@ -67,72 +69,113 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     if(lwo) logwriter << " " << curdate->tm_hour << ":" << curdate->tm_min << ":" << curdate->tm_sec << std::endl;
 
 
-    if(rf.check("controllerDevice")) {
+    if(rf.check("visCtrlLeft")) {
 
-        std::string controllerDevice = rf.find("controllerDevice").asString();
+        std::string visCtrlLeft = rf.find("visCtrlLeft").asString();
 
-        vsctrlMngLeft = vDevCtrl(controllerDevice, I2C_ADDRESS_LEFT);
-        vsctrlMngRight = vDevCtrl(controllerDevice, I2C_ADDRESS_RIGHT);
-
+        vsctrlMngLeft = vVisionCtrl(visCtrlLeft, I2C_ADDRESS_LEFT);
         vsctrlMngLeft.useCurrentBias(iBias);
-        vsctrlMngRight.useCurrentBias(iBias);
 
         //bias values
         yarp::os::Bottle biaslistl = rf.findGroup("ATIS_BIAS_LEFT");
-        yarp::os::Bottle biaslistr = rf.findGroup("ATIS_BIAS_RIGHT");
 
-        bool con_success = false;
-
-        if(!vsctrlMngLeft.setBias(biaslistl) || !vsctrlMngRight.setBias(biaslistr) ) {
+        if(!vsctrlMngLeft.setBias(biaslistl)) {
             std::cerr << "Bias file required to run zynqGrabber" << std::endl;
             if(lwo) logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
             return false;
         }
         std::cout << std::endl;
         if(!vsctrlMngLeft.connect())
+        {
             std::cerr << "Could not connect to vision controller left" << std::endl;
-        else
-            vsctrlMngLeft.turnOnAPS(useAPS);
-            if(!vsctrlMngLeft.configure(verbose)) {
-                std::cerr << "Could not configure left camera" << std::endl;
-                if(lwo) logwriter << "Could not configure left camera" << std::endl;
-            } else {
-                con_success = true;
-            }
-
-        std::cout << std::endl;
-        if(!vsctrlMngRight.connect())
-            std::cerr << "Could not connect to vision controller right" << std::endl;
-        else {
-            vsctrlMngRight.turnOnAPS(useAPS);
-            if(!vsctrlMngRight.configure(verbose)) {
-                std::cerr << "Could not configure right camera" << std::endl;
-                if(lwo) logwriter << "Could not configure right camera" << std::endl;
-            } else {
-                con_success = true;
-            }
-        }
-        std::cout << std::endl;
-
-        if(!con_success) {
-            std::cerr << "A configuration device was specified but could not be connected" << std::endl;
-            if(lwo) logwriter << "Could not connect to configuration device" << std::endl;
+            if(lwo) logwriter << "Could not connect to left camera" << std::endl;
             return false;
-        } else {
-            if(lwo) logwriter << "Connected to and configured at least one device" << std::endl;
         }
+	vsctrlMngLeft.turnOnAPS(useAPS);
+        if(!vsctrlMngLeft.configure(verbose)) {
+            std::cerr << "Could not configure left camera" << std::endl;
+            if(lwo) logwriter << "Could not configure left camera" << std::endl;
+            return false;
+        }
+        if(lwo) logwriter << "Connected to and configured left camera" << std::endl;
 
     }
 
-    bool yarppresent = yarp::os::Network::checkNetwork();
+
+    if(rf.check("visCtrlRight")) {
+
+        std::string visCtrlRight = rf.find("visCtrlRight").asString();
+
+        vsctrlMngRight = vVisionCtrl(visCtrlRight, I2C_ADDRESS_RIGHT);
+        vsctrlMngRight.useCurrentBias(iBias);
+
+        //bias values
+        yarp::os::Bottle biaslistr = rf.findGroup("ATIS_BIAS_RIGHT");
+
+        if(!vsctrlMngRight.setBias(biaslistr)) {
+            std::cerr << "Bias file required to run zynqGrabber" << std::endl;
+            if(lwo) logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
+            return false;
+        }
+        std::cout << std::endl;
+        if(!vsctrlMngRight.connect())
+        {
+            std::cerr << "Could not connect to vision controller Right" << std::endl;
+            if(lwo) logwriter << "Could not connect to Right camera" << std::endl;
+            return false;
+        }
+        vsctrlMngRight.turnOnAPS(useAPS);
+        if(!vsctrlMngRight.configure(verbose)) {
+            std::cerr << "Could not configure Right camera" << std::endl;
+            if(lwo) logwriter << "Could not configure Right camera" << std::endl;
+            return false;
+        }
+        if(lwo) logwriter << "Connected to and configured Right camera" << std::endl;
+
+    }
+
+
+    if(rf.check("skinCtrl")) {
+
+        skctrlMng = vSkinCtrl(rf.find("skinCtrl").asString(), I2C_ADDRESS_AUX);
+
+        if(!skctrlMng.connect())
+        {
+            yError() << "Could not connect to skin controller";
+            if(lwo) logwriter << "Could not connect to skin" << std::endl;
+            return false;
+        }
+
+        if(!skctrlMng.configure(verbose)) {
+            yError() << "Could not set skin defaults";
+            if(lwo) logwriter << "Could not set skin defaults" << std::endl;
+            return false;
+        }
+
+        //config values
+        yarp::os::Bottle &cnfglists = rf.findGroup("SKIN_CNFG");
+        if(cnfglists.isNull()) {
+            yWarning() << "No Skin Parameters Found";
+            if(lwo) logwriter << "No Skin Parameters Found" << std::endl;
+        } else if(!skctrlMng.configureRegisters(cnfglists)) {
+            yError() << "Could not configure ini parameters";
+            if(lwo) logwriter << "Could not configure ini parameters" << std::endl
+                              << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
+            return false;
+        }
+
+        if(lwo) logwriter << "Connected to and configured skin" << std::endl;
+
+    }
+
+    bool yarppresent = yarp::os::Network::checkNetwork(5);
     if(!yarppresent)
         yError() << "Could not connect to YARP network";
 
     if(!yarppresent || biaswrite) {
-        vsctrlMngLeft.disconnect(true);
-        std::cout << "Left camera off" << std::endl;
-        vsctrlMngRight.disconnect(true);
-        std::cout << "Right camera off" << std::endl;
+        vsctrlMngLeft.disconnect(false);
+        vsctrlMngRight.disconnect(false);
+        skctrlMng.disconnect();
         if(lwo) logwriter << "Only writing biases, or YARP not present" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
         return false;
     }
@@ -142,42 +185,31 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     //open rateThread device2yarp
     if(rf.check("dataDevice")) {
 
-        std::string dataDevice = rf.find("dataDevice").asString();
-        int readPacketSize = 8 * rf.check("readPacketSize", yarp::os::Value("512")).asInt();
-        int bufferSize     = 8 * rf.check("bufferSize", yarp::os::Value("5120")).asInt();
-        int maxBottleSize  = 8 * rf.check("maxBottleSize", yarp::os::Value("5120")).asInt();
+        string data_device = rf.find("dataDevice").asString();
+        bool use_spinnaker = rf.check("use_spinnaker") &&
+                rf.check("use_spinnaker", yarp::os::Value(true)).asBool();
+        bool loopback = rf.check("loopback_debug") &&
+                rf.check("loopback_debug", yarp::os::Value(true)).asBool();
 
-        if(!D2Y.initialise(moduleName, errorcheck, dataDevice, bufferSize, readPacketSize, maxBottleSize)) {
-            std::cout << "A data device was specified but could not be initialised" << std::endl;
+        if(!hpu.configureDevice(data_device, use_spinnaker, loopback))
             return false;
-        } else {
-            //see if we want to apply a filter to the events
-            if(rf.check("applyFilter", yarp::os::Value("false")).asBool()) {
 
-                yarp::os::Bottle filp = rf.findGroup("FILTER_PARAMS");
-                if(!filp.isNull()) {
-                    yInfo() << "APPLYING FILTER";
-                    std::cout << filp.toString() << std::endl;
+        bool read_flag = rf.check("hpu_read") &&
+                rf.check("hpu_read", yarp::os::Value(true)).asBool();
+        bool write_flag = rf.check("hpu_write") &&
+                rf.check("hpu_write", yarp::os::Value(true)).asBool();
+        int packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt();
 
-                    D2Y.initialiseFilter(true,
-                                         filp.find("width").asInt(),
-                                         filp.find("height").asInt(),
-                                         filp.find("tsize").asInt(),
-                                         filp.find("ssize").asInt());
-                }
-            }
+        if(read_flag)
+            if(!hpu.openReadPort(moduleName, packet_size))
+                return false;
 
-            if(jumpcheck) {
-                yInfo() << "CHECKING FOR TIMESTAMP JUMPS";
-                D2Y.checkForTSJumps();
-            }
-            D2Y.start();
-        }
+        if(write_flag)
+            if(!hpu.openWritePort(moduleName))
+                return false;
 
-        //if(!Y2D.initialise(moduleName, dataDevice)) {
-        //    std::cerr << "Could not open YARP ports for Y2D" << std::endl;
-        //    return false;
-        //}
+        yInfo() << "Starting HPU read/write threads";
+        hpu.start();
     }
 
     if (!handlerPort.open(moduleName)) {
@@ -192,13 +224,12 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 bool zynqGrabberModule::interruptModule() {
     std::cout << "breaking YARP connections.. ";
     handlerPort.close();        // rpc of the RF module
-    Y2D.close();
-    D2Y.stop();                // bufferedport from yarp to device
+    hpu.stop();
     std::cout << "done" << std::endl;
 
     std::cout << "closing device drivers.. ";
-    vsctrlMngLeft.disconnect(true);
-    vsctrlMngRight.disconnect(true);
+    vsctrlMngLeft.disconnect(false);
+    vsctrlMngRight.disconnect(false);
     std::cout << "done" << std::endl;
     return true;
 }
@@ -451,9 +482,20 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
 //    }
 //        break;
 
-
+    case COMMAND_VOCAB_SETSKIN:
+        rec = true;
+    {
+        if(!skctrlMng.configureRegisters(command.tail()))
+        {
+            std::cout << "unable to set skin register " << command.get(1).asString() << std::endl;
+            ok = false;
+        } else {
+            ok = true;
+        }
     }
+        break;
 
+}
     if (!rec)
         ok = RFModule::respond(command,reply);
 

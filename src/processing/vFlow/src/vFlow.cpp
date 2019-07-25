@@ -1,23 +1,24 @@
 /*
- * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "vFlow.h"
 #include <yarp/os/all.h>
 
-using yarp::math::operator *;
 using yarp::math::outerProduct;
 
 using namespace ev;
@@ -265,7 +266,7 @@ int vFlowManager::computeGrads(yarp::sig::Matrix &A, yarp::sig::Vector &Y,
 
     double dtdp = sqrt(pow(abc(0), 2.0) + pow(abc(1), 2.0));
     int inliers = 0;
-    for(int i = 0; i < A.rows(); i++) {
+    for(unsigned int i = 0; i < A.rows(); i++) {
         //so I think that abc(0) and abc(1) are already scaled to the magnitude
         //of the slope of the plane. E.g. when only using abc(0) and abc(1) and
         //fitting a 3-point plane we always get 0 error. Therefore the differ-

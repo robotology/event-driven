@@ -1,17 +1,19 @@
 /*
- * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "vCircleModule.h"
@@ -199,7 +201,7 @@ void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, 
         for(int x = -cr; x <= cr; x++) {
             if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - (double)cr) > 0.8) continue;
             int px = cx + x; int py = cy + y;
-            if(py < 0 || py > image.height()-1 || px < 0 || px > image.width()-1) continue;
+            if(py < 0 || py > (int)image.height()-1 || px < 0 || px > (int)image.width()-1) continue;
             image(py, image.width() - px) = yarp::sig::PixelBgr(0, 0, 255);
 
         }
@@ -357,7 +359,7 @@ void vCircleReader::onRead(ev::vBottle &inBot)
     if(scopeOut.getOutputCount()) {
         yarp::os::Bottle &scopebottle = scopeOut.prepare();
         scopebottle.clear();
-        scopebottle.add(st.getCount() - pstampcounter);
+        scopebottle.addInt(st.getCount() - pstampcounter);
         scopeOut.setEnvelope(st);
         scopeOut.write();
     }

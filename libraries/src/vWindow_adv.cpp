@@ -1,3 +1,21 @@
+/*
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "iCub/eventdriven/vWindow_adv.h"
 #include <math.h>
 
@@ -244,6 +262,12 @@ event<> vSurface2::getMostRecent()
 }
 
 /******************************************************************************/
+temporalSurface::temporalSurface(int width, int height, int duration) : vSurface2(width, height)
+{
+    //whichever is smaller 2 seconds or ~1/2 of the maximum window
+    this->duration = std::min(duration, (int)(vtsHelper::max_stamp * 0.45));
+}
+
 vQueue temporalSurface::removeEvents(event<> toAdd)
 {
     vQueue removed;
@@ -795,6 +819,49 @@ vQueue historicalSurface::getSurface(int queryTime, int queryWindow, int xl, int
         }
     }
     return qret;
+}
+
+void historicalSurface::getSurfaceN(ev::vQueue &qret, int queryTime, int numEvents, int d)
+{
+    if(q.empty()) return; // vQueue();
+
+    auto v = is_event<AE>(q.back());
+    return getSurfaceN(qret, queryTime, numEvents, d, v->x, v->y);
+}
+
+void historicalSurface::getSurfaceN(ev::vQueue &qret, int queryTime, int numEvents, int d, int x, int y)
+{
+    if(q.empty()) return; // vQueue();
+    return getSurfaceN(qret, queryTime, numEvents, x - d, x + d, y - d, y + d);
+}
+
+void historicalSurface::getSurfaceN(ev::vQueue &qret, int queryTime, int numEvents, int xl, int xh, int yl, int yh)
+{
+    if(q.empty()) return; // vQueue();
+
+//    vQueue qret;
+    int ctime = q.back()->stamp;
+    int countEvents = 0;
+    surface.zero();
+
+    for(vQueue::reverse_iterator qi = q.rbegin(); qi != q.rend(); qi++) {
+        auto v = is_event<AE>(*qi);
+
+        if(surface(v->x, v->y)) continue;
+
+        int cdeltat = ctime - v->stamp;
+        if(cdeltat < 0) cdeltat += vtsHelper::max_stamp;
+        if(cdeltat < queryTime) continue;
+
+        surface(v->x, v->y) = 1;
+        if(v->x >= xl && v->x <= xh && v->y >= yl && v->y <= yh) {
+            qret.push_back(*qi);
+            countEvents++;
+        }
+
+        if(countEvents > numEvents) break;
+    }
+//    return qret;
 }
 
 

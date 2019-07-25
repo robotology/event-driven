@@ -1,47 +1,40 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<portscope rows="2" columns="1" carrier="udp">
-    <plot gridx="0"
-          gridy="0"
-          hspan="1"
-          vspan="1"
-          size="201"
-          minval="0"
-          title="[Black] Left Event Rate (kHz) [Red] Filter Rate (Hz)"
-          maxval="3200"
-          bgcolor="#EEFFEE">
-        <graph remote="/vpfL/scope:o"
-               index="1"
-               title="Filter Rate (Hz)"
-               color="Red"
-               type="lines"
-               size="1" />
-        <graph remote="/vpfL/scope:o"
-               index="3"
-               title="Event Rate (kHz)"
-               color="Black"
-               type="lines"
-               size="1" />
+<portscope rows="4" columns="1" carrier="udp">
+
+    <plot
+        gridx="0" gridy="0" hspan="1" vspan="1" size="51" bgcolor="#EEFFEE"
+        title="[Left Camera] CPU Usage (%)"
+        minval="0.0" maxval="100.0" >
+        <graph
+            remote="/vpfL/scope:o"  index="8"
+            size="2"  color="Black" type="lines" />
     </plot>
-    <plot gridx="0"
-          gridy="1"
-          hspan="1"
-          vspan="1"
-          size="201"
-          title="[Green] Temp. Win. {k} (ms) [Red] Filter Update {m} (Hz)"
-          minval="0"
-          maxval="100"
-          bgcolor="#EEFFEE">
-        <graph remote="/vpfL/scope:o"
-               index="2"
-               title="Temporal Window k (ms)"
-               color="Green"
-               type="lines"
-               size="1" />
-        <graph remote="/vpfL/scope:o"
-               index="0"
-               title="Filter Period m (ms)"
-               color="Red"
-               type="lines"
-               size="1" />
+
+    <plot
+        gridx="0" gridy="1" hspan="1" vspan="1" size="51" bgcolor="#EEFFEE"
+        title="Event Rate (kHz)"
+        minval="0.0" maxval="2000" >
+        <graph
+            remote="/vpfL/scope:o"  index="3"
+            size="2"  color="Orange" type="lines" />
     </plot>
+
+    <plot
+        gridx="0" gridy="2" hspan="1" vspan="1" size="51" bgcolor="#EEFFEE"
+        title="Filter Rate (Hz)"
+        minval="0.0" maxval="2000" >
+        <graph
+            remote="/vpfL/scope:o"  index="1"
+            size="2"  color="Blue" type="lines" />
+    </plot>
+
+    <plot
+        gridx="0" gridy="3" hspan="1" vspan="1" size="51" bgcolor="#EEFFEE"
+        title="Latency (ms)"
+        minval="0.0" maxval="200" >
+        <graph
+            remote="/vpfL/scope:o"  index="0"
+            size="2"  color="Red" type="lines" />
+    </plot>
+
 </portscope>

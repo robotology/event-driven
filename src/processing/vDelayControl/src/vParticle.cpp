@@ -1,3 +1,21 @@
+/*
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "vParticle.h"
 #include <cmath>
 #include <limits>
@@ -31,34 +49,31 @@ double generateGaussianNoise(double mu, double sigma)
     return z0 * sigma + mu;
 }
 
-void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q, int currenttime, double tw, bool flip) {
+void drawEvents(yarp::sig::ImageOf< yarp::sig::PixelBgr> &image, ev::vQueue &q,
+                int offsetx) {
 
     if(q.empty()) return;
 
-    for(unsigned int i = 0; i < q.size(); i++) {
-        if(tw) {
-            double dt = currenttime - q[i]->stamp;
-            if(dt < 0) dt += ev::vtsHelper::max_stamp;
-            if(dt > tw) break;
-        }
-
+    //draw oldest first
+    for(int i = (int)q.size()-1; i >= 0; i--) {
+        double p = (double)i / (double)q.size();
         auto v = is_event<AE>(q[i]);
-        if(flip)
-            image(image.width() - 1 - v->x, image.height() - 1 - v->y) = yarp::sig::PixelBgr(0, 255, 0);
-        else
-            image(v->x, v->y) = yarp::sig::PixelBgr(0, 255, 0);
-
+        image(v->x + offsetx, v->y) =
+                yarp::sig::PixelBgr(255 * (1-p), 0, 255);
     }
 }
 
-void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy, int cr, int id)
+void drawcircle(yarp::sig::ImageOf<yarp::sig::PixelBgr> &image, int cx, int cy,
+                int cr, int id)
 {
 
     for(int y = -cr; y <= cr; y++) {
         for(int x = -cr; x <= cr; x++) {
-            if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - (double)cr) > 0.8) continue;
+            if(fabs(sqrt(pow(x, 2.0) + pow(y, 2.0)) - (double)cr) > 0.8)
+                continue;
             int px = cx + x; int py = cy + y;
-            if(py < 0 || py > image.height()-1 || px < 0 || px > image.width()-1) continue;
+            if(py<0 || py>(int)image.height()-1 || px<0 || px>(int)image.width()-1)
+                continue;
             switch(id) {
             case(0): //green
                 image(px, py) = yarp::sig::PixelBgr(0, 255, 0);
@@ -132,32 +147,36 @@ vParticle::vParticle()
     predlike = 1.0;
     minlikelihood = 20.0;
     inlierParameter = 1.5;
-    outlierParameter = 3.0;
     variance = 0.5;
-    stamp = 0;
-    tw = 0;
+    nw = 0;
     inlierCount = 0;
-    maxtw = 0;
     outlierCount = 0;
     pcb = 0;
     angbuckets = 128;
+    negativeBias = 2.0;
     angdist.resize(angbuckets);
     negdist.resize(angbuckets);
     constrain = false;
 }
 
 void vParticle::initialiseParameters(int id, double minLikelihood,
-                                     double outlierParam, double inlierParam,
+                                     double negativeBias, double inlierParam,
                                      double variance, int angbuckets)
 {
     this->id = id;
-    this->minlikelihood = minLikelihood;
-    this->outlierParameter = outlierParam;
+    this->negativeBias = negativeBias;
     this->inlierParameter = inlierParam;
     this->variance = variance;
     this->angbuckets = angbuckets;
     angdist.resize(angbuckets);
     negdist.resize(angbuckets);
+
+    updateMinLikelihood(minLikelihood);
+}
+
+void vParticle::updateMinLikelihood(double value)
+{
+    minlikelihood = value * angbuckets;
 }
 
 vParticle& vParticle::operator=(const vParticle &rhs)
@@ -165,28 +184,20 @@ vParticle& vParticle::operator=(const vParticle &rhs)
     this->x = rhs.x;
     this->y = rhs.y;
     this->r = rhs.r;
-    this->tw = rhs.tw;
     this->weight = rhs.weight;
-    this->stamp = rhs.stamp;
     return *this;
 }
 
-void vParticle::initialiseState(double x, double y, double r, double tw)
+void vParticle::initialiseState(double x, double y, double r)
 {
     this->x = x;
     this->y = y;
     this->r = r;
-    this->tw = tw;
 }
 
-void vParticle::randomise(int x, int y, int r, int tw)
+void vParticle::randomise(int x, int y, int r)
 {
-    initialiseState(rand()%x, rand()%y, rand()%r, rand()%tw);
-}
-
-void vParticle::resetStamp(unsigned long int value)
-{
-    stamp = value;
+    initialiseState(rand()%x, rand()%y, rand()%r);
 }
 
 void vParticle::resetWeight(double value)
@@ -197,12 +208,22 @@ void vParticle::resetWeight(double value)
 void vParticle::resetRadius(double value)
 {
     this->r = value;
-    resetArea();
+    //resetArea();
+}
+
+void vParticle::setNegativeBias(double value)
+{
+    negativeBias = value;
+}
+
+void vParticle::setInlierParameter(double value)
+{
+    inlierParameter = value;
 }
 
 void vParticle::resetArea()
 {
-    negscaler = 2.0 * angbuckets / (M_PI * r * r);
+    negativeScaler = negativeBias * angbuckets / (M_PI * r * r);
 }
 
 void vParticle::predict(double sigma)
@@ -210,7 +231,7 @@ void vParticle::predict(double sigma)
     //tw += 12500;
     x = generateGaussianNoise(x, sigma);
     y = generateGaussianNoise(y, sigma);
-    r = generateGaussianNoise(r, sigma * 0.4);
+    r = generateGaussianNoise(r, sigma * 0.2);
 
     if(constrain) checkConstraints();
 }
@@ -250,7 +271,7 @@ void vParticle::updateWeightSync(double normval)
 void vParticlefilter::initialise(int width, int height, int nparticles,
                                  int bins, bool adaptive, int nthreads,
                                  double minlikelihood, double inlierThresh,
-                                 double randoms)
+                                 double randoms, double negativeBias)
 {
     res.width = width;
     res.height = height;
@@ -259,8 +280,8 @@ void vParticlefilter::initialise(int width, int height, int nparticles,
     this->adaptive = adaptive;
     this->nthreads = nthreads;
     this->nRandoms = randoms + 1.0;
-    rbound_min = res.width/16;
-    rbound_max = res.width/6;
+    rbound_min = res.width/18;
+    rbound_max = res.width/5;
     pcb.configure(res.height, res.width, rbound_max, bins);
     setSeed(res.width/2.0, res.height/2.0);
 
@@ -287,7 +308,7 @@ void vParticlefilter::initialise(int width, int height, int nparticles,
     p.resetWeight(1.0/nparticles);
     p.setContraints(0, res.width, 0, res.height, rbound_min, rbound_max);
     for(int i = 0; i < this->nparticles; i++) {
-        p.initialiseParameters(i, minlikelihood, 0, inlierThresh, 0, bins);
+        p.initialiseParameters(i, minlikelihood, negativeBias, inlierThresh, 0, bins);
         ps.push_back(p);
         ps_snap.push_back(p);
     }
@@ -304,15 +325,38 @@ void vParticlefilter::resetToSeed()
 {
     if(seedr) {
         for(int i = 0; i < nparticles; i++) {
-            ps[i].initialiseState(seedx, seedy, seedr, 1.0);
+            ps[i].initialiseState(seedx, seedy, seedr);
         }
     } else {
         for(int i = 0; i < nparticles; i++) {
             ps[i].initialiseState(seedx, seedy,
                                   rbound_min + (rbound_max - rbound_min) *
-                                  ((double)rand()/RAND_MAX), 0);
+                                  ((double)rand()/RAND_MAX));
         }
     }
+}
+
+void vParticlefilter::setMinLikelihood(double value)
+{
+    for(int i = 0; i < nparticles; i++)
+        ps[i].updateMinLikelihood(value);
+}
+
+void vParticlefilter::setInlierParameter(double value)
+{
+    for(int i = 0; i < nparticles; i++)
+        ps[i].setInlierParameter(value);
+}
+
+void vParticlefilter::setNegativeBias(double value)
+{
+    for(int i = 0; i < nparticles; i++)
+        ps[i].setNegativeBias(value);
+}
+
+void vParticlefilter::setAdaptive(bool value)
+{
+    adaptive = value;
 }
 
 void vParticlefilter::performObservation(const vQueue &q)
@@ -322,11 +366,11 @@ void vParticlefilter::performObservation(const vQueue &q)
 
         //START WITHOUT THREAD
         for(int i = 0; i < nparticles; i++) {
-            ps[i].initLikelihood();
+            ps[i].initLikelihood(q.size());
         }
 
         for(int i = 0; i < nparticles; i++) {
-            for(int j = (int)(q.size()-1); j >= 0; j--) {
+            for(int j = 0; j < (int)q.size(); j++) {
                 AE* v = read_as<AE>(q[j]);
                 ps[i].incrementalLikelihood(v->x, v->y, j);
             }
@@ -377,7 +421,7 @@ void vParticlefilter::extractTargetWindow(double &tw)
 
     for(int i = 0; i < nparticles; i++) {
         double w = ps[i].getw();
-        tw += ps[i].gettw() * w;
+        tw += ps[i].getnw() * w;
 
     }
 
@@ -398,7 +442,7 @@ void vParticlefilter::performResample()
         for(int i = 0; i < nparticles; i++) {
             double rn = nRandoms * (double)rand() / RAND_MAX;
             if(rn > 1.0)
-                ps[i].randomise(res.width, res.height, rbound_max, 0.001 * vtsHelper::vtsscaler);
+                ps[i].randomise(res.width, res.height, rbound_max);
             else {
                 int j = 0;
                 for(j = 0; j < nparticles; j++)
@@ -458,16 +502,16 @@ void vPartObsThread::run()
         processing.lock();
         if(isStopping()) return;
 
+        int nw = (*stw).size();
+
         for(int i = pStart; i < pEnd; i++) {
-            (*particles)[i].initLikelihood();
+            (*particles)[i].initLikelihood(nw);
         }
 
         for(int i = pStart; i < pEnd; i++) {
-            for(int j = (int)(stw->size()-1); j >= 0; j--) {
+            for(int j = 0; j < nw; j++) {
                 AE* v = read_as<AE>((*stw)[j]);
                 (*particles)[i].incrementalLikelihood(v->x, v->y, j);
-
-
             }
         }
 

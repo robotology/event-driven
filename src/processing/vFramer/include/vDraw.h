@@ -1,17 +1,22 @@
 /*
- * Copyright (C) 2010 iCub Facility
- * Authors: Arren Glover
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *           valentina.vasco@iit.it
+ *           chiara.bartolozzi@iit.it
+ *           massimiliano.iacono@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifndef __vDraw__
@@ -43,26 +48,24 @@ protected:
 
     int Xlimit;
     int Ylimit;
-    int stagnantCount;
-    int pTS;
-    int clearThreshold;
-    int twindow;
+    unsigned int display_window;
+    unsigned int max_window;
     bool flip;
 
-    int checkStagnancy(const ev::vQueue &eSet) {
-        if(!eSet.size()) return 0;
-        if(pTS == eSet.back()->stamp)
-            stagnantCount++;
-        else
-            stagnantCount = 0;
-        pTS = eSet.back()->stamp;
-        return stagnantCount;
-    }
+    cv::Vec3b violet {151, 174, 6};
+    cv::Vec3b aqua  {180, 10, 155};
+    cv::Vec3b orange {9, 111, 255};
+    cv::Vec3b lime   {9, 250, 222};
+    cv::Vec3b white{255, 255, 255};
 
 public:
 
-    vDraw() : Xlimit(128), Ylimit(128), stagnantCount(0), pTS(0),
-            clearThreshold(30), twindow(781250/2), flip(false) {}
+    vDraw() : Xlimit(304), Ylimit(240), flip(false)
+    {
+        display_window = 0.1*ev::vtsHelper::vtsscaler;
+        max_window = 0.5*ev::vtsHelper::vtsscaler;
+    }
+
     virtual ~vDraw() {}
 
     ///
@@ -71,15 +74,17 @@ public:
     /// \param Xlimit is the maximum x value (width)
     /// \param Ylimit is the maximium y value (height)
     ///
-    void setLimits(int Xlimit, int Ylimit)
+    void setRetinaLimits(int Xlimit, int Ylimit)
     {
         this->Xlimit = Xlimit;
         this->Ylimit = Ylimit;
     }
 
-    void setWindow(int twindow)
+    void setTemporalLimits(unsigned int display_window,
+                           unsigned int max_window)
     {
-        this->twindow = twindow;
+        this->display_window = display_window;
+        this->max_window = max_window;
     }
 
     void setFlip(bool flip)
@@ -88,6 +93,13 @@ public:
     }
 
     virtual void initialise() {}
+
+    virtual void resetImage(cv::Mat &image)
+    {
+        if(image.empty())
+            image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+        image.setTo(255);
+    }
 
     ///
     /// \brief draw takes an image and overlays the new visualisation textures
@@ -108,6 +120,17 @@ public:
 
 };
 
+class accDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
 class addressDraw : public vDraw {
 
 public:
@@ -119,7 +142,7 @@ public:
 
 };
 
-class flowDraw : public vDraw {
+class grayDraw : public vDraw {
 
 public:
 
@@ -130,7 +153,29 @@ public:
 
 };
 
-class lifeDraw : public vDraw {
+class skinDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class skinsampleDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class flowDraw : public vDraw {
 
 public:
 
@@ -205,16 +250,26 @@ protected:
     double CY, SY;
     double CX, SX;
 
-    int tsscalar;
+    double ts_to_axis;
     int Zlimit;
     int imagewidth;
     int imageheight;
     int imagexshift;
     int imageyshift;
-    int maxdt;
 
     //private functions
-    void pttr(int &x, int &y, int &z);
+    inline void pttr(int &x, int &y, int &z) {
+        // we want a negative rotation around the y axis (yaw)
+        // a positive rotation around the x axis (pitch) (no roll)
+        // the z should always be negative values.
+        // the points need to be shifted across by negligble amount
+        // the points need to be shifted up by (x = max, y = 0, ts = 0 rotation)
+
+        int xmod = x*CY + z*SY + 0.5; // +0.5 rounds rather than floor
+        int ymod = y*CX - SX*(-x*SY + z*CY) + 0.5;
+        int zmod = y*SX + CX*(-x*SY + z*CY) + 0.5;
+        x = xmod; y = ymod; z = zmod;
+    }
 
     //image with warped square drawn
     cv::Mat baseimage;
@@ -252,7 +307,27 @@ public:
 
 };
 
+class overlayStereoDraw : public vDraw {
 
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class saeDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
 
 #endif
 

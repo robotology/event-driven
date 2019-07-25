@@ -1,17 +1,20 @@
 /*
- * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Author: Arren.Glover@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *           massimiliano.iacono@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 // \defgroup RobotIO RobotIO
@@ -24,6 +27,7 @@
 
 #include <yarp/os/all.h>
 #include <iCub/eventdriven/all.h>
+#include <iCub/eventdriven/vBottle.h>
 #include <yarp/dev/all.h>
 #include <yarp/math/Math.h>
 
@@ -82,8 +86,8 @@ private:
     yarp::dev::PolyDriver mdriver;
     yarp::dev::PolyDriver gazeDriver;
     yarp::dev::IGazeControl *gazeControl;
-    yarp::dev::IPositionControl2 *ipos;
-    yarp::dev::IControlMode2     *imod;
+    yarp::dev::IPositionControl *ipos;
+    yarp::dev::IControlMode     *imod;
     int context0;
     std::string robotName;
 

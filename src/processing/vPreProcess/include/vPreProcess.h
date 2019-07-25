@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2011 Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
- * Author: Chiara Bartolozzi
- * email:  chiara.bartolozzi@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 // \defgroup Modules Modules
@@ -24,20 +25,21 @@
 #define __VPREPROCESS__
 
 #include <yarp/os/all.h>
+#include <yarp/sig/all.h>
 #include <iCub/eventdriven/all.h>
-#include <opencv/cv.h>
-using namespace::ev;
+#include <opencv2/opencv.hpp>
 
-class vPreProcess : public yarp::os::Thread
+class vPreProcess : public yarp::os::RFModule, public yarp::os::Thread
 {
 private:
 
     //output port for the vBottle with the new events computed by the module
-    ev::queueAllocator inPort;
-    yarp::os::Port outPort;
-    yarp::os::Port outPort2;
-    yarp::os::Port apsPortOutL;
-    yarp::os::Port apsPortOutR;
+
+    ev::vReadPort < vector<int32_t> > inPort;
+    ev::vWritePort outPortCamLeft;
+    ev::vWritePort outPortCamRight;
+    ev::vWritePort outPortSkin;
+    ev::vWritePort outPortSkinSamples;
 
     //parameters
     std::string name;
@@ -49,11 +51,14 @@ private:
     bool flipy;
 
     //filter class
-    bool pepper;
+    bool apply_filter;
     ev::vNoiseFilter thefilter;
+    int v_total;
+    int v_dropped;
 
     //we store an openCV map to use as a look-up table for the undistortion
     //given the camera parameters provided
+    bool rectify;
     bool undistort;
     cv::Mat leftMap;
     cv::Mat rightMap;
@@ -61,41 +66,34 @@ private:
 
     //output
     bool split;
+    bool use_local_stamp;
+
+    //timing stats
+    std::deque<double> delays;
+    std::deque<double> rates;
+    std::deque<double> intervals;
+    std::deque<double> proc_times;
 
 public:
 
     vPreProcess();
     ~vPreProcess();
 
-    void initBasic(std::string name, int height, int width, bool precheck,
-                   bool flipx, bool flipy, bool pepper, bool undistort,
-                   bool split);
-    void initPepper(int spatialSize, int temporalSize);
     void initUndistortion(const yarp::os::Bottle &left,
-                          const yarp::os::Bottle &right, bool truncate);
-    int queryUnprocessed();
-    void run();
+                          const yarp::os::Bottle &right,
+                          const yarp::os::Bottle &stereo,
+                          bool truncate);
+
+
+    //inherited functions
+    virtual bool configure(yarp::os::ResourceFinder &rf);
+    double getPeriod();
+    bool interruptModule();
     void onStop();
     bool threadInit();
+    bool updateModule();
+    void run();
 
 };
-
-class vPreProcessModule : public yarp::os::RFModule
-{
-    //the event bottle input and output handler
-    vPreProcess      eventManager;
-
-public:
-
-    //the virtual functions that need to be overloaded
-    virtual bool configure(yarp::os::ResourceFinder &rf);
-    virtual bool close();
-
-    virtual double getPeriod();
-    virtual bool updateModule();
-
-};
-
 
 #endif
-

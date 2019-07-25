@@ -1,3 +1,21 @@
+/*
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "iCub/eventdriven/vCodec.h"
 #include "iCub/eventdriven/vtsHelper.h"
 
@@ -32,31 +50,35 @@ event<> GaussianAE::clone()
 void GaussianAE::encode(yarp::os::Bottle &b) const
 {
     LabelledAE::encode(b);
-    b.addInt(*(int*)(&sigx));
-    b.addInt(*(int*)(&sigy));
-    b.addInt(*(int*)(&sigxy));
+    b.addInt32(_gaei[0]);
+    b.addInt32(_gaei[1]);
+    b.addInt32(_gaei[2]);
 }
 
-void GaussianAE::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
+void GaussianAE::encode(std::vector<int32_t> &b, unsigned int &pos) const
 {
     LabelledAE::encode(b, pos);
-    b[pos++] = (*(int*)(&sigx));
-    b[pos++] = (*(int*)(&sigy));
-    b[pos++] = (*(int*)(&sigxy));
+    b[pos++] = _gaei[0];
+    b[pos++] = _gaei[1];
+    b[pos++] = _gaei[2];
 }
 
-bool GaussianAE::decode(const yarp::os::Bottle &packet, int &pos)
+void GaussianAE::decode(const int32_t *&data)
+{
+    LabelledAE::decode(data);
+    _gaei[0] = *(data++);
+    _gaei[1] = *(data++);
+    _gaei[2] = *(data++);
+}
+
+bool GaussianAE::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     if (LabelledAE::decode(packet, pos) && pos + 3 <= packet.size())
     {
-        int word;
-        word = packet.get(pos).asInt();
-        sigx=*(float*)(&word);
-        word = packet.get(pos+1).asInt();
-        sigy=*(float*)(&word);
-        word = packet.get(pos+2).asInt();
-        sigxy=*(float*)(&word);
-        pos+=3;
+
+        _gaei[0] = packet.get(pos++).asInt();
+        _gaei[1] = packet.get(pos++).asInt();
+        _gaei[2] = packet.get(pos++).asInt();
         return true;
     }
     return false;

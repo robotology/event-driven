@@ -1,25 +1,30 @@
 /*
- * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
-*/
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef __VBOTTLE__
 #define __VBOTTLE__
 
 #include <yarp/os/Bottle.h>
 #include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
+#include <yarp/os/ConnectionWriter.h>
 #include "iCub/eventdriven/vCodec.h"
+#include <iostream>
 
 namespace ev {
 
@@ -62,7 +67,7 @@ public:
     {
 
         //for each list of events
-        for(int tagi = 0; tagi < eb.yarp::os::Bottle::size(); tagi+=2) {
+        for(size_t tagi = 0; tagi < eb.yarp::os::Bottle::size(); tagi+=2) {
 
             //get the appended event type
             const std::string tagname =
@@ -119,13 +124,13 @@ public:
     template<class T> void addtoendof(vQueue &q) {
 
         //the bottle is stored as TAG (EVENTS) TAG (EVENTS)
-        for(int i = 0; i < Bottle::size(); i+=2) {
+        for(size_t i = 0; i < Bottle::size(); i+=2) {
 
             //so for each TAG we create an event of that type
             event<> e = createEvent(Bottle::get(i).asString());
             if(!e) {
-                std::cerr << "Warning: could not get bottle type during vBottle::"
-                             "get<>(). Check vBottle integrity." << std::endl;
+                yError() << "Warning: could not get bottle type during vBottle::"
+                             "get<>(). Check vBottle integrity.";
                 continue;
             }
 
@@ -137,15 +142,15 @@ public:
             //we get the (EVENTS)
             Bottle * b = Bottle::get(i+1).asList();
             if(!b) {
-                std::cerr << "Warning: could not get event data as a list after "
+                yError() << "Warning: could not get event data as a list after "
                              "getting correct tag (e.g. AE) in vBottle::getAll(). "
-                             "Check vBottle integrity" << std::endl;
+                             "Check vBottle integrity";
                 break;
             }
 
             //and decode each one also creating the memory with clone
             //NOTE: push_back seems as fast as preallocation for a deque
-            int pos_b = 0;
+            size_t pos_b = 0;
             while(pos_b < b->size()) {
                 if(e->decode(*b, pos_b)) {
                     q.push_back(e->clone());
@@ -207,6 +212,7 @@ public:
 //    Bottle::toBinary()
 //    Bottle::toString()
 
+    using yarp::os::Bottle::find;
 
 private:
 
@@ -218,7 +224,7 @@ private:
     void addList();
     void addString();
     void addVocab();
-    void fromString(const yarp::os::ConstString& text);
+    void fromString(const std::string& text);
     void append(const yarp::os::Bottle &alt);
     void copy();
     void copyPortable();
@@ -226,14 +232,14 @@ private:
     //yarp::os::Value& find(const ConstString &key) : Bottle::find(const yarp::os::ConstString &key) {};
     //Bottle& findGroup(const yarp::os::ConstString& key) const;
     //void findGroup();
+
     using yarp::os::Bottle::findGroup;
-    using yarp::os::Bottle::find;
 
     yarp::os::Bottle tail() const;
 
 
     int getInt();
-    yarp::os::ConstString getString();
+    std::string getString();
     double getDouble();
     Bottle* getList();
     yarp::os::Value& get();
@@ -250,14 +256,14 @@ class vBottleMimic : public yarp::os::Portable {
 private:
 
     //headers
-    std::vector<YARP_INT32> header1;
+    std::vector<std::int32_t> header1;
     std::string header2;
-    std::vector<YARP_INT32> header3;
+    std::vector<std::int32_t> header3;
 
     //data
     const char * datablock;
     unsigned int datalength; //<- set the number of bytes here
-    std::vector<YARP_INT32> internaldata;
+    std::vector<std::int32_t> internaldata;
 
     //sizes
     unsigned int elementINTS;
@@ -275,7 +281,7 @@ public:
         header3.push_back(BOTTLE_TAG_LIST|BOTTLE_TAG_INT); // bottle code + specialisation with ints
         header3.push_back(0); // <- set the number of ints here (e.g. 2 * #v's)
         elementINTS = 2;
-        elementBYTES = sizeof(YARP_INT32) * elementINTS;
+        elementBYTES = sizeof(std::int32_t) * elementINTS;
     }
 
     /// \brief for data already allocated in contiguous space. Just send this
@@ -316,7 +322,7 @@ public:
         event<> v = ev::createEvent(eventtype);
         v->encode(temp);
         elementINTS = temp.size();
-        elementBYTES = sizeof(YARP_INT32) * elementINTS;
+        elementBYTES = sizeof(std::int32_t) * elementINTS;
 
     }
 
@@ -326,13 +332,13 @@ public:
     }
 
     /// \brief write the data on the connection.
-    virtual bool write(yarp::os::ConnectionWriter& connection) {
+    virtual bool write(yarp::os::ConnectionWriter& connection) const {
 
         connection.appendBlock((const char *)header1.data(),
-                                       header1.size() * sizeof(YARP_INT32));
+                                       header1.size() * sizeof(std::int32_t));
         connection.appendBlock(header2.c_str(), header1[3]);
         connection.appendBlock((const char *)header3.data(),
-                                       header3.size() * sizeof(YARP_INT32));
+                                       header3.size() * sizeof(std::int32_t));
         connection.appendBlock(datablock, datalength);
 
         return !connection.isError();

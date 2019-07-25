@@ -1,18 +1,20 @@
 /*
- * Copyright (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
- * Author: arren.glover@iit.it
- * Permission is granted to copy, distribute, and/or modify this program
- * under the terms of the GNU General Public License, version 2 or any
- * later version published by the Free Software Foundation.
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
  *
- * A copy of the license can be found at
- * http://www.robotcub.org/icub/license/gpl.txt
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details
-*/
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "vCircleObserver.h"
 #include <math.h>
@@ -589,8 +591,8 @@ yarp::sig::ImageOf<yarp::sig::PixelBgr> vCircleMultiSize::makeDebugImage()
 
     for(i++; i != htransforms.end(); i++) {
         yarp::sig::ImageOf<yarp::sig::PixelBgr> image = (*i)->makeDebugImage(v);
-        for(int y = 0; y < image.height(); y++) {
-            for(int x = 0; x < image.width(); x++) {
+        for(unsigned int y = 0; y < image.height(); y++) {
+            for(unsigned int x = 0; x < image.width(); x++) {
                 if(image(x, y).g > imagebase(x, y).g)
                     imagebase(x, y) = image(x, y);
             }

@@ -1,31 +1,66 @@
+/*
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include <yarp/os/Bottle.h>
 #include "iCub/eventdriven/vCodec.h"
+
+#if defined CODEC_128x128
+union {
+    uint32_t _coded_data;
+    struct {
+        unsigned int polarity:1;
+        unsigned int x:7;
+        unsigned int y:7;
+        unsigned int channel:1;
+    };
+} _bitorder128;
+#elif defined CODEC_304x240_20
+union {
+    uint32_t _coded_data;
+    struct {
+        unsigned int polarity:1;
+        unsigned int x:9;
+        unsigned int y:8;
+        unsigned int type:2;
+        unsigned int channel:1;
+        unsigned int skin:1;
+    };
+} _bitorder20;
+#endif
 
 namespace ev {
 
 const std::string AddressEvent::tag = "AE";
 
-AddressEvent::AddressEvent() : vEvent(), x(0), y(0), channel(0), polarity(0), aps(0) {}
+AddressEvent::AddressEvent() : vEvent(), polarity(0), x(0), _xfill(0), y(0),
+    _yfill(0), channel(0), type(0), skin(0), _fill(0) {}
 
 AddressEvent::AddressEvent(const vEvent &v) : vEvent(v)
 {
     const AddressEvent *v2 = dynamic_cast<const AddressEvent *>(&v);
     if(v2) {
-        x = v2->x;
-        y = v2->y;
-        channel = v2->channel;
-        polarity = v2->polarity;
-        aps = v2->aps;
+        _coded_data = v2->_coded_data;
     }
 }
 
 AddressEvent::AddressEvent(const AddressEvent &v) : vEvent(v)
 {
-    x = v.x;
-    y = v.y;
-    channel = v.channel;
-    polarity = v.polarity;
-    aps = v.aps;
+    _coded_data = v._coded_data;
 }
 
 event<> AddressEvent::clone()
@@ -36,71 +71,93 @@ event<> AddressEvent::clone()
 void AddressEvent::encode(yarp::os::Bottle &b) const
 {
     vEvent::encode(b);
-#ifdef TENBITCODEC
-    b.addInt(((channel&0x01)<<20)|((aps&0x01)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
+#if defined CODEC_128x128
+    _bitorder128.polarity = polarity;
+    _bitorder128.x = x;
+    _bitorder128.y = y;
+    _bitorder128.channel = channel;
+    b.addInt32(_bitorder128._coded_data);
+#elif defined CODEC_304x240_20
+    _bitorder20.polarity = polarity;
+    _bitorder20.x = x;
+    _bitorder20.y = y;
+    _bitorder20.type = type;
+    _bitorder20.channel = channel;
+    _bitorder20.skin = skin;
+    b.addInt32(_bitorder20._coded_data);
 #else
-    //b.addInt(((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01));
-    b.addInt(((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
+    b.addInt32(_coded_data);
 #endif
+
 }
 
-void AddressEvent::encode(std::vector<YARP_INT32> &b, unsigned int &pos) const
+void AddressEvent::encode(std::vector<int32_t> &b, unsigned int &pos) const
 {
     vEvent::encode(b, pos);
-#ifdef TENBITCODEC
-    b[pos++] = (((channel&0x01)<<20)|((aps&0x01)<<18)|((y&0x0FF)<<10)|((x&0x1FF)<<1)|(polarity&0x01));
+#if defined CODEC_128x128
+    _bitorder128.polarity = polarity;
+    _bitorder128.x = x;
+    _bitorder128.y = y;
+    _bitorder128.channel = channel;
+    b[pos++] = _bitorder128._coded_data;
+#elif defined CODEC_304x240_20
+    _bitorder20.polarity = polarity;
+    _bitorder20.x = x;
+    _bitorder20.y = y;
+    _bitorder20.type = type;
+    _bitorder20.channel = channel;
+    _bitorder20.skin = skin;
+    b[pos++] = _bitorder20._coded_data;
 #else
-    //b.addInt(((channel&0x01)<<15)|((y&0x7f)<<8)|((x&0x7f)<<1)|(polarity&0x01));
-    b[pos++] = (((channel&0x01)<<15)|((x&0x7f)<<8)|(((127-y)&0x7f)<<1)|(polarity&0x01));
+    b[pos++] = _coded_data;
+#endif
+
+}
+
+void AddressEvent::decode(const int32_t *&data)
+{
+    vEvent::decode(data);
+#if defined CODEC_128x128
+    _bitorder128._coded_data = *(data++);
+    polarity = _bitorder128.polarity;
+    x = _bitorder128.x;
+    y = _bitorder128.y;
+    channel = _bitorder128.channel;
+#elif defined CODEC_304x240_20
+    _bitorder20._coded_data = *(data++);
+    polarity = _bitorder20.polarity;
+    x = _bitorder20.x;
+    y = _bitorder20.y;
+    type = _bitorder20.type;
+    channel  = _bitorder20.channel;
+    skin = _bitorder20.skin;
+#else
+    _coded_data = *(data++);
 #endif
 }
 
-bool AddressEvent::decode(const yarp::os::Bottle &packet, int &pos)
+bool AddressEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     // check length
     if (vEvent::decode(packet, pos) && pos + 1 <= packet.size())
     {
-        int word0=packet.get(pos).asInt();
-
-#ifdef TENBITCODEC
-        polarity=word0&0x01;
-
-        word0>>=1;
-        x=word0&0x1FF;
-
-        word0>>=9;
-        y=word0&0xFF;
-
-        word0>>=8;
-        aps = word0&0x01;
-
-        word0>>=2;
-        channel=word0&0x01;
+#if defined CODEC_128x128
+        _bitorder128._coded_data = packet.get(pos++).asInt();
+        polarity = _bitorder128.polarity;
+        x = _bitorder128.x;
+        y = _bitorder128.y;
+        channel = _bitorder128.channel;
+#elif defined CODEC_304x240_20
+        _bitorder20._coded_data = packet.get(pos++).asInt();
+        polarity = _bitorder20.polarity;
+        x = _bitorder20.x;
+        y = _bitorder20.y;
+        type = _bitorder20.type;
+        channel  = _bitorder20.channel;
+        skin = _bitorder20.skin;
 #else
-        //        polarity=word0&0x01;
-
-        //        word0>>=1;
-        //        x=word0&0x7f;
-
-        //        word0>>=7;
-        //        y=word0&0x7f;
-
-        //        word0>>=7;
-        //        channel=word0&0x01;
-        polarity=word0&0x01;
-
-        word0>>=1;
-        y=127-(word0&0x7f);
-
-        word0>>=7;
-        x=word0&0x7f;
-
-        word0>>=7;
-        channel=word0&0x01;
-
+        _coded_data = packet.get(pos++).asInt();
 #endif
-
-        pos += 1;
         return true;
     }
     return false;
@@ -111,9 +168,10 @@ yarp::os::Property AddressEvent::getContent() const
     yarp::os::Property prop = vEvent::getContent();
     prop.put("channel", (int)channel);
     prop.put("polarity", (int)polarity);
+    prop.put("type", (int)type);
+    prop.put("skin", (int)skin);
     prop.put("x", (int)x);
     prop.put("y", (int)y);
-    prop.put("aps", (int)aps);
 
     return prop;
 }
