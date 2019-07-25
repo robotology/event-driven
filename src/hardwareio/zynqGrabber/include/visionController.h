@@ -62,7 +62,6 @@ private:
     bool setLatchAtEnd(bool Enable);
     bool setShiftCount(uint8_t shiftCount);
 
-
     int getFpgaStatus();
     bool clearFpgaStatus(std::string clr);
 
