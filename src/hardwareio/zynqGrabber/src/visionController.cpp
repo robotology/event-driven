@@ -236,7 +236,8 @@ bool vVisionCtrl::configureBiases(){
         header = biasdata->get(2).asInt();
         voltage = biasdata->get(3).asInt();
         unsigned int biasVal = 0;
-        if(iBias)
+		bool vBias = header % 2; // the LSB of header is 0=current bias, 1= voltage bias
+        if(!vBias)
             biasVal = voltage;
         else
             biasVal = 255 * (voltage / vref);
@@ -253,7 +254,8 @@ bool vVisionCtrl::configureBiases(){
     header = biasdata->get(2).asInt();
     voltage = biasdata->get(3).asInt();
     unsigned int biasVal = 0;
-    if(iBias)
+	bool vBias = header % 2; // the LSB of header is 0=current bias, 1= voltage bias
+    if(!vBias)
         biasVal = voltage;
     else
         biasVal = 255 * (voltage / vref);
