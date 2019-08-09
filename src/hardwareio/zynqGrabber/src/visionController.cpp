@@ -248,7 +248,7 @@ bool vVisionCtrl::configureBiases(){
     if(!setShiftCount(ATIS_BIASSHIFT))
         return false;
 
-    std::cout << "Programming " << bias.size() << " biases:" << std::endl;
+    std::cout << "Programming " << bias.size()-1 << " biases:" << std::endl;
     double vref, voltage;
     int header;
     size_t i;
