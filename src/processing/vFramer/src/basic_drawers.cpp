@@ -365,7 +365,7 @@ std::string cochleaDraw::getEventType()
     return AddressEvent::tag;
 }
 
-void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
@@ -379,8 +379,16 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         auto aep = is_event<AddressEvent>(*qi);
 
-        //
+        int x  = aep->x * (Xlimit-1) / 64;
+        int y = 120;
 
+        cv::Vec3b c;
+        if(aep->polarity)
+            c = violet;
+        else
+            c = aqua;
+
+        cv::circle(image, cv::Point(x, y), 5, c, CV_FILLED);
 
     }
 }
