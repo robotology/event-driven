@@ -32,6 +32,7 @@ namespace ev {
 #define IS_SAMPLE(x) x&0x00804000
 #define IS_SSA(x)    x&0x00004000
 #define IS_SSV(x)    x&0x00800000
+#define IS_IMUSAMPLE(x) x&0x02000000
 
 //macros
 class vEvent;
@@ -270,6 +271,40 @@ public:
     virtual void decode(const int32_t *&data);
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
+};
+
+/// \brief an event with a pixel location, camera number and polarity
+class IMUevent : public vEvent
+{
+public:
+    static const std::string tag;
+
+    union
+    {
+        uint32_t _coded_data;
+        struct {
+            unsigned int value:16;
+            unsigned int sensor:4;
+            unsigned int _r1:2;
+            unsigned int channel:1;
+            unsigned int type:1;
+            unsigned int _r2:8;
+        };
+    };
+
+    IMUevent();
+    IMUevent(const vEvent &v);
+    IMUevent(const IMUevent &v);
+
+    virtual event<> clone();
+    virtual void encode(yarp::os::Bottle &b) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
+    virtual void decode(const int32_t *&data);
+    virtual yarp::os::Property getContent() const;
+    virtual std::string getType() const;
+    virtual int getChannel() const { return channel;}
+    virtual void setChannel(const int channel) { this->channel = channel;}
 };
 
 /// \brief count the events in a vQueue

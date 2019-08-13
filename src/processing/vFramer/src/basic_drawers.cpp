@@ -308,6 +308,48 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
 }
 
+// IMU SAMPLE DRAW //
+// ================ //
+
+const std::string imuDraw::drawtype = "IMU";
+
+std::string imuDraw::getDrawType()
+{
+    return imuDraw::drawtype;
+}
+
+std::string imuDraw::getEventType()
+{
+    return IMUevent::tag;
+}
+
+void imuDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    const static int radius = 4;
+
+    if(image.empty()) {
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+        image.setTo(255);
+    }
+
+    if(eSet.empty()) return;
+
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+
+        int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+
+        auto aep = is_event<IMUevent>(*qi);
+        int x = aep->sensor * Xlimit / 10;
+        int y = Ylimit - (radius + 200.0 * aep->value / 65535.0);
+        cv::circle(image, cv::Point(x, y), radius, this->orange, CV_FILLED);
+    }
+}
+
 // ACCELEROMETER DRAW //
 // ================== //
 

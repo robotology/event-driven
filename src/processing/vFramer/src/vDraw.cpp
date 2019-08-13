@@ -58,6 +58,8 @@ vDraw * createDrawer(std::string tag)
         return new overlayStereoDraw();
     if(tag == saeDraw::drawtype)
         return new saeDraw();
+    if(tag == imuDraw::drawtype)
+        return new imuDraw();
     return 0;
 
 }
