@@ -60,6 +60,8 @@ vDraw * createDrawer(std::string tag)
         return new saeDraw();
     if(tag == imuDraw::drawtype)
         return new imuDraw();
+    if(tag == cochleaDraw::drawtype)
+        return new cochleaDraw();
     return 0;
 
 }

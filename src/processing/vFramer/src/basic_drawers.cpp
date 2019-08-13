@@ -350,6 +350,41 @@ void imuDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
 }
 
+// COCHLEA DRAW //
+// ======= //
+
+const std::string cochleaDraw::drawtype = "EAR";
+
+std::string cochleaDraw::getDrawType()
+{
+    return cochleaDraw::drawtype;
+}
+
+std::string cochleaDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+
+        auto aep = is_event<AddressEvent>(*qi);
+
+        //
+
+
+    }
+}
+
 // ACCELEROMETER DRAW //
 // ================== //
 
