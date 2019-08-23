@@ -152,5 +152,5 @@ class DataManager:
 if __name__ == '__main__':
 
     dm = DataManager()
-    dm.load_AE_from_yarp('acquisitions/circle10042019')
+    dm.load_AE_from_yarp('data_from_dumper')
 

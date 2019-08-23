@@ -295,6 +295,13 @@ public:
         velocity[4]=eyes_pan;           // eyes pan
         velocity[5]=eyes_ver;           // eyes vergence
         ivel->velocityMove(velocity.data());
+
+        yarp::sig::Vector accls(6, 0.0);
+        ivel->getRefAccelerations(accls.data());
+        yInfo() << "Acc:" << accls.toString();
+
+        yInfo() << "Vel:" << velocity[0] << " " << velocity[1] << " " << velocity[2] << " "
+                   << velocity[3] << " " << velocity[4] << " " << velocity[5];
     }
 
     void controlStereo(int ul, int vl, int ur, int vr, double dt)
@@ -328,6 +335,13 @@ public:
         velocity[4]=eyes_pan;           // eyes pan
         velocity[5]=eyes_ver;           // eyes vergence
         ivel->velocityMove(velocity.data());
+
+        yarp::sig::Vector accls(6, 0.0);
+        ivel->getRefAccelerations(accls.data());
+        yInfo() << "Acc:" << accls.toString();
+
+        yInfo() << "Vel:" << velocity[0] << " " << velocity[1] << " " << velocity[2] << " "
+                   << velocity[3] << " " << velocity[4] << " " << velocity[5];
     }
 
     void controlReset()

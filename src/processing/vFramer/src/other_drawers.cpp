@@ -268,3 +268,100 @@ void overlayStereoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         }
     }
 }
+
+//Rasterplot Draw//
+//=============//
+
+const std::string rasterDraw::drawtype = "RASTER";
+
+std::string rasterDraw::getDrawType()
+{
+    return rasterDraw::drawtype;
+}
+
+std::string rasterDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    //setOfQueues (=eSet) is a merge of many queues received by the vFramer:i-port
+    //The port accumulates events, so the eSet gets longer over time!
+
+    //check if the q contains elements
+    if(eSet.empty()){
+        return;
+    }
+    //get latest timestamp
+    if(vTime < 0){
+        vTime = eSet.back()->stamp;
+    }
+    //Timestamp Iterator:
+
+    for(unsigned int y=0; y<neuronID; y++){
+        for(unsigned int x=0; x<timeElements; x++){
+
+            //Safety counter
+            jumpCheck++;
+
+            //if there is a timestamp in the storage and the timestamp did not jump during the last iteration
+            if (eventStorage[y][x] > 0 && jumpCheck != 3){
+
+                //reset Counter
+                jumpCheck = 1;
+
+                //print current event as blue point
+                image.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 0, 0);
+
+                //reset eventStorage after maxStamp
+                if(x == (pixelLimit-1)){
+                    eventStorage[y][x] = 0;
+                }
+                //else increase the timestamp by the timedifference and reset the old field
+                else{
+                    eventStorage[y][x+1] = eventStorage[y][x];
+                    eventStorage[y][x] = 0;
+                    jumpCheck++;
+                    }
+            }
+        }
+    }
+
+    //go through the eSet-q and start with the latest event
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        //calculate the time difference between latest and actual event
+        int dt = vTime - (*qi)->stamp;
+
+        // if the difference is negative,it was at max_stamp = 85ms
+        if(dt < 0)
+            dt += ev::vtsHelper::max_stamp;
+
+        //time difference increases because of accumulation, therefore ignore events that are older than 1ms
+        if((unsigned int)dt > display_window){
+            break;
+        }
+        //Safety: Make whatevers inside the q-element to AE
+        auto aep = as_event<AE>(*qi);
+
+        if(!aep){
+            continue;
+        }
+        //Safe the aep as an accessible AE
+        AE v = *(aep);
+
+        //y = neuronID (total 32bit address)
+        int y = v._coded_data;
+
+        if(flip) {
+            y = Ylimit - 1 - y;
+        }
+
+        if(neuronID >= y){
+        //store that event at t = 0ms
+            eventStorage[y][0] = 1;
+        }
+    }
+}
