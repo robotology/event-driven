@@ -289,7 +289,7 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     //setOfQueues (=eSet) is a merge of many queues received by the vFramer:i-port
     //The port accumulates events, so the eSet gets longer over time!
 
-    //check if the q contains elements
+    //check if eSet contains elements
     if(eSet.empty()){
         return;
     }
@@ -299,14 +299,14 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
     //Timestamp Iterator:
 
-    for(unsigned int y=0; y<neuronID; y++){
-        for(unsigned int x=0; x<timeElements; x++){
+    for(unsigned int y=0; y<Ylimit; y++){
+        for(unsigned int x=0; x<Xlimit; x++){
 
             //Safety counter
             jumpCheck++;
 
             //if there is a timestamp in the storage and the timestamp did not jump during the last iteration
-            if (eventStorage[y][x] > 0 && jumpCheck != 3){
+            if (pixelStorage[y][x] > 0 && jumpCheck != 3){
 
                 //reset Counter
                 jumpCheck = 1;
@@ -315,19 +315,18 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
                 image.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 0, 0);
 
                 //reset eventStorage after maxStamp
-                if(x == (pixelLimit-1)){
-                    eventStorage[y][x] = 0;
+                if(x == (timeResolution-1)){
+                    pixelStorage[y][x] = 0;
                 }
                 //else increase the timestamp by the timedifference and reset the old field
                 else{
-                    eventStorage[y][x+1] = eventStorage[y][x];
-                    eventStorage[y][x] = 0;
+                    pixelStorage[y][x+1] = pixelStorage[y][x];
+                    pixelStorage[y][x] = 0;
                     jumpCheck++;
                     }
             }
         }
     }
-
     //go through the eSet-q and start with the latest event
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
@@ -343,6 +342,9 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if((unsigned int)dt > display_window){
             break;
         }
+//        //calculate the time difference between two events
+//        int dt_event = prevEv - (*qi)->stamp;
+
         //Safety: Make whatevers inside the q-element to AE
         auto aep = as_event<AE>(*qi);
 
@@ -353,15 +355,20 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         AE v = *(aep);
 
         //y = neuronID (total 32bit address)
-        int y = v._coded_data;
+        unsigned int y = v._coded_data;
+        //x = timestamp [in s]
+        unsigned int x = v.stamp*ev::vtsHelper::tsscaler;
 
-        if(flip) {
-            y = Ylimit - 1 - y;
+//        if(flip) {
+//            y = Ylimit - 1 - y;
+//        }
+        //scale neuronID to YLimit of vFramer
+        if(scaling){
+            y = round(y * yScaler);
+            pixelStorage[y][0] = x;
         }
-
-        if(neuronID >= y){
-        //store that event at t = 0ms
-            eventStorage[y][0] = 1;
+        else if(neuronID >= y){
+            pixelStorage[y][0] = x;
         }
     }
 }

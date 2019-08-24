@@ -128,27 +128,35 @@ public:
 class rasterDraw : public vDraw {
 
 protected:
-    unsigned int pixelLimit = 300; //303 = x-Limit for vFramer
-    //15ms Timewindow / 0.05ms Timedifference eSet(now)-eSet(previous) (almost constant) = 300 Elements
-    unsigned int neuronID = 50; //optimally 255 because of SpiNNaker Limit, but 239 = y-Limit for vFramer
-    unsigned int timeElements = 300;
-    int eventStorage[50][300]; //[neuronID][totalTimeWindowElements]
-    unsigned int jumpCheck = 0;
+    #define XLIMIT 304 //unfortunately given by vFramer
+    #define YLIMIT 240
 
-    int Xlimit;
-    int Ylimit;
+    int pixelStorage[YLIMIT][XLIMIT];
+
+    double Xlimit = XLIMIT;
+    double Ylimit = YLIMIT;
+    double neuronID; //255 because of SpiNNaker Limit
+    double yScaler;
+    double xScaler;
+    double totalTime; // in ms
+    double dt_q; //Timedifference between two eSet-queues
+    double frameRate; //frameRate of the vFramer
+    double timeResolution;
+    unsigned int jumpCheck = 0;
     unsigned int display_window;
-    unsigned int max_window;
     bool flip;
+    bool scaling;
 
 public:
 
-    rasterDraw() : Xlimit(1700), Ylimit(neuronID+10), flip(false)
+    rasterDraw() : neuronID(1000), totalTime(15), frameRate(20), flip(false), scaling(true)
     {
         display_window = 0.1*ev::vtsHelper::vtsscaler;
-        max_window = 0.5*ev::vtsHelper::vtsscaler;
+        dt_q = 1/frameRate;
+        timeResolution = (totalTime/dt_q);
+        xScaler = (Xlimit-1.0)/timeResolution;
+        yScaler = (Ylimit-1.0)/neuronID;
     }
-
 
     static const std::string drawtype;
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
