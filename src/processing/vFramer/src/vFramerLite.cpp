@@ -188,10 +188,8 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     string moduleName = rf.check("name", Value("/vFramer")).asString();
     setName(moduleName.c_str());
 
-//    int height = rf.check("height", Value(240)).asInt();
-//    int width = rf.check("width", Value(304)).asInt();
-    int height = rf.check("height", Value(50)).asInt();
-    int width = rf.check("width", Value(1700)).asInt();
+    int height = rf.check("height", Value(240)).asInt();
+    int width = rf.check("width", Value(304)).asInt();
     double eventWindow = rf.check("eventWindow", Value(0.1)).asDouble();
     eventWindow *= vtsHelper::vtsscaler;
     eventWindow = std::min(eventWindow, vtsHelper::max_stamp / 2.0);

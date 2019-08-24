@@ -131,30 +131,29 @@ protected:
     #define XLIMIT 304 //unfortunately given by vFramer
     #define YLIMIT 240
 
-    int pixelStorage[YLIMIT][XLIMIT];
+    double pixelStorage[YLIMIT][XLIMIT];
 
     double Xlimit = XLIMIT;
     double Ylimit = YLIMIT;
-    double neuronID; //255 because of SpiNNaker Limit
+    double neuronID; //should be 255, because of SpiNNaker Neuron Limit
     double yScaler;
     double xScaler;
     double totalTime; // in ms
-    double dt_q; //Timedifference between two eSet-queues
+    double dt_q;
     double frameRate; //frameRate of the vFramer
     double timeResolution;
-    unsigned int jumpCheck = 0;
     unsigned int display_window;
     bool flip;
     bool scaling;
 
 public:
-
-    rasterDraw() : neuronID(1000), totalTime(15), frameRate(20), flip(false), scaling(true)
+//right now just neuronID and scaling are changable
+    rasterDraw() : neuronID(200), totalTime(15), frameRate(20), flip(false), scaling(true)
     {
         display_window = 0.1*ev::vtsHelper::vtsscaler;
-        dt_q = 1/frameRate;
-        timeResolution = (totalTime/dt_q);
-        xScaler = (Xlimit-1.0)/timeResolution;
+//        dt_q = 1/frameRate;               //Timedifference between two eSet-queues
+//        timeResolution = (totalTime/dt_q);//for eventStorage[neuronID][timeResolution] and not pixelStorage
+//        xScaler = (Xlimit-1.0)/timeResolution;
         yScaler = (Ylimit-1.0)/neuronID;
     }
 

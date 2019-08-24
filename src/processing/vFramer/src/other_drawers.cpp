@@ -299,30 +299,23 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
     //Timestamp Iterator:
 
-    for(unsigned int y=0; y<Ylimit; y++){
-        for(unsigned int x=0; x<Xlimit; x++){
+    for(int y=(Ylimit-1.0); y>=0; y--){
+        for(int x=(Xlimit-1.0); x>=0; x--){
 
-            //Safety counter
-            jumpCheck++;
-
-            //if there is a timestamp in the storage and the timestamp did not jump during the last iteration
-            if (pixelStorage[y][x] > 0 && jumpCheck != 3){
-
-                //reset Counter
-                jumpCheck = 1;
+            //if there is a timestamp in the storage
+            if (pixelStorage[y][x] > 0){
 
                 //print current event as blue point
                 image.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 0, 0);
 
-                //reset eventStorage after maxStamp
-                if(x == (timeResolution-1)){
+                //reset pixelStorage if end is reached
+                if(x == (Xlimit-1)){
                     pixelStorage[y][x] = 0;
                 }
                 //else increase the timestamp by the timedifference and reset the old field
                 else{
                     pixelStorage[y][x+1] = pixelStorage[y][x];
                     pixelStorage[y][x] = 0;
-                    jumpCheck++;
                     }
             }
         }
@@ -356,8 +349,6 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         //y = neuronID (total 32bit address)
         unsigned int y = v._coded_data;
-        //x = timestamp [in s]
-        unsigned int x = v.stamp*ev::vtsHelper::tsscaler;
 
 //        if(flip) {
 //            y = Ylimit - 1 - y;
@@ -365,10 +356,10 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         //scale neuronID to YLimit of vFramer
         if(scaling){
             y = round(y * yScaler);
-            pixelStorage[y][0] = x;
+            pixelStorage[y][0] = 1;
         }
         else if(neuronID >= y){
-            pixelStorage[y][0] = x;
+            pixelStorage[y][0] = 1;
         }
     }
 }
