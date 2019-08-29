@@ -312,7 +312,7 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
                 if(x == (Xlimit-1)){
                     pixelStorage[y][x] = 0;
                 }
-                //else increase the timestamp by the timedifference and reset the old field
+                //else increase the timestamp and reset the old field
                 else{
                     pixelStorage[y][x+1] = pixelStorage[y][x];
                     pixelStorage[y][x] = 0;
@@ -353,6 +353,7 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 //        if(flip) {
 //            y = Ylimit - 1 - y;
 //        }
+
         //scale neuronID to YLimit of vFramer
         if(scaling){
             y = round(y * yScaler);

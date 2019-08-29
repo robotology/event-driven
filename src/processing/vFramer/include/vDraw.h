@@ -137,23 +137,15 @@ protected:
     double Ylimit = YLIMIT;
     double neuronID; //should be 255, because of SpiNNaker Neuron Limit
     double yScaler;
-    double xScaler;
-    double totalTime; // in ms
-    double dt_q;
-    double frameRate; //frameRate of the vFramer
-    double timeResolution;
     unsigned int display_window;
     bool flip;
     bool scaling;
 
 public:
 //right now just neuronID and scaling are changable
-    rasterDraw() : neuronID(200), totalTime(15), frameRate(20), flip(false), scaling(true)
+    rasterDraw() : neuronID(300), flip(false), scaling(true)
     {
         display_window = 0.1*ev::vtsHelper::vtsscaler;
-//        dt_q = 1/frameRate;               //Timedifference between two eSet-queues
-//        timeResolution = (totalTime/dt_q);//for eventStorage[neuronID][timeResolution] and not pixelStorage
-//        xScaler = (Xlimit-1.0)/timeResolution;
         yScaler = (Ylimit-1.0)/neuronID;
     }
 
