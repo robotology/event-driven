@@ -60,6 +60,8 @@ vPreProcess::vPreProcess(): name("/vPreProcess")
     outPortSkinSamples.setWriteType(SkinSample::tag);
     out_port_aps_left.setWriteType(AE::tag);
     out_port_aps_right.setWriteType(AE::tag);
+    out_port_imu_samples.setWriteType(IMUevent::tag);
+    out_port_audio.setWriteType(AE::tag);
 }
 
 
@@ -72,6 +74,8 @@ vPreProcess::~vPreProcess()
     outPortSkinSamples.close();
     out_port_aps_left.close();
     out_port_aps_right.close();
+    out_port_imu_samples.close();
+    out_port_audio.close();
 }
 
 bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
@@ -187,12 +191,17 @@ bool vPreProcess::threadInit()
         if(!out_port_aps_left.open(getName() + "/APS:o"))
             return false;
     }
+    if(!out_port_imu_samples.open(getName() + "/imu_samples:o"))
+        return false;
+    if(!out_port_audio.open(getName() + "/audo:o"))
+        return false;
     if(!outPortSkin.open(getName() + "/skin:o"))
         return false;
     if(!outPortSkinSamples.open(getName() + "/skinsamples:o"))
         return false;
     if(!inPort.open(getName() + "/AE:i"))
         return false;
+
     return true;
 }
 
@@ -276,6 +285,8 @@ void vPreProcess::run()
         std::deque<int32_t> qskin;
         std::deque<int32_t> qskinsamples;
         std::deque<AE> qleft_aps, qright_aps;
+        std::deque<int32_t> qimusamples;
+        std::deque<int32_t> qaudio;
 
         const std::vector<int32_t> *q = inPort.read(zynq_stamp);
         if(!q) break;
@@ -303,7 +314,7 @@ void vPreProcess::run()
 
         while ((size_t)(qi - q->data()) < q->size()) {
 
-            if(IS_SKIN(*(qi+1))) {
+            if(IS_SKIN(*(qi+1))) { //IS_SKIN
                 if(IS_SAMPLE(*(qi+1))) {
                     qskinsamples.push_back(*(qi++)); //TS
                     qskinsamples.push_back(*(qi++)); //VALUE/TAXEL
@@ -311,6 +322,12 @@ void vPreProcess::run()
                     qskin.push_back(*(qi++)); //TS
                     qskin.push_back(*(qi++)); //TAXEL
                 }
+            } else if(IS_IMUSAMPLE(*(qi+1))) { //IS_IMU
+                qimusamples.push_back(*(qi++)); //TS
+                qimusamples.push_back(*(qi++)); //VALUE
+            } else if(IS_AUDIO(*(qi+1))) {
+                qaudio.push_back(*(qi++)); //TS
+                qaudio.push_back(*(qi++)); //EVENT
             } else { // IS_VISION
 
                 v.decode(qi);
@@ -420,6 +437,12 @@ void vPreProcess::run()
         }
         if(qright_aps.size()) {
             out_port_aps_right.write(qright_aps, zynq_stamp);
+        }
+        if(qimusamples.size()) {
+            out_port_imu_samples.write(qimusamples, zynq_stamp);
+        }
+        if(qaudio.size()) {
+            out_port_audio.write(qaudio, zynq_stamp);
         }
     }
 }
