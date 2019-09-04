@@ -284,7 +284,7 @@ public:
     {
         uint32_t _coded_data;
         struct {
-            unsigned int value:16;
+            int value:16;
             unsigned int sensor:4;
             unsigned int _r1:2;
             unsigned int channel:1;
@@ -292,6 +292,8 @@ public:
             unsigned int _r2:8;
         };
     };
+
+    const static unsigned int _max_value = 32768;
 
     IMUevent();
     IMUevent(const vEvent &v);

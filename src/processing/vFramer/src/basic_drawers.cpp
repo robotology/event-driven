@@ -325,7 +325,11 @@ std::string imuDraw::getEventType()
 
 void imuDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
-    const static int radius = 4;
+    auto radius = 10;
+    auto axes = cv::Size(10, 10);
+    auto centre = cv::Point(Xlimit/2, Ylimit/2);
+    auto lin_scaler = std::min(Xlimit, Ylimit) * 0.5 / IMUevent::_max_value;
+    auto circ_scaler = 360 / IMUevent::_max_value;
 
     if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
@@ -334,19 +338,51 @@ void imuDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
     if(eSet.empty()) return;
 
-    ev::vQueue::const_reverse_iterator qi;
-    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+    int i = 0;
+    for(auto qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
 
-
-        int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
-        if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        if((unsigned int)dt > display_window) break;
-
+        if(i++ > 10) break;
 
         auto aep = is_event<IMUevent>(*qi);
-        int x = aep->sensor * Xlimit / 10;
-        int y = Ylimit - (radius + 200.0 * aep->value / 65535.0);
-        cv::circle(image, cv::Point(x, y), radius, this->orange, CV_FILLED);
+
+        switch(aep->sensor) {
+        case 0: { //acc x
+            auto p_end = centre + cv::Point(aep->value * lin_scaler, 0);
+            cv::line(image, centre, p_end, this->lime);
+            break; }
+        case 1: {//acc y
+            auto p_end = centre + cv::Point(0, aep->value * lin_scaler);
+            cv::line(image, centre, p_end, this->lime);
+            break;}
+        case 2: {//acc z
+            auto p_end = centre + cv::Point(aep->value * lin_scaler * 0.7,
+                                            aep->value * lin_scaler * 0.7);
+            cv::line(image, centre, p_end, this->lime);
+            break;}
+        case 3: {//rot x
+            centre = centre + cv::Point(Ylimit * 0.5, 0);
+            cv::ellipse(image, centre, axes, 0, 0, aep->value * circ_scaler, this->aqua, CV_FILLED);
+            break;}
+        case 4: {//rot y
+            centre = centre + cv::Point(0, Ylimit * 0.5);
+            cv::ellipse(image, centre, axes, 0, 0, aep->value * circ_scaler, this->aqua, CV_FILLED);
+            break;}
+        case 5: {//rot z
+            centre = centre + cv::Point(Ylimit * 0.5, Ylimit * 0.5);
+            cv::ellipse(image, centre, axes, 0, 0, aep->value * circ_scaler, this->aqua, CV_FILLED);
+            break;}
+        case 6: {//temp
+            centre = cv::Point(radius, radius);
+            cv::ellipse(image, centre, axes, 0, 0, aep->value * circ_scaler, this->aqua, CV_FILLED);
+            break;}
+        case 7: {//mag x
+            break;}
+        case 8: {//mag y
+            break;}
+        case 9: {//mag z
+            break;}
+
+        }
     }
 }
 
