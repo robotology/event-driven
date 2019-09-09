@@ -47,7 +47,7 @@ private:
 
     string channel_name;
     unsigned int limit_time;
-
+    yarp::os::Stamp ts;
     map<string, vReadPort<vQueue> > read_ports;
     map<string, vQueue> event_qs;
     vector<vDraw *> drawers;
