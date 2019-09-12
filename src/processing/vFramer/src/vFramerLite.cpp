@@ -55,7 +55,7 @@ string channelInstance::getName()
 
 bool channelInstance::addDrawer(string drawer_name, unsigned int width,
                                 unsigned int height, unsigned int window_size,
-                                bool flip)
+                                bool flip, int scaling)
 {
     //make the drawer
     vDraw * new_drawer = createDrawer(drawer_name);
@@ -63,6 +63,7 @@ bool channelInstance::addDrawer(string drawer_name, unsigned int width,
         new_drawer->setRetinaLimits(width, height);
         new_drawer->setTemporalLimits(window_size, limit_time);
         new_drawer->setFlip(flip);
+        new_drawer->setScaling(scaling);
         new_drawer->initialise();
         drawers.push_back(new_drawer);
     } else {
@@ -200,7 +201,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     int frameRate = rf.check("frameRate", Value(30)).asInt();
     double period = 1000.0 / frameRate;
-
+    int scaling = rf.check("scaling", Value(0)).asInt();
     //bool useTimeout =
     //        rf.check("timeout") && rf.check("timeout", Value(true)).asBool();
     bool flip =
@@ -248,7 +249,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
         for(unsigned int j = 0; j < drawtypelist->size(); j++)
         {
             string draw_type = drawtypelist->get(j).asString();
-            if(!new_ci->addDrawer(draw_type, width, height, eventWindow, flip))
+            if(!new_ci->addDrawer(draw_type, width, height, eventWindow, flip, scaling))
             {
                 yError() << "Could not create specified publisher"
                          << channel_name << draw_type;

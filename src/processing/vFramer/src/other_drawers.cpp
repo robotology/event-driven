@@ -297,10 +297,10 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     if(vTime < 0){
         vTime = eSet.back()->stamp;
     }
-    //Timestamp Iterator:
+    //Reverse Timestamp Iterator:
 
     for(int y=(Ylimit-1.0); y>=0; y--){
-        for(int x=(Xlimit-1.0); x>=0; x--){
+        for(int x=(Xlimit-1); x>=0; x--){
 
             //if there is a timestamp in the storage
             if (pixelStorage[y][x] > 0){
@@ -350,16 +350,18 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         //y = neuronID (total 32bit address)
         unsigned int y = v._coded_data;
 
-//        if(flip) {
-//            y = Ylimit - 1 - y;
-//        }
-
         //scale neuronID to YLimit of vFramer
-        if(scaling){
+        if(scaling == 1){
             y = round(y * yScaler);
+            if(flip) {
+                y = (Ylimit - 1) - y;
+            }
             pixelStorage[y][0] = 1;
         }
-        else if(neuronID >= y){
+        else if((Ylimit-1) >= y){
+            if(flip) {
+                y = (Ylimit - 1) - y;
+            }
             pixelStorage[y][0] = 1;
         }
     }

@@ -18,6 +18,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 #include "vDraw.h"
 using namespace ev;
 
@@ -103,7 +104,7 @@ std::string flowDraw::getEventType()
 
 void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 {
-
+    p_cputime = Time::now();
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
 
@@ -167,6 +168,12 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
     //draw the mean velocity in the centre of the image
     vx_mean = vx_mean/eSet.size();
     vy_mean = vy_mean/eSet.size();
+
+    //record the flowError
+    double start = Time::now();
+    timeElapsed += start-p_cputime; //calculates time in [s]
+    flowLog<<timeElapsed<<","<<vx_mean<<std::endl;
+
     p_start.x = Xlimit/2;
     p_start.y = Ylimit/2;
     double h = 15;

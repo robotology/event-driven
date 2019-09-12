@@ -26,6 +26,10 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
+//for recording data
+#include <iostream>
+#include <fstream>
+
 class vDraw;
 
 /**
@@ -51,10 +55,11 @@ protected:
     unsigned int display_window;
     unsigned int max_window;
     bool flip;
+    int scaling;
 
 public:
 
-    vDraw() : Xlimit(304), Ylimit(240), flip(false)
+    vDraw() : Xlimit(304), Ylimit(240), flip(true)
     {
         display_window = 0.1*ev::vtsHelper::vtsscaler;
         max_window = 0.5*ev::vtsHelper::vtsscaler;
@@ -84,6 +89,11 @@ public:
     void setFlip(bool flip)
     {
         this->flip = flip;
+    }
+
+    void setScaling(int scaling)
+    {
+        this->scaling = scaling;
     }
 
     virtual void initialise() {}
@@ -133,20 +143,18 @@ protected:
 
     double pixelStorage[YLIMIT][XLIMIT];
 
-    double Xlimit = XLIMIT;
+    int Xlimit = XLIMIT;
     double Ylimit = YLIMIT;
     double neuronID; //should be 255, because of SpiNNaker Neuron Limit
     double yScaler;
     unsigned int display_window;
-    bool flip;
-    bool scaling;
 
 public:
-//right now just neuronID and scaling are changable
-    rasterDraw() : neuronID(300), flip(false), scaling(true)
+//just an initializer, but the values do have to be changed in the vFramer!
+    rasterDraw() : neuronID(300)
     {
         display_window = 0.1*ev::vtsHelper::vtsscaler;
-        yScaler = (Ylimit-1.0)/neuronID;
+        yScaler = (Ylimit-1)/neuronID;
     }
 
     static const std::string drawtype;
@@ -201,7 +209,26 @@ public:
 
 class flowDraw : public vDraw {
 
+protected:
+    int Xlimit;
+    int Ylimit;
+    unsigned int display_window;
+    unsigned int max_window;
+    bool flip;
+
+    std::ofstream flowLog;
+    double timeElapsed;
+    double p_cputime;
+
 public:
+
+    flowDraw() : Xlimit(304), Ylimit(240), flip(false)
+    {
+        display_window = 0.1*ev::vtsHelper::vtsscaler;
+        max_window = 0.5*ev::vtsHelper::vtsscaler;
+        flowLog.open("flowErrors.csv");
+        flowLog<<"time"<<","<<"errorFlowX"<<std::endl;
+    }
 
     static const std::string drawtype;
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
