@@ -193,11 +193,11 @@ bool vPreProcess::threadInit()
     }
     if(!out_port_imu_samples.open(getName() + "/imu_samples:o"))
         return false;
-    if(!out_port_audio.open(getName() + "/audo:o"))
+    if(!out_port_audio.open(getName() + "/audio:o"))
         return false;
     if(!outPortSkin.open(getName() + "/skin:o"))
         return false;
-    if(!outPortSkinSamples.open(getName() + "/skinsamples:o"))
+    if(!outPortSkinSamples.open(getName() + "/skin_samples:o"))
         return false;
     if(!inPort.open(getName() + "/AE:i"))
         return false;
