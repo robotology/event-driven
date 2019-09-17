@@ -530,10 +530,15 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
 
-    int r = 5;
-    CvScalar c1 = CV_RGB(255, 0, 0);
-    CvScalar c2 = CV_RGB(60, 0, 255);
-
+	//TODO: bring these params in from configuration
+	double alpha = 0.1; // proportion of shading for a single event
+	double notAlpha = 1.0 - alpha;
+    int r = 2; // radius 
+	int d = r*2+1; // diameter
+	CvScalar c1 = CV_RGB(255, 0, 0);
+	CvScalar c2 = CV_RGB(60, 0, 255);
+	CvScalar c;
+	
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
         int dt = vTime - (*qi)->stamp;
@@ -547,12 +552,18 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             px = Xlimit - 1 - px;
             py = Ylimit - 1 - py;
         }
-
-        cv::Point centr(px, py);
-        if(v->ID == 1)
-            cv::circle(image, centr, r, c1, CV_FILLED);
-        else
-            cv::circle(image, centr, r, c2, CV_FILLED);
+		if(v->ID == 1)
+			c = c1;
+		else
+			c = c2;
+		//2019_09_17 Sim: instead of adding a filled circle, shade a square where side of square is d=diameter of the corresponding circle
+        //cv::Point centr(px, py);
+		//cv::circle(image, centr, r, c, CV_FILLED);	
+		cv::Rect roiRect(std::max(px-r, 0), std::max(py-r, 0), std::min(d, Xlimit-px), std::min(d, Ylimit-py));
+		cv::Mat roi = image(roiRect);
+		cv::Mat color(roi.size(), CV_8UC3, c); 
+		cv::addWeighted(color, alpha, roi, notAlpha , 0.0, roi); 
+		
     }
 
 }
