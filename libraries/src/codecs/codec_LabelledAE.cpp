@@ -25,7 +25,7 @@ const std::string LabelledAE::tag = "LAE";
 
 LabelledAE::LabelledAE() : AddressEvent(), ID(0) {}
 
-LabelledAE::LabelledAE(const vEvent &v) : AddressEvent(v)
+LabelledAE::LabelledAE(const vEvent &v) : AddressEvent(v), ID(0)
 {
     const LabelledAE * v2 = dynamic_cast<const LabelledAE *>(&v);
     if(v2) {
