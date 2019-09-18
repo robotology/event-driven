@@ -26,7 +26,7 @@ const std::string SkinEvent::tag = "SKE";
 SkinEvent::SkinEvent() : vEvent(), polarity(0), taxel(0), cross_base(0),
     _sample(0), _error(0), body_part(0), side(0), type(0), skin(1) {}
 
-SkinEvent::SkinEvent(const vEvent &v) : vEvent(v)
+SkinEvent::SkinEvent(const vEvent &v) : vEvent(v), _skei(0)
 {
     const SkinEvent *v2 = dynamic_cast<const SkinEvent *>(&v);
     if(v2) {

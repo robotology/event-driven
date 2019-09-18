@@ -24,7 +24,7 @@ const std::string IMUevent::tag = "IMUS";
 
 IMUevent::IMUevent() : vEvent(), _coded_data(0) {}
 
-IMUevent::IMUevent(const vEvent &v) : vEvent(v)
+IMUevent::IMUevent(const vEvent &v) : vEvent(v), _coded_data(0)
 {
     const IMUevent *v2 = dynamic_cast<const IMUevent *>(&v);
     if(v2) {
