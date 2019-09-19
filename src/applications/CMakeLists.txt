@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 2.6)
-
 option(ENABLE_autosaccade "Build autosaccade module" OFF)
 option(ENABLE_gazedemo "Build ball gaze following demo" OFF)
 option(ENABLE_reptest "Build representation tester" OFF)

@@ -1,12 +1,12 @@
 <application>
-<name>vView </name>
+<name>event-viewer-example </name>
 
 <dependencies>
 </dependencies>
 
 <module>
     <name> vPreProcess </name>
-    <parameters>--undistort false --flipx --flipy --split </parameters>
+    <parameters>--flipx --flipy --split </parameters>
     <node> localhost </node>
 </module>
 
