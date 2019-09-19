@@ -17,7 +17,7 @@
  */
 
 #include <yarp/os/Bottle.h>
-#include "iCub/eventdriven/vCodec.h"
+#include "event-driven/vCodec.h"
 
 namespace ev {
 

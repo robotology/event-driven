@@ -20,8 +20,8 @@
 #define __VCODEC_VEVENT__
 
 
-#include "iCub/eventdriven/vCodec.h"
-#include "iCub/eventdriven/vtsHelper.h"
+#include "event-driven/vCodec.h"
+#include "event-driven/vtsHelper.h"
 
 namespace ev {
 

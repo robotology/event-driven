@@ -17,7 +17,7 @@
  */
 
 #include <yarp/os/Bottle.h>
-#include "iCub/eventdriven/vCodec.h"
+#include "event-driven/vCodec.h"
 
 #if defined CODEC_128x128
 union {

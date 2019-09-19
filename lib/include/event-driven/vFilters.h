@@ -20,7 +20,7 @@
 #define __VFILTER__
 
 #include <yarp/sig/Image.h>
-#include <iCub/eventdriven/vtsHelper.h>
+#include "vtsHelper.h"
 
 namespace ev {
 

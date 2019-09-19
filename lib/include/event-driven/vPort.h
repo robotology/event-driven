@@ -21,8 +21,8 @@
 
 #include <vector>
 #include <yarp/os/all.h>
-#include "iCub/eventdriven/vCodec.h"
-#include "iCub/eventdriven/vtsHelper.h"
+#include "vCodec.h"
+#include "vtsHelper.h"
 
 using namespace yarp::os;
 using std::vector;

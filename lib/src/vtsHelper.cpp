@@ -17,7 +17,7 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "iCub/eventdriven/vtsHelper.h"
+#include "event-driven/vtsHelper.h"
 
 #include <sstream>
 #include <unistd.h>

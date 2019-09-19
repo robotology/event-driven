@@ -16,8 +16,8 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "iCub/eventdriven/vCodec.h"
-#include "iCub/eventdriven/vtsHelper.h"
+#include "event-driven/vCodec.h"
+#include "event-driven/vtsHelper.h"
 
 namespace ev {
 
