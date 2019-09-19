@@ -22,9 +22,9 @@
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
 #include <vector>
-#include "iCub/eventdriven/vCodec.h"
-#include "iCub/eventdriven/vtsHelper.h"
-#include "iCub/eventdriven/vWindow_basic.h"
+#include "event-driven/vCodec.h"
+#include "event-driven/vtsHelper.h"
+#include "event-driven/vWindow_basic.h"
 
 namespace ev {
 

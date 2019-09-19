@@ -1,4 +1,4 @@
-#include "iCub/eventdriven/vBottle.h"
-#include "iCub/eventdriven/vWindow_basic.h"
-#include "iCub/eventdriven/vWindow_adv.h"
-#include "iCub/eventdriven/vSurfaceHandlerTh.h"
+#include "event-driven/vBottle.h"
+#include "event-driven/vWindow_basic.h"
+#include "event-driven/vWindow_adv.h"
+#include "event-driven/vSurfaceHandlerTh.h"

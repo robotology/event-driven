@@ -21,8 +21,8 @@
 #define __VWINDOW_BASIC__
 
 #include <vector>
-#include "iCub/eventdriven/vCodec.h"
-#include "iCub/eventdriven/vtsHelper.h"
+#include "event-driven/vCodec.h"
+#include "event-driven/vtsHelper.h"
 
 namespace ev {
 

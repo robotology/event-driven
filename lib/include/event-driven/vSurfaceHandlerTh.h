@@ -20,12 +20,12 @@
 #define __VSURFACEHANDLER__
 
 #include <yarp/os/all.h>
-#include <iCub/eventdriven/vBottle.h>
-#include <iCub/eventdriven/vCodec.h>
-#include <iCub/eventdriven/vWindow_basic.h>
-#include <iCub/eventdriven/vWindow_adv.h>
-#include <iCub/eventdriven/vFilters.h>
-#include <iCub/eventdriven/vPort.h>
+#include "event-driven/vBottle.h"
+#include "event-driven/vCodec.h"
+#include "event-driven/vWindow_basic.h"
+#include "event-driven/vWindow_adv.h"
+#include "event-driven/vFilters.h"
+#include "event-driven/vPort.h"
 #include <deque>
 #include <string>
 #include <map>

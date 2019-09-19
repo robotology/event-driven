@@ -26,7 +26,7 @@
 
 #include <fstream>
 #include <yarp/os/all.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
 
 #include "vCircleObserver.h"
 

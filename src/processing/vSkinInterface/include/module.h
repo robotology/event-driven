@@ -23,7 +23,7 @@
 #define __V_SKINMODULE__
 
 #include <yarp/os/all.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
 #include <vector>
 //#include "vSkinInterface.h"
 

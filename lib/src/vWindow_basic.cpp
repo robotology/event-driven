@@ -16,7 +16,7 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "iCub/eventdriven/vWindow_basic.h"
+#include "event-driven/vWindow_basic.h"
 
 namespace ev {
 

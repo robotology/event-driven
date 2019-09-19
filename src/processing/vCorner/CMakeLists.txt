@@ -1,20 +1,24 @@
-cmake_minimum_required(VERSION 2.6)
-set(MODULENAME vCorner)
-project(${MODULENAME})
+project(vCorner)
 
 file(GLOB source src/*.cpp)
 file(GLOB header include/*.h)
 
-include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${EVENTDRIVENLIBS_INCLUDE_DIRS})
+add_executable(${PROJECT_NAME} ${source} ${header})
 
-add_executable(${MODULENAME} ${source} ${header})
+target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include
+                                                   ${OpenCV_INCLUDE_DIRS})
 
-target_link_libraries(${MODULENAME} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARY})
+target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_OS
+                                              YARP::YARP_init
+                                              YARP::YARP_sig
+                                              YARP::YARP_math
+                                              ev::${EVENTDRIVEN_LIBRARY})
 
-install(TARGETS ${MODULENAME} DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-yarp_install(FILES ${MODULENAME}.ini DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${CONTEXT_DIR})
+yarp_install(FILES ${PROJECT_NAME}.ini
+             DESTINATION ${EVENT-DRIVEN_CONTEXTS_INSTALL_DIR}/${CONTEXT_DIR})
+
 if(ADD_DOCS_TO_IDE)
-    add_custom_target(${MODULENAME}_docs SOURCES ${MODULENAME}.ini ${MODULENAME}.xml)
+  add_custom_target(${PROJECT_NAME}_docs SOURCES ${PROJECT_NAME}.ini ${PROJECT_NAME}.xml)
 endif(ADD_DOCS_TO_IDE)
