@@ -1,6 +1,6 @@
-# Copyright: (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
-# Authors: Arren Glover
-# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+# Copyright: (C) 2019 EDPR - Istituto Italiano di Tecnologia
+# Authors: Arren Glover, Daniele Domenichelli
+# CopyPolicy: Released under the terms of the GNU GPL v3.0.
 
 cmake_minimum_required(VERSION 3.5)
 project(event-driven

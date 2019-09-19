@@ -1,7 +1,3 @@
-# Copyright: (C) 2010 RobotCub Consortium
-# Authors: Francesco Rea
-# CopyPolicy: Released under the terms of the GNU GPL v2.0.
-
 #choose codec type
 list(APPEND CodecTypes "CODEC_128x128" "CODEC_304x240_20" "CODEC_304x240_24")
 list(GET CodecTypes 2 VLIB_CODEC_DEFAULT)
