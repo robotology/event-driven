@@ -1,4 +1,6 @@
 
+These instructions are the standard way to set-up the YARP/event-driven environment on an sd-card meant for the zcb or z-turn. If you already have a working sd-card you can simply copy the sd-card. You can find instructions for copying an sd-card at the bottom.
+
 # How to set-up an SD for a zynq board
 
 ## Set-up icub user
