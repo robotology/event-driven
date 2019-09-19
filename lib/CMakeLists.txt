@@ -40,21 +40,21 @@ if(VLIB_DEPRECATED)
 endif()
 
 set(folder_header
-  include/iCub/eventdriven/vtsHelper.h
-  include/iCub/eventdriven/vCodec.h
-  include/iCub/eventdriven/vFilters.h
-  include/iCub/eventdriven/vPort.h
-  include/iCub/eventdriven/vCollectSend.h
-  include/iCub/eventdriven/all.h
+  include/event-driven/vtsHelper.h
+  include/event-driven/vCodec.h
+  include/event-driven/vFilters.h
+  include/event-driven/vPort.h
+  include/event-driven/vCollectSend.h
+  include/event-driven/all.h
 )
 
 if(VLIB_DEPRECATED)
   list(APPEND folder_header
-    include/iCub/eventdriven/vBottle.h
-    include/iCub/eventdriven/vWindow_adv.h
-    include/iCub/eventdriven/vWindow_basic.h
-    include/iCub/eventdriven/vSurfaceHandlerTh.h
-    include/iCub/eventdriven/deprecated.h)
+    include/event-driven/vBottle.h
+    include/event-driven/vWindow_adv.h
+    include/event-driven/vWindow_basic.h
+    include/event-driven/vSurfaceHandlerTh.h
+    include/event-driven/deprecated.h)
 endif()
 
 # Create everything needed to build our library
@@ -80,15 +80,5 @@ install(TARGETS ${EVENTDRIVEN_LIBRARY}
         LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}"                            COMPONENT shlib
         ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"                            COMPONENT lib
         RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}"                            COMPONENT bin
-        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/iCub/eventdriven"       COMPONENT dev)
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${EVENTDRIVEN_LIBRARY}" COMPONENT dev)
 
-
-# if(ICUBcontrib_FOUND)
-#     icubcontrib_export_library(${EVENTDRIVEN_LIBRARY}
-#         INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
-# #        EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS}
-#         DESTINATION include/iCub/eventdriven
-#         FILES  ${folder_header}
-#     )
-#     icubcontrib_finalize_export(${EVENTDRIVEN_LIBRARY})
-# endif(ICUBcontrib_FOUND)

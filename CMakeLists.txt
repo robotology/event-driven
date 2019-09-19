@@ -69,7 +69,7 @@ set_package_properties(OpenCV PROPERTIES TYPE OPTIONAL)
 
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES)
 
-add_subdirectory(libraries)
+add_subdirectory(lib)
 add_subdirectory(src)
 # add_subdirectory(bindings)
 # if(BUILD_TESTING)
