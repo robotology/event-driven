@@ -89,6 +89,7 @@ install_basic_package_files(${PROJECT_NAME}
                             COMPATIBILITY SameMajorVersion
                             LOWERCASE_FILENAMES
                             NAMESPACE ev::
-                            DEPENDENCIES "YARP COMPONENTS OS sig")
+                            DEPENDENCIES "YARP COMPONENTS OS sig"
+                            INCLUDE_CONTENT "yarp_configure_external_installation(event-driven NO_PATH_D)")
 
 include(AddUninstallTarget)
