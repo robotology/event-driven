@@ -18,7 +18,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 add_executable(${PROJECT_NAME} ${source} ${header})
 
 target_link_libraries(${PROJECT_NAME} ${Boost_SYSTEM_LIBRARY})
-target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARIES} ${LIBCCAMDEVICE_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARY} ${LIBCCAMDEVICE_LIBRARIES})
 
 #add_definitions("-D${VLIB_CODEC_TYPE}")
 

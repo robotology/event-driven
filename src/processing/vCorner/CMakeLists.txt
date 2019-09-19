@@ -10,7 +10,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 
 add_executable(${MODULENAME} ${source} ${header})
 
-target_link_libraries(${MODULENAME} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARIES})
+target_link_libraries(${MODULENAME} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARY})
 
 install(TARGETS ${MODULENAME} DESTINATION bin)
 

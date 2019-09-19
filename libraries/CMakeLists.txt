@@ -1,7 +1,6 @@
 # Copyright: (C) 2010 RobotCub Consortium
 # Authors: Francesco Rea
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
-cmake_minimum_required(VERSION 2.6)
 
 #choose codec type
 list(APPEND CodecTypes "CODEC_128x128" "CODEC_304x240_20" "CODEC_304x240_24")
@@ -21,20 +20,26 @@ endif()
 
 set(VLIB_DEPRECATED OFF CACHE BOOL "Also build old classes")
 
-project(${EVENTDRIVEN_LIBRARIES})
-
-file(GLOB folder_source
-        src/vtsHelper.cpp
-        src/codecs/codec_*.cpp
-        src/vPort.cpp
-        src/vCodec.cpp
-)
+set(folder_source
+  src/vCodec.cpp
+  src/vPort.cpp
+  src/vtsHelper.cpp
+  src/codecs/codec_AddressEvent.cpp
+  src/codecs/codec_FlowEvent.cpp
+  src/codecs/codec_GaussianAE.cpp
+  src/codecs/codec_IMUEvent.cpp
+  src/codecs/codec_LabelledAE.cpp
+  src/codecs/codec_SkinEvent.cpp
+  src/codecs/codec_SkinSample.cpp
+  src/codecs/codec_vEvent.cpp)
 
 if(VLIB_DEPRECATED)
-    list(APPEND folder_source src/vWindow_adv.cpp src/vWindow_basic.cpp)
+  list(APPEND folder_source
+    src/vWindow_adv.cpp
+    src/vWindow_basic.cpp)
 endif()
 
-file(GLOB folder_header
+set(folder_header
   include/iCub/eventdriven/vtsHelper.h
   include/iCub/eventdriven/vCodec.h
   include/iCub/eventdriven/vFilters.h
@@ -44,36 +49,46 @@ file(GLOB folder_header
 )
 
 if(VLIB_DEPRECATED)
-    list(APPEND folder_header   include/iCub/eventdriven/vBottle.h
-                                include/iCub/eventdriven/vWindow_adv.h
-                                include/iCub/eventdriven/vWindow_basic.h
-                                include/iCub/eventdriven/vSurfaceHandlerTh.h
-                                include/iCub/eventdriven/deprecated.h)
+  list(APPEND folder_header
+    include/iCub/eventdriven/vBottle.h
+    include/iCub/eventdriven/vWindow_adv.h
+    include/iCub/eventdriven/vWindow_basic.h
+    include/iCub/eventdriven/vSurfaceHandlerTh.h
+    include/iCub/eventdriven/deprecated.h)
 endif()
 
-# Declare groups of source and header files -- makes things pretty in MSVC.
-source_group("Source Files" FILES ${folder_source})
-source_group("Header Files" FILES ${folder_header})
-
-include_directories(
-    ${PROJECT_SOURCE_DIR}/include
-)
-
 # Create everything needed to build our library
-add_library(${EVENTDRIVEN_LIBRARIES} ${folder_source} ${folder_header})
+add_library(${EVENTDRIVEN_LIBRARY} ${folder_source} ${folder_header})
+add_library(ev::${EVENTDRIVEN_LIBRARY} ALIAS ${EVENTDRIVEN_LIBRARY})
 
-add_definitions("-D${VLIB_CODEC_TYPE}")
-add_definitions( -DCLOCK_PERIOD=${VLIB_CLOCK_PERIOD_NS} )
-add_definitions( -DTIMER_BITS=${VLIB_TIMER_BITS} )
 
-target_link_libraries(${EVENTDRIVEN_LIBRARIES} ${YARP_LIBRARIES})
+set_target_properties(${EVENTDRIVEN_LIBRARY} PROPERTIES PUBLIC_HEADER "${folder_header}"
+                                                          VERSION ${event-driven_VERSION}
+                                                          SOVERSION 1)
+target_include_directories(${EVENTDRIVEN_LIBRARY} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+                                                           "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>") # FIXME INSTALL PATH
 
-if(ICUBcontrib_FOUND)
-    icubcontrib_export_library(${EVENTDRIVEN_LIBRARIES}
-        INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
-#        EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS}
-        DESTINATION include/iCub/eventdriven
-        FILES  ${folder_header}
-    )
-    icubcontrib_finalize_export(${EVENTDRIVEN_LIBRARIES})
-endif(ICUBcontrib_FOUND)
+target_compile_definitions(${EVENTDRIVEN_LIBRARY} PRIVATE "${VLIB_CODEC_TYPE}"
+                                                            CLOCK_PERIOD=${VLIB_CLOCK_PERIOD_NS}
+                                                            TIMER_BITS=${VLIB_TIMER_BITS})
+
+target_link_libraries(${EVENTDRIVEN_LIBRARY} PUBLIC YARP::YARP_OS
+                                                      YARP::YARP_sig)
+
+install(TARGETS ${EVENTDRIVEN_LIBRARY}
+        EXPORT eventdriven
+        LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}"                            COMPONENT shlib
+        ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"                            COMPONENT lib
+        RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}"                            COMPONENT bin
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/iCub/eventdriven"       COMPONENT dev)
+
+
+# if(ICUBcontrib_FOUND)
+#     icubcontrib_export_library(${EVENTDRIVEN_LIBRARY}
+#         INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include
+# #        EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS}
+#         DESTINATION include/iCub/eventdriven
+#         FILES  ${folder_header}
+#     )
+#     icubcontrib_finalize_export(${EVENTDRIVEN_LIBRARY})
+# endif(ICUBcontrib_FOUND)
