@@ -98,6 +98,7 @@ public:
     bool updateModule();
     void run();
 
+    void getUndistortedEvent(const ev::resolution &resmod, ev::AE &v) const;
 };
 
 #endif
