@@ -10,10 +10,10 @@ target_include_directories(${PROJECT_ALIAS} PRIVATE ${PROJECT_SOURCE_DIR}/includ
                                                    ${OpenCV_INCLUDE_DIRS})
 
 target_link_libraries(${PROJECT_ALIAS} PRIVATE YARP::YARP_OS
-                                              YARP::YARP_init
-                                              YARP::YARP_sig
-                                              ${OpenCV_LIBRARIES}
-                                              ev::${EVENTDRIVEN_LIBRARY})
+                                               YARP::YARP_init
+                                               YARP::YARP_sig
+                                               ${OpenCV_LIBRARIES}
+                                               ev::${EVENTDRIVEN_LIBRARY})
 
 install(TARGETS ${PROJECT_ALIAS} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
