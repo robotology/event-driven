@@ -1,128 +1,66 @@
 # Comprehensive Installation
 
-These installation instructions are for first time users of YARP and specifically for compiling from sources in a linux environment. The instructions for installing YARP can be found [here](http://wiki.icub.org/wiki/Linux:Installation_from_sources) and are repeated here for completeness. For any problems please check the official instructions.
+We'll go through the recommended set-up of `event-driven` for a first time user of the `YARP` environment. The first step is to create a directory in which to install `YARP`, `event-driven` and the eventual modules you will write. For example
 
-## Install YARP
+> mkdir ~/yarp-install
 
-set up the required environment variables.
+Secondly, we want to set up some environment variables that will make the install go smoother. Use your favourite text editor to open ~/.bashrc and add the following lines:
 
-We will assume that you are installing YARP in the directory $PROJECTS - for example this could be your home directory. Use your favourite text editor to open ~/.bashrc and add the following lines:
+* export INSTALL_DIR=~/yarp-install
+* export YARP_DATA_DIRS=$INSTALL_DIR/share/yarp:$INSTALL_DIR/share/event-driven
+* export PATH=$PATH:$INSTALL_DIR/bin
 
-* export YARP_ROOT=$PROJECTS/yarp
-* export YARP_DIR=$YARP_ROOT/build
-* export ICUBcontrib_DIR=$PROJECTS/icub-contrib-install
-* export YARP_DATA_DIRS=$YARP_DIR/share/yarp:$ICUBcontrib_DIR/share/ICUBcontrib
-* export PATH=$PATH:$YARP_DIR/bin:$ICUBcontrib_DIR/bin
+Next we want to get the required repositories. Change directory into one in which you want these projects, for example:
 
-replace $PROJECTS with your desired directory.
+> mkdir ~/projects && cd ~/projects
 
-get all dependencies
+then,
 
-> sudo sh -c 'echo "deb http://www.icub.org/ubuntu xenial contrib/science" > /etc/apt/sources.list.d/icub.list'
-
-> sudo apt update
-
-> sudo apt install icub-common
-
-get the repositories
-
-> cd $PROJECTS
+> git clone https://github.com/robotology/YCM.git
 
 > git clone https://github.com/robotology/yarp.git
 
-> git clone https://github.com/robotology/icub-contrib-common.git
-
 > git clone https://github.com/robotology/event-driven.git
 
-build the repositories
+we are going to build the repositories in the above order too. However, first you might need some extra dependencies for `YARP`. One option is to go [here](http://wiki.icub.org/wiki/Linux:Installation_from_sources) and follow the _Getting all dependencies_ instructions (either installing dependencies yourself or adding to the `apt` path).
 
-> cd $YARP_ROOT
+Now you have dependencies, let's install `YCM`:
 
-> mkdir build && cd build
-
-> ccmake ..
-
-set the following variables, pressing [c] to configure until all options are shown:
-
-* CREATE_GUIS ON
-* CREATE_LIB_MATH ON
-* CREATE_YARPDATADUMPER ON
-* CREATE_YARPDATAPLAYER ON
-* CREATE_YARPLOGGER ON
-* CREATE_YARPMANAGER ON
-* CREATE_YARPSCOPE ON
-* CREATE_YARPVIEW ON
-
-if you are using the icub robot also turn on:
-
-* CREATE_YARPMOTORGUI ON
-* CREATE_YARPROBOTINTERFACE ON
-
-finally press [g] to generate the makefile.
-
-> make -j4
-
-> cd ../..
-
-> cd icub-contrib-common
+> cd ~/projects/YCM
 
 > mkdir build && cd build
 
-> ccmake ..
-
-set the following variables
-
-* CMAKE_INSTALL_PREFIX=$ICUBcontrib_DIR
-
-press [c] to configure and [g] to generate
+> cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
 
 > make install -j4
 
-> cd ../..
+then `YARP`
 
-> cd event-driven
+> cd ~/projects/yarp
 
 > mkdir build && cd build
 
-> ccmake ..
-
-set the following variables, pressing [c] to configure until all options are shown:
-
-* BUILD_PROCESSING ON
-* BUILD_APPLICATIONS ON
-
-select any of the applications you want to build by setting them to ON. If you need to interface to hardware (e.g. using the zynqGrabber), please also set:
-
-* BUILD_PROCESSING ON
-
-and select which modules you need. In addition several options need to be set in regards to the hardware parameters, which will also need to be correct for pre-recorded sequences.
-
-> VLIB_CLOCK_PERIOD_NS 80
-
-> VLIB_CODEC_128x128 OFF
-
-> VLIB_TIMER_BITS 24
-
-These are customisable for your hardware, specifying the event timing and the decoding method, which is different for the 128x128 resolution DVS and a higher resolution camera.
-
-Press [g] to generate the makefile.
+> cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=~/projects/YCM/build
 
 > make install -j4
 
-completed.
+then `event-driven`
 
-## Install icub-main (optional)
+> cd ~/projects/event-driven
 
-This is only needed if you are going to work with an icub robot and is not needed if you want to use the event-driven library as a stand-alone project.
+> mkdir build && cd build
 
-Add the following environment variables (e.g. in ~/.bashrc):
+> cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=~/projects/YCM/build -DYARP_DIR=~/projects/yarp/build
 
-* export ICUB_ROOT=$PROJECTS/icub-main
-* export ICUB_DIR=$ICUB_ROOT/build
-* export YARP_DATA_DIRS=$YARP_DATA_DIRS:$ICUB_DIR/share/icub
-* export PATH=$PATH:$ICUB_DIR/bin
+> make install -j4
 
-in the $PROJECTS directory
+[Continue with the tutorials](README.md) to test your installation, or:
+
+### Install icub-main (optional)
+
+`icub-main` is used if you are using the iCub robot and want to enable some of the `event-driven` modules that control the robot. To install `icub-main` do:
+
+> cd ~/projects
 
 > git clone https://github.com/robotology/icub-main.git
 
@@ -130,21 +68,7 @@ in the $PROJECTS directory
 
 > mkdir build && cd build
 
-> ccmake ..
+> cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=~/projects/YCM/build -DYARP_DIR=~/projects/yarp/build
 
-set the following variables, pressing [c] to configure until all options are shown:
-
-* ENABLE_icubmod_cartesiancontrollerclient ON
-* ENABLE_icubmod_cartesiancontrollerserver ON
-* ENABLE_icubmod_gazecontrollerclient ON
-
-finally press [g] to generate.
-
-> make -j4
-
-completed
-
-## Test Installation
-
-To test your installation is correct please follow the "Getting started with the viewer" tutorial [here](http://robotology.github.io/event-driven/doxygen/doc/html/pages.html).
+> make install -j4
 

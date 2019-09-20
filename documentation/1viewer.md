@@ -11,22 +11,21 @@ Here is a visualisation of the instantiated modules and connections.
 
 <img src="http://robotology.github.io/event-driven/doxygen/images/vView.png" width="480">
 
-## Dependencies
-
-No special dependencies are required, all the required modules will be executed by the application.
-
 ## How to run the application
 
 These are basic instructions for first time YARP users, assuming the comprehensive instructions have been followed.
 
-* copy the application template into the yarpmanager search path, removing the .template extension
-
-> cp $ICUBcontrib_DIR/share/ICUBcontrib/templates/applications/app_vView.xml.template ~/.local/share/yarp/applications/app_vView.xml
-
 * download the sample dataset from [here](https://doi.org/10.5281/zenodo.2556755) and unpack to a location of your choosing.
+
+* set the yarp namespace
+
+> yarp namespace /<yourname>
+
 * run a yarpserver
 
-> yarpserver
+> yarpserver --write
+
+### Using actual hardware/camera? Skip ahead. Using a dataset? Follow these instructions:
 
 * (in a seperate terminal) run a yarpdataplayer
 
@@ -36,12 +35,23 @@ These are basic instructions for first time YARP users, assuming the comprehensi
 * the dataset should be open in the yarpdataplayer window with a "Port Name" of "/zynqGrabber/AE:o".
 * (in a separate terminal) run a yarpmanager
 
+### Using real hardware/camera?
+
+You should have followed the instructions
+
+[to run install hardware and run zynqGrabber,](README.md)
+
+so your zynqGrabber should be running and a port `/zynqGrabber/AE:o` should be already open (check with `yarp name list`).
+
+### Okay - yarpdataplayer users, and hardware users back together here:
+
 > yarpmanager
 
 * the yarpmanager gui should be open.
-* on the entities tab (left) open the "Applications" folder - the vView application should be visible. Double click the vView application to load it.
-
-* run all the modules in the vView app by choosing "Run All" in the left-most vertical toolbar. All applications should become green.
+* on the entities tab (left) open the "Applications" folder - the vView application should be visible. Double click the `event-viewer-example` application to load it.
+* If you do not have the `event-viewer-example` application, make sure you followed the installation steps correctly, and that your `YARP_DATA_DIRS` environment variable correctly points to the share folders in your install folder (`echo $YARP_DATA_DIRS`)
+* run all the modules in the `event-viewer-example` app by choosing "Run All" in the left-most vertical toolbar. All applications should become green.
+* if not all applications are green, it means the executable files could not be found on the `PATH`. Verfify your installation and your `PATH` environment variable (`echo $PATH`).
 * connect all yarp ports by choosing "Connect All" in the same toolbar. All connections should turn green.
 * press "Play" on the yarpdataplayer. The dataset should be visible in the yarpview windows (split into left and right cameras).
 * To close all applications first "Disconnect All" and then "Close All" on the left-hand toolbar. GUI's are closed as per a normal window. The yarpserver can be closed using "ctrl+c" in the appropriate terminal.

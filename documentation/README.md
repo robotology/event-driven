@@ -34,7 +34,7 @@ The first step is to install the dependencies  - typically just YARP, is require
 
 should be all you need to do to have a working environment. We suggest following the
 
-[getting started with visualising events]()
+[getting started with visualising events](1viewer.md)
 
 tutorial to check everything is working, and to learn about the `yarpdataplayer`. If you can't get the tutorial working, double check everything is installed correctly, and if you can't find the problem, please open an issue on the `event-driven` repository page.
 
