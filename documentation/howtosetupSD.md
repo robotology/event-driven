@@ -40,7 +40,7 @@ At this point you should be able to recompile YARP 3.0 and event-driven master b
 
 When isntalling `event-driven` use the following options for cmake:
 
-> cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=~/projects/YCM/build -DYARP_DIR=~/projects/yarp/build -DBUILD_HARDWAREIO=ON -DENABLE_zynqgrabber=ON
+> cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=\~/projects/YCM/build -DYARP_DIR=\~/projects/yarp/build -DBUILD_HARDWAREIO=ON -DENABLE_zynqgrabber=ON
 
 ## Set up device drivers
 

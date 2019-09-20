@@ -67,16 +67,16 @@ save and exit nano
 
 > ifconfig
 
-The <ip address> of the board should be reported. Take note so you can connect to the board over SSH.
+The \<ip address\> of the board should be reported. Take note so you can connect to the board over SSH.
 
 ## SSH connection
 
 On your laptop
 
-> ping <ip address>
+> ping \<ip address\>
 
 if a connection is found
 
-> ssh icub@<ip address>
+> ssh icub@\<ip address\>
 
 The password should be given to you by EDPR-IIT.

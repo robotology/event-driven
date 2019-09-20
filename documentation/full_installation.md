@@ -50,7 +50,7 @@ then `event-driven`
 
 > mkdir build && cd build
 
-> cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=~/projects/YCM/build -DYARP_DIR=~/projects/yarp/build
+> cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=\~/projects/YCM/build -DYARP_DIR=\~/projects/yarp/build
 
 > make install -j4
 
@@ -68,7 +68,7 @@ then `event-driven`
 
 > mkdir build && cd build
 
-> cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=~/projects/YCM/build -DYARP_DIR=~/projects/yarp/build
+> cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=\~/projects/YCM/build -DYARP_DIR=\~/projects/yarp/build
 
 > make install -j4
 
