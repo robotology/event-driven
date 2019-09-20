@@ -10,7 +10,7 @@ Hardware could include sensors: ATIS, event-driven skin, cochlea, or IMU, as wel
 
 If the system should be already ready-to-go, and you just need the board to start acquisition, you can follow these instructions to
 
-[connect to the ZCB or z-turn.]()
+[connect to the ZCB or z-turn.](connect_to_zcb.md)
 
 Once you have a connection to the board, you need to
 
@@ -52,5 +52,5 @@ and possibly requires a way to
 
 given you have
 
-[calibrated your camera.]()
+[calibrated your camera.](2calibration.md)
 
