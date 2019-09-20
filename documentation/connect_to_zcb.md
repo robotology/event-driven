@@ -19,7 +19,9 @@ Okay now you have a terminal *inside the ZCB!* You need to decide how you are go
 To exit screen do:
 
 > ctrl+a
+
 > k
+
 > y
 
 #### Option 1: External network

@@ -1,4 +1,4 @@
-# Getting started with the viewer
+# Testing your install with the viewer
 
 Visualise a stream of events from the cameras / from a pre-recorded sequence.
 
