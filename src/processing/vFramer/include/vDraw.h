@@ -26,10 +26,6 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
-//for recording data
-#include <iostream>
-#include <fstream>
-
 class vDraw;
 
 /**
@@ -55,7 +51,7 @@ protected:
     unsigned int display_window;
     unsigned int max_window;
     bool flip;
-    int scaling;
+    bool scaling;
 
 public:
 
@@ -91,7 +87,7 @@ public:
         this->flip = flip;
     }
 
-    void setScaling(int scaling)
+    void setScaling(bool scaling)
     {
         this->scaling = scaling;
     }
@@ -138,19 +134,19 @@ public:
 class rasterDraw : public vDraw {
 
 protected:
-    #define XLIMIT 304 //unfortunately given by vFramer
+    #define XLIMIT 304          //array needs constants
     #define YLIMIT 240
 
     double pixelStorage[YLIMIT][XLIMIT];
-
     int Xlimit = XLIMIT;
     double Ylimit = YLIMIT;
-    double neuronID; //should be 255, because of SpiNNaker Neuron Limit
+    double neuronID;
     double yScaler;
     unsigned int display_window;
 
 public:
-//just an initializer, but the values do have to be changed in the vFramer!
+    //Important values like scaling or flip need to be changed by command line argument
+    //and get overwritten when in constructor by the vFramerLite.cpp configure
     rasterDraw() : neuronID(300)
     {
         display_window = 0.1*ev::vtsHelper::vtsscaler;

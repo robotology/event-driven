@@ -67,7 +67,7 @@ public:
     channelInstance(string channel_name);
     bool addDrawer(string drawer_name, unsigned int width,
                    unsigned int height, unsigned int window_size, bool flip,
-                   int scaling);
+                   bool scaling);
 
     bool threadInit();
     void run();

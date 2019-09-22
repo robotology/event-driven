@@ -55,7 +55,7 @@ string channelInstance::getName()
 
 bool channelInstance::addDrawer(string drawer_name, unsigned int width,
                                 unsigned int height, unsigned int window_size,
-                                bool flip, int scaling)
+                                bool flip, bool scaling)
 {
     //make the drawer
     vDraw * new_drawer = createDrawer(drawer_name);
@@ -201,11 +201,10 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     int frameRate = rf.check("frameRate", Value(30)).asInt();
     double period = 1000.0 / frameRate;
-    int scaling = rf.check("scaling", Value(0)).asInt();
+    bool scaling = rf.check("flip") && rf.check("scaling", Value(true)).asBool();
+    bool flip = rf.check("flip") && rf.check("flip", Value(true)).asBool();
     //bool useTimeout =
     //        rf.check("timeout") && rf.check("timeout", Value(true)).asBool();
-    bool flip =
-            rf.check("flip") && rf.check("flip", Value(true)).asBool();
     //bool forceRender =
     //        rf.check("forcerender") &&
     //        rf.check("forcerender", Value(true)).asBool();

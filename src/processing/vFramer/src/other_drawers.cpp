@@ -286,33 +286,32 @@ std::string rasterDraw::getEventType()
 
 void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
-    //setOfQueues (=eSet) is a merge of many queues received by the vFramer:i-port
-    //The port accumulates events, so the eSet gets longer over time!
+    // eSet is a merge of all queues received by the vFramer:i-port in frameRate time
+    // The vFramer:i-port accumulates events, so the eSet gets longer over time!
 
-    //check if eSet contains elements
+    // check if eSet contains elements
     if(eSet.empty()){
         return;
     }
-    //get latest timestamp
+    // get latest timestamp
     if(vTime < 0){
         vTime = eSet.back()->stamp;
     }
-    //Reverse Timestamp Iterator:
-
+    // Reverse Timeelement-Iterator:
     for(int y=(Ylimit-1.0); y>=0; y--){
         for(int x=(Xlimit-1); x>=0; x--){
 
-            //if there is a timestamp in the storage
+            //check if there is an event in the storage
             if (pixelStorage[y][x] > 0){
 
-                //print current event as blue point
+                //print this event as a blue point
                 image.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 0, 0);
 
-                //reset pixelStorage if end is reached
+                //if event reaches the end reset the pixelStorage
                 if(x == (Xlimit-1)){
                     pixelStorage[y][x] = 0;
                 }
-                //else increase the timestamp and reset the old field
+                //else increase the timeelement of this event and reset the old field
                 else{
                     pixelStorage[y][x+1] = pixelStorage[y][x];
                     pixelStorage[y][x] = 0;
@@ -320,44 +319,43 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             }
         }
     }
-    //go through the eSet-q and start with the latest event
+    // go through the eSet-q and start with the latest event
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
 
-        //calculate the time difference between latest and actual event
+        // calculate the time difference between latest and this event
         int dt = vTime - (*qi)->stamp;
 
-        // if the difference is negative,it was at max_stamp = 85ms
+        // if the difference is negative, a time wrap occured at Maxstamp (~85 ms)
         if(dt < 0)
             dt += ev::vtsHelper::max_stamp;
 
-        //time difference increases because of accumulation, therefore ignore events that are older than 1ms
+        // Ignore events in eSet that are older than display_window (= 1 ms)
         if((unsigned int)dt > display_window){
             break;
         }
-//        //calculate the time difference between two events
-//        int dt_event = prevEv - (*qi)->stamp;
 
-        //Safety: Make whatevers inside the q-element to AE
+        // Safety: Make whatevers inside this q-element to an AE
         auto aep = as_event<AE>(*qi);
 
         if(!aep){
             continue;
         }
-        //Safe the aep as an accessible AE
+        // Safe it as an accessible AE
         AE v = *(aep);
 
-        //y = neuronID (total 32bit address)
+        // Get the neuronID as a decimal number
         unsigned int y = v._coded_data;
 
-        //scale neuronID to YLimit of vFramer
-        if(scaling == 1){
+        // scale neuronID to YLimit of vFramer
+        if(scaling){
             y = round(y * yScaler);
             if(flip) {
                 y = (Ylimit - 1) - y;
             }
             pixelStorage[y][0] = 1;
         }
+        // else check that neuronID does not reach limits of pixelStorage
         else if((Ylimit-1) >= y){
             if(flip) {
                 y = (Ylimit - 1) - y;

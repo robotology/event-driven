@@ -69,8 +69,7 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
     double clusterLimit =
             rf.check("clusterLimit", yarp::os::Value(-1)).asDouble();
 
-
-
+    yWarning() << Tact;
 
     eventBottleManager.setAllParameters(alphaShape, alphaPos, Tact, Tinact,
                                         Tfree, Tevent, SigX, SigY, SigXY,
@@ -208,7 +207,7 @@ void EventBottleManager::onRead(ev::vBottle &bot)
         auto aep = ev::as_event<ev::AddressEvent>(*qi);
         if(!aep) continue;
 
-        short channel           = aep->getChannel();
+        short channel = aep->getChannel();
 
         if (channel == 0) //Process events for left camera
         {
