@@ -201,7 +201,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 
     int frameRate = rf.check("frameRate", Value(30)).asInt();
     double period = 1000.0 / frameRate;
-    bool scaling = rf.check("flip") && rf.check("scaling", Value(true)).asBool();
+    bool scaling = rf.check("scaling", Value(true)).asBool();
     bool flip = rf.check("flip") && rf.check("flip", Value(true)).asBool();
     //bool useTimeout =
     //        rf.check("timeout") && rf.check("timeout", Value(true)).asBool();

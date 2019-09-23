@@ -146,7 +146,7 @@ protected:
 
 public:
     //Important values like scaling or flip need to be changed by command line argument
-    //and get overwritten when in constructor by the vFramerLite.cpp configure
+    //and get overwritten in constructor by the vFramerLite.cpp configure
     rasterDraw() : neuronID(300)
     {
         display_window = 0.1*ev::vtsHelper::vtsscaler;
