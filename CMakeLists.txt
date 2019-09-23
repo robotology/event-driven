@@ -61,7 +61,7 @@ set(EVENTDRIVEN_LIBRARY event-driven)
 option(ADD_DOCS_TO_IDE "Add apps/documentation to IDE" OFF)
 
 
-find_package(YARP COMPONENTS OS sig math dev REQUIRED)
+find_package(YARP COMPONENTS OS sig math dev cv REQUIRED)
 yarp_configure_external_installation(event-driven)
 
 find_package(OpenCV)

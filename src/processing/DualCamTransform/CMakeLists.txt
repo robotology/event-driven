@@ -12,6 +12,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_OS
                                               YARP::YARP_init
                                               YARP::YARP_sig
                                               YARP::YARP_math
+                                              YARP::YARP_cv
                                               ${OpenCV_LIBRARIES}
                                               ev::${EVENTDRIVEN_LIBRARY})
 
