@@ -36,15 +36,15 @@ tutorial to check everything is working, and to learn about the `yarpdataplayer`
 
 Finally, once you are ready, you can
 
-[learn to write a basic processing module]()
+[learn to write a basic processing module](example_module.md)
 
-which covers, reading and writing events, and understanding event timestamps. You module probably needs a nice way of
+which covers, reading and writing events, and understanding event timestamps. Your module probably needs a nice way of
 
-[visualising the event-stream]()
+[visualising your output]()
 
-and possibly requires a way to
+and possibly needs to
 
-[correct for lens disortion]()
+[correct for lens disortion or external other external calibration]()
 
 given you have
 
