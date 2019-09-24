@@ -14,17 +14,13 @@ If the system should be already ready-to-go, and you just need the board to star
 
 Once you have a connection to the board, you need to
 
-[set-up the yarpserver]()
+[set-up the yarpserver](setup_yarpserver.md)
 
 to correctly communicate between your laptop and the board. Finally you will need to
 
-[run `zynqGrabber`]()
+[run `zynqGrabber`](zynqGrabber.md)
 
-At this point you should be streaming events from the hardware device and you can start to read and process them. You can
-
-[check your hardware]()
-
-is correctly streaming events to your laptop, once your software is correctly installed on the laptop as well.
+At this point, if you have checked your hardware is streaming events, you can start to read and process them, once your software is correctly installed on the laptop as well.
 
 ## Software
 
@@ -53,4 +49,10 @@ and possibly requires a way to
 given you have
 
 [calibrated your camera.](2calibration.md)
+
+You can also learn to
+
+[save and playback]()
+
+data for offline processing and experiment re-creation.
 
