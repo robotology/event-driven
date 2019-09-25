@@ -32,5 +32,10 @@ yarp_install(FILES ${PROJECT_NAME}.ini
              DESTINATION ${EVENT-DRIVEN_CONTEXTS_INSTALL_DIR}/${PROJECT_NAME})
 yarp_install(FILES app_${PROJECT_NAME}.xml 
              DESTINATION ${EVENT-DRIVEN_APPLICATIONS_INSTALL_DIR})
+
+option(ADD_DOCS_TO_IDE "Add apps/documentation to IDE" OFF)
+if(ADD_DOCS_TO_IDE)
+  add_custom_target(${PROJECT_NAME}_docs SOURCES app_${PROJECT_NAME}.xml ${PROJECT_NAME}.ini README.md)
+endif()
              
 #uninstall target?
