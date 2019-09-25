@@ -17,6 +17,6 @@ yarp_install(FILES ${PROJECT_NAME}.ini
              DESTINATION ${EVENT-DRIVEN_CONTEXTS_INSTALL_DIR}/${CONTEXT_DIR})
 
 if(ADD_DOCS_TO_IDE)
-  add_custom_target(${PROJECT_NAME}_docs SOURCES ${PROJECT_NAME}.ini ${PROJECT_NAME}.xml)
+  add_custom_target(${PROJECT_NAME}_docs SOURCES ${PROJECT_NAME}.ini)
 endif()
 
