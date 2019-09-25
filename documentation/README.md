@@ -40,19 +40,19 @@ Finally, once you are ready, you can
 
 which covers, reading and writing events, and understanding event timestamps. Your module probably needs a nice way of
 
-[visualising your output]()
+[TODO: visualising your output]()
 
 and possibly needs to
 
-[correct for lens disortion or external other external calibration]()
+[TODO: correct for lens disortion or external other external calibration]()
 
 given you have
 
-[calibrated your camera.](2calibration.md)
+[TOIMPROVE: calibrated your camera.](2calibration.md)
 
 You can also learn to
 
-[save and playback]()
+[TODO: save and playback]()
 
 data for offline processing and experiment re-creation.
 
