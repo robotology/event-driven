@@ -51,4 +51,4 @@ yarpmanager
 * If not all applications are green, it means the executable files could not be found on the `PATH`. Verfify your installation and your `PATH` environment variable (`echo $PATH`).
 * Connect all yarp ports by choosing "Connect All" in the same toolbar. All connections should turn green.
 * Press "Play" on the yarpdataplayer. The dataset should be visible in the yarpview windows (split into left and right cameras).
-* To close all applications first "Disconnect All" and then "Close All" on the left-hand toolbar. GUI's are closed as per a normal window. The yarpserver can be closed using "ctrl+c" in the appropriate terminal.
+* To close all applications first "Disconnect All" and then "Close All" on the left-hand toolbar. GUI's are closed as per a normal window. The yarpserver can be closed using `ctrl+c` in the appropriate terminal.
