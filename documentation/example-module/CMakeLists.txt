@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.5)
 # produce the cmake var PROJECT_NAME
 project(example-module)
 
-#include(GNUInstallDirs)
+include(GNUInstallDirs)
 if(NOT CMAKE_CONFIGURATION_TYPES)
     if(NOT CMAKE_BUILD_TYPE)
         message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -12,8 +12,15 @@ if(NOT CMAKE_CONFIGURATION_TYPES)
     endif()
 endif()
 
+find_package(YCM REQUIRED)
+include(AddInstallRPATHSupport)
+add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
+                          LIB_DIRS "${CMAKE_INSTALL_FULL_LIBDIR}"
+                          INSTALL_NAME_DIR "${CMAKE_INSTALL_FULL_LIBDIR}"
+                          USE_LINK_PATH)
 
-# mandatory use of these packages
+
+
 find_package(YARP COMPONENTS OS sig math dev REQUIRED)
 find_package(event-driven REQUIRED)
 
