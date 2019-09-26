@@ -36,8 +36,8 @@ yarpdataplayer
 
 ### Using real hardware/camera?
 
-* You should have followed the instructions [to run install hardware and run zynqGrabber,](README.md). 
-* So your zynqGrabber should be running and a port `/zynqGrabber/AE:o` should be already open (check with `yarp name list`).
+* You should have followed the instructions [to run install hardware and run zynqGrabber](README.md). 
+* if everything went smoothly, your zynqGrabber should be running and a port `/zynqGrabber/AE:o` should be already open (check with `yarp name list`).
 
 ### Okay - yarpdataplayer users, and hardware users back together here:
 * In a separate terminal, run a yarpmanager:
