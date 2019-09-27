@@ -14,7 +14,7 @@ The login and password should be given to you by EDPR-IIT.
 
 Okay now you have a terminal *inside the ZCB!* You need to decide how you are going to connect the ZCB to the network:
 
-To exit `screen` do `ctrl+a` to open the list of commands,, then press `k` and `y` to close the session.
+To exit `screen` do `ctrl+a` to open the list of commands,, then press `k`, then `y` to close the session.
 
 ### Option 1: External network
 
