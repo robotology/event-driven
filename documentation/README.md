@@ -4,7 +4,7 @@ You may have some hardware in front of you that you are unsure of how to use, if
 
 ## Hardware
 
-* Hardware could include sensors (_e.g._ ATIS, event-driven skin, cochlea, or IMU), as well as acquisition boards based on zynq chips (_e.g._ ZCB or z-turn). We'll assume the hardware is correctly connected and powered. However, you may need to [set-up an sd-card for a ZCB or z-turn.](howtosetupSD.md)
+* Hardware could include sensors (_e.g._ ATIS, event-driven skin, cochlea, or IMU), as well as acquisition boards based on zynq chips (_e.g._ ZCB or z-turn). We'll assume the hardware is correctly connected and powered. :warning: However, if you are truly starting from scratch, you may need to [set-up an sd-card for a ZCB or z-turn](howtosetupSD.md). If you just need to connect to your hardware, skip this step.
 
 * If the system should be already ready-to-go, and you just need the board to start acquisition, you can follow these instructions to [connect to the ZCB or z-turn.](connect_to_zcb.md).
 
