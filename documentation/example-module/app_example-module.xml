@@ -12,7 +12,7 @@
 
 <module>
     <name> example-module </name>
-    <parameters>--name example-module --example_flag true --example_parameter 0.01 </parameters>
+    <parameters>--name /example-module --example_flag true --example_parameter 0.01 </parameters>
     <node> localhost </node>
 </module>
 
