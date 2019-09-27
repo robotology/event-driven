@@ -101,18 +101,14 @@ public:
                 out_queue.push_back(qi);   
             }
 
+            //after processing the packet output the results
+            //(only if there is something to output
+            if(out_queue.size()) {
+                output_port.write(out_queue, yarpstamp);
+                out_queue.clear();
+            }
         }
-
-        //after processing the packet output the results
-        //(only if there is something to output
-        if(out_queue.size()) {
-            output_port.write(out_queue, yarpstamp);
-            out_queue.clear();
-        }
-
     }
-
-
 };
 
 int main(int argc, char * argv[])
