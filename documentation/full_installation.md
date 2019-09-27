@@ -42,7 +42,7 @@ Finally, let's install event-driven`:
 ```bash
 cd ~/projects/event-driven
 mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=\~/projects/YCM/build -DYARP_DIR=\~/projects/yarp/build
+cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=~/projects/YCM/build -DYARP_DIR=~/projects/yarp/build
 make install -j$(nproc)
 ```
 
@@ -56,6 +56,6 @@ cd ~/projects
 git clone https://github.com/robotology/icub-main.git
 cd icub-main
 mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=\~/projects/YCM/build -DYARP_DIR=\~/projects/yarp/build
+cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=~/projects/YCM/build -DYARP_DIR=~/projects/yarp/build
 make install -j$(nproc)
 ```
