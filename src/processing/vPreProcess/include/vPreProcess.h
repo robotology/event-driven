@@ -38,6 +38,7 @@ private:
     ev::vReadPort < vector<int32_t> > inPort;
     ev::vWritePort outPortCamLeft;
     ev::vWritePort outPortCamRight;
+    ev::vWritePort outPortCamStereo;
     ev::vWritePort outPortSkin;
     ev::vWritePort outPortSkinSamples;
     ev::vWritePort out_port_aps_left;

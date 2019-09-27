@@ -37,7 +37,7 @@ int main(int argc, char * argv[])
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
     rf.setVerbose();
-    rf.setDefaultContext( "eventdriven" );
+    rf.setDefaultContext( "event-driven" );
     rf.setDefaultConfigFile( "vPreProcess.ini" );
     rf.configure( argc, argv );
 
@@ -56,6 +56,7 @@ vPreProcess::vPreProcess(): name("/vPreProcess")
 
     outPortCamLeft.setWriteType(AE::tag);
     outPortCamRight.setWriteType(AE::tag);
+    outPortCamStereo.setWriteType(AE::tag);
     outPortSkin.setWriteType(SkinEvent::tag);
     outPortSkinSamples.setWriteType(SkinSample::tag);
     out_port_aps_left.setWriteType(AE::tag);
@@ -70,6 +71,7 @@ vPreProcess::~vPreProcess()
     inPort.close();
     outPortCamLeft.close();
     outPortCamRight.close();
+    outPortCamStereo.close();
     outPortSkin.close();
     outPortSkinSamples.close();
     out_port_aps_left.close();
@@ -186,11 +188,12 @@ bool vPreProcess::threadInit()
         if(!out_port_aps_right.open(getName() + "/aps_right:o"))
             return false;
     } else {
-        if(!outPortCamLeft.open(getName() + "/AE:o"))
-            return false;
         if(!out_port_aps_left.open(getName() + "/APS:o"))
             return false;
     }
+    if(!outPortCamStereo.open(getName() + "/AE:o"))
+        return false;
+
     if(!out_port_imu_samples.open(getName() + "/imu_samples:o"))
         return false;
     if(!out_port_audio.open(getName() + "/audio:o"))
@@ -257,7 +260,7 @@ bool vPreProcess::updateModule()
 
     //yInfo() << mind << meand << maxd << " : min | mean | max";
     yWarning() << std::fixed << min_d << " " << mean_d << " "
-              << max_d << " " << meanr << " " << meani;
+               << max_d << " " << meanr << " " << meani;
 
     return Thread::isRunning();
 }
@@ -281,7 +284,7 @@ void vPreProcess::run()
 
         double pyt = zynq_stamp.getTime();
 
-        std::deque<AE> qleft, qright;
+        std::deque<AE> qleft, qright, qstereo;
         std::deque<int32_t> qskin;
         std::deque<int32_t> qskinsamples;
         std::deque<AE> qleft_aps, qright_aps;
@@ -368,21 +371,28 @@ void vPreProcess::run()
                     v.y = mapPix[1];
 
                 }
-
-                if(split && v.channel)
+                if(v.type)
                 {
-                    if(v.type)
+                    if(split && v.channel){
                         qright_aps.push_back(v);
-                    else
-                        qright.push_back(v);
-                } else {
-                    if(v.type)
+                    }
+                    else{
                         qleft_aps.push_back(v);
-                    else
-                        qleft.push_back(v);
+                    }
+                }
+                else{
+                    if(split)
+                    {
+                        if(v.channel){
+                            qright.push_back(v);
+                        }
+                        else{
+                            qleft.push_back(v);
+                        }
+                    }
+                    qstereo.push_back(v);
                 }
             }
-
         }
 
         if(qskinsamples.size() > 2) { //if we have skin samples
@@ -419,12 +429,17 @@ void vPreProcess::run()
             local_stamp.update();
             zynq_stamp = local_stamp;
         }
-
-        if(qleft.size()) {
-            outPortCamLeft.write(qleft, zynq_stamp);
+        if(split)
+        {
+            if(qleft.size()) {
+                outPortCamLeft.write(qleft, zynq_stamp);
+            }
+            if(qright.size()) {
+                outPortCamRight.write(qright, zynq_stamp);
+            }
         }
-        if(qright.size()) {
-            outPortCamRight.write(qright, zynq_stamp);
+        if(qstereo.size()) {
+            outPortCamStereo.write(qstereo, zynq_stamp);
         }
         if(qskin.size()) {
             outPortSkin.write(qskin, zynq_stamp);
@@ -557,5 +572,3 @@ void vPreProcess::onStop()
     outPortSkin.close();
     outPortSkinSamples.close();
 }
-
-
