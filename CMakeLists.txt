@@ -77,7 +77,8 @@ add_subdirectory(src)
 # endif()
 
 if(ADD_DOCS_TO_IDE)
-    file(GLOB tutorialfiles documentation/*.md)
+    file(GLOB tutorialfiles documentation/*.md
+                            documentation/application_instructions/*.md)
     add_custom_target(project_documentation SOURCES README.md ${tutorialfiles})
 endif(ADD_DOCS_TO_IDE)
 

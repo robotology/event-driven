@@ -39,7 +39,21 @@ On [line 5](https://github.com/robotology/event-driven/blob/99a1f941141b33266900
 ```bash
 nano <my-module-name>/<my-module-name>.cpp
 ```
-On line [7](https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/example-module.cpp#L7), [19](https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/example-module.cpp#L19), and [124](https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/example-module.cpp#L124) change the class, constructor and declaration to `<my-module-name>`, then save (`ctrl+o`) and exit (`ctrl+x`).
+On line [7](https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/example-module.cpp#L7), [19](https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/example-module.cpp#L19),[24](https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/example-module.cpp#L24), and [124](https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/example-module.cpp#L124) change the class, constructor and declaration to `<my-module-name>`, then save (`ctrl+o`) and exit (`ctrl+x`).
+
+Change the first line of the default configuration file and the lines that refer
+to `example-module` in the example `yarpmanager` application. For example:
+
+```bash
+nano <my-module-name>/<my-module-name>.ini
+nano <my-module-name>/app_<my-module-name>.xml
+```
+
+or if you like:
+
+```bash
+sed -n 's/example-module/<my-module-name>/g' <my-module-name>.xml
+```
 
 The module should now be personalised to your processing task.
 

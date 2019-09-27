@@ -8,9 +8,12 @@ mkdir ~/yarp-install
 Secondly, we want to set up some environment variables that will make the install go smoother. Use your favourite text editor to open `~/.bashrc` and add the following lines:
 ```bash
 export INSTALL_DIR=~/yarp-install
+export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$INSTALL_DIR
 export YARP_DATA_DIRS=$INSTALL_DIR/share/yarp:$INSTALL_DIR/share/event-driven
 export PATH=$PATH:$INSTALL_DIR/bin
 ```
+and don't forget to `source ~/.bashrc` to apply the changes!
+
 Next we want to get the required repositories. Change directory into one in which you want these projects, for example:
 ```bash
 mkdir ~/projects && cd ~/projects
@@ -35,14 +38,14 @@ Then let's install `YARP`:
 ```bash
 cd ~/projects/yarp
 mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=~/projects/YCM/build
+cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
 make install -j$(nproc)
 ```
 Finally, let's install event-driven`:
 ```bash
 cd ~/projects/event-driven
 mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=~/projects/YCM/build -DYARP_DIR=~/projects/yarp/build
+cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
 make install -j$(nproc)
 ```
 
@@ -56,6 +59,6 @@ cd ~/projects
 git clone https://github.com/robotology/icub-main.git
 cd icub-main
 mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=~/projects/YCM/build -DYARP_DIR=~/projects/yarp/build
+cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
 make install -j$(nproc)
 ```
