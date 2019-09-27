@@ -41,7 +41,7 @@ mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
 make install -j$(nproc)
 ```
-Finally, let's install event-driven`:
+Finally, let's install `event-driven`:
 ```bash
 cd ~/projects/event-driven
 mkdir build && cd build
