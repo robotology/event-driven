@@ -15,8 +15,9 @@ Here is a visualisation of the instantiated modules and connections.
 
 These are basic instructions for first time YARP users, assuming the [comprehensive instructions](full_installation.md) have been followed.
 
-* Download the sample dataset from [here](https://doi.org/10.5281/zenodo.2556755) and unpack to a location of your choosing.
+### Using actual hardware/camera? Skip [ahead](#using-real-hardwarecamera). Using a dataset? Follow these instructions:
 
+* Download the sample dataset from [here](https://doi.org/10.5281/zenodo.2556755) and unpack to a location of your choosing.
 * Set the yarp namespace:
 ```bash
 yarp namespace /<yourname>
@@ -25,8 +26,6 @@ yarp namespace /<yourname>
 ```bash
 yarpserver --write
 ```
-### Using actual hardware/camera? Skip [ahead](#using-real-hardwarecamera). Using a dataset? Follow these instructions:
-
 * In a separate terminal, run a yarpdataplayer:
 ```bash
 yarpdataplayer
@@ -37,7 +36,7 @@ yarpdataplayer
 ### Using real hardware/camera?
 
 * You should have followed the instructions [to run install hardware and run zynqGrabber](README.md). 
-* if everything went smoothly, your zynqGrabber should be running and a port `/zynqGrabber/AE:o` should be already open (check with `yarp name list`).
+* If everything went smoothly, your laptop should be connected to the `yarpserver` running on the ZCB, your zynqGrabber should be running and a port `/zynqGrabber/AE:o` should be already open (check with `yarp name list`).
 
 ### Okay - yarpdataplayer users, and hardware users back together here:
 * In a separate terminal, run a yarpmanager:
