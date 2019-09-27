@@ -52,7 +52,7 @@ nano <my-module-name>/app_<my-module-name>.xml
 or if you like:
 
 ```bash
-sed -n 's/example-module/<my-module-name>/g' <my-module-name>.xml
+sed -i 's/example-module/<my-module-name>/g' <my-module-name>.xml
 ```
 
 The module should now be personalised to your processing task.
