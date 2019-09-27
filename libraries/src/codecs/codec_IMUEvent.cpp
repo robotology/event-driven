@@ -16,80 +16,74 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <yarp/os/Bottle.h>
 #include "iCub/eventdriven/vCodec.h"
 
 namespace ev {
 
-const std::string SkinEvent::tag = "SKE";
+const std::string IMUevent::tag = "IMUS";
 
-SkinEvent::SkinEvent() : vEvent(), polarity(0), taxel(0), cross_base(0),
-    _sample(0), _error(0), body_part(0), side(0), type(0), skin(1) {}
+IMUevent::IMUevent() : vEvent(), _coded_data(0) {}
 
-SkinEvent::SkinEvent(const vEvent &v) : vEvent(v), _skei(0)
+IMUevent::IMUevent(const vEvent &v) : vEvent(v), _coded_data(0)
 {
-    const SkinEvent *v2 = dynamic_cast<const SkinEvent *>(&v);
+    const IMUevent *v2 = dynamic_cast<const IMUevent *>(&v);
     if(v2) {
-        _skei = v2->_skei;
+        _coded_data = v2->_coded_data;
     }
 }
 
-SkinEvent::SkinEvent(const SkinEvent &v) : vEvent(v)
+IMUevent::IMUevent(const IMUevent &v) : vEvent(v)
 {
-    _skei = v._skei;
+    _coded_data = v._coded_data;
 }
 
-event<> SkinEvent::clone()
+event<> IMUevent::clone()
 {
-    return std::make_shared<SkinEvent>(*this);
+    return std::make_shared<IMUevent>(*this);
 }
 
-void SkinEvent::encode(yarp::os::Bottle &b) const
+void IMUevent::encode(yarp::os::Bottle &b) const
 {
     vEvent::encode(b);
-    b.addInt32(_skei);
+    b.addInt32(_coded_data);
 }
 
-void SkinEvent::encode(std::vector<int32_t> &b, unsigned int &pos) const
+void IMUevent::encode(std::vector<int32_t> &b, unsigned int &pos) const
 {
     vEvent::encode(b, pos);
-    b[pos++] = _skei;
+    b[pos++] = _coded_data;
 }
 
-void SkinEvent::decode(const int32_t *&data)
+void IMUevent::decode(const int32_t *&data)
 {
     vEvent::decode(data);
-    _skei = *(data++);
+    _coded_data = *(data++);
 }
 
-bool SkinEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
+bool IMUevent::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     // check length
     if (vEvent::decode(packet, pos) && pos + 1 <= packet.size())
     {
-        _skei = packet.get(pos++).asInt();
+        _coded_data = packet.get(pos++).asInt();
         return true;
     }
     return false;
 }
 
-yarp::os::Property SkinEvent::getContent() const
+yarp::os::Property IMUevent::getContent() const
 {
     yarp::os::Property prop = vEvent::getContent();
-    prop.put("polarity", (int)polarity);
+    prop.put("value", (int)value);
+    prop.put("sensor", (int)sensor);
+    prop.put("channel", (int)channel);
     prop.put("type", (int)type);
-    prop.put("skin", (int)skin);
-    prop.put("taxel", (int)taxel);
-    prop.put("cross_base", (int)cross_base);
-    prop.put("body_part", (int)body_part);
-    prop.put("side", (int)side);
-
     return prop;
 }
 
-std::string SkinEvent::getType() const
+std::string IMUevent::getType() const
 {
-    return SkinEvent::tag;
+    return IMUevent::tag;
 }
 
 }

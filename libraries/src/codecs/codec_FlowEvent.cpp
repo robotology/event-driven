@@ -25,7 +25,7 @@ const std::string FlowEvent::tag = "FLOW";
 
 FlowEvent::FlowEvent() : AddressEvent(), vx(0), vy(0) {}
 
-FlowEvent::FlowEvent(const vEvent &v) : AddressEvent(v)
+FlowEvent::FlowEvent(const vEvent &v) : AddressEvent(v), vx(0), vy(0)
 {
     const FlowEvent * v2 = dynamic_cast<const FlowEvent *>(&v);
     if(v2) {

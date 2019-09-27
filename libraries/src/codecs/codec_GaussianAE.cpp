@@ -25,7 +25,7 @@ const std::string GaussianAE::tag = "GAE";
 
 GaussianAE::GaussianAE() : LabelledAE(), sigx(0), sigy(0), sigxy(0) {}
 
-GaussianAE::GaussianAE(const vEvent &v) : LabelledAE(v)
+GaussianAE::GaussianAE(const vEvent &v) : LabelledAE(v), sigx(0), sigy(0), sigxy(0)
 {
     const GaussianAE * v2 = dynamic_cast<const GaussianAE *>(&v);
     if(v2) {

@@ -153,6 +153,8 @@ void channelInstance::run()
 
     //write
     //if(cEnv.isValid()) outports[i]->setEnvelope(cEnv);
+    ts.update();
+    image_port.setEnvelope(ts);
     image_port.write();
 
     //updateQs();

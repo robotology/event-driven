@@ -5,7 +5,9 @@
 
 (as root)
 
-> groups icub 
+> adduser icub
+
+> groups icub
 
 > visudo
 
@@ -31,9 +33,22 @@ add lines:
 * export YARP_DATA_DIRS=$YARP_DIR/share/yarp:$ICUBcontrib_DIR/share/ICUBcontrib
 * export PATH=$YARP_DIR/bin:$ICUBcontrib_DIR/bin:$PATH
 * export ED_ROOT=$ROBOT_CODE/event-driven
-  
+
 ### Set up YARP
-> cd /usr/local/src/robot  
+
+#### Important note:
+The newest YARP requires CMake>3.5, which is not installable via apt on the Debian 8.10 (jessie) distribution we have installed on the zynq. To upgrade CMake you need to install it via backports (reference: https://backports.debian.org/Instructions). 
+To do so:
+ - add to /etc/apt/sources.list the line below:
+      deb http://ftp.debian.org/debian jessie-backports main 
+- sudo apt update
+- sudo apt -t jessie-backports install cmake
+ 
+At this point you should be able to recompile YARP 3.0 and event-driven master branch.
+ 
+**We can consider updating the Debian distribution of the zynq boards since the Debian 8.10 is no longer supported by YARP**
+
+> cd /usr/local/src/robot
 
 > git clone https://github.com/robotology/yarp
 
@@ -50,7 +65,7 @@ add lines:
 > make (not install)
 
 ### Set up install directory as $ICUBcontrib_DIR
-> cd /usr/local/src/robot  
+> cd /usr/local/src/robot
 
 > git clone https://github.com/robotology/icub-contrib-common
 
@@ -62,13 +77,13 @@ add lines:
 
 > ccmake ../
 
-* set CMAKE_INSTALL_DIR=$ICUBcontrib_DIR
+* set CMAKE_INSTALL_PREFIX=$ICUBcontrib_DIR
 
 > make install
 
 
-### Set up event-driven 
-> cd /usr/local/src/robot  
+### Set up event-driven
+> cd /usr/local/src/robot
 
 > git clone https://github.com/robotology/event-driven
 
@@ -81,9 +96,14 @@ add lines:
 > ccmake ../
 
 * (cmake should have found install directory as $ICUBcontrib_DIR automatically)
+* BUILD_HARDWAREIO = ON
+
+configure and then
+
+* ENABLE_zynqgrabber = ON
 
 > make install
-    
+
 ## Set up device drivers
 
 (as icub)
@@ -102,7 +122,7 @@ add lines:
 
 * insmod $PATH_TO_HPU_DRIVER.ko ps=4096
 * $PATH_TO_ZYNQGRABBER --biaswrite > /usr/local/src/robot/zynqGrabber.log
-  
+
 ## Misc
 
 check the device driver meta data
@@ -112,4 +132,27 @@ check the device driver meta data
 check the device driver parameters
 
 > cat /sys/module/iit_hpucore_dma/parameters/ps
+
+# How copy an entire sd-card for a new board
+
+## PARTITION THE NEW SD
+
+* insert the new SD
+* sudo gparted (sudo apt-get install gparted if needed)
+* gparted GUI should detect the SD
+* unmount the SD in gparted GUI (you cannot partition a mounted drive)
+* create new partitions: 1. FAT32 name:BOOT 50MiB 2. EXT4 name:rootfs (max-250) 3. linux-swap name:swap 200MiB
+* edit -> apply all operations
+
+## COPY THE FILES
+
+* insert old SD (mount the boot and filesystem partitions)
+* copy BOOT (old) -> BOOT (new) (use /tmp as a temporary location to store files if you cannot mount both SD cards simultaneously)
+* sudo tar zcvf filesystem.tgz /media/$username/rootfs (from the old SD - again do this in /tmp)
+* sudo sync (ensure files are copied by flushing file writing queue)
+* cd /media/$username/rootfs (on the new SD)
+* sudo tar zxvf /tmp/filesystem.tgz --strip-components=3
+* sudo sync
+
+
 

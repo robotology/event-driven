@@ -25,7 +25,7 @@ const std::string SkinSample::tag = "SKS";
 
 SkinSample::SkinSample() : SkinEvent(), _ts(0), value(0) {}
 
-SkinSample::SkinSample(const vEvent &v) : SkinEvent(v)
+SkinSample::SkinSample(const vEvent &v) : SkinEvent(v), _ts(0), value(0)
 {
     const SkinSample *v2 = dynamic_cast<const SkinSample *>(&v);
     if(v2) {

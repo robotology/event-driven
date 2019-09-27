@@ -109,7 +109,7 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 
     double vx_mean = 0, vy_mean = 0;
 
-    int line_thickness = 0;
+    int line_thickness = 1;
     cv::Scalar line_color = CV_RGB(0,0,255);
     cv::Point p_start,p_end;
 
@@ -308,6 +308,134 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
 }
 
+// IMU SAMPLE DRAW //
+// ================ //
+
+const std::string imuDraw::drawtype = "IMU";
+
+std::string imuDraw::getDrawType()
+{
+    return imuDraw::drawtype;
+}
+
+std::string imuDraw::getEventType()
+{
+    return IMUevent::tag;
+}
+
+void imuDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    auto radius = 20;
+    auto axes = cv::Size(radius, radius);
+    auto centre = cv::Point(Xlimit/2, Ylimit/2);
+    auto lin_scaler = std::min(Xlimit, Ylimit) * 0.5 / IMUevent::_max_value;
+    auto circ_scaler = 360.0 / IMUevent::_max_value;
+
+    cv::line(image, centre, centre - cv::Point(0, Ylimit * 0.25),
+             black, 1);
+    cv::line(image, centre, centre + cv::Point(Ylimit * 0.25, 0),
+             black, 1);
+    cv::line(image, centre, centre + cv::Point(Ylimit * 0.25 * 0.71, Ylimit * 0.25 * 0.71),
+             black, 1);
+
+    if(image.empty()) {
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+        image.setTo(255);
+    }
+
+    if(eSet.empty()) return;
+
+    int i = 0;
+    for(auto qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        if(i++ > 10) break;
+
+        auto aep = is_event<IMUevent>(*qi);
+
+        switch(aep->sensor) {
+        case 0: { //acc x
+            auto p_end = centre - cv::Point(0, aep->value * lin_scaler);
+            cv::line(image, centre, p_end, violet, 4);
+            break; }
+        case 1: {//acc y
+            auto p_end = centre + cv::Point(aep->value * lin_scaler, 0);
+            cv::line(image, centre, p_end, violet, 4);
+            break;}
+        case 2: {//acc z
+            auto p_end = centre + cv::Point(aep->value * lin_scaler * 0.71,
+                                            aep->value * lin_scaler * 0.71);
+            cv::line(image, centre, p_end, violet, 4);
+            break;}
+        case 3: {//rot x
+            auto pos = centre - cv::Point(0, Ylimit * 0.25);
+            cv::ellipse(image, pos, axes, 0, 0, aep->value * circ_scaler, orange, CV_FILLED);
+            break;}
+        case 4: {//rot y
+            auto pos = centre + cv::Point(Ylimit * 0.25, 0);
+            cv::ellipse(image, pos, axes, 0, 0, aep->value * circ_scaler, orange, CV_FILLED);
+            break;}
+        case 5: {//rot z
+            auto pos = centre + cv::Point(Ylimit * 0.25*0.71, Ylimit * 0.25 * 0.71);
+            cv::ellipse(image, pos, axes, 0, 0, aep->value * circ_scaler, orange, CV_FILLED);
+            break;}
+        case 6: {//temp
+            //centre = cv::Point(radius, radius);
+            //cv::ellipse(image, centre, axes, 0, 0, aep->value * circ_scaler, this->aqua, CV_FILLED);
+            break;}
+        case 7: {//mag x
+            break;}
+        case 8: {//mag y
+            break;}
+        case 9: {//mag z
+            break;}
+
+        }
+    }
+}
+
+// COCHLEA DRAW //
+// ======= //
+
+const std::string cochleaDraw::drawtype = "EAR";
+
+std::string cochleaDraw::getDrawType()
+{
+    return cochleaDraw::drawtype;
+}
+
+std::string cochleaDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+
+        auto aep = is_event<AddressEvent>(*qi);
+
+        int x  = aep->x * (Xlimit-1) / 64;
+        int y = 120;
+
+        cv::Vec3b c;
+        if(aep->polarity)
+            c = violet;
+        else
+            c = aqua;
+
+        cv::circle(image, cv::Point(x, y), 5, c, CV_FILLED);
+
+    }
+}
+
 // ACCELEROMETER DRAW //
 // ================== //
 
@@ -402,9 +530,14 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
 
-    int r = 5;
+    //TODO: bring these params in from configuration
+    double alpha = 0.1; // proportion of shading for a single event
+    double notAlpha = 1.0 - alpha;
+    int r = 2; // radius
+    int d = r*2+1; // diameter
     CvScalar c1 = CV_RGB(255, 0, 0);
     CvScalar c2 = CV_RGB(60, 0, 255);
+    CvScalar c;
 
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
@@ -419,12 +552,18 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             px = Xlimit - 1 - px;
             py = Ylimit - 1 - py;
         }
-
-        cv::Point centr(px, py);
         if(v->ID == 1)
-            cv::circle(image, centr, r, c1, CV_FILLED);
+            c = c1;
         else
-            cv::circle(image, centr, r, c2, CV_FILLED);
+            c = c2;
+        //2019_09_17 Sim: instead of adding a filled circle, shade a square where side of square is d=diameter of the corresponding circle
+        //cv::Point centr(px, py);
+        //cv::circle(image, centr, r, c, CV_FILLED);
+        cv::Rect roiRect(std::max(px-r, 0), std::max(py-r, 0), std::min(d, Xlimit-px), std::min(d, Ylimit-py));
+        cv::Mat roi = image(roiRect);
+        cv::Mat color(roi.size(), CV_8UC3, c);
+        cv::addWeighted(color, alpha, roi, notAlpha , 0.0, roi);
+
     }
 
 }
