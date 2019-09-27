@@ -87,8 +87,19 @@ public:
             if(!q || Thread::isStopping()) return;
 
             //do asynchronous processing here
-            for(auto &qi : *q)
-                out_queue.push_back(qi);
+            for(auto &qi : *q) {
+
+                //here you could try modifying the data of the event before
+                //pushing to the output q
+
+                //the position of the event (qi.x, qi.y)
+                //the polarity of the event (qi.polarity)
+                //the timstamp (qi.stamp)
+                //or remove some events based on a condition?
+                //if(qi.x < 100) only takes the left 1/3 of events
+
+                out_queue.push_back(qi);   
+            }
 
         }
 
