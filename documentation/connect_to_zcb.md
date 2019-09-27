@@ -63,6 +63,9 @@ hwaddress ether 00:0a:35:00:01:X
 address <ip address>
 netmask 255.255.255.0
 ```
+
+Note: X here needs to be set such that each ZCB/z-turn you have on the same network has a different hardware address. It should be 2 letters in hex (i.e. 00 to FF)
+
 Save and exit `nano`.
 
 ```bash
