@@ -19,7 +19,7 @@
 #ifndef __VCODEC__
 #define __VCODEC__
 
-#include "vtsHelper.h"
+#include "event-driven/vtsHelper.h"
 #include <memory>
 #include <deque>
 #include <math.h>

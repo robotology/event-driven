@@ -19,8 +19,8 @@
 #ifndef __VCOLLECTSEND__
 #define __VCOLLECTSEND__
 
-#include "vCodec.h"
-#include "vPort.h"
+#include "event-driven/vCodec.h"
+#include "event-driven/vPort.h"
 #include <yarp/os/all.h>
 
 namespace ev {
