@@ -43,9 +43,9 @@ At this point you should be able to recompile YARP 3.0 and `event-driven` **mast
 
 ### Note 3:
 
-When isntalling `event-driven` use the following options for cmake:
+When installing `event-driven` use the following options for cmake:
 ```bash
-cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DYCM_DIR=\~/projects/YCM/build -DYARP_DIR=\~/projects/yarp/build -DBUILD_HARDWAREIO=ON -DENABLE_zynqgrabber=ON
+cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DBUILD_HARDWAREIO=ON -DENABLE_zynqgrabber=ON
 ```
 ## Set up device drivers
 
@@ -64,8 +64,7 @@ sudo vim /etc/rc.local
 ```
 Add lines:
 ```bash
-insmod $PATH_TO_HPU_DRIVER.ko ps=4096
-$PATH_TO_ZYNQGRABBER --biaswrite > /usr/local/src/robot/zynqGrabber.log
+insmod /home/icub/iit-hpucore-dma.ko rx_pn=1024 rx_ps=8096 rx_to=5000
 ```
 ## Misc
 
