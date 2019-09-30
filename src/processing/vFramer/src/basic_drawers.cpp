@@ -147,19 +147,19 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
         double angle = atan2(vy, vx);
 
         //Scale the arrow by a factor of three
-        p_end.x = (int) (p_start.x + hypotenuse * cos(angle));
-        p_end.y = (int) (p_start.y + hypotenuse * sin(angle));
+        p_end.x = (int) (p_start.x + hypotenuse * sin(angle));
+        p_end.y = (int) (p_start.y + hypotenuse * cos(angle));
 
         //Draw the main line of the arrow
         cv::line(image, p_start, p_end, line_color, line_thickness, 4);
 
         //Draw the tips of the arrow
-        p_start.x = (int) (p_end.x - 5*cos(angle + M_PI/4));
-        p_start.y = (int) (p_end.y - 5*sin(angle + M_PI/4));
+        p_start.x = (int) (p_end.x - 5*sin(angle + M_PI/4));
+        p_start.y = (int) (p_end.y - 5*cos(angle + M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_thickness, 4);
 
-        p_start.x = (int) (p_end.x - 5*cos(angle - M_PI/4));
-        p_start.y = (int) (p_end.y - 5*sin(angle - M_PI/4));
+        p_start.x = (int) (p_end.x - 5*sin(angle - M_PI/4));
+        p_start.y = (int) (p_end.y - 5*cos(angle - M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_thickness, 4);
 
     }
@@ -171,19 +171,19 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
     p_start.y = Ylimit/2;
     double h = 15;
     double theta = atan2(vy_mean, vx_mean);
-    p_end.x = (int) (p_start.x + h * cos(theta));
-    p_end.y = (int) (p_start.y + h * sin(theta));
+    p_end.x = (int) (p_start.x + h * sin(theta));
+    p_end.y = (int) (p_start.y + h * cos(theta));
 
     cv::Scalar line_color2 = CV_RGB(0,255,0);
     cv::line(image, p_start, p_end, line_color2, 3, 4);
 
     //Draw the tips of the arrow
-    p_start.x = (int) (p_end.x - 5*cos(theta + M_PI/4));
-    p_start.y = (int) (p_end.y - 5*sin(theta + M_PI/4));
+    p_start.x = (int) (p_end.x - 5*sin(theta + M_PI/4));
+    p_start.y = (int) (p_end.y - 5*cos(theta + M_PI/4));
     cv::line(image, p_start, p_end, line_color2, 3, 4);
 
-    p_start.x = (int) (p_end.x - 5*cos(theta - M_PI/4));
-    p_start.y = (int) (p_end.y - 5*sin(theta - M_PI/4));
+    p_start.x = (int) (p_end.x - 5*sin(theta - M_PI/4));
+    p_start.y = (int) (p_end.y - 5*cos(theta - M_PI/4));
     cv::line(image, p_start, p_end, line_color2, 3, 4);
 
 }
@@ -530,9 +530,14 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
 
-    int r = 1;
+    //TODO: bring these params in from configuration
+    double alpha = 0.1; // proportion of shading for a single event
+    double notAlpha = 1.0 - alpha;
+    int r = 2; // radius
+    int d = r*2+1; // diameter
     CvScalar c1 = CV_RGB(255, 0, 0);
     CvScalar c2 = CV_RGB(60, 0, 255);
+    CvScalar c;
 
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
@@ -547,12 +552,18 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             px = Xlimit - 1 - px;
             py = Ylimit - 1 - py;
         }
-
-        cv::Point centr(px, py);
         if(v->ID == 1)
-            cv::circle(image, centr, r, c1, CV_FILLED);
+            c = c1;
         else
-            cv::circle(image, centr, r, c2, CV_FILLED);
+            c = c2;
+        //2019_09_17 Sim: instead of adding a filled circle, shade a square where side of square is d=diameter of the corresponding circle
+        //cv::Point centr(px, py);
+        //cv::circle(image, centr, r, c, CV_FILLED);
+        cv::Rect roiRect(std::max(px-r, 0), std::max(py-r, 0), std::min(d, Xlimit-px), std::min(d, Ylimit-py));
+        cv::Mat roi = image(roiRect);
+        cv::Mat color(roi.size(), CV_8UC3, c);
+        cv::addWeighted(color, alpha, roi, notAlpha , 0.0, roi);
+
     }
 
 }

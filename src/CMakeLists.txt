@@ -1,6 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
-
-option(BUILD_APPLICATIONS "Build event-driven applications" OFF)
+option(BUILD_APPLICATIONS "Build event-driven applications" ON)
 option(BUILD_HARDWAREIO "Build event-driven hardware interfaces" OFF)
 option(BUILD_PROCESSING "Build event-driven processing modules" ON)
 

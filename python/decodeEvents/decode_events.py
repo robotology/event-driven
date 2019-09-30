@@ -103,8 +103,8 @@ class DataManager:
                 ev = ev.reshape(int(len(ev)/2), 2)
                 timestamps, channel, x, y, polarity = self.decode_events_24bit(ev)[0]
                 AE_to_save.append(np.array([timestamps, channel, x, y, polarity]))       # SELECT WHAT TO SAVE
-        AE_to_save = np.array(AE_to_save)
-        AE_to_save[:, 0] = (AE_to_save[:, 0] - AE_to_save[0, 0]) * 80e-9  # 80ns to normalize w.r.t. the clock
+        AE_to_save = np.array(AE_to_save)       # * 80e-9  # 80ns to normalize w.r.t. the clock
+	# Time unwrapping must be done in the code! Sum 2^30 everytime there's a jump
         np.savetxt(os.path.join(AE_file_path, 'decoded_events.txt'), AE_to_save, delimiter=',', fmt=['%f', '%d', '%d', '%d', '%d'])     # SPECIFY THE FORMAT OF THE DATA
 
 
@@ -125,13 +125,13 @@ class DataManager:
                 # circle = struct.unpack("<f", struct.pack("<i", np.int(b[6])))
                 ts, ch, x, y, p = self.decode_events(' '.join([v_ts, v]))[0]  # TODO ONLY WORKS FOR ONE EVENT PER BOTTLE
                 GAE_to_save.append(np.array([ts, x, y, radius, p]))
-        GAE_to_save = np.array(GAE_to_save)
-        GAE_to_save[:, 0] = (GAE_to_save[:, 0] - GAE_to_save[0, 0]) * 80e-9  # 80ns to normalize w.r.t. the clock
+        GAE_to_save = np.array(GAE_to_save)       # * 80e-9  # 80ns to normalize w.r.t. the clock
+	# Time unwrapping must be done in the code! Sum 2^30 everytime there's a jump
         np.savetxt(os.path.join(GAE_file_path, "decoded_events.txt"), GAE_to_save, delimiter=',', fmt=['%f', '%d', '%d', '%d', '%d'])
 
 
     def load_SkinEvents_from_yarp(self, AE_file_path):
-        pattern = re.compile('(\d*) (\d*.\d*) AE \((.*)\)')
+        pattern = re.compile('(\d*) (\d*.\d*) SKE \((.*)\)')
         AE_to_save = []
         with open(os.path.join(AE_file_path, 'data.log')) as boxFile:
             content = boxFile.read()
@@ -143,8 +143,8 @@ class DataManager:
                 ev = ev.reshape(int(len(ev)/2), 2)
                 ts, pol, tax, cross_b, body_part, side, type, skin = self.decode_skinEvents(ev)[0]
                 AE_to_save.append(np.array([ts, pol, tax, cross_b, body_part, side, type, skin]))       # SELECT WHAT TO SAVE
-        AE_to_save = np.array(AE_to_save)
-        AE_to_save[:, 0] = (AE_to_save[:, 0] - AE_to_save[0, 0]) * 80e-9  # 80ns to normalize w.r.t. the clock
+        AE_to_save = np.array(AE_to_save)       # * 80e-9  # 80ns to normalize w.r.t. the clock
+	# Time unwrapping must be done in the code! Sum 2^30 everytime there's a jump
         np.savetxt(os.path.join(AE_file_path, 'decoded_events.txt'), AE_to_save, delimiter=',', fmt=['%f', '%d', '%d', '%d', '%d', '%d', '%d', '%d'])     # SPECIFY THE FORMAT OF THE DATA
 
 
@@ -152,5 +152,5 @@ class DataManager:
 if __name__ == '__main__':
 
     dm = DataManager()
-    dm.load_AE_from_yarp('acquisitions/circle10042019')
+    dm.load_AE_from_yarp('data_from_dumper')
 

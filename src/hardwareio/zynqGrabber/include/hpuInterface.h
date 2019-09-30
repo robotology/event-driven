@@ -21,7 +21,7 @@
 #define __EVENTDRIVENYARPINTERFACE__
 
 #include <yarp/os/all.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
 #include <string>
 #include <vector>
 
