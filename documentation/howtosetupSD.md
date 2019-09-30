@@ -3,6 +3,8 @@
 
 # How to set-up an SD for a zynq board
 
+:warning: These instructions are only needed if your SD card has a fresh OS install and the `event-driven` library is not yet compiled. These instructions shuold be performed on the ZCB/z-turn and not your own laptop.
+
 ## Set-up icub user
 
 As **root**:
