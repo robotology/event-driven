@@ -27,9 +27,9 @@
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
 #include <yarp/math/Math.h>
-#include <iCub/eventdriven/all.h>
-#include <iCub/eventdriven/deprecated.h>
-#include <iCub/eventdriven/vtsHelper.h>
+#include <event-driven/all.h>
+#include <event-driven/deprecated.h>
+#include <event-driven/vtsHelper.h>
 #include <filters.h>
 #include <fstream>
 #include <math.h>

@@ -22,7 +22,7 @@
 #ifndef __vDraw__
 #define __vDraw__
 
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
 #include <string>
 #include <opencv2/opencv.hpp>
 

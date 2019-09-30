@@ -26,7 +26,7 @@
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
 #include <opencv2/opencv.hpp>
 #include <map>
 

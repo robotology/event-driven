@@ -17,6 +17,8 @@
  */
 
 #include <DualCamTransform.h>
+#include <yarp/cv/Cv.h>
+#include <opencv2/imgproc.hpp>
 
 
 using namespace ev;
@@ -322,12 +324,14 @@ void DualCamTransformModule::getCanvasSize( const yarp::sig::Matrix &homography,
 
 bool DualCamTransformModule::performCalibStep( yarp::sig::ImageOf<yarp::sig::PixelBgr> &frame
                                        , yarp::sig::ImageOf<yarp::sig::PixelBgr> &vImg, yarp::sig::Matrix &homography ) const {
-    auto *frameIplImg = (IplImage *) frame.getIplImage();
-    cv::Mat frameMat = cv::cvarrToMat( frameIplImg );
+    cv::Mat frameMat = yarp::cv::toCvMat(frame);
+    //auto *frameIplImg = (IplImage *) frame.getIplImage();
+    //cv::Mat frameMat = cv::cvarrToMat( frameIplImg );
     imshow( "img", frameMat );
 
-    auto *vIplImg = (IplImage *) vImg.getIplImage();
-    cv::Mat vMat = cv::cvarrToMat( vIplImg );
+    cv::Mat vMat = yarp::cv::toCvMat(vImg);
+    //auto *vIplImg = (IplImage *) vImg.getIplImage();
+    //cv::Mat vMat = cv::cvarrToMat( vIplImg );
     imshow( "vImg", vMat );
     cv::waitKey( 1 );
     cv::Size boardSize( 4, 11 );
@@ -340,8 +344,8 @@ bool DualCamTransformModule::performCalibStep( yarp::sig::ImageOf<yarp::sig::Pix
                                        cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING );
 
     if ( frameFound && eventFound ) {
-        cvCvtColor( frameIplImg, frameIplImg, CV_RGB2BGR );
-        cvCvtColor( vIplImg, vIplImg, CV_RGB2BGR );
+        cv::cvtColor( frameMat, frameMat, CV_RGB2BGR );
+        cv::cvtColor( vMat, vMat, CV_RGB2BGR );
 
         cv::Mat frameCentersMat( frameCenters );
         cv::Mat vCentersMat( vCenters );

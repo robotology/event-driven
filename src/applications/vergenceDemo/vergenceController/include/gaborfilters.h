@@ -18,7 +18,7 @@
 #ifndef __GABORFILTERS__
 #define __GABORFILTERS__
 
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
 #include <math.h>
 
 class gaborfilter {

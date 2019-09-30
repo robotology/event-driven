@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 2.6)
-
 option(ENABLE_zynqgrabber "Build zynqGrabber" OFF)
 option(ENABLE_chronocamgrabber "Build chronocamGrabber" OFF)
 
