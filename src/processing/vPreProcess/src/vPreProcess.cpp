@@ -535,6 +535,8 @@ bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
     std::cout << "Rotation Right: " << std::endl;
     std::cout << rectRot[1] << std::endl << std::endl;
 
+    int minx = INT_MAX, miny= INT_MAX, maxx = -INT_MAX, maxy = -INT_MAX;
+
     for(int i=0; i<2; i++) {
 
         cv::Mat allpoints(res.height * res.width, 1, CV_32FC2);
@@ -550,11 +552,7 @@ bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
                             distCoeffs[i], rectRot[i], Proj[i],
                             cv::TermCriteria(cv::TermCriteria::COUNT, 2000, 2));
 
-        int minx = INT_MAX, miny= INT_MAX, maxx = -INT_MAX, maxy = -INT_MAX;
-
         *(maps[i]) = cv::Mat(s, CV_32SC2);
-
-
         for(unsigned int y = 0; y < res.height; y++) {
             for(unsigned int x = 0; x < res.width; x++) {
                 cv::Vec2i undistorted_point =
@@ -568,161 +566,127 @@ bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
                 maps[i]->at<cv::Vec2i>(y, x) = undistorted_point;
             }
         }
+    }
 
-        cv::Size rmsize(maxx-minx + 1, maxy-miny + 1);
-        cv::Vec2i offset(-miny, -minx);
+    cv::Size rmsize(maxx-minx + 1, maxy-miny + 1);
+    cv::Vec2i offset(-miny, -minx);
 
-        cv::Mat map2(rmsize, CV_32SC2);
+    cv::Mat reverse_map[2];
+
+    for(int i=0; i<2; i++) {
+
+        reverse_map[i] = cv::Mat(rmsize, CV_32SC2);
         for(unsigned int y = 0; y < res.height; y++) {
             for(unsigned int x = 0; x < res.width; x++) {
                 cv::Vec2i undistorted_point = maps[i]->at<cv::Vec2i>(y, x) + offset;
-                map2.at<cv::Vec2i>(undistorted_point) = cv::Vec2i(y, x);
+                reverse_map[i].at<cv::Vec2i>(undistorted_point) = cv::Vec2i(y, x);
             }
         }
+
+    }
+
+    cv::Mat test_image_left(s, CV_8UC1);
+    for(unsigned int y = 0; y < res.height; y+=1) {
+        for(unsigned int x = 0; x < res.width; x+=1) {
+            if(y > res.height / 2) {
+                test_image_left.at<uchar>(y, x) = x % 20 > 10 ? 0 : 120;
+            } else {
+                test_image_left.at<uchar>(y, x) = x % 20 < 10 ? 0 : 120;
+            }
+        }
+    }
+
+    cv::Mat test_image_right(s, CV_8UC1);
+    for(unsigned int y = 0; y < res.height; y+=1) {
+        for(unsigned int x = 0; x < res.width; x+=1) {
+            if(x > res.width / 2) {
+                test_image_right.at<uchar>(y, x) = y % 20 > 10 ? 0 : 120;
+            } else {
+                test_image_right.at<uchar>(y, x) = y % 20 < 10 ? 0 : 120;
+            }
+        }
+    }
+
+    cv::Mat shared_space = cv::Mat::zeros(rmsize, CV_8UC1);
+    for(unsigned int y = 0; y < res.height; y+=1) {
+        for(unsigned int x = 0; x < res.width; x+=1) {
+            cv::Vec2i mapPix = maps[0]->at<cv::Vec2i>(y, x);
+            shared_space.at<uchar>(mapPix + offset) += test_image_left.at<uchar>(y, x);
+
+            mapPix = maps[1]->at<cv::Vec2i>(y, x);
+            shared_space.at<uchar>(mapPix + offset) += test_image_right.at<uchar>(y, x);
+        }
+    }
+
+
+    cv::Mat test_left_remapped = cv::Mat::zeros(s, CV_8UC1);
+    cv::Mat test_right_remapped = cv::Mat::zeros(s, CV_8UC1);
+    for(unsigned int y = 0; y < res.height; y+=1) {
+        for(unsigned int x = 0; x < res.width; x+=1) {
+            cv::Vec2i mapPix = maps[0]->at<cv::Vec2i>(y, x);
+            cv::Vec2i redistortedPix = reverse_map[0].at<cv::Vec2i>(mapPix+offset);
+            test_left_remapped.at<uchar>(redistortedPix) = test_image_left.at<uchar>(y, x);
+
+            mapPix = maps[1]->at<cv::Vec2i>(y, x);
+            redistortedPix = reverse_map[1].at<cv::Vec2i>(mapPix+offset);
+            test_right_remapped.at<uchar>(redistortedPix) = test_image_right.at<uchar>(y, x);
+
+        }
+    }
+
+
+    cv::imshow("Image left", test_image_left);
+    cv::imshow("Image right", test_image_right);
+    cv::imshow("Image shared space", shared_space);
+    cv::imshow("Image unwarped left", test_left_remapped);
+    cv::imshow("Image unwarped right", test_right_remapped);
+    cv::waitKey(0);
+
+
+
+//        cv::Mat map2(rmsize, CV_32SC2);
+//        for(unsigned int y = 0; y < res.height; y++) {
+//            for(unsigned int x = 0; x < res.width; x++) {
+//                cv::Vec2i undistorted_point = maps[i]->at<cv::Vec2i>(y, x) + offset;
+//                map2.at<cv::Vec2i>(undistorted_point) = cv::Vec2i(y, x);
+//            }
+//        }
 
         //MAPS MADE
 
-        cv::Mat image1(s, CV_8UC1);
-        for(unsigned int y = 0; y < res.height; y+=1) {
-            for(unsigned int x = 0; x < res.width; x+=1) {
-                if(y > res.height / 2) {
-                    image1.at<uchar>(y, x) = x % 20 > 10 ? 0 : 255;
-                } else {
-                    image1.at<uchar>(y, x) = x % 20 < 10 ? 0 : 255;
-                }
-            }
-        }
-
-        cv::Mat image3 = cv::Mat::zeros(rmsize, CV_8UC1);
-        for(unsigned int y = 0; y < res.height; y+=1) {
-            for(unsigned int x = 0; x < res.width; x+=1) {
-                cv::Vec2i mapPix = maps[i]->at<cv::Vec2i>(y, x);
-                image3.at<uchar>(mapPix + offset) = image1.at<uchar>(y, x);
-            }
-        }
-
-
-
-        cv::Mat image4 = cv::Mat::zeros(s, CV_8UC1);
-        for(unsigned int y = 0; y < res.height; y+=1) {
-            for(unsigned int x = 0; x < res.width; x+=1) {
-                cv::Vec2i mapPix = maps[i]->at<cv::Vec2i>(y, x);
-                cv::Vec2i redistortedPix = map2.at<cv::Vec2i>(mapPix+offset);
-                image4.at<uchar>(redistortedPix) = image1.at<uchar>(y, x);
-//                yInfo() << y << x << " | " << mapPix[0] << mapPix[1] << " | "
-//                        << redistortedPix[0] << redistortedPix[1];
-
-
-            }
-        }
-
-        cv::imshow("image1", image1);
-        yInfo() << "Image1:" << image1.size().height << image1.size().width;
-        cv::imshow("image2 (undistort)", image2a);
-        yInfo() << "Image1:" << image2a.size().height << image2a.size().width;
-        cv::imshow("image2 (remap)", image2b);
-        yInfo() << "Image1:" << image2b.size().height << image2b.size().width;
-        cv::imshow("image3", image3);
-        yInfo() << "Image1:" << image3.size().height << image3.size().width;
-        cv::imshow("image4", image4);
-        yInfo() << "Image1:" << image4.size().height << image4.size().width;
-        cv::waitKey(0);
-
-
-
-
-
-        //using undistort and reprojection
-//        cv::Mat modPoints;
-//        cv::Mat testPoints;
-//        cv::Mat ptsTemp;
-//        cv::Mat rtemp, ttemp;
-//        rtemp.create( 3, 1, CV_32F );
-//        rtemp.setTo( 0 );
-//        rtemp.copyTo( ttemp );
-//        cv::undistortPoints( mappoints, modPoints, cameraMatrix[i], cv::noArray());
-//        cv::convertPointsToHomogeneous( modPoints, ptsTemp );
-//        cv::projectPoints( ptsTemp, rtemp, ttemp, cameraMatrix[i],  distCoeffs[i], testPoints );
-
-//        for(unsigned int y = 0; y < res.height; y++) {
-//            for(unsigned int x = 0; x < res.width; x++) {
-
-//                yInfo() << allpoints.at<cv::Vec2f>(y * res.width + x)[0] <<
-//                           allpoints.at<cv::Vec2f>(y * res.width + x)[1] <<
-//                           mappoints.at<cv::Vec2f>(y * res.width + x)[0] <<
-//                           mappoints.at<cv::Vec2f>(y * res.width + x)[1] <<
-//                           testPoints.at<cv::Vec2f>(y * res.width + x)[0] <<
-//                           testPoints.at<cv::Vec2f>(y * res.width + x)[1];
+//        cv::Mat image1(s, CV_8UC1);
+//        for(unsigned int y = 0; y < res.height; y+=1) {
+//            for(unsigned int x = 0; x < res.width; x+=1) {
+//                if(y > res.height / 2) {
+//                    image1.at<uchar>(y, x) = x % 20 > 10 ? 0 : 255;
+//                } else {
+//                    image1.at<uchar>(y, x) = x % 20 < 10 ? 0 : 255;
+//                }
 //            }
 //        }
 
-//        //using equations
-//        double cx = cameraMatrix[i].at<double>(0, 2);
-//        double cy = cameraMatrix[i].at<double>(1, 2);
-//        double fx = cameraMatrix[i].at<double>(0, 0);
-//        double fy = cameraMatrix[i].at<double>(1, 1);
-//        double k1 = distCoeffs[i].at<double>(0, 0);
-//        double k2 = distCoeffs[i].at<double>(0, 1);
-//        double p1 = distCoeffs[i].at<double>(0, 2);
-//        double p2 = distCoeffs[i].at<double>(0, 3);
-
-//        for(unsigned int py = 0; py < res.height; py+=40) {
-//            for(unsigned int px = 0; px < res.width; px+=40) {
-
-//            cv::Vec2f mapPix = mappoints.at<cv::Vec2f>(py * res.width + px);
-
-//            double x = (mapPix[1] - cx) / fx;
-//            double y = (mapPix[0] - cy) / fy;
-
-//            double r2 = x*x + y*y;
-
-//            // Radial distorsion
-//            double xDistort = x * (1 + k1 * r2 + k2 * r2 * r2);
-//            double yDistort = y * (1 + k1 * r2 + k2 * r2 * r2);
-
-//            // Tangential distorsion
-//            xDistort = xDistort + (2 * p1 * x * y + p2 * (r2 + 2 * x * x));
-//            yDistort = yDistort + (p1 * (r2 + 2 * y * y) + 2 * p2 * x * y);
-
-//            // Back to absolute coordinates.
-//            xDistort = xDistort * fx + cx;
-//            yDistort = yDistort * fy + cy;
-
-//            yInfo() << py << px << " | " << mapPix[0] << mapPix[1] << " | " <<
-//                       yDistort << xDistort;
-
-//            }
-
-//        }
-
-
-
-
-
-
-        //using initUndistortMap
-
-//        for(unsigned int y = 0; y < res.height; y+=40) {
-//            for(unsigned int x = 0; x < res.width; x+=40) {
+//        cv::Mat image3 = cv::Mat::zeros(rmsize, CV_8UC1);
+//        for(unsigned int y = 0; y < res.height; y+=1) {
+//            for(unsigned int x = 0; x < res.width; x+=1) {
 //                cv::Vec2i mapPix = maps[i]->at<cv::Vec2i>(y, x);
-//                if(mapPix[0] < 0 || mapPix[0] >= res.height ||
-//                        mapPix[1] < 0 || mapPix[1] >= res.width)
-//                    continue;
-
-//                cv::Vec2i redistortedPix;
-//                redistortedPix[0] = maty.at<float>(mapPix);
-//                redistortedPix[1] = matx.at<float>(mapPix);
-
-//                yInfo() << y << x << " | " << mapPix[0] << mapPix[1] << " | " <<
-//                           redistortedPix[0] << redistortedPix[1];
+//                image3.at<uchar>(mapPix + offset) = image1.at<uchar>(y, x);
 //            }
 //        }
 
 
 
+//        cv::Mat image4 = cv::Mat::zeros(s, CV_8UC1);
+//        for(unsigned int y = 0; y < res.height; y+=1) {
+//            for(unsigned int x = 0; x < res.width; x+=1) {
+//                cv::Vec2i mapPix = maps[i]->at<cv::Vec2i>(y, x);
+//                cv::Vec2i redistortedPix = map2.at<cv::Vec2i>(mapPix+offset);
+//                image4.at<uchar>(redistortedPix) = image1.at<uchar>(y, x);
+////                yInfo() << y << x << " | " << mapPix[0] << mapPix[1] << " | "
+////                        << redistortedPix[0] << redistortedPix[1];
 
 
-    }
+//            }
+//        }
 
 
     return false;
