@@ -83,7 +83,7 @@ public:
     vPreProcess();
     ~vPreProcess();
 
-    void initUndistortion(const yarp::os::Bottle &left,
+    bool initUndistortion(const yarp::os::Bottle &left,
                           const yarp::os::Bottle &right,
                           const yarp::os::Bottle &stereo,
                           bool truncate);
