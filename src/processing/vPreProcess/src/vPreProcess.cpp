@@ -642,53 +642,6 @@ bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
     cv::imshow("Image unwarped right", test_right_remapped);
     cv::waitKey(0);
 
-
-
-//        cv::Mat map2(rmsize, CV_32SC2);
-//        for(unsigned int y = 0; y < res.height; y++) {
-//            for(unsigned int x = 0; x < res.width; x++) {
-//                cv::Vec2i undistorted_point = maps[i]->at<cv::Vec2i>(y, x) + offset;
-//                map2.at<cv::Vec2i>(undistorted_point) = cv::Vec2i(y, x);
-//            }
-//        }
-
-        //MAPS MADE
-
-//        cv::Mat image1(s, CV_8UC1);
-//        for(unsigned int y = 0; y < res.height; y+=1) {
-//            for(unsigned int x = 0; x < res.width; x+=1) {
-//                if(y > res.height / 2) {
-//                    image1.at<uchar>(y, x) = x % 20 > 10 ? 0 : 255;
-//                } else {
-//                    image1.at<uchar>(y, x) = x % 20 < 10 ? 0 : 255;
-//                }
-//            }
-//        }
-
-//        cv::Mat image3 = cv::Mat::zeros(rmsize, CV_8UC1);
-//        for(unsigned int y = 0; y < res.height; y+=1) {
-//            for(unsigned int x = 0; x < res.width; x+=1) {
-//                cv::Vec2i mapPix = maps[i]->at<cv::Vec2i>(y, x);
-//                image3.at<uchar>(mapPix + offset) = image1.at<uchar>(y, x);
-//            }
-//        }
-
-
-
-//        cv::Mat image4 = cv::Mat::zeros(s, CV_8UC1);
-//        for(unsigned int y = 0; y < res.height; y+=1) {
-//            for(unsigned int x = 0; x < res.width; x+=1) {
-//                cv::Vec2i mapPix = maps[i]->at<cv::Vec2i>(y, x);
-//                cv::Vec2i redistortedPix = map2.at<cv::Vec2i>(mapPix+offset);
-//                image4.at<uchar>(redistortedPix) = image1.at<uchar>(y, x);
-////                yInfo() << y << x << " | " << mapPix[0] << mapPix[1] << " | "
-////                        << redistortedPix[0] << redistortedPix[1];
-
-
-//            }
-//        }
-
-
     return false;
 
 }

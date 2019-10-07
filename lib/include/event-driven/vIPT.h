@@ -13,11 +13,17 @@ class vIPT {
 
 private:
 
-    bool rectify;
-    cv::Mat cam1_forward_map;
-    cv::Mat cam2_forward_map;
-    cv::Mat cam1_reverse_map;
-    cv::Mat cam2_reverse_map;
+    cv::Size size_shared;
+    cv::Size size_cam[2];
+    cv::Mat cam_matrix[2];
+    cv::Mat dist_coeff[2];
+    cv::Mat projection[2];
+    cv::Mat rotation[2];
+
+    cv::Mat forward_map[2];
+    cv::Mat reverse_map[2];
+
+    cv::Size offset;
 
 public:
 

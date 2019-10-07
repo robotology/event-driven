@@ -24,23 +24,39 @@ bool vIPT::configure(const string calibContext, const string calibFile,
         calibfinder.setDefaultConfigFile(calibFile);
         calibfinder.configure(0, 0);
 
-        Bottle &cam1Params = calibfinder.findGroup("CAMERA_CALIBRATION_LEFT");
-        Bottle &cam2Params = calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT");
-        Bottle &stereoParams = calibfinder.findGroup("STEREO_DISPARITY");
-        if (leftParams.isNull() || rightParams.isNull()) {
-            yError() << "Could not load intrinsic camera parameters";
-            //return false;
-        }
-        if (rectify && stereoParams.isNull()) {
-            yError() << "Could not load extrinsic camera parameters";
-            //return false;
+        //import intrinsics
+        bool valid_cam1 = importIntrinsics(calibfinder.findGroup("CAMERA_CALIBRATION_LEFT"));
+        bool valid_cam2 = importIntrinsics(calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT"));
+        bool valid_stereo = importStereo(calibfinder.findGroup("STEREO_DISPARITY"));
+
+        //compute projection and rotation
+        if(valid_cam1 && valid_cam2 && valid_stereo) {
+            //compute stereo + rectification
+        } else if(valid_cam1) {
+            //compute for camera 1
+        } else if(valid_cam2) {
+            //compute for camera 2
         }
 
-        std::cout << leftParams.toString() << std::endl;
-        std::cout << rightParams.toString() << std::endl;
-        std::cout << stereoParams.toString() << std::endl;
+        //compute the forward mapping (saving the forward map size and offset)
+        cv::Size2i mins(INT_MAX, INT_MAX);
+        cv::Size2i maxs(INT_MAX, INT_MAX);
+        if(valid_cam1)
+            computeForwardMap(0, mins, maxs);
+        if(valid_cam2)
+            computeForwardMap(1, mins, maxs);
 
-        this->rectify = rectify;
+        offset = -mins;
+        size_shared = maxs - mins + cv::Size(1, 1);
+
+        //compute the reverse mapping
+        if(valid_cam1)
+            computeReverseMap(0);
+        if(valid_cam2)
+            computeReverseMap(1);
+
+
+
         const Bottle *coeffs[3] = {&leftParams, &rightParams, &stereoParams};
         cv::Mat *maps[2] = {&leftMap, &rightMap};
         cv::Mat cameraMatrix[2];
