@@ -6,6 +6,7 @@
 #define VIPT_H
 
 #include <opencv2/opencv.hpp>
+#include <yarp/os/Bottle.h>
 
 namespace ev {
 
@@ -17,6 +18,7 @@ private:
     cv::Size size_cam[2];
     cv::Mat cam_matrix[2];
     cv::Mat dist_coeff[2];
+    cv::Mat stereo_rotation, stereo_translation;
     cv::Mat projection[2];
     cv::Mat rotation[2];
 
@@ -24,6 +26,11 @@ private:
     cv::Mat reverse_map[2];
 
     cv::Size offset;
+
+    bool importIntrinsics(int cam, yarp::os::Bottle &parameters);
+    bool importStereo(yarp::os::Bottle &parameters);
+    bool computeForwardMap(int cam, cv::Size2i mins, cv::Size2i maxs);
+    bool computeReverseMap(int cam);
 
 public:
 
@@ -33,8 +40,7 @@ public:
 
     vIPT();
 
-    bool configure(const std::string calibContext, const std::string calibFile,
-                   const bool rectify);
+    bool configure(const std::string calibContext, const std::string calibFile);
 
     bool cam1ForwardTransform(pixel &p);
     bool cam2ForwardTransform(pixel &p);

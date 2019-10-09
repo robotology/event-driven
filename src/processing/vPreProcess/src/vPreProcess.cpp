@@ -568,8 +568,14 @@ bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
         }
     }
 
+
+
     cv::Size rmsize(maxx-minx + 1, maxy-miny + 1);
     cv::Vec2i offset(-miny, -minx);
+
+    cv::Mat map1, map2;
+    cv::initUndistortRectifyMap(cameraMatrix[1], distCoeffs[1], rectRot[1], Proj[1], rmsize, CV_32FC2, map1, cv::noArray());
+    std::cout << map1.size() << std::endl << map2.size() << std::endl;
 
     cv::Mat reverse_map[2];
 
@@ -582,8 +588,82 @@ bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
                 reverse_map[i].at<cv::Vec2i>(undistorted_point) = cv::Vec2i(y, x);
             }
         }
-
     }
+
+//    cv::Vec2i null_point = {0, 0};
+//    for(int i=0; i<2; i++) {
+
+//        for(unsigned int y = 0; y < rmsize.height; y++) {
+//            for(unsigned int x = 0; x < rmsize.width; x++) {
+//                if(reverse_map[i].at<cv::Vec2i>(y, x) != null_point)
+//                    continue;
+
+////                for(int d = 1; d < ;;;)
+
+////                    if
+
+//                //else we have a missing spot - find the four pixels around it
+//                int yl = -1, yh = -1, xl = -1, xh = -1;
+//                int diff = rmsize.width;
+//                for(unsigned int j = y-1; j >= 0; j--){
+//                    if(reverse_map[i].at<cv::Vec2i>(j, x) != null_point) {
+//                        yl = j;
+//                        diff = std::min(diff, y - yl);
+//                        break;
+//                    }
+//                }
+//                if(yl < 0) break;
+
+//                for(unsigned int j = y+1; j < rmsize.height; j++){
+//                    if(reverse_map[i].at<cv::Vec2i>(j, x) != null_point) {
+//                        yh = j;
+//                        diff = std::min(diff, yh - y);
+//                        break;
+//                    }
+//                }
+//                if(yh < 0) break;
+
+//                for(unsigned int j = x-1; j >= 0; j--){
+//                    if(reverse_map[i].at<cv::Vec2i>(y, j) != null_point) {
+//                        xl = j;
+//                        diff = std::min(diff, x - xl);
+//                        break;
+//                    }
+//                }
+//                if(xl < 0) break;
+
+//                for(unsigned int j = x+1; j < rmsize.width; j++){
+//                    if(reverse_map[i].at<cv::Vec2i>(y, j) != null_point) {
+//                        xh = j;
+//                        diff = std::min(diff, xh - x);
+//                        break;
+//                    }
+//                }
+//                if(xh < 0) break;
+
+//                //now find the closest point to map to
+//                if(xl == diff)
+//                    reverse_map[i].at<cv::Vec2i>(y, x) = reverse_map[i].at<cv::Vec2i>(y, xl);
+//                else if(xh == diff)
+//                    reverse_map[i].at<cv::Vec2i>(y, x) = reverse_map[i].at<cv::Vec2i>(y, xh);
+//                else if(yl == diff)
+//                    reverse_map[i].at<cv::Vec2i>(y, x) = reverse_map[i].at<cv::Vec2i>(yl, x);
+//                else if(yh == diff)
+//                    reverse_map[i].at<cv::Vec2i>(y, x) = reverse_map[i].at<cv::Vec2i>(yh, x);
+
+
+
+
+
+//                cv::Vec2i undistorted_point = maps[i]->at<cv::Vec2i>(y, x) + offset;
+//                reverse_map[i].at<cv::Vec2i>(undistorted_point) = cv::Vec2i(y, x);
+//            }
+//        }
+//    }
+
+
+
+    // !!!!!!!!! TESTING !!!!!!!!!
 
     cv::Mat test_image_left(s, CV_8UC1);
     for(unsigned int y = 0; y < res.height; y+=1) {
