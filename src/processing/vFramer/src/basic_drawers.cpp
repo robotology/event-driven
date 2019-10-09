@@ -61,27 +61,36 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         if(!aep->polarity)
         {
-            //blue
-            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
-            else cpc[0] = 160;            //if only positive
-            //green
-            if(cpc[1] == 60) cpc[1] = 255;
-            else cpc[1] = 0;
-            //red
-            if(cpc[2] == 0) cpc[2] = 255;
-            else cpc[2] = 160;
+            if(cpc == aqua)
+                cpc = lime;
+            else if(cpc != lime)
+                cpc = violet;
+
+//            //blue
+//            if(cpc[0] == 1) cpc[0] = 0;   //if positive and negative
+//            else cpc[0] = 160;            //if only positive
+//            //green
+//            if(cpc[1] == 60) cpc[1] = 255;
+//            else cpc[1] = 0;
+//            //red
+//            if(cpc[2] == 0) cpc[2] = 255;
+//            else cpc[2] = 160;
         }
         else
         {
-            //blue
-            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
-            else cpc[0] = 1;                //negative only
-            //green
-            if(cpc[1] == 0) cpc[1] = 255;
-            else cpc[1] = 60;
-            //red
-            if(cpc.val[2] == 160) cpc[2] = 255;
-            else cpc[2] = 0;
+            if(cpc == violet)
+                cpc = lime;
+            else if(cpc != lime)
+                cpc = aqua;
+//            //blue
+//            if(cpc[0] == 160) cpc[0] = 0;   //negative and positive
+//            else cpc[0] = 1;                //negative only
+//            //green
+//            if(cpc[1] == 0) cpc[1] = 255;
+//            else cpc[1] = 60;
+//            //red
+//            if(cpc.val[2] == 160) cpc[2] = 255;
+//            else cpc[2] = 0;
         }
     }
 }
