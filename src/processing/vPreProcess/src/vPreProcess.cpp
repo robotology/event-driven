@@ -127,11 +127,17 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
     apply_filter = filter_spatial || filter_temporal;
     if(apply_filter)
     {
-        thefilter.initialise(res.width, res.height);
+        filter_left.initialise(res.width, res.height);
+        filter_right.initialise(res.width, res.height);
     }
     if(filter_spatial)
     {
-        thefilter.use_spatial_filter(
+        filter_left.use_spatial_filter(
+                    rf.check("sf_time",
+                             Value(0.05)).asDouble() * vtsHelper::vtsscaler,
+                    rf.check("sf_size",
+                             Value(1)).asInt());
+        filter_right.use_spatial_filter(
                     rf.check("sf_time",
                              Value(0.05)).asDouble() * vtsHelper::vtsscaler,
                     rf.check("sf_size",
@@ -140,7 +146,10 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
 
     if(filter_temporal)
     {
-        thefilter.use_temporal_filter(
+        filter_left.use_temporal_filter(
+                    rf.check("tf_time",
+                             Value(0.1)).asDouble() * vtsHelper::vtsscaler);
+        filter_right.use_temporal_filter(
                     rf.check("tf_time",
                              Value(0.1)).asDouble() * vtsHelper::vtsscaler);
     }
@@ -343,9 +352,18 @@ void vPreProcess::run()
                 if(flipy) v.y = resmod.height - v.y;
 
                 //salt and pepper filter (only to TD events)
-                if(apply_filter && !v.type && !thefilter.check(v.x, v.y, v.polarity, v.channel, v.stamp)) {
-                    v_dropped++;
-                    continue;
+                if(apply_filter && !v.type) {
+                    if(v.polarity) {
+                        if(!filter_right.check(v.x, v.y, v.polarity, v.stamp)) {
+                            v_dropped++;
+                            continue;
+                        }
+                    } else {
+                        if(!filter_left.check(v.x, v.y, v.polarity, v.stamp)) {
+                            v_dropped++;
+                            continue;
+                        }
+                    }
                 }
 
                 //undistortion (including rectification)

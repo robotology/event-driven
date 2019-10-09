@@ -56,7 +56,8 @@ private:
 
     //filter class
     bool apply_filter;
-    ev::vNoiseFilter thefilter;
+    ev::vNoiseFilter filter_left;
+    ev::vNoiseFilter filter_right;
     int v_total;
     int v_dropped;
 
