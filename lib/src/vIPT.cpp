@@ -223,32 +223,29 @@ bool vIPT::showMapProjections()
 
 
     cv::Mat test_left_remapped = cv::Mat::zeros(size_cam[0], CV_8UC1);
-    for(unsigned int y = 0; y < size_cam[0].height; y++) {
-        for(unsigned int x = 0; x < size_cam[0].width; x++) {
-            cv::Vec2i mapPix = point_forward_map[0].at<cv::Vec2i>(y, x);
-            cv::Vec2i redistortedPix = point_reverse_map[0].at<cv::Vec2i>(mapPix);
+    for(unsigned int y = 0; y < size_shared.height; y++) {
+        for(unsigned int x = 0; x < size_shared.width; x++) {
+            cv::Vec2i redistortedPix = point_reverse_map[0].at<cv::Vec2i>(y, x);
             if(redistortedPix[0] < 0 || redistortedPix[0] >= size_cam[0].height ||
                     redistortedPix[1] < 0 || redistortedPix[1] >= size_cam[0].width) {
-                std::cout << redistortedPix << std::endl;
+                //std::cout << redistortedPix << std::endl;
                 continue;
             }
-            test_left_remapped.at<uchar>(redistortedPix) = test_image_left.at<uchar>(y, x);
+            test_left_remapped.at<uchar>(redistortedPix) = shared_space.at<uchar>(y, x);
         }
     }
-    cv::imshow("Image unwarped cam1", test_left_remapped);
+    cv::imshow("Cam1 Sparse Reverse", test_left_remapped);
 
     cv::Mat test_right_remapped = cv::Mat::zeros(size_cam[1], CV_8UC1);
-    for(unsigned int y = 0; y < size_cam[1].height; y++) {
-        for(unsigned int x = 0; x < size_cam[1].width; x++) {
-            cv::Vec2i mapPix = point_forward_map[1].at<cv::Vec2i>(y, x);
-            cv::Vec2i redistortedPix = point_reverse_map[1].at<cv::Vec2i>(mapPix);
+    for(unsigned int y = 0; y < size_shared.height; y++) {
+        for(unsigned int x = 0; x < size_shared.width; x++) {
+            cv::Vec2i redistortedPix = point_reverse_map[1].at<cv::Vec2i>(y, x);
             if(redistortedPix[0] < 0 || redistortedPix[0] >= size_cam[1].height ||
                     redistortedPix[1] < 0 || redistortedPix[1] >= size_cam[1].width) {
-                std::cout << redistortedPix << std::endl;
+                //std::cout << redistortedPix << std::endl;
                 continue;
             }
-            test_right_remapped.at<uchar>(redistortedPix) = test_image_right.at<uchar>(y, x);
-
+            test_right_remapped.at<uchar>(redistortedPix) = shared_space.at<uchar>(y, x);
         }
     }
     cv::imshow("Image unwarped cam2", test_right_remapped);
