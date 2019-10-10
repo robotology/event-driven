@@ -27,6 +27,7 @@
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
 #include <event-driven/all.h>
+#include <event-driven/vIPT.h>
 #include <opencv2/opencv.hpp>
 
 class vPreProcess : public yarp::os::RFModule, public yarp::os::Thread
@@ -62,6 +63,7 @@ private:
 
     //we store an openCV map to use as a look-up table for the undistortion
     //given the camera parameters provided
+    ev::vIPT calibrator;
     bool rectify;
     bool undistort;
     cv::Mat leftMap;

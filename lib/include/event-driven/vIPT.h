@@ -22,15 +22,17 @@ private:
     cv::Mat projection[2];
     cv::Mat rotation[2];
 
-    cv::Mat forward_map[2];
-    cv::Mat reverse_map[2];
+    cv::Mat point_forward_map[2];
+    cv::Mat point_reverse_map[2];
+    cv::Mat mat_reverse_map[2];
+    cv::Mat mat_forward_map[2];
 
     cv::Size offset;
 
     bool importIntrinsics(int cam, yarp::os::Bottle &parameters);
     bool importStereo(yarp::os::Bottle &parameters);
-    bool computeForwardMap(int cam, cv::Size2i mins, cv::Size2i maxs);
-    bool computeReverseMap(int cam);
+    bool computeForwardReverseMaps(int cam);
+
 
 public:
 
@@ -41,6 +43,7 @@ public:
     vIPT();
 
     bool configure(const std::string calibContext, const std::string calibFile);
+    bool showMapProjections();
 
     bool cam1ForwardTransform(pixel &p);
     bool cam2ForwardTransform(pixel &p);
@@ -58,24 +61,6 @@ public:
     bool transposeCam2ToCam1(cv::Mat &m);
 
 
-//    void getUndistortedEvent(const resolution &resmod, AE &v) const {
-//        cv::Vec2i mapPix;
-//        if (v.getChannel() == 0)
-//            mapPix = leftMap.at<cv::Vec2i>(v.y, v.x);
-//        else
-//            mapPix = rightMap.at<cv::Vec2i>(v.y, v.x);
-
-//        //truncate to sensor bounds after mapping?
-//        if (truncate && (mapPix[0] < 0 ||
-//                         mapPix[0] > resmod.width ||
-//                         mapPix[1] < 0 ||
-//                         mapPix[1] > resmod.height)) {
-//            return;
-//        }
-
-//        v.x = mapPix[0];
-//        v.y = mapPix[1];
-//    };
 };
 
 }

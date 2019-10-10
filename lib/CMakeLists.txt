@@ -29,9 +29,9 @@ set(folder_source
   src/codecs/codec_SkinSample.cpp
   src/codecs/codec_vEvent.cpp)
 
-#if(OpenCV_FOUND)
-#    list(APPEND folder_source src/vIPT.cpp)
-#endif()
+if(OpenCV_FOUND)
+    list(APPEND folder_source src/vIPT.cpp)
+endif()
 
 if(VLIB_DEPRECATED)
   list(APPEND folder_source
@@ -48,9 +48,9 @@ set(folder_header
   include/event-driven/all.h
 )
 
-#if(OpenCV_FOUND)
-#    list(APPEND folder_header include/event-driven/vIPT.h)
-#endif()
+if(OpenCV_FOUND)
+    list(APPEND folder_header include/event-driven/vIPT.h)
+endif()
 
 if(VLIB_DEPRECATED)
   list(APPEND folder_header

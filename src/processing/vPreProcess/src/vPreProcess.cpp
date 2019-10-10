@@ -147,29 +147,34 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
     }
 
     if(undistort) {
-        ResourceFinder calibfinder;
-        calibfinder.setVerbose();
-        calibfinder.setDefaultContext(rf.check("calibContext", Value("camera")).asString().c_str());
-        calibfinder.setDefaultConfigFile(rf.check("calibFile", Value("atis_calib.ini")).asString().c_str());
-        calibfinder.configure(0, 0);
 
-        Bottle &leftParams = calibfinder.findGroup("CAMERA_CALIBRATION_LEFT");
-        Bottle &rightParams = calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT");
-        Bottle &stereoParams = calibfinder.findGroup("STEREO_DISPARITY");
-        if(leftParams.isNull() || rightParams.isNull()) {
-            yError() << "Could not load intrinsic camera parameters";
-            return false;
-        }
-        if (rectify && stereoParams.isNull()) {
-            yError() << "Could not load extrinsic camera parameters";
-            return false;
-        }
+        calibrator.configure("camera", "atis_calib.ini");
+        calibrator.showMapProjections();
 
-        std::cout << leftParams.toString() << std::endl;
-        std::cout << rightParams.toString() << std::endl;
-        std::cout << stereoParams.toString() << std::endl;
-        if(!initUndistortion(leftParams, rightParams, stereoParams, truncate))
-            return false;
+        return false;
+//        ResourceFinder calibfinder;
+//        calibfinder.setVerbose();
+//        calibfinder.setDefaultContext(rf.check("calibContext", Value("camera")).asString().c_str());
+//        calibfinder.setDefaultConfigFile(rf.check("calibFile", Value("atis_calib.ini")).asString().c_str());
+//        calibfinder.configure(0, 0);
+
+//        Bottle &leftParams = calibfinder.findGroup("CAMERA_CALIBRATION_LEFT");
+//        Bottle &rightParams = calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT");
+//        Bottle &stereoParams = calibfinder.findGroup("STEREO_DISPARITY");
+//        if(leftParams.isNull() || rightParams.isNull()) {
+//            yError() << "Could not load intrinsic camera parameters";
+//            return false;
+//        }
+//        if (rectify && stereoParams.isNull()) {
+//            yError() << "Could not load extrinsic camera parameters";
+//            return false;
+//        }
+
+//        std::cout << leftParams.toString() << std::endl;
+//        std::cout << rightParams.toString() << std::endl;
+//        std::cout << stereoParams.toString() << std::endl;
+//        if(!initUndistortion(leftParams, rightParams, stereoParams, truncate))
+//            return false;
     }
 
     return Thread::start();
