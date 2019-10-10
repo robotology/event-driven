@@ -545,9 +545,9 @@ bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
 
     for(int i=0; i<2; i++) {
 
-        *(maps[i]) = cv::Mat(s, CV_32SC2);
+        //*(maps[i]) = cv::Mat(s, CV_32SC2);
         point_forward_map[i] = cv::Mat(s, CV_32SC2);
-        mat_forward_map[i] = cv::Mat(s, CV_32SC2);
+        mat_forward_map[i] = cv::Mat(s, CV_32FC2);
 
         cv::initUndistortRectifyMap(cameraMatrix[i], distCoeffs[i], rectRot[i],
                                     Proj[i], size_shared, CV_32FC2, mat_reverse_map[i],
@@ -559,14 +559,14 @@ bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
             for(unsigned int x = 0; x < res.width*2; x++) {
                 cv::Vec2f distorted_point = mat_reverse_map[i].at<cv::Vec2f>(y, x);
                 point_reverse_map[i].at<cv::Vec2i>(y, x) =
-                        cv::Vec2i(distorted_point[1]+0.5, distorted_point[0]+0.5); //point_reverse_map filled
+                        cv::Vec2i(distorted_point[1], distorted_point[0]); //point_reverse_map filled
                 if(distorted_point[1] < 0 || distorted_point[1] >= s.height ||
                         distorted_point[0] < 0 || distorted_point[0] >= s.width)
                     continue;
 
-                cv::Vec2i dp2 = cv::Vec2i(distorted_point[1]+0.5, distorted_point[0]+0.5);
+                cv::Vec2i dp2 = cv::Vec2i(distorted_point[1], distorted_point[0]);
                 point_forward_map[i].at<cv::Vec2i>(dp2) = cv::Vec2i(y, x); //point_forward_map filled
-               // mat_forward_map[i].at<cv::Vec2i>(dp2) = cv::Vec2i(x, y);
+                mat_forward_map[i].at<cv::Vec2f>(dp2) = cv::Vec2f(x, y);
             }
         }
     }
@@ -601,7 +601,7 @@ bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
     cv::remap(test_image_left, remapped, mat_reverse_map[0], cv::noArray(), CV_INTER_LINEAR);
     cv::remap(test_image_right, remapped2, mat_reverse_map[1], cv::noArray(), CV_INTER_LINEAR);
     remapped = remapped * 0.5;
-    remapped = remapped + remapped2;
+    remapped = remapped + remapped2 * 0.5;
 
 
 
@@ -623,17 +623,28 @@ bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
         for(unsigned int x = 0; x < res.width; x+=1) {
             cv::Vec2i mapPix = point_forward_map[0].at<cv::Vec2i>(y, x);
             cv::Vec2i redistortedPix = point_reverse_map[0].at<cv::Vec2i>(mapPix);
+            if(redistortedPix[0] < 0 || redistortedPix[0] >= s.height ||
+                    redistortedPix[1] < 0 || redistortedPix[1] >= s.width) {
+                std::cout << redistortedPix << std::endl;
+                continue;
+            }
             test_left_remapped.at<uchar>(redistortedPix) = test_image_left.at<uchar>(y, x);
 
             mapPix = point_forward_map[1].at<cv::Vec2i>(y, x);
             redistortedPix = point_reverse_map[1].at<cv::Vec2i>(mapPix);
+            if(redistortedPix[0] < 0 || redistortedPix[0] >= s.height ||
+                    redistortedPix[1] < 0 || redistortedPix[1] >= s.width) {
+                std::cout << redistortedPix << std::endl;
+                continue;
+            }
             test_right_remapped.at<uchar>(redistortedPix) = test_image_right.at<uchar>(y, x);
 
         }
     }
 
     cv::Mat mat_remap_back;
-   // cv::remap(remapped, mat_remap_back, mat_forward_map[0], cv::noArray(), CV_INTER_LINEAR);
+    //std::cout << mat_reverse_map[0] << std::endl;
+    cv::remap(remapped, mat_remap_back, mat_forward_map[1], cv::noArray(), CV_INTER_LINEAR);
 
     cv::imshow("Image left", test_image_left);
     cv::imshow("Image right", test_image_right);
@@ -645,7 +656,7 @@ bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
 
     cv::imshow("Mat shared space", remapped);
 
-   // cv::imshow("Mat remapped", mat_remap_back);
+    cv::imshow("Mat remapped", mat_remap_back);
 
 
 
