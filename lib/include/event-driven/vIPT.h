@@ -1,6 +1,20 @@
-//
-// Created by miacono on 9/13/19.
-//
+/*
+ *   Copyright (C) 2019 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef VIPT_H
 #define VIPT_H
@@ -27,8 +41,6 @@ private:
     cv::Mat mat_reverse_map[2];
     cv::Mat mat_forward_map[2];
 
-    cv::Size offset;
-
     bool importIntrinsics(int cam, yarp::os::Bottle &parameters);
     bool importStereo(yarp::os::Bottle &parameters);
     bool computeForwardReverseMaps(int cam);
@@ -36,29 +48,20 @@ private:
 
 public:
 
-    struct pixel {
-        int u; int v;
-    };
-
     vIPT();
 
     bool configure(const std::string calibContext, const std::string calibFile);
     bool showMapProjections();
 
-    bool cam1ForwardTransform(pixel &p);
-    bool cam2ForwardTransform(pixel &p);
-    bool cam1ReverseTransform(pixel &p);
-    bool cam2ReverseTransform(pixel &p);
+    bool sparseForwardTransform(int cam, int &x, int &y);
+    bool sparseReverseTransform(int cam, int &x, int &y);
+    bool sparseProjectCam0ToCam1(int &x, int &y);
+    bool sparseProjectCam1ToCam0(int &x, int &y);
 
-    bool cam1ForwardTransform(cv::Mat &m);
-    bool cam2ForwardTransform(cv::Mat &m);
-    bool cam1ReverseTransform(cv::Mat &m);
-    bool cam2ReverseTransform(cv::Mat &m);
-
-    bool transposeCam1ToCam2(pixel &p);
-    bool transposeCam2ToCam1(pixel &p);
-    bool transposeCam1ToCam2(cv::Mat &m);
-    bool transposeCam2ToCam1(cv::Mat &m);
+    bool denseForwardTransform(int cam, cv::Mat &m);
+    bool denseReverseTransform(int cam, cv::Mat &m);
+    bool denseProjectCam0ToCam1(cv::Mat &m);
+    bool denseProjectCam1ToCam0(cv::Mat &m);
 
 
 };

@@ -1,3 +1,21 @@
+/*
+ *   Copyright (C) 2019 Event-driven Perception for Robotics
+ *   Author: arren.glover@iit.it
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include "event-driven/vIPT.h"
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/Bottle.h>
@@ -252,6 +270,77 @@ bool vIPT::showMapProjections()
 
     cv::waitKey(0);
 
+    return true;
+}
+
+bool vIPT::sparseForwardTransform(int cam, int &x, int &y)
+{
+    cv::Vec2i p(y, x);
+    p = point_forward_map[cam].at<cv::Vec2i>(p);
+    y = p[0];
+    x = p[1];
+    return true;
+}
+
+bool vIPT::sparseReverseTransform(int cam, int &x, int &y)
+{
+    cv::Vec2i p(y, x);
+    p = point_reverse_map[cam].at<cv::Vec2i>(p);
+    if(p[0] < 0 || p[0] >= size_cam[cam].height ||
+            p[1] < 0 || p[1] >= size_cam[cam].width)
+    {
+        return false;
+    }
+    y = p[0];
+    x = p[1];
+    return true;
+}
+
+
+bool vIPT::sparseProjectCam0ToCam1(int &x, int &y)
+{
+    if(!sparseForwardTransform(0, x, y))
+        return false;
+    if(!sparseReverseTransform(1, x, y))
+        return false;
+    return true;
+}
+
+bool vIPT::sparseProjectCam1ToCam0(int &x, int &y)
+{
+    if(!sparseForwardTransform(1, x, y))
+        return false;
+    if(!sparseReverseTransform(0, x, y))
+        return false;
+    return true;
+}
+
+bool vIPT::denseForwardTransform(int cam, cv::Mat &m)
+{
+    cv::Mat remapped;
+    cv::remap(m, remapped, mat_reverse_map[cam], cv::noArray(), CV_INTER_LINEAR);
+    m = remapped;
+    return true;
+}
+
+bool vIPT::denseReverseTransform(int cam, cv::Mat &m)
+{
+    cv::Mat remapped;
+    cv::remap(m, remapped, mat_forward_map[cam], cv::noArray(), CV_INTER_LINEAR);
+    m = remapped;
+    return true;
+}
+
+bool vIPT::denseProjectCam0ToCam1(cv::Mat &m)
+{
+    denseForwardTransform(0, m);
+    denseReverseTransform(1, m);
+    return true;
+}
+bool vIPT::denseProjectCam1ToCam0(cv::Mat &m)
+{
+    denseForwardTransform(1, m);
+    denseReverseTransform(0, m);
     return true;
 }
 
