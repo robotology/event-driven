@@ -50,8 +50,6 @@ int main(int argc, char * argv[])
 
 vPreProcess::vPreProcess(): name("/vPreProcess")
 {
-    leftMap.deallocate();
-    rightMap.deallocate();
     v_total = 0;
     v_dropped = 0;
 
@@ -90,12 +88,8 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
             rf.check("filter_spatial", Value(true)).asBool();
     bool filter_temporal = rf.check("filter_temporal") &&
             rf.check("filter_temporal", Value(true)).asBool();
-    rectify = rf.check("rectify") &&
-            rf.check("rectify", Value(true)).asBool();
     undistort = rf.check("undistort") &&
             rf.check("undistort", Value(true)).asBool();
-    truncate = rf.check("truncate") &&
-            rf.check("truncate", Value(true)).asBool();
     flipx = rf.check("flipx") &&
             rf.check("flipx", Value(true)).asBool();
     flipy = rf.check("flipy") &&
@@ -116,12 +110,8 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
         yInfo() << "Applying spatial \"salt and pepper\" filter";
     if(filter_temporal)
         yInfo() << "Applying temporal \"refractory\" filter";
-    if(rectify)
-        yInfo() << "Rectifying image pairs using extrinsic parameters";
-    if(undistort && truncate)
-        yInfo() << "Applying camera undistortion - truncating to sensor size";
-    if(undistort && !truncate)
-        yInfo() << "Applying camera undistortion - without truncation";
+    if(undistort)
+        yInfo() << "Applying camera undistortion";
     if(split)
         yInfo() << "Splitting into left/right streams";
 
@@ -150,31 +140,6 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
 
         calibrator.configure("camera", "atis_calib.ini");
         calibrator.showMapProjections();
-
-        return false;
-//        ResourceFinder calibfinder;
-//        calibfinder.setVerbose();
-//        calibfinder.setDefaultContext(rf.check("calibContext", Value("camera")).asString().c_str());
-//        calibfinder.setDefaultConfigFile(rf.check("calibFile", Value("atis_calib.ini")).asString().c_str());
-//        calibfinder.configure(0, 0);
-
-//        Bottle &leftParams = calibfinder.findGroup("CAMERA_CALIBRATION_LEFT");
-//        Bottle &rightParams = calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT");
-//        Bottle &stereoParams = calibfinder.findGroup("STEREO_DISPARITY");
-//        if(leftParams.isNull() || rightParams.isNull()) {
-//            yError() << "Could not load intrinsic camera parameters";
-//            return false;
-//        }
-//        if (rectify && stereoParams.isNull()) {
-//            yError() << "Could not load extrinsic camera parameters";
-//            return false;
-//        }
-
-//        std::cout << leftParams.toString() << std::endl;
-//        std::cout << rightParams.toString() << std::endl;
-//        std::cout << stereoParams.toString() << std::endl;
-//        if(!initUndistortion(leftParams, rightParams, stereoParams, truncate))
-//            return false;
     }
 
     return Thread::start();
@@ -357,23 +322,11 @@ void vPreProcess::run()
 
                 //undistortion (including rectification)
                 if(undistort) {
-                    cv::Vec2i mapPix;
-                    if(v.getChannel() == 0)
-                        mapPix = leftMap.at<cv::Vec2i>(v.y, v.x);
-                    else
-                        mapPix = rightMap.at<cv::Vec2i>(v.y, v.x);
-
-                    //truncate to sensor bounds after mapping?
-                    if(truncate && (mapPix[0] < 0 ||
-                                    mapPix[0] > resmod.width ||
-                                    mapPix[1] < 0 ||
-                                    mapPix[1] > resmod.height)) {
-                        continue;
-                    }
-
-                    v.x = mapPix[0];
-                    v.y = mapPix[1];
-
+                    int x = v.x;
+                    int y = v.y;
+                    calibrator.sparseForwardTransform(v.channel, x, y);
+                    v.x = x;
+                    v.y = y;
                 }
 
                 if(split && v.channel)
@@ -454,222 +407,6 @@ void vPreProcess::run()
     }
 }
 
-bool vPreProcess::initUndistortion(const yarp::os::Bottle &left,
-                                   const yarp::os::Bottle &right,
-                                   const yarp::os::Bottle &stereo, bool truncate)
-{
-    this->truncate = truncate;
-    const yarp::os::Bottle *coeffs[3] = { &left, &right, &stereo};
-    cv::Mat *maps[2] = {&leftMap, &rightMap};
-    cv::Mat cameraMatrix[2];
-    cv::Mat distCoeffs[2];
-    cv::Mat rectRot[2];
-    cv::Size s(res.width, res.height); //cv::Size seems to be swapped x/y
-    cv::Mat Proj[2];
-
-    cv::Size size_shared = s*2;
-
-    //create camera and distortion matrices
-    for(int i = 0; i < 2; i++) {
-
-        double scaley = res.height / (double)(coeffs[i]->find("h").asInt());
-        double scalex = res.width  / (double)(coeffs[i]->find("w").asInt());
-
-        cameraMatrix[i] = cv::Mat(3, 3, CV_64FC1);
-        cameraMatrix[i].setTo(0);
-        cameraMatrix[i].at<double>(0, 0) = coeffs[i]->find("fx").asDouble()*scalex;
-        cameraMatrix[i].at<double>(1, 1) = coeffs[i]->find("fy").asDouble()*scaley;
-        cameraMatrix[i].at<double>(2, 2) = 1.0;
-        cameraMatrix[i].at<double>(0, 2) = coeffs[i]->find("cx").asDouble()*scalex;
-        cameraMatrix[i].at<double>(1, 2) = coeffs[i]->find("cy").asDouble()*scaley;
-
-        distCoeffs[i] = cv::Mat(4, 1, CV_64FC1);
-        distCoeffs[i].at<double>(0, 0) = coeffs[i]->find("k1").asDouble();
-        distCoeffs[i].at<double>(0, 1) = coeffs[i]->find("k2").asDouble();
-        distCoeffs[i].at<double>(0, 2) = coeffs[i]->find("p1").asDouble();
-        distCoeffs[i].at<double>(0, 3) = coeffs[i]->find("p2").asDouble();
-
-        Proj[i] = cv::getOptimalNewCameraMatrix(cameraMatrix[i], distCoeffs[i], s, 1, size_shared);
-    }
-
-    if(rectify)
-    {
-        //Loading extrinsic stereo parameters
-        yarp::os::Bottle *HN = coeffs[2]->find("HN").asList();
-        if(HN == nullptr || HN->size() != 16)
-            yError() << "Rototranslation matrix HN is absent or without required number of values: 16)";
-        else
-        {
-            std::cout<<"After extracting list from bottle value HN: "<<(HN->toString())<<std::endl;
-
-            cv::Mat R(3, 3, CV_64FC1); //Rotation matrix between stereo cameras
-            cv::Mat T(3, 1, CV_64FC1); //Translation vector of right wrt left camera center
-            for (int row=0; row<3; row++)
-            {
-                for(int col=0; col<3; col++)
-                {
-                    R.at<double>(row, col) = HN->get(row*4 + col).asDouble();
-                }
-                T.at<double>(row) = HN->get(row*4+3).asDouble();
-            }
-            std::cout<<"R and T values stored properly; R:"<<R<<"T: "<<T<<std::endl;
-
-            cv::Mat R_left(3, 3, CV_64FC1);
-            cv::Mat R_right(3, 3, CV_64FC1);
-            cv::Mat P_left(3, 4, CV_64FC1);
-            cv::Mat P_right(3, 4, CV_64FC1);
-            cv::Mat Q(4, 4, CV_64FC1);
-            //Computing homographies for left and right image
-            cv::stereoRectify(cameraMatrix[0], distCoeffs[0], cameraMatrix[1], distCoeffs[1],
-                    s, R, T, R_left, R_right, P_left, P_right, Q, CV_CALIB_ZERO_DISPARITY, 1, size_shared);
-            rectRot[0] = R_left.clone();
-            rectRot[1] = R_right.clone();
-            Proj[0] = P_left.clone();
-            Proj[1] = P_right.clone();
-
-        }
-    }
-    std::cout << "Camera Transforms" << std::endl;
-    std::cout << "-----------------" << std::endl;
-    std::cout << "Projection Left: " << std::endl;
-    std::cout << Proj[0] << std::endl;
-    std::cout << "Projection Right: " << std::endl;
-    std::cout << Proj[1] << std::endl;
-    std::cout << "Rotation Left: " << std::endl;
-    std::cout << rectRot[0] << std::endl;
-    std::cout << "Rotation Right: " << std::endl;
-    std::cout << rectRot[1] << std::endl << std::endl;
-
-    //cv::Mat reverse_map[2];
-
-    cv::Mat point_forward_map[2];
-    cv::Mat point_reverse_map[2];
-    cv::Mat mat_reverse_map[2];
-    cv::Mat mat_forward_map[2];
-    //cv::Mat urmap[2];
-
-    for(int i=0; i<2; i++) {
-
-        //*(maps[i]) = cv::Mat(s, CV_32SC2);
-        point_forward_map[i] = cv::Mat(s, CV_32SC2);
-        mat_forward_map[i] = cv::Mat(s, CV_32FC2);
-
-        cv::initUndistortRectifyMap(cameraMatrix[i], distCoeffs[i], rectRot[i],
-                                    Proj[i], size_shared, CV_32FC2, mat_reverse_map[i],
-                                    cv::noArray()); //mat_reverse_map filled
-        point_reverse_map[i] = cv::Mat(mat_reverse_map[i].size(), CV_32SC2);
-        //urmap is points ordered [x, y]
-
-        for(unsigned int y = 0; y < res.height*2; y++) {
-            for(unsigned int x = 0; x < res.width*2; x++) {
-                cv::Vec2f distorted_point = mat_reverse_map[i].at<cv::Vec2f>(y, x);
-                point_reverse_map[i].at<cv::Vec2i>(y, x) =
-                        cv::Vec2i(distorted_point[1], distorted_point[0]); //point_reverse_map filled
-                if(distorted_point[1] < 0 || distorted_point[1] >= s.height ||
-                        distorted_point[0] < 0 || distorted_point[0] >= s.width)
-                    continue;
-
-                cv::Vec2i dp2 = cv::Vec2i(distorted_point[1], distorted_point[0]);
-                point_forward_map[i].at<cv::Vec2i>(dp2) = cv::Vec2i(y, x); //point_forward_map filled
-                mat_forward_map[i].at<cv::Vec2f>(dp2) = cv::Vec2f(x, y);
-            }
-        }
-    }
-
-        //reverse_map[i] = urmap[i];
-
-    // !!!!!!!!! TESTING !!!!!!!!!
-
-    cv::Mat test_image_left(s, CV_8UC1);
-    for(unsigned int y = 0; y < res.height; y+=1) {
-        for(unsigned int x = 0; x < res.width; x+=1) {
-            if(y > res.height / 2) {
-                test_image_left.at<uchar>(y, x) = x % 20 > 10 ? 0 : 120;
-            } else {
-                test_image_left.at<uchar>(y, x) = x % 20 < 10 ? 0 : 120;
-            }
-        }
-    }
-
-    cv::Mat test_image_right(s, CV_8UC1);
-    for(unsigned int y = 0; y < res.height; y+=1) {
-        for(unsigned int x = 0; x < res.width; x+=1) {
-            if(x > res.width / 2) {
-                test_image_right.at<uchar>(y, x) = y % 20 > 10 ? 0 : 120;
-            } else {
-                test_image_right.at<uchar>(y, x) = y % 20 < 10 ? 0 : 120;
-            }
-        }
-    }
-
-    cv::Mat remapped, remapped2;
-    cv::remap(test_image_left, remapped, mat_reverse_map[0], cv::noArray(), CV_INTER_LINEAR);
-    cv::remap(test_image_right, remapped2, mat_reverse_map[1], cv::noArray(), CV_INTER_LINEAR);
-    remapped = remapped * 0.5;
-    remapped = remapped + remapped2 * 0.5;
-
-
-
-    cv::Mat shared_space = cv::Mat::zeros(size_shared, CV_8UC1);
-    for(unsigned int y = 0; y < res.height; y+=1) {
-        for(unsigned int x = 0; x < res.width; x+=1) {
-            cv::Vec2i mapPix = point_forward_map[0].at<cv::Vec2i>(y, x);
-            shared_space.at<uchar>(mapPix) += test_image_left.at<uchar>(y, x);
-
-            mapPix = point_forward_map[1].at<cv::Vec2i>(y, x);
-            shared_space.at<uchar>(mapPix) += test_image_right.at<uchar>(y, x);
-        }
-    }
-
-
-    cv::Mat test_left_remapped = cv::Mat::zeros(s, CV_8UC1);
-    cv::Mat test_right_remapped = cv::Mat::zeros(s, CV_8UC1);
-    for(unsigned int y = 0; y < res.height; y+=1) {
-        for(unsigned int x = 0; x < res.width; x+=1) {
-            cv::Vec2i mapPix = point_forward_map[0].at<cv::Vec2i>(y, x);
-            cv::Vec2i redistortedPix = point_reverse_map[0].at<cv::Vec2i>(mapPix);
-            if(redistortedPix[0] < 0 || redistortedPix[0] >= s.height ||
-                    redistortedPix[1] < 0 || redistortedPix[1] >= s.width) {
-                std::cout << redistortedPix << std::endl;
-                continue;
-            }
-            test_left_remapped.at<uchar>(redistortedPix) = test_image_left.at<uchar>(y, x);
-
-            mapPix = point_forward_map[1].at<cv::Vec2i>(y, x);
-            redistortedPix = point_reverse_map[1].at<cv::Vec2i>(mapPix);
-            if(redistortedPix[0] < 0 || redistortedPix[0] >= s.height ||
-                    redistortedPix[1] < 0 || redistortedPix[1] >= s.width) {
-                std::cout << redistortedPix << std::endl;
-                continue;
-            }
-            test_right_remapped.at<uchar>(redistortedPix) = test_image_right.at<uchar>(y, x);
-
-        }
-    }
-
-    cv::Mat mat_remap_back;
-    //std::cout << mat_reverse_map[0] << std::endl;
-    cv::remap(remapped, mat_remap_back, mat_forward_map[1], cv::noArray(), CV_INTER_LINEAR);
-
-    cv::imshow("Image left", test_image_left);
-    cv::imshow("Image right", test_image_right);
-
-    cv::imshow("Point shared space", shared_space);
-
-    cv::imshow("Image unwarped left", test_left_remapped);
-    cv::imshow("Image unwarped right", test_right_remapped);
-
-    cv::imshow("Mat shared space", remapped);
-
-    cv::imshow("Mat remapped", mat_remap_back);
-
-
-
-    cv::waitKey(0);
-
-    return false;
-
-}
 
 bool vPreProcess::interruptModule()
 {

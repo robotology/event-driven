@@ -63,12 +63,8 @@ private:
 
     //we store an openCV map to use as a look-up table for the undistortion
     //given the camera parameters provided
-    ev::vIPT calibrator;
-    bool rectify;
     bool undistort;
-    cv::Mat leftMap;
-    cv::Mat rightMap;
-    bool truncate;
+    ev::vIPT calibrator;
 
     //output
     bool split;
@@ -85,11 +81,6 @@ public:
     vPreProcess();
     ~vPreProcess();
 
-    bool initUndistortion(const yarp::os::Bottle &left,
-                          const yarp::os::Bottle &right,
-                          const yarp::os::Bottle &stereo,
-                          bool truncate);
-
 
     //inherited functions
     virtual bool configure(yarp::os::ResourceFinder &rf);
@@ -100,7 +91,6 @@ public:
     bool updateModule();
     void run();
 
-    void getUndistortedEvent(const ev::resolution &resmod, ev::AE &v) const;
 };
 
 #endif
