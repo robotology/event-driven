@@ -324,7 +324,7 @@ void vPreProcess::run()
                 if(undistort) {
                     int x = v.x;
                     int y = v.y;
-                    calibrator.sparseForwardTransform(v.channel, x, y);
+                    calibrator.sparseForwardTransform(v.channel, y, x);
                     v.x = x;
                     v.y = y;
                 }

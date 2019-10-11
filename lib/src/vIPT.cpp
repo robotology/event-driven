@@ -258,7 +258,8 @@ bool vIPT::showMapProjections()
     }
     cv::imshow("Cam2 Sparse Reverse", test_right_remapped);
 
-    cv::waitKey(0);
+    cv::waitKey(2);
+    cv::destroyAllWindows();
 
     return true;
 }
