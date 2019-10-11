@@ -84,10 +84,6 @@ bool vIPT::importStereo(Bottle &parameters)
             stereo_translation.at<double>(row) = HN->get(row * 4 + 3).asDouble();
         }
 
-        yInfo() << "After extracting list from bottle value HN:"
-                << (HN->toString());
-        //yInfo() << "R and T values stored properly; R:"
-        //        << stereo_rotation << "stereo_translation: " << stereo_translation;
     }
 
     return true;
@@ -149,7 +145,7 @@ bool vIPT::configure(const string calibContext, const string calibFile)
     bool valid_stereo = importStereo(calibfinder.findGroup("STEREO_DISPARITY"));
 
     size_shared = cv::Size2i(cv::max(size_cam[0].width, size_cam[1].width),
-            cv::max(size_cam[1].height, size_cam[1].height))*2;
+            cv::max(size_cam[1].height, size_cam[1].height));
 
     //compute projection and rotation
     if(valid_cam1 && valid_cam2 && valid_stereo) {
@@ -208,33 +204,35 @@ bool vIPT::showMapProjections()
     }
     cv::imshow("Cam 1", test_image_right);
 
-    cv::Mat remapped, remapped2;
-    cv::remap(test_image_left, remapped, mat_reverse_map[0], cv::noArray(),
-            CV_INTER_LINEAR);
-    cv::remap(test_image_right, remapped2, mat_reverse_map[1], cv::noArray(),
-            CV_INTER_LINEAR);
+    cv::Mat remapped = test_image_left.clone();
+    cv::Mat remapped2 = test_image_right.clone();
+    denseForwardTransform(0, remapped);
+    denseForwardTransform(1, remapped2);
     remapped = remapped * 0.5 + remapped2 * 0.5;
     cv::imshow("Dense Shared", remapped);
 
-    cv::Mat mat_remap_back1;
-    cv::remap(remapped, mat_remap_back1, mat_forward_map[0], cv::noArray(), CV_INTER_LINEAR);
+    cv::Mat mat_remap_back1 = remapped.clone();
+    denseReverseTransform(0, mat_remap_back1);
     cv::imshow("Cam1 Dense Reverse", mat_remap_back1);
 
-    cv::Mat mat_remap_back2;
-    cv::remap(remapped, mat_remap_back2, mat_forward_map[1], cv::noArray(), CV_INTER_LINEAR);
+    cv::Mat mat_remap_back2= remapped.clone();
+    denseReverseTransform(1, mat_remap_back2);
     cv::imshow("Cam2 Dense Reverse", mat_remap_back2);
 
     cv::Mat shared_space = cv::Mat::zeros(size_shared, CV_8UC1);
     for(unsigned int y = 0; y < size_cam[0].height; y++) {
         for(unsigned int x = 0; x < size_cam[0].width; x++) {
-            cv::Vec2i mapPix = point_forward_map[0].at<cv::Vec2i>(y, x);
-            shared_space.at<uchar>(mapPix) += test_image_left.at<uchar>(y, x);
+            int xf = x; int yf = y;
+            if(sparseForwardTransform(0, yf, xf))
+                shared_space.at<uchar>(cv::Vec2i(yf, xf)) += test_image_left.at<uchar>(y, x);
         }
     }
+
     for(unsigned int y = 0; y < size_cam[1].height; y++) {
         for(unsigned int x = 0; x < size_cam[1].width; x++) {
-            cv::Vec2i mapPix = point_forward_map[1].at<cv::Vec2i>(y, x);
-            shared_space.at<uchar>(mapPix) += test_image_right.at<uchar>(y, x);
+            int xf = x; int yf = y;
+            if(sparseForwardTransform(1, yf, xf))
+                shared_space.at<uchar>(cv::Vec2i(yf, xf)) += test_image_right.at<uchar>(y, x);
         }
     }
     cv::imshow("Sparse Shared", shared_space);
@@ -243,13 +241,9 @@ bool vIPT::showMapProjections()
     cv::Mat test_left_remapped = cv::Mat::zeros(size_cam[0], CV_8UC1);
     for(unsigned int y = 0; y < size_shared.height; y++) {
         for(unsigned int x = 0; x < size_shared.width; x++) {
-            cv::Vec2i redistortedPix = point_reverse_map[0].at<cv::Vec2i>(y, x);
-            if(redistortedPix[0] < 0 || redistortedPix[0] >= size_cam[0].height ||
-                    redistortedPix[1] < 0 || redistortedPix[1] >= size_cam[0].width) {
-                //std::cout << redistortedPix << std::endl;
-                continue;
-            }
-            test_left_remapped.at<uchar>(redistortedPix) = shared_space.at<uchar>(y, x);
+            int xf = x; int yf = y;
+            if(sparseReverseTransform(0, yf, xf))
+                test_left_remapped.at<uchar>(cv::Vec2i(yf, xf)) = shared_space.at<uchar>(y, x);
         }
     }
     cv::imshow("Cam1 Sparse Reverse", test_left_remapped);
@@ -257,23 +251,19 @@ bool vIPT::showMapProjections()
     cv::Mat test_right_remapped = cv::Mat::zeros(size_cam[1], CV_8UC1);
     for(unsigned int y = 0; y < size_shared.height; y++) {
         for(unsigned int x = 0; x < size_shared.width; x++) {
-            cv::Vec2i redistortedPix = point_reverse_map[1].at<cv::Vec2i>(y, x);
-            if(redistortedPix[0] < 0 || redistortedPix[0] >= size_cam[1].height ||
-                    redistortedPix[1] < 0 || redistortedPix[1] >= size_cam[1].width) {
-                //std::cout << redistortedPix << std::endl;
-                continue;
-            }
-            test_right_remapped.at<uchar>(redistortedPix) = shared_space.at<uchar>(y, x);
+            int xf = x; int yf = y;
+            if(sparseReverseTransform(1, yf, xf))
+                test_right_remapped.at<uchar>(cv::Vec2i(yf, xf)) = shared_space.at<uchar>(y, x);
         }
     }
-    cv::imshow("Image unwarped cam2", test_right_remapped);
+    cv::imshow("Cam2 Sparse Reverse", test_right_remapped);
 
     cv::waitKey(0);
 
     return true;
 }
 
-bool vIPT::sparseForwardTransform(int cam, int &x, int &y)
+bool vIPT::sparseForwardTransform(int cam, int &y, int &x)
 {
     cv::Vec2i p(y, x);
     p = point_forward_map[cam].at<cv::Vec2i>(p);
@@ -282,7 +272,7 @@ bool vIPT::sparseForwardTransform(int cam, int &x, int &y)
     return true;
 }
 
-bool vIPT::sparseReverseTransform(int cam, int &x, int &y)
+bool vIPT::sparseReverseTransform(int cam, int &y, int &x)
 {
     cv::Vec2i p(y, x);
     p = point_reverse_map[cam].at<cv::Vec2i>(p);
@@ -297,7 +287,7 @@ bool vIPT::sparseReverseTransform(int cam, int &x, int &y)
 }
 
 
-bool vIPT::sparseProjectCam0ToCam1(int &x, int &y)
+bool vIPT::sparseProjectCam0ToCam1(int &y, int &x)
 {
     if(!sparseForwardTransform(0, x, y))
         return false;
@@ -306,7 +296,7 @@ bool vIPT::sparseProjectCam0ToCam1(int &x, int &y)
     return true;
 }
 
-bool vIPT::sparseProjectCam1ToCam0(int &x, int &y)
+bool vIPT::sparseProjectCam1ToCam0(int &y, int &x)
 {
     if(!sparseForwardTransform(1, x, y))
         return false;

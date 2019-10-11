@@ -53,10 +53,10 @@ public:
     bool configure(const std::string calibContext, const std::string calibFile);
     bool showMapProjections();
 
-    bool sparseForwardTransform(int cam, int &x, int &y);
-    bool sparseReverseTransform(int cam, int &x, int &y);
-    bool sparseProjectCam0ToCam1(int &x, int &y);
-    bool sparseProjectCam1ToCam0(int &x, int &y);
+    bool sparseForwardTransform(int cam, int &y, int &x);
+    bool sparseReverseTransform(int cam, int &y, int &x);
+    bool sparseProjectCam0ToCam1(int &y, int &x);
+    bool sparseProjectCam1ToCam0(int &y, int &x);
 
     bool denseForwardTransform(int cam, cv::Mat &m);
     bool denseReverseTransform(int cam, cv::Mat &m);
