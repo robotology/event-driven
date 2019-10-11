@@ -97,6 +97,12 @@ string channelInstance::getName()
     return channel_name;
 }
 
+bool channelInstance::addFrameDrawer()
+{
+
+    return frame_read_port.open(channel_name + "/frame:i");
+}
+
 bool channelInstance::addDrawer(string drawer_name, unsigned int width,
                                 unsigned int height, unsigned int window_size,
                                 bool flip)
@@ -168,6 +174,12 @@ bool channelInstance::updateQs()
         }
     }
 
+    if(!frame_read_port.isClosed()) {
+        auto image_p = frame_read_port.read(false);
+        if(image_p)
+            current_frame.copy(*image_p);
+    }
+
     return updated;
 }
 
@@ -211,6 +223,8 @@ void channelInstance::threadRelease()
     for(port_i = read_ports.begin(); port_i != read_ports.end(); port_i++) {
         port_i->second.close();
     }
+
+    frame_read_port.close();
 
     //close output port
     image_port.close();

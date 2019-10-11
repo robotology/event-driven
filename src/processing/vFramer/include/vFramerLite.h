@@ -47,6 +47,8 @@ private:
     string channel_name;
     unsigned int limit_time;
     yarp::os::Stamp ts;
+    BufferedPort< ImageOf<PixelBgr> > frame_read_port;
+    ImageOf<PixelBgr> current_frame;
     map<string, vReadPort<vQueue> > read_ports;
     map<string, vQueue> event_qs;
     vector<vDraw *> drawers;
@@ -64,6 +66,7 @@ private:
 public:
 
     channelInstance(string channel_name);
+    bool addFrameDrawer();
     bool addDrawer(string drawer_name, unsigned int width,
                    unsigned int height, unsigned int window_size, bool flip);
 
