@@ -30,7 +30,9 @@ set(folder_source
   src/codecs/codec_vEvent.cpp)
 
 if(OpenCV_FOUND)
-    list(APPEND folder_source src/vIPT.cpp)
+    list(APPEND folder_source src/vIPT.cpp
+                              src/vDraw_basic.cpp
+                              src/vDraw_ISO.cpp)
 endif()
 
 if(VLIB_DEPRECATED)
@@ -49,7 +51,8 @@ set(folder_header
 )
 
 if(OpenCV_FOUND)
-    list(APPEND folder_header include/event-driven/vIPT.h)
+    list(APPEND folder_header include/event-driven/vIPT.h
+                              include/event-driven/vDraw.h)
 endif()
 
 if(VLIB_DEPRECATED)

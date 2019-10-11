@@ -1,10 +1,9 @@
 project(vFramer)
 set(PROJECT_ALIAS vFramerLite)
 
-file(GLOB source src/vFramerLite.cpp src/vDraw.cpp src/*_drawers.cpp)
-file(GLOB header include/vFramerLite.h include/vDraw.h)
-
-add_executable(${PROJECT_ALIAS} ${source} ${header})
+add_executable(${PROJECT_ALIAS} src/vFramerLite.cpp
+                                src/other_drawers.cpp
+                                include/vFramerLite.h)
 
 target_include_directories(${PROJECT_ALIAS} PRIVATE ${PROJECT_SOURCE_DIR}/include
                                                    ${OpenCV_INCLUDE_DIRS})

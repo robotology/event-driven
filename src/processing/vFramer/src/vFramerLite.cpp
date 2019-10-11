@@ -39,6 +39,49 @@ int main(int argc, char * argv[])
     vFramerModule framerModule;
     return framerModule.runModule(rf);
 }
+/*////////////////////////////////////////////////////////////////////////////*/
+// drawer factory
+/*////////////////////////////////////////////////////////////////////////////*/
+vDraw * createDrawer(std::string tag)
+{
+
+    if(tag == addressDraw::drawtype)
+        return new addressDraw();
+    if(tag == grayDraw::drawtype)
+        return new grayDraw();
+    if(tag == isoDraw::drawtype)
+        return new isoDraw();
+    if(tag == interestDraw::drawtype)
+        return new interestDraw();
+    if(tag == circleDraw::drawtype)
+        return new circleDraw();
+    if(tag == flowDraw::drawtype)
+        return new flowDraw();
+    if(tag == clusterDraw::drawtype)
+        return new clusterDraw();
+    if(tag == blobDraw::drawtype)
+        return new blobDraw();
+    if(tag == skinDraw::drawtype)
+        return new skinDraw();
+    if(tag == skinsampleDraw::drawtype)
+        return new skinsampleDraw();
+    if(tag == accDraw::drawtype)
+        return new accDraw();
+    if(tag == isoInterestDraw::drawtype)
+        return new isoInterestDraw();
+    if(tag == isoCircDraw::drawtype)
+        return new isoCircDraw();
+    if(tag == overlayStereoDraw::drawtype)
+        return new overlayStereoDraw();
+    if(tag == saeDraw::drawtype)
+        return new saeDraw();
+    if(tag == imuDraw::drawtype)
+        return new imuDraw();
+    if(tag == cochleaDraw::drawtype)
+        return new cochleaDraw();
+    return 0;
+
+}
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //channelInstance
