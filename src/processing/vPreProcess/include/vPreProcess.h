@@ -26,7 +26,8 @@
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
+#include <event-driven/vIPT.h>
 #include <opencv2/opencv.hpp>
 
 class vPreProcess : public yarp::os::RFModule, public yarp::os::Thread
@@ -57,17 +58,15 @@ private:
 
     //filter class
     bool apply_filter;
-    ev::vNoiseFilter thefilter;
+    ev::vNoiseFilter filter_left;
+    ev::vNoiseFilter filter_right;
     int v_total;
     int v_dropped;
 
     //we store an openCV map to use as a look-up table for the undistortion
     //given the camera parameters provided
-    bool rectify;
     bool undistort;
-    cv::Mat leftMap;
-    cv::Mat rightMap;
-    bool truncate;
+    ev::vIPT calibrator;
 
     //output
     bool split;
@@ -83,11 +82,6 @@ public:
 
     vPreProcess();
     ~vPreProcess();
-
-    void initUndistortion(const yarp::os::Bottle &left,
-                          const yarp::os::Bottle &right,
-                          const yarp::os::Bottle &stereo,
-                          bool truncate);
 
 
     //inherited functions

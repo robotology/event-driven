@@ -171,6 +171,9 @@ void isoDraw::initialise()
 void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
 
+    auto light_violet = (white - (white - violet) * 0.25);
+    auto light_aqua = (white - (white - aqua) * 0.25);
+
     cv::Mat isoimage = baseimage.clone();
     isoimage.setTo(255);
 
@@ -204,9 +207,9 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         }
 
         if(!aep->polarity) {
-            isoimage.at<cv::Vec3b>(py, px) = cv::Vec3b(255, 160, 255);
+            isoimage.at<cv::Vec3b>(py, px) = light_violet;
         } else {
-            isoimage.at<cv::Vec3b>(py, px) = cv::Vec3b(160, 255, 160);
+            isoimage.at<cv::Vec3b>(py, px) = light_aqua;
         }
     }
 

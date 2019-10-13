@@ -22,7 +22,7 @@
  * @brief Implementation of the zynqGrabberModule (see header file).
  */
 
-#include <zynqGrabberModule.h>
+#include "zynqGrabberModule.h"
 #include <fstream>
 #include <ctime>
 #include <string>

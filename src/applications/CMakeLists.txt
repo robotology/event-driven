@@ -1,11 +1,9 @@
-cmake_minimum_required(VERSION 2.6)
-
 option(ENABLE_autosaccade "Build autosaccade module" OFF)
 option(ENABLE_gazedemo "Build ball gaze following demo" OFF)
 option(ENABLE_reptest "Build representation tester" OFF)
 option(ENABLE_vergence "Build vergence control demo" OFF)
 option(ENABLE_calibrate "Build camera calibration" OFF)
-option(ENABLE_view "Build basic viewer" OFF)
+option(ENABLE_view "Build basic viewer" ON)
 option(ENABLE_corner "Build corner detector" OFF)
 option(ENABLE_dualCamTransform "Build event to frame transform" OFF)
 

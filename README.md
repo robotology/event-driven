@@ -51,19 +51,7 @@ Datasets for use in running some of the tutorials off-line can be found on the s
 
 ## How to Install:
 
-Comprehensive instructions available if you are a first-time user of YARP [here](http://robotology.github.io/event-driven/doxygen/doc/html/pages.html).
-
-Quick instructions:
-
-1. Install [YARP](https://github.com/robotology/yarp) and [icub-contrib-common](https://github.com/robotology/icub-contrib-common) following these [instructions](http://wiki.icub.org/wiki/Linux:Installation_from_sources).
-2. git clone https://github.com/robotology/event-driven.git
-3. cd event-driven
-4. mkdir build && cd build
-5. ccmake ..
-6. ensure the install path is as configured in icub-contrib-common
-7. turn on desired modules and applications (e.g. processing)
-8. configure (c) and generate (g)
-9. make install
+[Comprehensive instructions available for installation](http://robotology.github.io/event-driven/doxygen/doc/html/pages.html).
 
 ## References
 

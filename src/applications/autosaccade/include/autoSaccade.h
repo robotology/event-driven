@@ -26,8 +26,8 @@
 #define __V_AUTOSACCADE__
 
 #include <yarp/os/all.h>
-#include <iCub/eventdriven/all.h>
-#include <iCub/eventdriven/vBottle.h>
+#include <event-driven/all.h>
+#include <event-driven/vBottle.h>
 #include <yarp/dev/all.h>
 #include <yarp/math/Math.h>
 

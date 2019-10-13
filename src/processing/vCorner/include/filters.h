@@ -19,7 +19,7 @@
 #ifndef __FILTERS__
 #define __FILTERS__
 
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
 #include <yarp/sig/all.h>
 #include <yarp/math/Math.h>
 #include <math.h>
