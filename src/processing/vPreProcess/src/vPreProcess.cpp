@@ -98,10 +98,15 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
             rf.check("flipy", Value(true)).asBool();
     precheck = rf.check("precheck") &&
             rf.check("precheck", Value(true)).asBool();
-    split = rf.check("split") &&
-            rf.check("split", Value(true)).asBool();
+    split_stereo = rf.check("split_stereo") &&
+                  rf.check("split_stereo", Value(true)).asBool();
+    combined_stereo = rf.check("combined_stereo") &&
+                  rf.check("combined_stereo", Value(true)).asBool();
     use_local_stamp = rf.check("local_stamp") &&
             rf.check("local_stamp", Value(true)).asBool();
+
+    if(!split_stereo) combined_stereo=true;
+
     if(precheck)
         yInfo() << "Performing precheck for event corruption";
     if(flipx)
@@ -114,8 +119,10 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
         yInfo() << "Applying temporal \"refractory\" filter";
     if(undistort)
         yInfo() << "Applying camera undistortion";
-    if(split)
+    if(split_stereo)
         yInfo() << "Splitting into left/right streams";
+    if(combined_stereo)
+        yInfo() << "Producing combined stereo output";
 
     apply_filter = filter_spatial || filter_temporal;
     if(apply_filter)
@@ -159,7 +166,7 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
 
 bool vPreProcess::threadInit()
 {
-    if(split) {
+    if(split_stereo) {
         if(!outPortCamLeft.open(getName() + "/left:o"))
             return false;
         if(!outPortCamRight.open(getName() + "/right:o"))
@@ -168,12 +175,13 @@ bool vPreProcess::threadInit()
             return false;
         if(!out_port_aps_right.open(getName() + "/aps_right:o"))
             return false;
-    } else {
-        if(!out_port_aps_left.open(getName() + "/APS:o"))
-            return false;
     }
-    if(!outPortCamStereo.open(getName() + "/AE:o"))
-        return false;
+    if(combined_stereo) {
+      if(!outPortCamStereo.open(getName() + "/AE:o"))
+          return false;
+      if(!out_port_aps_stereo.open(getName() + "/APS:o"))
+          return false;
+    }
 
     if(!out_port_imu_samples.open(getName() + "/imu_samples:o"))
         return false;
@@ -268,7 +276,7 @@ void vPreProcess::run()
         std::deque<AE> qleft, qright, qstereo;
         std::deque<int32_t> qskin;
         std::deque<int32_t> qskinsamples;
-        std::deque<AE> qleft_aps, qright_aps;
+        std::deque<AE> qleft_aps, qright_aps, qstereo_aps;
         std::deque<int32_t> qimusamples;
         std::deque<int32_t> qaudio;
 
@@ -349,28 +357,32 @@ void vPreProcess::run()
                     v.x = x;
                     v.y = y;
                 }
-                if(v.type)
+                if(split_stereo)
                 {
-                    if(split && v.channel){
-                        qright_aps.push_back(v);
-                    }
-                    else{
-                        qleft_aps.push_back(v);
-                    }
+                  if(v.channel)
+                  {
+                    if(v.type)
+                      qright_aps.push_back(v);
+                    else
+                      qright.push_back(v);
+                  }
+                  else
+                  {
+                    if(v.type)
+                      qleft_aps.push_back(v);
+                    else
+                      qleft.push_back(v);
+                  }
                 }
-                else{
-                    if(split)
-                    {
-                        if(v.channel){
-                            qright.push_back(v);
-                        }
-                        else{
-                            qleft.push_back(v);
-                        }
-                    }
+                if(combined_stereo)
+                {
+                  if(v.type)
+                    qstereo_aps.push_back(v);
+                  else
                     qstereo.push_back(v);
                 }
-            }
+              }
+            
         }
 
         if(qskinsamples.size() > 2) { //if we have skin samples
@@ -407,14 +419,11 @@ void vPreProcess::run()
             local_stamp.update();
             zynq_stamp = local_stamp;
         }
-        if(split)
-        {
-            if(qleft.size()) {
-                outPortCamLeft.write(qleft, zynq_stamp);
-            }
-            if(qright.size()) {
-                outPortCamRight.write(qright, zynq_stamp);
-            }
+        if(qleft.size()) {
+            outPortCamLeft.write(qleft, zynq_stamp);
+        }
+        if(qright.size()) {
+            outPortCamRight.write(qright, zynq_stamp);
         }
         if(qstereo.size()) {
             outPortCamStereo.write(qstereo, zynq_stamp);
@@ -430,6 +439,9 @@ void vPreProcess::run()
         }
         if(qright_aps.size()) {
             out_port_aps_right.write(qright_aps, zynq_stamp);
+        }
+        if(qstereo_aps.size()) {
+            out_port_aps_stereo.write(qstereo_aps, zynq_stamp);
         }
         if(qimusamples.size()) {
             out_port_imu_samples.write(qimusamples, zynq_stamp);

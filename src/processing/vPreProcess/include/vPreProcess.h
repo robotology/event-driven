@@ -44,6 +44,7 @@ private:
     ev::vWritePort outPortSkinSamples;
     ev::vWritePort out_port_aps_left;
     ev::vWritePort out_port_aps_right;
+    ev::vWritePort out_port_aps_stereo;
     ev::vWritePort out_port_imu_samples;
     ev::vWritePort out_port_audio;
 
@@ -69,7 +70,8 @@ private:
     ev::vIPT calibrator;
 
     //output
-    bool split;
+    bool split_stereo;
+    bool combined_stereo;
     bool use_local_stamp;
 
     //timing stats
