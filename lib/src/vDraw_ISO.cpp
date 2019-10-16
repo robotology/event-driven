@@ -177,8 +177,9 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     cv::Mat isoimage = baseimage.clone();
     isoimage.setTo(255);
 
-    if(eSet.empty()) return;
-    if(vTime < 0) vTime = eSet.back()->stamp;
+    //if() return;
+    if(!eSet.empty() && vTime < 0)
+        vTime = eSet.back()->stamp;
 
     int skip = 1 + eSet.size() / 100000;
 
@@ -231,8 +232,6 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             }
         }
     }
-
-
 
     image = isoimage - baseimage;
 

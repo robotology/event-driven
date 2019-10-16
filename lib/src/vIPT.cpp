@@ -30,7 +30,6 @@ namespace ev {
 
 vIPT::vIPT()
 {
-
 }
 
 bool vIPT::importIntrinsics(int cam, Bottle &parameters)
@@ -144,6 +143,9 @@ bool vIPT::configure(const string calibContext, const string calibFile)
     bool valid_cam2 = importIntrinsics(1, calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT"));
     bool valid_stereo = importStereo(calibfinder.findGroup("STEREO_DISPARITY"));
 
+    if(!valid_cam1 && !valid_cam2)
+        return false;
+
     size_shared = cv::Size2i(cv::max(size_cam[0].width, size_cam[1].width),
             cv::max(size_cam[1].height, size_cam[1].height));
 
@@ -180,6 +182,9 @@ bool vIPT::configure(const string calibContext, const string calibFile)
 
 bool vIPT::showMapProjections()
 {
+
+    yInfo() << "Showing example projections";
+
     cv::Mat test_image_left(size_cam[0], CV_8UC1);
     for(unsigned int y = 0; y < size_cam[0].height; y++) {
         for(unsigned int x = 0; x < size_cam[0].width; x++) {
@@ -258,7 +263,7 @@ bool vIPT::showMapProjections()
     }
     cv::imshow("Cam2 Sparse Reverse", test_right_remapped);
 
-    cv::waitKey(2);
+    cv::waitKey(5000);
     cv::destroyAllWindows();
 
     return true;
