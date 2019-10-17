@@ -258,7 +258,10 @@ void EventBottleManager::onRead(ev::vBottle &bot)
     }
 
 
-    outPort.write();
+    if(evtCluster.size() == 0)
+        outPort.unprepare();
+    else
+        outPort.write();
 }
 
 //empty line to make gcc happy

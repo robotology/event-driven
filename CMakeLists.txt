@@ -1,40 +1,96 @@
-# Copyright: (C) 2015 iCub Facility - Istituto Italiano di Tecnologia
-# Authors: Arren Glover
-# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+# Copyright: (C) 2019 EDPR - Istituto Italiano di Tecnologia
+# Authors: Arren Glover, Daniele Domenichelli
+# CopyPolicy: Released under the terms of the GNU GPL v3.0.
 
-cmake_minimum_required(VERSION 2.6)
-set(CONTEXT_DIR eventdriven)
-set(PROJECTNAME icub-event-driven)
-project(${PROJECTNAME})
+cmake_minimum_required(VERSION 3.5)
+project(event-driven
+        LANGUAGES CXX C
+        VERSION 1.3)
 
+include(GNUInstallDirs)
+include(FeatureSummary)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fno-strict-aliasing -std=c++11 -fPIC")
-set(EVENTDRIVENLIBS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libraries/include)
-set(EVENTDRIVEN_LIBRARIES eventdriven)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
+
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+if(MSVC)
+    set(CMAKE_DEBUG_POSTFIX "d")
+endif()
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+find_package(YCM QUIET)
+set_package_properties(YCM PROPERTIES TYPE RECOMMENDED)
+
+if(NOT YCM_FOUND)
+  list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+endif()
+
+option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
+
+# option(BUILD_TESTING "Create tests using CMake" OFF)
+# if(BUILD_TESTING)
+#     enable_testing()
+# endif()
+
+include(AddInstallRPATHSupport)
+add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
+                          LIB_DIRS "${CMAKE_INSTALL_FULL_LIBDIR}"
+                          INSTALL_NAME_DIR "${CMAKE_INSTALL_FULL_LIBDIR}"
+                          USE_LINK_PATH)
+
+if(NOT CMAKE_CONFIGURATION_TYPES)
+    if(NOT CMAKE_BUILD_TYPE)
+        message(STATUS "Setting build type to 'Release' as none was specified.")
+        set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE "Release")
+    endif()
+endif()
+
+set(CONTEXT_DIR event-driven)
+set(EVENTDRIVEN_LIBRARY event-driven)
+
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fno-strict-aliasing -std=c++11 -fPIC")
+#set(EVENTDRIVENLIBS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libraries/include)
 
 option(ADD_DOCS_TO_IDE "Add apps/documentation to IDE" OFF)
 
-#YARP
-find_package(YARP REQUIRED)
 
-#ICUBCONTRIB
-find_package(ICUBcontrib)
-if(ICUBcontrib_FOUND)
-    list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
-    include(ICUBcontribOptions)
-    include(ICUBcontribHelpers)
-    icubcontrib_set_default_prefix()
-else(ICUBcontrib_FOUND)
-    message("Warning: ICUBcontrib not found. Make Install may not install to the correct location")
-endif(ICUBcontrib_FOUND)
+find_package(YARP COMPONENTS OS sig math dev cv REQUIRED)
+yarp_configure_external_installation(event-driven)
 
-add_subdirectory(libraries)
+find_package(OpenCV)
+set_package_properties(OpenCV PROPERTIES TYPE OPTIONAL)
+
+feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES)
+
+add_subdirectory(lib)
 add_subdirectory(src)
-add_subdirectory(bindings)
+# add_subdirectory(bindings)
+# if(BUILD_TESTING)
+#     add_subdirectory(test)
+# endif()
 
 if(ADD_DOCS_TO_IDE)
-    file(GLOB tutorialfiles documentation/*.md)
+    file(GLOB tutorialfiles documentation/*.md
+                            documentation/application_instructions/*.md)
     add_custom_target(project_documentation SOURCES README.md ${tutorialfiles})
 endif(ADD_DOCS_TO_IDE)
 
-icubcontrib_add_uninstall_target()     #macro added 13/11/2013
+
+include(InstallBasicPackageFiles)
+install_basic_package_files(${PROJECT_NAME}
+                            EXPORT eventdriven
+                            VERSION ${${PROJECT_NAME}_VERSION}
+                            COMPATIBILITY SameMajorVersion
+                            LOWERCASE_FILENAMES
+                            NAMESPACE ev::
+                            DEPENDENCIES "YARP COMPONENTS OS sig"
+                            INCLUDE_CONTENT "yarp_configure_external_installation(event-driven NO_PATH_D)")
+
+include(AddUninstallTarget)

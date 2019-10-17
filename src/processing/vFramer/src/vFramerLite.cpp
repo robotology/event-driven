@@ -18,6 +18,7 @@
 
 #include "vFramerLite.h"
 #include <sstream>
+#include <yarp/cv/Cv.h>
 
 using namespace ev;
 
@@ -31,7 +32,7 @@ int main(int argc, char * argv[])
 
     yarp::os::ResourceFinder rf;
     rf.setVerbose( true );
-    rf.setDefaultContext( "eventdriven" );
+    rf.setDefaultContext( "event-driven" );
     rf.setDefaultConfigFile( "vFramer.ini" );
     rf.configure( argc, argv );
 
@@ -137,7 +138,7 @@ void channelInstance::run()
 
     //get the image to be written and make a cv::Mat pointing to the same
     ImageOf<PixelBgr> &o = image_port.prepare();
-    cv::Mat canvas = cv::cvarrToMat((IplImage *)o.getIplImage());
+    cv::Mat canvas = yarp::cv::toCvMat(o);
 
     //the first drawer will reset the base image, then drawing proceeds
     drawers.front()->resetImage(canvas);
@@ -147,12 +148,13 @@ void channelInstance::run()
         (*drawer_i)->draw(canvas, event_qs[(*drawer_i)->getEventType()], -1);
     }
 
-
     //tell the actual YARP image what size the final image became
     o.resize(canvas.cols, canvas.rows);
 
     //write
     //if(cEnv.isValid()) outports[i]->setEnvelope(cEnv);
+    ts.update();
+    image_port.setEnvelope(ts);
     image_port.write();
 
     //updateQs();
