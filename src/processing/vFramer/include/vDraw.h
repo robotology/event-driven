@@ -187,6 +187,27 @@ public:
 
 };
 
+class rasterDraw : public vDraw {               ///////////////////////////////////////////////////
+
+protected:
+
+    unsigned int numNeurs;
+
+public:
+
+    vDraw() : Xlimit(304), Ylimit(240), flip(false), numNeurs(240)
+    {
+        display_window = 0.1*ev::vtsHelper::vtsscaler;
+        max_window = 0.5*ev::vtsHelper::vtsscaler;
+    }
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
 class cochleaDraw : public vDraw {
 
 public:

@@ -62,6 +62,8 @@ vDraw * createDrawer(std::string tag)
         return new imuDraw();
     if(tag == cochleaDraw::drawtype)
         return new cochleaDraw();
+    if(tag == rasterDraw::drawtype) //////////////////////////
+        return new rasterDraw();
     return 0;
 
 }
