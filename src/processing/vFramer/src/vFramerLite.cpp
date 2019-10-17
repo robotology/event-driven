@@ -32,7 +32,7 @@ int main(int argc, char * argv[])
 
     yarp::os::ResourceFinder rf;
     rf.setVerbose( true );
-    rf.setDefaultContext( "eventdriven" );
+    rf.setDefaultContext( "event-driven" );
     rf.setDefaultConfigFile( "vFramer.ini" );
     rf.configure( argc, argv );
 
