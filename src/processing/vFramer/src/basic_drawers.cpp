@@ -217,7 +217,7 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     cv::Scalar pos = CV_RGB(160, 0, 160);
     cv::Scalar neg = CV_RGB(0, 60, 1);
 
-    int radius = 4;
+    int radius = 2;
 
     if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
@@ -279,7 +279,7 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     cv::Scalar pos = CV_RGB(160, 0, 160);
     cv::Scalar neg = CV_RGB(0, 60, 1);
 
-    int radius = 4;
+    int radius = 2;
 
     if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
