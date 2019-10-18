@@ -156,8 +156,11 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
 
     if(undistort) {
 
-        calibrator.configure("camera", "atis_calib.ini");
-        calibrator.showMapProjections();
+        if(calibrator.configure("camera", "stefi_calib.ini"))
+            calibrator.showMapProjections(3.0);
+        else
+            yWarning() << "Could not correctly configure the cameras";
+        return false;
     }
 
     return Thread::start();

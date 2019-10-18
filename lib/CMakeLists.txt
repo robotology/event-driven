@@ -30,7 +30,9 @@ set(folder_source
   src/codecs/codec_vEvent.cpp)
 
 if(OpenCV_FOUND)
-    list(APPEND folder_source src/vIPT.cpp)
+    list(APPEND folder_source src/vIPT.cpp
+                              src/vDraw_basic.cpp
+                              src/vDraw_ISO.cpp)
 endif()
 
 if(VLIB_DEPRECATED)
@@ -49,7 +51,8 @@ set(folder_header
 )
 
 if(OpenCV_FOUND)
-    list(APPEND folder_header include/event-driven/vIPT.h)
+    list(APPEND folder_header include/event-driven/vIPT.h
+                              include/event-driven/vDraw.h)
 endif()
 
 if(VLIB_DEPRECATED)
@@ -75,6 +78,8 @@ target_include_directories(${EVENTDRIVEN_LIBRARY} PUBLIC "$<BUILD_INTERFACE:${CM
 target_compile_definitions(${EVENTDRIVEN_LIBRARY} PRIVATE "${VLIB_CODEC_TYPE}"
                                                             CLOCK_PERIOD=${VLIB_CLOCK_PERIOD_NS}
                                                             TIMER_BITS=${VLIB_TIMER_BITS})
+
+target_compile_options(${EVENTDRIVEN_LIBRARY} PRIVATE -Wall)
 
 if(OpenCV_FOUND)
     target_link_libraries(${EVENTDRIVEN_LIBRARY} PUBLIC YARP::YARP_OS
