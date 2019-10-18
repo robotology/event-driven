@@ -26,7 +26,7 @@
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
 #include <opencv2/opencv.hpp>
 #include <map>
 
@@ -47,8 +47,8 @@ private:
 
     string channel_name;
     unsigned int limit_time;
-
-    map<string, vGenReadPort> read_ports;
+    yarp::os::Stamp ts;
+    map<string, vReadPort<vQueue> > read_ports;
     map<string, vQueue> event_qs;
     vector<vDraw *> drawers;
     BufferedPort< ImageOf<PixelBgr> > image_port;

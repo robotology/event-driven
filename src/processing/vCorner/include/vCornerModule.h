@@ -25,7 +25,7 @@
 #define __VCORNERRTMODULE__
 
 #include <yarp/os/all.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
 #include <fstream>
 #include <vHarrisCallback.h>
 #include <vHarrisThread.h>

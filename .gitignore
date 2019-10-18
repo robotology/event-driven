@@ -1,4 +1,5 @@
 #this file is created by QT creator IDE
+*.asv
 CMakeLists.txt.user
 CMakeLists.txt.user.*
 *.autosave
@@ -12,6 +13,7 @@ CMakeLists.txt.user.*
 
 #ignore the build directory
 build/
+build-debug/
 build-x86_64/
 build-ubuntu/
 

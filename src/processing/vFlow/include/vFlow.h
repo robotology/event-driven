@@ -25,7 +25,8 @@
 #include <yarp/sig/all.h>
 #include <yarp/math/Math.h>
 #include <yarp/math/SVD.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
+#include <event-driven/deprecated.h>
 
 class vFlowManager : public yarp::os::BufferedPort<ev::vBottle>
 {

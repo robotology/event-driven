@@ -21,7 +21,6 @@
 
 using namespace yarp::os;
 using namespace yarp::sig;
-using namespace yarp::math;
 using namespace std;
 
 int main(int argc, char * argv[])
@@ -30,7 +29,7 @@ int main(int argc, char * argv[])
     yarp::os::Network yarp;
     if(!yarp.checkNetwork()) {
         std::cout << "Could not connect to YARP" << std::endl;
-        return false;
+        return -1;
     }
 
     /* create the module */
@@ -54,7 +53,7 @@ bool AutoSaccadeModule::configure(ResourceFinder &rf){
     readParams( rf );
     bool configDone = true;
     configDone &= openJointControlDriver();
-//    configDone &= openGazeDriver();
+    configDone &= openGazeDriver();
     configDone &= openPorts();
 
     //initialize timestamp
@@ -146,30 +145,30 @@ bool AutoSaccadeModule::openJointControlDriver() {//open driver for joint contro
         cerr << "Did not connect to robot/simulator" << endl;
         return false;
     } else {
-//        mdriver.view( ipos );
-        mdriver.view( ivel );
+        mdriver.view( ipos );
+//        mdriver.view( ivel );
         mdriver.view( imod );
         mdriver.view( enc );
     }
-    if (!imod|| !ivel){ //!ipos ||
-                cerr << "Could not open joint control driver" << endl;
+    if (!ipos || !imod){
+        cerr << "Could not open joint control driver" << endl;
         return false;
     }
 
     bool check = true;
     for ( int i = 0; i <= 5; ++i ) {
-        check &= configDriver( i, 30.0, 2000.0 );
+        check &= configDriver( i, 30.0, 200.0 );
     }
     return check;
 }
 
 bool AutoSaccadeModule::configDriver( int joint, double refSp, double refAcc ) {
     if ( ipos && imod && ivel) {
-//        ipos->setRefSpeed( joint, refSp );
-//        ipos->setRefAcceleration( joint, refAcc );
-//        imod->setControlMode( joint, VOCAB_CM_POSITION );
-        ivel->setRefAcceleration(joint, refAcc);
-        imod->setControlMode(joint, VOCAB_CM_VELOCITY);
+        ipos->setRefSpeed( joint, refSp );
+        ipos->setRefAcceleration( joint, refAcc );
+        imod->setControlMode( joint, VOCAB_CM_POSITION );
+//        ivel->setRefAcceleration(joint, refAcc);
+//        imod->setControlMode(joint, VOCAB_CM_VELOCITY);
     } else {
         cerr << "Could not open driver" << endl;
         return false;
@@ -198,48 +197,49 @@ bool AutoSaccadeModule::close() {
 }
 
 //void AutoSaccadeModule::performSaccade() {
-//    for ( double theta = 0; theta < 2*M_PI; theta+= M_PI/36 ) {
-//        ipos->positionMove( 3, cos( theta ) );
-//        ipos->positionMove( 4, radius*sin( theta ) );
-//        Time::delay(delay);
+//    double v;
+//    enc->getEncoder(4, &v);
+//    int vers_limit = 15;
+//    int speed = 30;
+//
+//    for (int i = 0; i < 3; ++i) {
+//        while (v < vers_limit) {
+//            ivel->velocityMove(4, speed);
+//            enc->getEncoder(4, &v);
+//        }
+//        while (v > -vers_limit) {
+//            ivel->velocityMove(4, -speed);
+//            enc->getEncoder(4, &v);
+//        }
 //    }
-//    bool motionDone;
-//    int joints[2] = {3,4};
-//    while (!motionDone){
-//        ipos ->checkMotionDone(2,joints, &motionDone);
+//
+//    speed = 100;
+//    for (int i = 0; i < 3; ++i) {
+//        while (v < vers_limit) {
+//            ivel->velocityMove(4, speed);
+//            enc->getEncoder(4, &v);
+//        }
+//        while (v > -vers_limit) {
+//            ivel->velocityMove(4, -speed);
+//            enc->getEncoder(4, &v);
+//        }
 //    }
-////    Time::delay(0.2);
+//
 //
 //}
+
 void AutoSaccadeModule::performSaccade() {
-    double v;
-    enc->getEncoder(4, &v);
-    int vers_limit = 15;
-    int speed = 30;
-
-    for (int i = 0; i < 3; ++i) {
-        while (v < vers_limit) {
-            ivel->velocityMove(4, speed);
-            enc->getEncoder(4, &v);
-        }
-        while (v > -vers_limit) {
-            ivel->velocityMove(4, -speed);
-            enc->getEncoder(4, &v);
-        }
+    for ( double theta = 0; theta < 2*M_PI; theta+= M_PI/36 ) {
+        ipos->positionMove( 3, cos( theta ) );
+        ipos->positionMove( 4, sin( theta ) );
+        Time::delay(0.005);
     }
-
-    speed = 100;
-    for (int i = 0; i < 3; ++i) {
-        while (v < vers_limit) {
-            ivel->velocityMove(4, speed);
-            enc->getEncoder(4, &v);
-        }
-        while (v > -vers_limit) {
-            ivel->velocityMove(4, -speed);
-            enc->getEncoder(4, &v);
-        }
+    bool motionDone = false;
+    int joints[2] = {3,4};
+    while (!motionDone){
+        ipos ->checkMotionDone(2,joints, &motionDone);
     }
-
+    Time::delay(0.2);
 
 }
 

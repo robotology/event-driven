@@ -50,7 +50,7 @@ private:
     yarp::os::Bottle bias;
     fpgaStatus_t fpgaStat;
     bool iBias;
-
+    bool aps;
 
     //INTERNAL FUNCTIONS
     int i2cRead(unsigned char reg, unsigned char *data, unsigned int size);
@@ -75,11 +75,13 @@ public:
     bool setBias(yarp::os::Bottle bias);
     unsigned int getBias(std::string biasName);
     void useCurrentBias(bool flag = true);
+    void turnOnAPS(bool flag = true);
+    bool activateAPSShutter();
 
     //CONNECTION
     bool connect(void);
     bool configure(bool verbose = false);
-    void disconnect(bool andturnoff = true);
+    void disconnect(bool andturnoff = false);
     bool activate(bool active = true);
     bool suspend(void); //wraps activate(false);
 

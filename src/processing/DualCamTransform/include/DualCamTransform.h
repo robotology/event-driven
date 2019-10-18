@@ -23,8 +23,9 @@
 #include <fstream>
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
-# include <yarp/math/Math.h>
-#include <iCub/eventdriven/all.h>
+#include <yarp/math/Math.h>
+#include <event-driven/all.h>
+#include <event-driven/vBottle.h>
 #include <opencv2/opencv.hpp>
 
 class EventPort : public yarp::os::BufferedPort<ev::vBottle> {

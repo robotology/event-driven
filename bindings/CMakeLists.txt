@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.5)
 
 option(BUILD_BINDINGS "Build python bindings" OFF)
 
@@ -9,8 +9,7 @@ if(BUILD_BINDINGS)
 
     file(GLOB source *.i)
 
-    include_directories(${YARP_INCLUDE_DIRS}
-                        ${EVENTDRIVENLIBS_INCLUDE_DIRS}
+    include_directories(${EVENTDRIVENLIBS_INCLUDE_DIRS}
                         ${PYTHON_INCLUDE_PATH}
                         ${CMAKE_CURRENT_SOURCE_DIR})
     set(CMAKE_SWIG_FLAGS "")
@@ -19,7 +18,7 @@ if(BUILD_BINDINGS)
     set_source_files_properties(event_driven.i PROPERTIES SWIG_FLAGS "-includeall")
 
     swig_add_library(event_driven LANGUAGE python SOURCES event_driven.i)
-    swig_link_libraries(event_driven ${PYTHON_LIBRARIES} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARIES})
+    swig_link_libraries(event_driven ${PYTHON_LIBRARIES} ${YARP_LIBRARIES} ${EVENTDRIVEN_LIBRARY})
 
     execute_process(COMMAND python3 -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
     #INSTALL ( FILES ${CMAKE_CURRENT_BINARY_DIR}/lib/_event_driven.so DESTINATION ${PYTHON_SITE_PACKAGES} )

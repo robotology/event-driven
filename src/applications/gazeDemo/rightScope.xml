@@ -4,7 +4,7 @@
     <plot
         gridx="0" gridy="0" hspan="1" vspan="1" size="51" bgcolor="#EEFFEE"
         title="[Right Camera] CPU Usage (%)"
-        minval="0.0" maxval="1.0" >
+        minval="0.0" maxval="100.0" >
         <graph
             remote="/vpfR/scope:o"  index="8"
             size="2"  color="Black" type="lines" />

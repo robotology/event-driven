@@ -18,6 +18,7 @@
 
 #include "vFramerLite.h"
 #include <sstream>
+#include <yarp/cv/Cv.h>
 
 using namespace ev;
 
@@ -31,7 +32,7 @@ int main(int argc, char * argv[])
 
     yarp::os::ResourceFinder rf;
     rf.setVerbose( true );
-    rf.setDefaultContext( "eventdriven" );
+    rf.setDefaultContext( "event-driven" );
     rf.setDefaultConfigFile( "vFramer.ini" );
     rf.configure( argc, argv );
 
@@ -93,7 +94,7 @@ bool channelInstance::updateQs()
     Stamp yarp_stamp;
     //fill up the q's as much as possible
     map<string, int> qs_available;
-    std::map<string, vGenReadPort>::iterator port_i;
+    std::map<string, vReadPort<vQueue> >::iterator port_i;
     for(port_i = read_ports.begin(); port_i != read_ports.end(); port_i++) {
         qs_available[port_i->first] = port_i->second.queryunprocessed();
         if(qs_available[port_i->first]) updated = true;
@@ -137,7 +138,7 @@ void channelInstance::run()
 
     //get the image to be written and make a cv::Mat pointing to the same
     ImageOf<PixelBgr> &o = image_port.prepare();
-    cv::Mat canvas = cv::cvarrToMat((IplImage *)o.getIplImage());
+    cv::Mat canvas = yarp::cv::toCvMat(o);
 
     //the first drawer will reset the base image, then drawing proceeds
     drawers.front()->resetImage(canvas);
@@ -147,12 +148,13 @@ void channelInstance::run()
         (*drawer_i)->draw(canvas, event_qs[(*drawer_i)->getEventType()], -1);
     }
 
-
     //tell the actual YARP image what size the final image became
     o.resize(canvas.cols, canvas.rows);
 
     //write
     //if(cEnv.isValid()) outports[i]->setEnvelope(cEnv);
+    ts.update();
+    image_port.setEnvelope(ts);
     image_port.write();
 
     //updateQs();
@@ -162,7 +164,7 @@ void channelInstance::run()
 void channelInstance::threadRelease()
 {
     //close input ports
-    std::map<string, vGenReadPort>::iterator port_i;
+    std::map<string, vReadPort<vQueue> >::iterator port_i;
     for(port_i = read_ports.begin(); port_i != read_ports.end(); port_i++) {
         port_i->second.close();
     }
@@ -230,8 +232,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     yInfo() << displayList->toString();
 
     if(displayList->size() % 2) {
-        std::cerr << "Error: display incorrectly configured in provided "
-                     "settings file." << std::endl;
+        yError() << "Error: display list configured incorrectly" << displayList->size();
         return false;
     }
 

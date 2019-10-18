@@ -22,7 +22,7 @@
 #ifndef __vDraw__
 #define __vDraw__
 
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
 #include <string>
 #include <opencv2/opencv.hpp>
 
@@ -51,6 +51,13 @@ protected:
     unsigned int display_window;
     unsigned int max_window;
     bool flip;
+
+    cv::Vec3b aqua {151, 174, 6};
+    cv::Vec3b violet  {180, 10, 155};
+    cv::Vec3b orange {9, 111, 255};
+    cv::Vec3b lime   {9, 250, 222};
+    cv::Vec3b white{255, 255, 255};
+    cv::Vec3b black  {0,   0,   0};
 
 public:
 
@@ -114,7 +121,7 @@ public:
 
 };
 
-class addressGrayscaleDraw : public vDraw {
+class accDraw : public vDraw {
 
 public:
 
@@ -128,12 +135,23 @@ public:
 class addressDraw : public vDraw {
 
 public:
-    
+
     static const std::string drawtype;
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
     virtual std::string getDrawType();
     virtual std::string getEventType();
-    
+
+};
+
+class grayDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
 };
 
 class boxDraw : public vDraw {
@@ -158,7 +176,7 @@ public:
 
 };
 
-class flowDraw : public vDraw {
+class skinsampleDraw : public vDraw {
 
 public:
 
@@ -169,7 +187,29 @@ public:
 
 };
 
-class lifeDraw : public vDraw {
+class imuDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class cochleaDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class flowDraw : public vDraw {
 
 public:
 
@@ -301,7 +341,27 @@ public:
 
 };
 
+class overlayStereoDraw : public vDraw {
 
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class saeDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
 
 #endif
 

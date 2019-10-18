@@ -26,7 +26,8 @@
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
+#include <event-driven/deprecated.h>
 
 class vRepTest : public yarp::os::BufferedPort<ev::vBottle>
 {

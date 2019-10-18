@@ -19,7 +19,6 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 #include "vDraw.h"
 //#define _USE_MATH_DEFINES
 //#include <math.h>
@@ -31,8 +30,8 @@ vDraw * createDrawer(std::string tag)
 
     if(tag == addressDraw::drawtype)
         return new addressDraw();
-    if(tag == addressGrayscaleDraw::drawtype)
-        return new addressGrayscaleDraw();
+    if(tag == grayDraw::drawtype)
+        return new grayDraw();
     if(tag == isoDraw::drawtype)
         return new isoDraw();
     if(tag == interestDraw::drawtype)
@@ -41,18 +40,28 @@ vDraw * createDrawer(std::string tag)
         return new circleDraw();
     if(tag == flowDraw::drawtype)
         return new flowDraw();
-    if(tag == lifeDraw::drawtype)
-        return new lifeDraw();
     if(tag == clusterDraw::drawtype)
         return new clusterDraw();
     if(tag == blobDraw::drawtype)
         return new blobDraw();
     if(tag == skinDraw::drawtype)
         return new skinDraw();
+    if(tag == skinsampleDraw::drawtype)
+        return new skinsampleDraw();
+    if(tag == accDraw::drawtype)
+        return new accDraw();
     if(tag == isoInterestDraw::drawtype)
         return new isoInterestDraw();
     if(tag == isoCircDraw::drawtype)
         return new isoCircDraw();
+    if(tag == overlayStereoDraw::drawtype)
+        return new overlayStereoDraw();
+    if(tag == saeDraw::drawtype)
+        return new saeDraw();
+    if(tag == imuDraw::drawtype)
+        return new imuDraw();
+    if(tag == cochleaDraw::drawtype)
+        return new cochleaDraw();
     if (tag == boxDraw::drawtype)
         return new boxDraw();
     return 0;

@@ -7,8 +7,6 @@ display(['Reading from file ' infilename]);
 
 TSBITS = int32(2^31-1); %all but most significant bit
 
-MAXSTAMP = 2^24-1;
-
 infile = fopen(infilename, 'r');
 if(infile < 0)
     display('Could not open file');

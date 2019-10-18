@@ -20,7 +20,8 @@
 #define __VCIRCLE_OBS__
 
 #include <yarp/sig/all.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
+#include <event-driven/deprecated.h>
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //VCIRCLETHREAD

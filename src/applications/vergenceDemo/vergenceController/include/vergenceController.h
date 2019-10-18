@@ -20,7 +20,8 @@
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
+#include <event-driven/deprecated.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/GazeControl.h>
 #include <yarp/dev/IEncoders.h>
