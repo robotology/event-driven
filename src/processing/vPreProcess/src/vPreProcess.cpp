@@ -38,7 +38,7 @@ int main(int argc, char * argv[])
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
     rf.setVerbose();
-    rf.setDefaultContext( "eventdriven" );
+    rf.setDefaultContext( "event-driven" );
     rf.setDefaultConfigFile( "vPreProcess.ini" );
     rf.configure( argc, argv );
 
@@ -148,12 +148,12 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
     if(undistort) {
 
         if(calibrator.configure("camera", "stefi_calib.ini"))
-            calibrator.showMapProjections();
+            calibrator.showMapProjections(3.0);
         else
             yWarning() << "Could not correctly configure the cameras";
+        return false;
     }
 
-    return false;
     return Thread::start();
 
 }

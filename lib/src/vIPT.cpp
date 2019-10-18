@@ -157,6 +157,7 @@ bool vIPT::configure(const string calibContext, const string calibFile)
 
     size_shared = cv::Size2i(cv::max(size_cam[0].width, size_cam[1].width),
             cv::max(size_cam[1].height, size_cam[1].height));
+    size_shared *= 2;
 
     //compute projection and rotation
     if(valid_cam1 && valid_cam2 && valid_stereo) {
@@ -204,7 +205,7 @@ bool vIPT::configure(const string calibContext, const string calibFile)
     return true;
 }
 
-bool vIPT::showMapProjections()
+bool vIPT::showMapProjections(double seconds)
 {
 
     yInfo() << "Showing example projections";
@@ -301,7 +302,7 @@ bool vIPT::showMapProjections()
     yInfo() << "Sparse remaps success";
 
 
-    cv::waitKey();
+    cv::waitKey(static_cast<int>(seconds * 1000));
     cv::destroyAllWindows();
 
     return true;
@@ -352,7 +353,7 @@ bool vIPT::sparseProjectCam1ToCam0(int &y, int &x)
 bool vIPT::denseForwardTransform(int cam, cv::Mat &m)
 {
     cv::Mat remapped;
-    cv::remap(m, remapped, mat_reverse_map[cam], cv::noArray(), CV_INTER_LINEAR);
+    cv::remap(m, remapped, mat_reverse_map[cam], cv::noArray(), CV_INTER_LINEAR, BORDER_CONSTANT, CV_RGB(255, 255, 255));
     m = remapped;
     return true;
 }
@@ -360,7 +361,7 @@ bool vIPT::denseForwardTransform(int cam, cv::Mat &m)
 bool vIPT::denseReverseTransform(int cam, cv::Mat &m)
 {
     cv::Mat remapped;
-    cv::remap(m, remapped, mat_forward_map[cam], cv::noArray(), CV_INTER_LINEAR);
+    cv::remap(m, remapped, mat_forward_map[cam], cv::noArray(), CV_INTER_LINEAR, BORDER_CONSTANT, CV_RGB(255, 255, 255));
     m = remapped;
     return true;
 }

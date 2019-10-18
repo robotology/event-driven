@@ -100,11 +100,10 @@ string channelInstance::getName()
 
 bool channelInstance::addFrameDrawer(unsigned int width, unsigned int height)
 {
-//    calib_configured = unwarp.configure("camera", "stefi_calib.ini");
-//    if(!calib_configured)
-//        yWarning() << "Calibration was not configured";
-//    else
-//        unwarp.showMapProjections();
+    calib_configured = unwarp.configure("camera", "stefi_calib.ini");
+    if(!calib_configured)
+        yWarning() << "Calibration was not configured";
+
     desired_res.width = width;
     desired_res.height = height;
     return frame_read_port.open(channel_name + "/frame:i");
@@ -186,12 +185,13 @@ bool channelInstance::updateQs()
         if(image_p) {
             updated = true;
             cv::Mat temp = yarp::cv::toCvMat(*image_p);
-            cv::resize(temp, current_frame,
+            temp.copyTo(current_frame);
+            if(calib_configured) {
+                unwarp.denseProjectCam1ToCam0(current_frame);
+            }
+            cv::resize(current_frame, current_frame,
                        cv::Size(desired_res.width,
                                 desired_res.height));
-//            if(calib_configured) {
-//                unwarp.denseProjectCam1ToCam0(current_frame);
-//            }
         }
     }
 
@@ -218,7 +218,7 @@ void channelInstance::run()
         (*drawer_i)->draw(canvas, event_qs[(*drawer_i)->getEventType()], -1);
     }
 
-    image_port.prepare() = yarp::cv::fromCvMat<PixelBgr>(canvas);
+    image_port.prepare().copy(yarp::cv::fromCvMat<PixelBgr>(canvas));
     ts.update();
     image_port.setEnvelope(ts);
     image_port.write();
