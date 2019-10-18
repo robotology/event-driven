@@ -1,14 +1,9 @@
-cmake_minimum_required(VERSION 2.6)
+project(vAnnotation)
 
-set(MODULENAME vAnnotation)
-project(${MODULENAME})
+yarp_install(FILES app_${PROJECT_NAME}.xml
+        DESTINATION ${EVENT-DRIVEN_APPLICATIONS_INSTALL_DIR})
 
-include_directories(${PROJECT_SOURCE_DIR}/include
-        ${YARP_INCLUDE_DIRS}
-        ${OpenCV_INCLUDE_DIRS}
-        ${EVENTDRIVENLIBS_INCLUDE_DIRS})
+if(ADD_DOCS_TO_IDE)
+    add_custom_target(${PROJECT_NAME}_docs SOURCES app_${PROJECT_NAME}.xml)
+endif()
 
-yarp_install(FILES app_${MODULENAME}.xml DESTINATION ${ICUBCONTRIB_APPLICATIONS_INSTALL_DIR})
-if(USE_QTCREATOR)
-    add_custom_target(${MODULENAME}_token SOURCES ${MODULENAME}.ini ${MODULENAME}.xml)
-endif(USE_QTCREATOR)

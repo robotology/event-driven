@@ -353,7 +353,7 @@ template <> inline int countTime< std::vector<int32_t> > (const std::vector<int3
         virtual void encode(yarp::os::Bottle &b) const;
         virtual void encode(std::vector<std::int32_t> &b, unsigned int &pos) const;
         virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
-        virtual void decode(int *&data);
+        virtual void decode(const int32_t *&data);
         virtual yarp::os::Property getContent() const;
         virtual std::string getType() const;
 

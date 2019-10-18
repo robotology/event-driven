@@ -21,6 +21,7 @@ set(folder_source
   src/vPort.cpp
   src/vtsHelper.cpp
   src/codecs/codec_AddressEvent.cpp
+  src/codecs/codec_BoxEvent.cpp
   src/codecs/codec_FlowEvent.cpp
   src/codecs/codec_GaussianAE.cpp
   src/codecs/codec_IMUEvent.cpp

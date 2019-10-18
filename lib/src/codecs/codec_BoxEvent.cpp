@@ -1,5 +1,5 @@
 #include <yarp/os/Bottle.h>
-#include "iCub/eventdriven/vCodec.h"
+#include "event-driven/vCodec.h"
 
 namespace ev {
     
@@ -71,7 +71,7 @@ namespace ev {
         return BoxEvent::tag;
     }
 
-    void BoxEvent::decode(int *&data) {
+    void BoxEvent::decode(const int32_t *&data) {
         AddressEvent::decode(data);
     }
 
