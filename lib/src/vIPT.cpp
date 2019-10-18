@@ -98,6 +98,9 @@ bool vIPT::computeForwardReverseMaps(int cam)
     cv::initUndistortRectifyMap(cam_matrix[cam], dist_coeff[cam], rotation[cam],
                                 projection[cam], size_shared, CV_32FC2,
                                 mat_reverse_map[cam], cv::noArray());
+    if(mat_reverse_map[cam].empty())
+        return false;
+
     point_reverse_map[cam] = cv::Mat(size_shared, CV_32SC2);
     // !!urmap is points ordered [x, y]!!
 
@@ -127,6 +130,7 @@ bool vIPT::computeForwardReverseMaps(int cam)
         }
     }
 
+    return true;
 }
 
 bool vIPT::configure(const string calibContext, const string calibFile)
@@ -174,10 +178,13 @@ bool vIPT::configure(const string calibContext, const string calibFile)
 
     //compute the forward mapping (saving the forward map size and offset)
     if(valid_cam1)
-        computeForwardReverseMaps(0);
+        if(!computeForwardReverseMaps(0))
+            return false;
     if(valid_cam2)
-        computeForwardReverseMaps(1);
+        if(!computeForwardReverseMaps(1))
+            return false;
 
+    return true;
 }
 
 bool vIPT::showMapProjections()
@@ -209,12 +216,20 @@ bool vIPT::showMapProjections()
     }
     cv::imshow("Cam 1", test_image_right);
 
+    yInfo() << "Test image creation success";
+
+    if(this->mat_forward_map[0].empty() || mat_forward_map[1].empty()) {
+        yError() << "invalid forward maps";
+        return false;
+    }
     cv::Mat remapped = test_image_left.clone();
     cv::Mat remapped2 = test_image_right.clone();
     denseForwardTransform(0, remapped);
     denseForwardTransform(1, remapped2);
     remapped = remapped * 0.5 + remapped2 * 0.5;
     cv::imshow("Dense Shared", remapped);
+
+    yInfo() << "Dense Shared success";
 
     cv::Mat mat_remap_back1 = remapped.clone();
     denseReverseTransform(0, mat_remap_back1);
@@ -223,6 +238,8 @@ bool vIPT::showMapProjections()
     cv::Mat mat_remap_back2= remapped.clone();
     denseReverseTransform(1, mat_remap_back2);
     cv::imshow("Cam2 Dense Reverse", mat_remap_back2);
+
+    yInfo() << "Dense remaps success";
 
     cv::Mat shared_space = cv::Mat::zeros(size_shared, CV_8UC1);
     for(unsigned int y = 0; y < size_cam[0].height; y++) {
@@ -241,6 +258,7 @@ bool vIPT::showMapProjections()
         }
     }
     cv::imshow("Sparse Shared", shared_space);
+    yInfo() << "Sparse shared success";
 
 
     cv::Mat test_left_remapped = cv::Mat::zeros(size_cam[0], CV_8UC1);
@@ -263,7 +281,10 @@ bool vIPT::showMapProjections()
     }
     cv::imshow("Cam2 Sparse Reverse", test_right_remapped);
 
-    cv::waitKey(5000);
+    yInfo() << "Sparse remaps success";
+
+
+    cv::waitKey();
     cv::destroyAllWindows();
 
     return true;
