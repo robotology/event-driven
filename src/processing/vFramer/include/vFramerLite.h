@@ -27,10 +27,10 @@
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
 #include <event-driven/all.h>
+#include <event-driven/vIPT.h>
+#include <event-driven/vDraw.h>
 #include <opencv2/opencv.hpp>
 #include <map>
-
-#include "vDraw.h"
 
 using namespace ev;
 using namespace yarp::os;
@@ -48,10 +48,14 @@ private:
     string channel_name;
     unsigned int limit_time;
     yarp::os::Stamp ts;
+    BufferedPort< ImageOf<PixelBgr> > frame_read_port;
+    cv::Mat current_frame;
     map<string, vReadPort<vQueue> > read_ports;
     map<string, vQueue> event_qs;
     vector<vDraw *> drawers;
     BufferedPort< ImageOf<PixelBgr> > image_port;
+    vIPT unwarp;
+    bool calib_configured;
 
     bool updateQs();
 
@@ -62,9 +66,12 @@ private:
     map<string, deque<unsigned int> > bookmark_n_events;
     map<string, int> prev_vstamp;
 
+    ev::resolution desired_res;
+
 public:
 
     channelInstance(string channel_name);
+    bool addFrameDrawer(unsigned int width, unsigned int height);
     bool addDrawer(string drawer_name, unsigned int width,
                    unsigned int height, unsigned int window_size, bool flip);
 
@@ -101,6 +108,88 @@ public:
     //we use the framerate to determine how often we do this
     virtual bool updateModule();
     virtual double getPeriod();
+};
+
+class overlayStereoDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class saeDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class grayDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class circleDraw : public vDraw {
+
+protected:
+
+    std::map<int, ev::event<ev::GaussianAE>> persistance;
+    int stagnantCount;
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class blobDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class accDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class isoCircDraw : public isoDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
 };
 
 
