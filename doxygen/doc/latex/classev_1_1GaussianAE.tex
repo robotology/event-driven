@@ -1,0 +1,79 @@
+\hypertarget{classev_1_1GaussianAE}{}\section{ev\+:\+:Gaussian\+AE Class Reference}
+\label{classev_1_1GaussianAE}\index{ev\+::\+Gaussian\+AE@{ev\+::\+Gaussian\+AE}}
+
+
+a \hyperlink{classev_1_1LabelledAE}{Labelled\+AE} with parameters that define a 2D gaussian  
+
+
+
+
+{\ttfamily \#include $<$v\+Codec.\+h$>$}
+
+Inheritance diagram for ev\+:\+:Gaussian\+AE\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.000000cm]{classev_1_1GaussianAE}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1GaussianAE_abc9c34d68ad44ea743b565a6206e591f}\label{classev_1_1GaussianAE_abc9c34d68ad44ea743b565a6206e591f}} 
+{\bfseries Gaussian\+AE} (const \hyperlink{classev_1_1vEvent}{v\+Event} \&v)
+\item 
+\mbox{\Hypertarget{classev_1_1GaussianAE_ac5934905f00cc08eb9c444f67e0ec6a2}\label{classev_1_1GaussianAE_ac5934905f00cc08eb9c444f67e0ec6a2}} 
+{\bfseries Gaussian\+AE} (const \hyperlink{classev_1_1GaussianAE}{Gaussian\+AE} \&v)
+\item 
+\mbox{\Hypertarget{classev_1_1GaussianAE_aa9e649d9039d3e9348cea99352df77c5}\label{classev_1_1GaussianAE_aa9e649d9039d3e9348cea99352df77c5}} 
+virtual event {\bfseries clone} ()
+\item 
+\mbox{\Hypertarget{classev_1_1GaussianAE_a8ac9f9d68e23134e64ab37215c4feadd}\label{classev_1_1GaussianAE_a8ac9f9d68e23134e64ab37215c4feadd}} 
+virtual void {\bfseries encode} (yarp\+::os\+::\+Bottle \&b) const
+\item 
+\mbox{\Hypertarget{classev_1_1GaussianAE_a4f337114d2e9d3d142953525a6eb7418}\label{classev_1_1GaussianAE_a4f337114d2e9d3d142953525a6eb7418}} 
+virtual void {\bfseries encode} (std\+::vector$<$ int32\+\_\+t $>$ \&b, unsigned int \&pos) const
+\item 
+\mbox{\Hypertarget{classev_1_1GaussianAE_a508515e443b7c3c5ffd1f3fd02ced00a}\label{classev_1_1GaussianAE_a508515e443b7c3c5ffd1f3fd02ced00a}} 
+virtual bool {\bfseries decode} (const yarp\+::os\+::\+Bottle \&packet, size\+\_\+t \&pos)
+\item 
+\mbox{\Hypertarget{classev_1_1GaussianAE_aa24997795ded9df87a8013ca45bb4d20}\label{classev_1_1GaussianAE_aa24997795ded9df87a8013ca45bb4d20}} 
+virtual void {\bfseries decode} (const int32\+\_\+t $\ast$\&data)
+\item 
+\mbox{\Hypertarget{classev_1_1GaussianAE_ad0738c9667722bbd4cc5cb786028dca6}\label{classev_1_1GaussianAE_ad0738c9667722bbd4cc5cb786028dca6}} 
+virtual yarp\+::os\+::\+Property {\bfseries get\+Content} () const
+\item 
+\mbox{\Hypertarget{classev_1_1GaussianAE_acc5728386bc75bead01615c96ae4dab1}\label{classev_1_1GaussianAE_acc5728386bc75bead01615c96ae4dab1}} 
+virtual std\+::string {\bfseries get\+Type} () const
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1GaussianAE_a13e0c15248195b159d6b672ea3596611}\label{classev_1_1GaussianAE_a13e0c15248195b159d6b672ea3596611}} 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+union \{\\
+\>uint32\_t {\bfseries \_gaei} \mbox{[}3\mbox{]}\\
+\mbox{\Hypertarget{unionev_1_1GaussianAE_1_1_0D13_aebead89f411b9301f4fdb56ef30ba0c0}\label{unionev_1_1GaussianAE_1_1_0D13_aebead89f411b9301f4fdb56ef30ba0c0}} 
+\>struct \{\\
+\>\>float {\bfseries sigx}\\
+\>\>float {\bfseries sigy}\\
+\>\>float {\bfseries sigxy}\\
+\>\} \\
+\}; \\
+
+\end{tabbing}\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1GaussianAE_a6d0ea5de274ddd380b056d2ba8b019e2}\label{classev_1_1GaussianAE_a6d0ea5de274ddd380b056d2ba8b019e2}} 
+static const std\+::string {\bfseries tag} = \char`\"{}G\+AE\char`\"{}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+a \hyperlink{classev_1_1LabelledAE}{Labelled\+AE} with parameters that define a 2D gaussian 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Codec.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/codecs/codec\+\_\+\+Gaussian\+A\+E.\+cpp\end{DoxyCompactItemize}

@@ -1,0 +1,36 @@
+Detect and visualise a stream of corner events from the cameras / from a pre-\/recorded sequence.
+
+\subsection*{Description}
+
+This application demonstrates how to detect and visualise a stream of corner events either from the cameras or from a pre-\/recorded sequence. The event stream is transmitted from the cameras (/zynq\+Grabber/v\+Bottle\+:o) to the v\+Pre\+Process (/v\+Pre\+Process/v\+Bottle\+:i), that removes salt-\/and-\/pepper noise from the event stream. The filtered stream (/v\+Pre\+Process/v\+Bottle\+:o) is sent to v\+Corner (/v\+Corner/v\+Bottle\+:i) that detects corners whose Harris score is higher than a threshold. Both address events and corner events are sent to the v\+Framer, that has specific ports for different kinds of events (/v\+Framer/\+AE\+:i for address events, /v\+Framer/\+L\+AE\+:i for corner events). Address events and corresponding corner events are visualised on the yarp viewers (/view\+Left and /view\+Right).
+
+Here is a visualisation of the instantiated modules and connections.
+
+
+
+For more details on the algorithm, please refer to\+: Vasco V., Glover A., and Bartolozzi C. (2016) Fast event-\/based harris corner detection exploiting the advantages of event-\/driven cameras. In I\+E\+E\+E/\+R\+SJ International Conference on Intelligent Robots and Systems (I\+R\+OS), October 2016, Daejeon, Korea.
+
+\subsection*{Dependencies}
+
+No special dependencies are required, all the required modules will be executed by the application.
+
+\subsection*{How to run the application}
+
+The application assumes you are connected to a {\itshape yarpserver} -\/ see \href{http://www.yarp.it/}{\tt http\+://www.\+yarp.\+it/} for basic instructions for using yarp.
+
+Inside the {\itshape Application} folder in the yarpmanager gui, you should see an entry called {\itshape v\+Corner}. Double click and open it.
+
+Now you are ready to run the application. Hit the {\itshape run} button and then {\itshape connect} on the yarpmanager gui.
+
+You will now see the yarpview windows displaying the address events and the corner events (in red).
+
+To visualise events from a pre-\/recorded dataset, you can run {\itshape yarpdataplayer}.
+
+Since {\itshape yarpdataplayer} opens the port with the same name as the real robot, make sure the same port is not running (or that you start an instance of the nameserver with your own namespace).
+
+\subsection*{Known issues}
+
+
+\begin{DoxyItemize}
+\item There is a maximum event-\/rate at which corners can be computed, depending on computaitonal power. If this limit is reached, surplus events will not be checked for corners. The result is that corner trajectories can have missing segments if the camera is moved at very high speeds (over 1 million events per second). 
+\end{DoxyItemize}

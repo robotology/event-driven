@@ -1,0 +1,27 @@
+\subsection*{Introduction}
+
+The v\+Mapping app is used to calibrate and visualize the events onto the frame-\/based image. This module is needed within the i\+Cub setup which combines both traditional and event cameras to map the events in the corresponding location of the image provided by the normal cameras. The calibration is performed using the \href{https://nerian.com/support/resources/patterns/}{\tt asymmetric circle grid board} similarly to the classical calibration procedure. Both events and images need to be undistorted since the mapping is planar. If no calibration is required the module will simply output the image overlapped with the events.
+
+\subsection*{Dependencies}
+
+This app does not need any further module to be running. The intrinsic parameters of both traditional and event camera have to be computed beforehand and are loaded from specific files within the {\itshape camera\+Calibration} context as default setting.
+
+Here is a visualisation of the instantiated modules and connections.
+
+
+
+In case of calibration also a \href{http://robotology.github.io/event-driven/doxygen/doc/html/group__vFramer.html}{\tt v\+Framer} is required to find the corresponging points between events and frames. Below a visualization of instantiated modules and connection for the calibration setup.
+
+
+
+\subsection*{How to run the application}
+
+
+\begin{DoxyItemize}
+\item The application assumes you are connected to a {\itshape yarpserver} -\/ see \href{http://www.yarp.it/}{\tt http\+://www.\+yarp.\+it/} for basic instructions for using yarp.
+\item Inside the Application folder in the yarpmanager gui, you should see an entry called {\itshape mapping}. Double click and open it.
+\item Make sure the cameras are connected properly.
+\item Now you are ready to run the application! Hit the run button and then connect on the yarpmanager gui. You can avoid launching the v\+Framer if no calibration is necessary.
+\item If you want to perform the calibration then after the application has started and the ports are connected you should see two windows showing the events (in form of blobs. See v\+Framer documentation) and the camera image. Move the calibration board in front of the cameras until enough images have been collected (number of images required is set with the max\+Iter parameter of the v\+Mapping module). When calibration is over the results are saved in the v\+Mapping.\+ini file within the context folder ({\itshape camera\+Calibration} by default) .
+\item Once the calibration is done (or in case of no calibration) the yarpview windows will show the image overlapped with the events. 
+\end{DoxyItemize}

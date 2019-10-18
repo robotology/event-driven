@@ -1,0 +1,41 @@
+\subsection*{Introduction }
+
+This app launches the modules necessary to calibrate event-\/driven cameras. The event stream is sent in form of B\+L\+OB events (see \href{http://robotology.github.io/event-driven/doxygen/doc/html/group__vFramer.html}{\tt v\+Framer} for further details on the event types.) to the \href{http://wiki.icub.org/iCub/main/dox/html/group__icub__stereoCalib.html}{\tt stereo\+Calib} module. In the app we already provide a set of default parameters to the stereo\+Calib module defining the calibration board type as the asymmetric circle grid (shown in image below) which have proven to be optimal for event cameras calibration.
+
+
+
+In the following image an overview of the opened ports and how they are connected.
+
+
+
+\subsection*{Dependencies }
+
+No special dependencies are required, all the required modules will be executed by the application.
+
+\subsection*{How to run the application }
+
+
+\begin{DoxyItemize}
+\item On a console, run yarpserver (if not already running).
+\item On another console run yarpmanager
+\item Inside the Application folder in the yarpmanager gui, you should see an entry called v\+Calib. Double click and open it. Check that the parameters of the stereo\+Calib module are coherent with the board type you are going to use for calibration.
+\item Run the application and connect the ports with the buttons in the yarpmanager G\+UI. You will now see the yarpview windows displaying the events.
+\item On a terminal type \begin{DoxyVerb}  yarp rpc /stereoCalib/cmd
+\end{DoxyVerb}
+
+\end{DoxyItemize}
+
+You can now send commands to the stereo\+Calib module.
+\begin{DoxyItemize}
+\item Type {\ttfamily start} in the command prompt. You should get the following output\+: \begin{DoxyVerb}    >>start
+    Response: "Starting Calibration..."
+\end{DoxyVerb}
+
+\end{DoxyItemize}
+
+Now the image acquisition has started.
+\begin{DoxyItemize}
+\item Move the calibration board in front of the cameras until the module recognises the board as many times as specified within the stereo\+Calib parameters (30 by default).
+\item Once the calibration is over the results are written in the {\ttfamily \$\+I\+C\+U\+B\+\_\+\+D\+IR/contexts/camera\+Calibration/output\+Calib.ini}.
+\item If you are satisfied with the results, you can copy them into the camera configuration file. 
+\end{DoxyItemize}

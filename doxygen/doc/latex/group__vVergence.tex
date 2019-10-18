@@ -1,0 +1,24 @@
+\hypertarget{group__vVergence}{}\section{v\+Vergence}
+\label{group__vVergence}\index{v\+Vergence@{v\+Vergence}}
+Controlling the i\+Cub to Verge on a Stimulus Version\+:1.\+0 \begin{DoxyAuthor}{Author}
+Valentina Vasco \href{mailto:valentina.vasco@iit.it}{\tt valentina.\+vasco@iit.\+it} ~\newline
+ 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+Released under the terms of the G\+NU G\+PL v2.\+0 
+\end{DoxyCopyright}
+\hypertarget{group__zynqGrabber_intro_sec}{}\subsection{Description}\label{group__zynqGrabber_intro_sec}
+Controls the i\+Cub to verge on a target\hypertarget{group__zynqGrabber_parameters_sec}{}\subsection{Parameters}\label{group__zynqGrabber_parameters_sec}
+
+\begin{DoxyItemize}
+\item -- name \+: Specifies the stem name of ports created by the module. 
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_inputports_sec}{}\subsection{Input Ports}\label{group__zynqGrabber_inputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Vergence/v\+Bottle\+:i \mbox{[}eventdriven\+::v\+Bottle\mbox{]} \mbox{[}default carrier\+:udp\mbox{]}\+: Accepts the address events in the v\+Bottle container
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_outputports_sec}{}\subsection{Output Ports}\label{group__zynqGrabber_outputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Vergence/debug\+:o \mbox{[}yarp\+::sig\+::\+Image\+Of\mbox{]} \mbox{[}default carrier\+:tcp\mbox{]}\+: Outputs a debugging image displaying events from left and right cameras
+\item /v\+Vergence/scopefilters\+:o \mbox{[}yarp\+::os\+::\+Bottle\mbox{]} \mbox{[}default carrier\+:udp\mbox{]}\+: Outputs debug information for use with yarpscope. Energies of several filters are shown with different colors.
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_services_sec}{}\subsection{Services}\label{group__zynqGrabber_services_sec}

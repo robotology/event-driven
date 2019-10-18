@@ -1,0 +1,78 @@
+\hypertarget{classev_1_1taxelsampleDraw}{}\section{ev\+:\+:taxelsample\+Draw Class Reference}
+\label{classev_1_1taxelsampleDraw}\index{ev\+::taxelsample\+Draw@{ev\+::taxelsample\+Draw}}
+Inheritance diagram for ev\+:\+:taxelsample\+Draw\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1taxelsampleDraw}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1taxelsampleDraw_ae3b414d9cc7894b504683f0af8059d89}\label{classev_1_1taxelsampleDraw_ae3b414d9cc7894b504683f0af8059d89}} 
+void {\bfseries reset\+Image} (cv\+::\+Mat \&image)
+\item 
+\mbox{\Hypertarget{classev_1_1taxelsampleDraw_a9d69dcd342df4005f86966f18b8b31c4}\label{classev_1_1taxelsampleDraw_a9d69dcd342df4005f86966f18b8b31c4}} 
+void {\bfseries initialise} ()
+\item 
+virtual void \hyperlink{classev_1_1taxelsampleDraw_a43e40e8cfc4ed342f8d616eb9ddecf0a}{draw} (cv\+::\+Mat \&image, const ev\+::v\+Queue \&e\+Set, int v\+Time)
+\begin{DoxyCompactList}\small\item\em draw takes an image and overlays the new visualisation textures \end{DoxyCompactList}\item 
+virtual std\+::string \hyperlink{classev_1_1taxelsampleDraw_a7bf19e7de1e4851b5567308e95334942}{get\+Draw\+Type} ()
+\begin{DoxyCompactList}\small\item\em get\+Tag returns the unique code for this drawing method. The arguments given on the command line must match this code exactly \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1taxelsampleDraw_ac02cc2de0555b249d6a0df31f7954140}\label{classev_1_1taxelsampleDraw_ac02cc2de0555b249d6a0df31f7954140}} 
+virtual std\+::string {\bfseries get\+Event\+Type} ()
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1taxelsampleDraw_a461de248c8eee82c8f2a88a24a919992}\label{classev_1_1taxelsampleDraw_a461de248c8eee82c8f2a88a24a919992}} 
+static const std\+::string {\bfseries drawtype} = \char`\"{}T\+A\+X\+E\+L\+\_\+\+S\+A\+M\+P\+LE\char`\"{}
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classev_1_1taxelsampleDraw_a43e40e8cfc4ed342f8d616eb9ddecf0a}\label{classev_1_1taxelsampleDraw_a43e40e8cfc4ed342f8d616eb9ddecf0a}} 
+\index{ev\+::taxelsample\+Draw@{ev\+::taxelsample\+Draw}!draw@{draw}}
+\index{draw@{draw}!ev\+::taxelsample\+Draw@{ev\+::taxelsample\+Draw}}
+\subsubsection{\texorpdfstring{draw()}{draw()}}
+{\footnotesize\ttfamily void ev\+::taxelsample\+Draw\+::draw (\begin{DoxyParamCaption}\item[{cv\+::\+Mat \&}]{canvas,  }\item[{const ev\+::v\+Queue \&}]{e\+Set,  }\item[{int}]{v\+Time }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+draw takes an image and overlays the new visualisation textures 
+
+
+\begin{DoxyParams}{Parameters}
+{\em canvas} & is the image which may or may not yet exist \\
+\hline
+{\em e\+Set} & is the set of events which could possibly be drawn \\
+\hline
+\end{DoxyParams}
+
+
+Implements \hyperlink{classev_1_1vDraw_af1eee5dcdf3b4cfee6a3024e5cd706f8}{ev\+::v\+Draw}.
+
+\mbox{\Hypertarget{classev_1_1taxelsampleDraw_a7bf19e7de1e4851b5567308e95334942}\label{classev_1_1taxelsampleDraw_a7bf19e7de1e4851b5567308e95334942}} 
+\index{ev\+::taxelsample\+Draw@{ev\+::taxelsample\+Draw}!get\+Draw\+Type@{get\+Draw\+Type}}
+\index{get\+Draw\+Type@{get\+Draw\+Type}!ev\+::taxelsample\+Draw@{ev\+::taxelsample\+Draw}}
+\subsubsection{\texorpdfstring{get\+Draw\+Type()}{getDrawType()}}
+{\footnotesize\ttfamily std\+::string ev\+::taxelsample\+Draw\+::get\+Draw\+Type (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+get\+Tag returns the unique code for this drawing method. The arguments given on the command line must match this code exactly 
+
+\begin{DoxyReturn}{Returns}
+the tag code 
+\end{DoxyReturn}
+
+
+Implements \hyperlink{classev_1_1vDraw_ac01381befeffef2b930cbceb28b18a28}{ev\+::v\+Draw}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Draw\+Skin.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/v\+Draw\+\_\+skin.\+cpp\end{DoxyCompactItemize}

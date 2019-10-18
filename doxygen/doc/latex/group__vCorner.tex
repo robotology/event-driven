@@ -1,0 +1,33 @@
+\hypertarget{group__vCorner}{}\section{v\+Corner}
+\label{group__vCorner}\index{v\+Corner@{v\+Corner}}
+Event-\/driven corner detection adapting the Harris method Version\+:1.\+0 \begin{DoxyAuthor}{Author}
+Valentina Vasco \href{mailto:valentina.vasco@iit.it}{\tt valentina.\+vasco@iit.\+it} ~\newline
+ 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+Released under the terms of the G\+NU G\+PL v2.\+0 
+\end{DoxyCopyright}
+\hypertarget{group__zynqGrabber_intro_sec}{}\subsection{Description}\label{group__zynqGrabber_intro_sec}
+The module detects corner events in address events using the adapted Harris method.\hypertarget{group__zynqGrabber_parameters_sec}{}\subsection{Parameters}\label{group__zynqGrabber_parameters_sec}
+
+\begin{DoxyItemize}
+\item -- name \+: Specifies the stem name of ports created by the module.
+\item -- strict \+: Sets ouput port to use strict protocol.
+\item -- width \+: Number of pixels on the x-\/axis of the sensor.
+\item -- height \+: Number of pixels on the y-\/axis of the sensor.
+\item -- filter\+Size \+: Size of Sobel filter used for the detection.
+\item -- tempsize \+: Length of the temporal window in seconds used to accumulate events.
+\item -- window\+Rad \+: Radius of the spatial window in pixels.
+\item -- sigma \+: Standard deviation of the Gaussian filter.
+\item -- thresh \+: Threshold for a confirmed corner event detection.
+\item -- nthreads \+: Number of threads used for the computation. 
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_inputports_sec}{}\subsection{Input Ports}\label{group__zynqGrabber_inputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Corner/v\+Bottle\+:i \mbox{[}eventdriven\+::v\+Bottle\mbox{]} \mbox{[}default carrier\+:udp\mbox{]}\+: Accepts the address events in the v\+Bottle container
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_outputports_sec}{}\subsection{Output Ports}\label{group__zynqGrabber_outputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Corner/v\+Bottle\+:o \mbox{[}eventdriven\+::v\+Bottle\mbox{]} \mbox{[}default carrier\+:udp\mbox{]}\+: Outputs corner events in the form of an eventdriven\+::\+Labelled\+AE. The v\+Bottle also contains all events in the v\+Bottle received as input.
+\item /v\+Corner/score\+:o \mbox{[}yarp\+::os\+::\+Bottle\mbox{]} \mbox{[}default carrier\+:udp\mbox{]}\+: Outputs debug information for use with yarpscope. The gap between the time required to get and process events to detect data being lost.
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_services_sec}{}\subsection{Services}\label{group__zynqGrabber_services_sec}

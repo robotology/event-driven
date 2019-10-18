@@ -1,0 +1,30 @@
+\hypertarget{group__vFramer}{}\section{v\+Framer}
+\label{group__vFramer}\index{v\+Framer@{v\+Framer}}
+Converts an event stream to an image Version\+:1.\+0 \begin{DoxyAuthor}{Author}
+Arren Glover \href{mailto:arren.glover@iit.it}{\tt arren.\+glover@iit.\+it} ~\newline
+ 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+Released under the terms of the G\+NU G\+PL v2.\+0 
+\end{DoxyCopyright}
+\hypertarget{group__zynqGrabber_intro_sec}{}\subsection{Description}\label{group__zynqGrabber_intro_sec}
+\begin{DoxyVerb} Multiple "drawers" exist to visualise the event-stream in different ways and for different event types.
+\end{DoxyVerb}
+\hypertarget{group__zynqGrabber_parameters_sec}{}\subsection{Parameters}\label{group__zynqGrabber_parameters_sec}
+
+\begin{DoxyItemize}
+\item -- name \+: Specifies the stem name of ports created by the module.
+\item -- height \+: Number of pixels on the y-\/axis of the sensor.
+\item -- width \+: Number of pixels on the x-\/axis of the sensor.
+\item -- event\+Window \+: Size in seconds of the temporal window for displayed events.
+\item -- frame\+Rate\+: Output frame rate expressed in Hz
+\item -- displays \+: Channel \mbox{[}int\mbox{]} , port name \mbox{[}string\mbox{]} and \textquotesingle{}drawer\textquotesingle{} type \mbox{[}list\mbox{]} to use for display. Provided as a ordered list. Multiple displays allowed. Available drawer types\+: -\/ AE \+: Address Event. Draws events with their polarity -\/ I\+SO \+: Allows visualization of past events in the 3D space spanned by x, y and time. -\/ A\+E-\/\+I\+NT \+: Address Event of interest. Highlights an event making it red -\/ C\+LE \+: Cluster Event. Draws an ellipse on top of a cluster of events -\/ B\+L\+OB \+: Draws low-\/pass filtered image. Useful for calibration -\/ F\+L\+OW \+: Visualize flow events with arrows. 
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_inputports_sec}{}\subsection{Input Ports}\label{group__zynqGrabber_inputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Framer/v\+Bottle\+:i \mbox{[}v\+Bottle\mbox{]} \mbox{[}default carrier\+:tcp\mbox{]}\+: Input event stream to be displayed
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_outputports_sec}{}\subsection{Output Ports}\label{group__zynqGrabber_outputports_sec}
+
+\begin{DoxyItemize}
+\item /$<$port\+\_\+name$>$/v\+Bottle\+:o \mbox{[} yarp\+::sig\+::\+Image\+Of$<$yarp\+::sig\+::\+Pixel\+Bgr$>$ $>$\mbox{]} \mbox{[}default carrier\+:tcp\mbox{]}\+: Output image. The module creates as many ports, with the corresponding $<$port\+\_\+name$>$, as specified within the displays parameter.
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_services_sec}{}\subsection{Services}\label{group__zynqGrabber_services_sec}

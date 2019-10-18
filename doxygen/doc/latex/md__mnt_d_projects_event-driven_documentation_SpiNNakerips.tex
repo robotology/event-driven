@@ -1,0 +1,54 @@
+The Spi\+N\+Naker-\/5 board has two ethernet ports, one for management (located more central) and one for loading a model onto the cores (located more external). The management port can be used to change the IP address of both ports.
+
+
+\begin{DoxyItemize}
+\item Establish a connection to the management port. Either connect to the same local network, or make an ad-\/hoc connection with a direct cable connection and setting your own laptop IP to the same subnet (changing only the final value of the IP address). Make sure there is a connection using the {\ttfamily ping} command. The IP address of the management port could be\+:
+\begin{DoxyItemize}
+\item 192.\+168.\+240.\+0 (default)
+\item 10.\+0.\+0.\+70 (E\+D\+PR board)
+\end{DoxyItemize}
+\item The spinnaker\+\_\+tools package provides an application {\ttfamily bmpc} to communicate with the management port\+:
+\end{DoxyItemize}
+
+\begin{quote}
+bmpc 10.\+0.\+0.\+70 \end{quote}
+
+
+
+\begin{DoxyItemize}
+\item A connection should be made, and you should be greated by the bmpc command prompt. Type {\ttfamily help} for information. Visualise the IP address of the board with\+:
+\end{DoxyItemize}
+
+\begin{quote}
+spin\+\_\+ip \end{quote}
+
+
+\begin{quote}
+bmp\+\_\+ip \end{quote}
+
+
+
+\begin{DoxyItemize}
+\item Change the IP (and more with)
+\end{DoxyItemize}
+
+\begin{quote}
+spin\+\_\+ip $<$Flag.\+X$>$ $<$M\+A\+C.\+M$>$ $<$ip\+\_\+addr.\+P$>$ $<$gw\+\_\+addr.\+P$>$ $<$net\+\_\+mask.\+P$>$ $<$port.\+D$>$ \end{quote}
+
+
+for example
+
+\begin{quote}
+spin\+\_\+ip c059 00\+:00\+:a4\+:f0\+:00\+:01 10.\+0.\+0.\+7 10.\+0.\+0.\+1 255.\+255.\+0.\+0 17893 \end{quote}
+
+
+and
+
+\begin{quote}
+bmp\+\_\+ip c000 00\+:00\+:a4\+:f0\+:00\+:00 10.\+0.\+0.\+6 10.\+0.\+0.\+1 255.\+255.\+0.\+0 17893 \end{quote}
+
+
+
+\begin{DoxyItemize}
+\item Restart the board for the new IP addresses to take affect. 
+\end{DoxyItemize}

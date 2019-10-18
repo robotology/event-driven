@@ -1,0 +1,72 @@
+\hypertarget{classev_1_1isoInterestDraw}{}\section{ev\+:\+:iso\+Interest\+Draw Class Reference}
+\label{classev_1_1isoInterestDraw}\index{ev\+::iso\+Interest\+Draw@{ev\+::iso\+Interest\+Draw}}
+Inheritance diagram for ev\+:\+:iso\+Interest\+Draw\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classev_1_1isoInterestDraw}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual void \hyperlink{classev_1_1isoInterestDraw_a3276f946c09d4cd0009f8379ea24d409}{draw} (cv\+::\+Mat \&image, const ev\+::v\+Queue \&e\+Set, int v\+Time)
+\begin{DoxyCompactList}\small\item\em draw takes an image and overlays the new visualisation textures \end{DoxyCompactList}\item 
+virtual std\+::string \hyperlink{classev_1_1isoInterestDraw_a93b2142d5652f725e21d34fedde103df}{get\+Draw\+Type} ()
+\begin{DoxyCompactList}\small\item\em get\+Tag returns the unique code for this drawing method. The arguments given on the command line must match this code exactly \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1isoInterestDraw_afda0762c6c3679fdd541a1df1e1fc704}\label{classev_1_1isoInterestDraw_afda0762c6c3679fdd541a1df1e1fc704}} 
+virtual std\+::string {\bfseries get\+Event\+Type} ()
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1isoInterestDraw_ae416884ea2511db026669634be61d0ff}\label{classev_1_1isoInterestDraw_ae416884ea2511db026669634be61d0ff}} 
+static const std\+::string {\bfseries drawtype} = \char`\"{}I\+SO-\/I\+NT\char`\"{}
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classev_1_1isoInterestDraw_a3276f946c09d4cd0009f8379ea24d409}\label{classev_1_1isoInterestDraw_a3276f946c09d4cd0009f8379ea24d409}} 
+\index{ev\+::iso\+Interest\+Draw@{ev\+::iso\+Interest\+Draw}!draw@{draw}}
+\index{draw@{draw}!ev\+::iso\+Interest\+Draw@{ev\+::iso\+Interest\+Draw}}
+\subsubsection{\texorpdfstring{draw()}{draw()}}
+{\footnotesize\ttfamily void ev\+::iso\+Interest\+Draw\+::draw (\begin{DoxyParamCaption}\item[{cv\+::\+Mat \&}]{canvas,  }\item[{const ev\+::v\+Queue \&}]{e\+Set,  }\item[{int}]{v\+Time }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+draw takes an image and overlays the new visualisation textures 
+
+
+\begin{DoxyParams}{Parameters}
+{\em canvas} & is the image which may or may not yet exist \\
+\hline
+{\em e\+Set} & is the set of events which could possibly be drawn \\
+\hline
+\end{DoxyParams}
+
+
+Reimplemented from \hyperlink{classev_1_1isoDraw_ad481b618ae2d08664481ffc4b3c4dd95}{ev\+::iso\+Draw}.
+
+\mbox{\Hypertarget{classev_1_1isoInterestDraw_a93b2142d5652f725e21d34fedde103df}\label{classev_1_1isoInterestDraw_a93b2142d5652f725e21d34fedde103df}} 
+\index{ev\+::iso\+Interest\+Draw@{ev\+::iso\+Interest\+Draw}!get\+Draw\+Type@{get\+Draw\+Type}}
+\index{get\+Draw\+Type@{get\+Draw\+Type}!ev\+::iso\+Interest\+Draw@{ev\+::iso\+Interest\+Draw}}
+\subsubsection{\texorpdfstring{get\+Draw\+Type()}{getDrawType()}}
+{\footnotesize\ttfamily std\+::string ev\+::iso\+Interest\+Draw\+::get\+Draw\+Type (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+get\+Tag returns the unique code for this drawing method. The arguments given on the command line must match this code exactly 
+
+\begin{DoxyReturn}{Returns}
+the tag code 
+\end{DoxyReturn}
+
+
+Reimplemented from \hyperlink{classev_1_1isoDraw_abd32cc393e5489ee97b5a8b94e6dd88d}{ev\+::iso\+Draw}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Draw.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/v\+Draw\+\_\+\+I\+S\+O.\+cpp\end{DoxyCompactItemize}

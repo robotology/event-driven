@@ -1,0 +1,47 @@
+
+  /**
+  *
+  * @ingroup processing 
+  * \defgroup vFramer vFramer
+  * Converts an event stream to an image
+  * Version:1.0
+  * \author  Arren Glover arren.glover@iit.it
+  * \n
+  * \copyright Released under the terms of the GNU GPL v2.0
+  * \section intro_sec Description
+  *
+  
+        Multiple "drawers" exist to visualise the event-stream in different ways and for different event types.
+    
+  * \section parameters_sec Parameters     
+  
+  *- -- name : Specifies the stem name of ports created by the module.
+  *- -- height : Number of pixels on the y-axis of the sensor.
+  *- -- width : Number of pixels on the x-axis of the sensor.
+  *- -- eventWindow : Size in seconds of the temporal window for displayed events.
+  *- -- frameRate: Output frame rate expressed in Hz
+  *- -- displays : Channel [int] , port name [string] and 'drawer' type [list] to use for display. Provided as a ordered list. Multiple displays allowed.                 Available drawer types:                     - AE : Address Event. Draws events with their polarity                     - ISO : Allows visualization of past events in the 3D space spanned by x, y and time.                     - AE-INT : Address Event of interest. Highlights an event making it red                     - CLE : Cluster Event. Draws an ellipse on top of a cluster of events                     - BLOB : Draws low-pass filtered image. Useful for calibration                     - FLOW : Visualize flow events with arrows.
+  * \section inputports_sec Input Ports
+  * 
+  *- /vFramer/vBottle:i [vBottle]  [default carrier:tcp]: 
+                Input event stream to be displayed
+            
+  *
+  
+  * \section outputports_sec Output Ports
+  * 
+  *- /&lt;port_name&gt;/vBottle:o [ yarp::sig::ImageOf&lt;yarp::sig::PixelBgr&gt; &gt;]  [default carrier:tcp]: 
+                Output image. The module creates as many ports, with the corresponding &lt;port_name&gt;, as
+                specified within the displays parameter.
+            
+  *
+  
+  *
+  * \section services_sec Services
+  * 
+  *
+  * 
+  *
+  *
+  **/
+

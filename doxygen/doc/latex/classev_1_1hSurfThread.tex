@@ -1,0 +1,61 @@
+\hypertarget{classev_1_1hSurfThread}{}\section{ev\+:\+:h\+Surf\+Thread Class Reference}
+\label{classev_1_1hSurfThread}\index{ev\+::h\+Surf\+Thread@{ev\+::h\+Surf\+Thread}}
+
+
+asynchronously read events and push them in a \hyperlink{classev_1_1historicalSurface}{historical\+Surface}  
+
+
+
+
+{\ttfamily \#include $<$v\+Surface\+Handler\+Th.\+h$>$}
+
+Inheritance diagram for ev\+:\+:h\+Surf\+Thread\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1hSurfThread}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1hSurfThread_a17acb3eb05f063ab81ab5128986ed7c8}\label{classev_1_1hSurfThread_a17acb3eb05f063ab81ab5128986ed7c8}} 
+void {\bfseries configure} (int height, int width, double maxcpudelay)
+\item 
+\mbox{\Hypertarget{classev_1_1hSurfThread_afa2fc93ae2c64231e566738ebfddabf1}\label{classev_1_1hSurfThread_afa2fc93ae2c64231e566738ebfddabf1}} 
+bool {\bfseries open} (std\+::string portname)
+\item 
+\mbox{\Hypertarget{classev_1_1hSurfThread_a7897b02f77738563c0d2fd5123dc4c51}\label{classev_1_1hSurfThread_a7897b02f77738563c0d2fd5123dc4c51}} 
+void {\bfseries on\+Stop} ()
+\item 
+\mbox{\Hypertarget{classev_1_1hSurfThread_af4a0a8b35321419785dce1b94e43e5e3}\label{classev_1_1hSurfThread_af4a0a8b35321419785dce1b94e43e5e3}} 
+void {\bfseries run} ()
+\item 
+\mbox{\Hypertarget{classev_1_1hSurfThread_a469e52e39fe123a6699171e504cf0e78}\label{classev_1_1hSurfThread_a469e52e39fe123a6699171e504cf0e78}} 
+v\+Queue {\bfseries query\+R\+OI} (int channel, int num\+Evts, int r)
+\item 
+\mbox{\Hypertarget{classev_1_1hSurfThread_ada4a11e319f5f0122897e21d6411bb1a}\label{classev_1_1hSurfThread_ada4a11e319f5f0122897e21d6411bb1a}} 
+v\+Queue {\bfseries query\+R\+OI} (int channel, unsigned int query\+Size, int x, int y, int r)
+\item 
+\mbox{\Hypertarget{classev_1_1hSurfThread_a89e485321978fdf785ba0e4e3b08a7ec}\label{classev_1_1hSurfThread_a89e485321978fdf785ba0e4e3b08a7ec}} 
+v\+Queue {\bfseries query\+Window} (int channel, unsigned int query\+Size)
+\item 
+\mbox{\Hypertarget{classev_1_1hSurfThread_ae50c10e866f8692aae342d75e38369e7}\label{classev_1_1hSurfThread_ae50c10e866f8692aae342d75e38369e7}} 
+double {\bfseries query\+Delay} (int channel=0)
+\item 
+\mbox{\Hypertarget{classev_1_1hSurfThread_a02f2a70c6f8147e70e1689520555c389}\label{classev_1_1hSurfThread_a02f2a70c6f8147e70e1689520555c389}} 
+yarp\+::os\+::\+Stamp {\bfseries query\+Ystamp} ()
+\item 
+\mbox{\Hypertarget{classev_1_1hSurfThread_af5da61e8087f133f2202c873660779bc}\label{classev_1_1hSurfThread_af5da61e8087f133f2202c873660779bc}} 
+int {\bfseries query\+Vstamp} (int channel=0)
+\item 
+\mbox{\Hypertarget{classev_1_1hSurfThread_a92089f336c6298e58440cee7f3b2eb07}\label{classev_1_1hSurfThread_a92089f336c6298e58440cee7f3b2eb07}} 
+int {\bfseries query\+Q\+Delay} ()
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+asynchronously read events and push them in a \hyperlink{classev_1_1historicalSurface}{historical\+Surface} 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Surface\+Handler\+Th.\+h\end{DoxyCompactItemize}

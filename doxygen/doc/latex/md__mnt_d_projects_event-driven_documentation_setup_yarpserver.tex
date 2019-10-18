@@ -1,0 +1,31 @@
+The most important thing is to make sure all computers that are using {\ttfamily Y\+A\+RP} together are on the same subnet, and that the {\ttfamily yarpserver} is running on the same sub-\/net. Most problems with connection are because one of these is not true. Here\textquotesingle{}s the standard way to do if for {\ttfamily event-\/driven}.
+
+\paragraph*{Run the {\ttfamily yarpserver} on the Z\+CB}
+
+On your S\+SH connection to the Z\+CB\+: 
+\begin{DoxyCode}
+yarp namespace /<your name>
+yarp conf <ip address> 10000
+yarpserver
+\end{DoxyCode}
+ where{\ttfamily $<$ip address$>$} is the IP address assigned to the Z\+CB eth0 connection. If you want to run the {\ttfamily yarpserver} and the {\ttfamily zynq\+Grabber} on the same S\+SH connection, you can run the {\ttfamily yarpserver} in the background\+: 
+\begin{DoxyCode}
+yarpserver &
+\end{DoxyCode}
+ you can use 
+\begin{DoxyCode}
+fg
+\end{DoxyCode}
+ to bring {\ttfamily yarpserver} back to the foreground.
+
+\paragraph*{Connect your laptop to the {\ttfamily yarpserver}}
+
+On a terminal on your own laptop\+: 
+\begin{DoxyCode}
+yarp conf <ip address> 10000
+\end{DoxyCode}
+ {\bfseries Note\+:} this is the ip address of the Z\+C\+B! not your laptop! \+:warning\+: 
+\begin{DoxyCode}
+yarp detect
+\end{DoxyCode}
+ should find the {\ttfamily yarpserver} you have running on the zcb. 

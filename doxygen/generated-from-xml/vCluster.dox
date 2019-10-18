@@ -1,0 +1,58 @@
+
+  /**
+  *
+  * @ingroup processing 
+  * \defgroup vCluster vCluster
+  * Clustering and tracking events
+  * Version:1.0
+  * \author  Chiara Bartolozzi chiara.bartolozzi@iit.it, 
+                  Arren Glover arren.glover@iit.it
+  * \n
+  * \copyright Released under the terms of the GNU GPL v2.0
+  * \section intro_sec Description
+  *
+  
+      The module creates clusters of events assuming a Gaussian distribution. Tracks clusters as they move.
+    
+  * \section parameters_sec Parameters     
+  
+  *- -- name : Specifies the stem name of ports created by the module.
+  *- -- alphaShape : Specifies how quickly cluster shape changes given new events.
+  *- -- alphaPos : Specifies how quickly cluster position changes given new events.
+  *- -- tAct : Threshold for a cluster to become active.
+  *- -- tInact : Threshold for a cluster to become inactive.
+  *- -- tFree : Threshold for a cluster to become free.
+  *- -- tClusRefr : Maximum period at which a cluster can output a cluster event.
+  *- -- sigX : Initial cluster size on the x-axis.
+  *- -- sigY : Initial cluster size on the y-axis.
+  *- -- sigXY : Initial angle between x and y-axes.
+  *- -- fixedShape : Sets clusters to fixed shape.
+  *- -- regRate : Specifies how often clusters decay.
+  *- -- maxDista : Specifies the maximum distance an event can be from the centre of the cluster.
+  *- -- decay : Specifies how slowly events decay.
+  *- -- clusterLimit : Specifies a limit on the number of clusters.
+  * \section inputports_sec Input Ports
+  * 
+  *- /vCluster/vBottle:i [eventdriven::vBottle]  [default carrier:tcp]: 
+                Accepts the address events in the vBottle container
+            
+  *
+  
+  * \section outputports_sec Output Ports
+  * 
+  *- /vCluster/vBottle:o [eventdriven::vBottle]  [default carrier:tcp]: 
+                Outputs cluster events in the form of an
+                eventdriven::GaussianAE. The vBottle also contains all
+                events in the vBottle received as input.
+            
+  *
+  
+  *
+  * \section services_sec Services
+  * 
+  *
+  * 
+  *
+  *
+  **/
+

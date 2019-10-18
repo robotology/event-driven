@@ -1,0 +1,28 @@
+\hypertarget{group__vFlow}{}\section{v\+Flow}
+\label{group__vFlow}\index{v\+Flow@{v\+Flow}}
+Event-\/based Optical Flow Calculation Version\+:1.\+0 \begin{DoxyAuthor}{Author}
+Arren Glover \href{mailto:arren.glover@iit.it}{\tt arren.\+glover@iit.\+it} ~\newline
+ 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+Released under the terms of the G\+NU G\+PL v2.\+0 
+\end{DoxyCopyright}
+\hypertarget{group__zynqGrabber_intro_sec}{}\subsection{Description}\label{group__zynqGrabber_intro_sec}
+The module calculates event-\/based Optical Flow by fitting planes in spatio-\/temporal space.\hypertarget{group__zynqGrabber_parameters_sec}{}\subsection{Parameters}\label{group__zynqGrabber_parameters_sec}
+
+\begin{DoxyItemize}
+\item -- name \+: Specifies the stem name of ports created by the module.
+\item -- strict \+: Sets both input and ouput ports to use strict protocols.
+\item -- width \+: Number of pixels on the x-\/axis of the sensor.
+\item -- height \+: Number of pixels on the y-\/axis of the sensor.
+\item -- filter\+Size \+: Lenght of the spatial window in pixels.
+\item -- min\+Evts\+Thresh \+: Minimum number of events on the plane. 
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_inputports_sec}{}\subsection{Input Ports}\label{group__zynqGrabber_inputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Flow/v\+Bottle\+:i \mbox{[}eventdriven\+::v\+Bottle\mbox{]} \mbox{[}default carrier\+:tcp\mbox{]}\+: Accepts the address events in the v\+Bottle container
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_outputports_sec}{}\subsection{Output Ports}\label{group__zynqGrabber_outputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Flow/v\+Bottle\+:o \mbox{[}eventdriven\+::v\+Bottle\mbox{]} \mbox{[}default carrier\+:tcp\mbox{]}\+: Outputs flow events in the form of an eventdriven\+::\+Flow\+Event. The v\+Bottle also contains all events in the v\+Bottle received as input.
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_services_sec}{}\subsection{Services}\label{group__zynqGrabber_services_sec}

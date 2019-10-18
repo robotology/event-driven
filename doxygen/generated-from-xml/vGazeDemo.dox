@@ -1,0 +1,64 @@
+
+  /**
+  *
+  * @ingroup applications 
+  * \defgroup vGazeDemo vGazeDemo
+  * An interface between processed events and robot behaviour control
+  * Version:1.0
+  * \author  Arren Glover arren.glover@iit.it
+  * \n
+  * \copyright Released under the terms of the GNU GPL v2.0
+  * \section intro_sec Description
+  *
+  
+      Uses the gazecontroller and demoredball to perform gaze following or grasping given targets are given using eventdriven::ClusterEventGuass.
+    
+  * \section parameters_sec Parameters     
+  
+  *- -- name : Specifies the stem name of ports created by the module.
+  * \section inputports_sec Input Ports
+  * 
+  *- /vCircle/vBottle:i [eventdriven::vBottle]  [default carrier:tcp]: 
+                Accepts the address events and/or flow events in the vBottle
+                container
+            
+  *
+  
+  * \section outputports_sec Output Ports
+  * 
+  *- /vCircle/vBottle:o [eventdriven::vBottle]  [default carrier:tcp]: 
+                Outputs the cirlce detections in the form of an
+                eventdriven::ClusterEventGauss. The vBottle also contains all
+                events in the vBottle received as input.
+            
+  *
+  
+  *- /vCircle/scope:o [yarp::os::Bottle]  [default carrier:udp]: 
+                Outputs debug information for use with yarpscope. The gap
+                between input bottle numbers is written to detect data being
+                lost.
+            
+  *
+  
+  *- /vCirlce/debug:o [yarp::sig::Image]  [default carrier:udp]: 
+                Outputs a debugging images displaying events in the event-queue
+                as well as the strength of the Hough transform from the same
+                events.
+            
+  *
+  
+  *- /vCircle/dump:o [yarp::os::Bottle]  [default carrier:tcp]: 
+                Outputs a dump of detections for experiment analysis. The format
+                 is "Time Offset | Event Timestamp | X | Y | R | Score".
+            
+  *
+  
+  *
+  * \section services_sec Services
+  * 
+  *
+  * 
+  *
+  *
+  **/
+

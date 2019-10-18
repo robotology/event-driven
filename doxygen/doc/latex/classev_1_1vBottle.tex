@@ -1,0 +1,55 @@
+\hypertarget{classev_1_1vBottle}{}\section{ev\+:\+:v\+Bottle Class Reference}
+\label{classev_1_1vBottle}\index{ev\+::v\+Bottle@{ev\+::v\+Bottle}}
+
+
+yarp\+::os\+::\+Bottle wrapper for sending events through the yarp system with ensuring compatibility with yarpdatadumper and yarpdataplayer  
+
+
+
+
+{\ttfamily \#include $<$v\+Bottle.\+h$>$}
+
+Inheritance diagram for ev\+:\+:v\+Bottle\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1vBottle}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vBottle_afb002196d4fa9bd19af48be74327cb17}\label{classev_1_1vBottle_afb002196d4fa9bd19af48be74327cb17}} 
+\hyperlink{classev_1_1vBottle_afb002196d4fa9bd19af48be74327cb17}{v\+Bottle} ()
+\begin{DoxyCompactList}\small\item\em default constructor \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottle_a5b17f0b46d9260ab255f38382b4b7268}\label{classev_1_1vBottle_a5b17f0b46d9260ab255f38382b4b7268}} 
+void \hyperlink{classev_1_1vBottle_a5b17f0b46d9260ab255f38382b4b7268}{add\+Event} (event$<$$>$ e)
+\begin{DoxyCompactList}\small\item\em add a single event to the \hyperlink{classev_1_1vBottle}{v\+Bottle} \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottle_a0c78e6f9ef839038d71486f6a8a6294a}\label{classev_1_1vBottle_a0c78e6f9ef839038d71486f6a8a6294a}} 
+void \hyperlink{classev_1_1vBottle_a0c78e6f9ef839038d71486f6a8a6294a}{append} (\hyperlink{classev_1_1vBottle}{v\+Bottle} \&eb)
+\begin{DoxyCompactList}\small\item\em add all the contents of a \hyperlink{classev_1_1vBottle}{v\+Bottle} to the current \hyperlink{classev_1_1vBottle}{v\+Bottle} \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottle_a9ef66f613e1bbf196c515e7d8b0416df}\label{classev_1_1vBottle_a9ef66f613e1bbf196c515e7d8b0416df}} 
+{\footnotesize template$<$class T $>$ }\\void \hyperlink{classev_1_1vBottle_a9ef66f613e1bbf196c515e7d8b0416df}{append} (\hyperlink{classev_1_1vBottle}{v\+Bottle} \&eb)
+\begin{DoxyCompactList}\small\item\em append \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottle_a86302277c279a1b02d92f8e12afe6a2c}\label{classev_1_1vBottle_a86302277c279a1b02d92f8e12afe6a2c}} 
+{\footnotesize template$<$class T $>$ }\\v\+Queue \hyperlink{classev_1_1vBottle_a86302277c279a1b02d92f8e12afe6a2c}{get} ()
+\begin{DoxyCompactList}\small\item\em decode a single event-\/type into a v\+Queue from the \hyperlink{classev_1_1vBottle}{v\+Bottle} \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottle_a65bf90aec03b80dee45bf834efe3fbfc}\label{classev_1_1vBottle_a65bf90aec03b80dee45bf834efe3fbfc}} 
+{\footnotesize template$<$class T $>$ }\\void \hyperlink{classev_1_1vBottle_a65bf90aec03b80dee45bf834efe3fbfc}{addtoendof} (v\+Queue \&q)
+\begin{DoxyCompactList}\small\item\em add a specific event-\/type from the \hyperlink{classev_1_1vBottle}{v\+Bottle} to the end of a v\+Queue \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottle_a27569b9aaa7eb1ff9135d435b841c2de}\label{classev_1_1vBottle_a27569b9aaa7eb1ff9135d435b841c2de}} 
+{\footnotesize template$<$class T $>$ }\\v\+Queue \hyperlink{classev_1_1vBottle_a27569b9aaa7eb1ff9135d435b841c2de}{get\+Sorted} ()
+\begin{DoxyCompactList}\small\item\em get a specific event-\/type and ensure they are in correct temporal order \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottle_af2abadf41f73c455dd451e34e9ba3376}\label{classev_1_1vBottle_af2abadf41f73c455dd451e34e9ba3376}} 
+v\+Queue \hyperlink{classev_1_1vBottle_af2abadf41f73c455dd451e34e9ba3376}{get\+All} ()
+\begin{DoxyCompactList}\small\item\em decode all events into a v\+Queue \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottle_a273cfda65fed58bcf19cedf6652948d9}\label{classev_1_1vBottle_a273cfda65fed58bcf19cedf6652948d9}} 
+v\+Queue \hyperlink{classev_1_1vBottle_a273cfda65fed58bcf19cedf6652948d9}{get\+All\+Sorted} ()
+\begin{DoxyCompactList}\small\item\em decode all events into a v\+Queue and ensure they are in correct temporal order \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+yarp\+::os\+::\+Bottle wrapper for sending events through the yarp system with ensuring compatibility with yarpdatadumper and yarpdataplayer 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Bottle.\+h\end{DoxyCompactItemize}

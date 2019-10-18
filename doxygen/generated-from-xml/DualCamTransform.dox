@@ -1,0 +1,52 @@
+
+  /**
+  *
+  * @ingroup processing 
+  * \defgroup dualCamTransform dualCamTransform
+  * Transform events into the frame-based camera image plane
+  * Version:1.0
+  * \author  Massimiliano Iacono massimiliano.iacono@iit.it
+  * \n
+  * \copyright Released under the terms of the GNU GPL v2.0
+  * \section intro_sec Description
+  *
+  
+      The module maps events to their location in the frame camera
+    
+  * \section parameters_sec Parameters     
+  
+  *- -- name : Specifies the stem name of ports created by the module.
+  * \section inputports_sec Input Ports
+  * 
+  *- /vMapping/vBottle:i [eventdriven::vBottle]  [default carrier:tcp]: 
+                Accepts the address events and/or flow events in the vBottle
+                container
+            
+  *
+  
+  *- /vMapping/img:i [yarp::sig::Image]  [default carrier:tcp]: 
+                Input frame based image
+            
+  *
+  
+  * \section outputports_sec Output Ports
+  * 
+  *- /vMapping/img:o [yarp::sig::Image]  [default carrier:udp]: 
+                Image overlapped with events
+            
+  *
+  
+  *- /vMapping/vBottle:o [ev::vBottle]  [default carrier:udp]: 
+                Transformed events
+            
+  *
+  
+  *
+  * \section services_sec Services
+  * 
+  *
+  * 
+  *
+  *
+  **/
+

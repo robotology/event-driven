@@ -1,0 +1,216 @@
+\hypertarget{classev_1_1vSurface2}{}\section{ev\+:\+:v\+Surface2 Class Reference}
+\label{classev_1_1vSurface2}\index{ev\+::v\+Surface2@{ev\+::v\+Surface2}}
+
+
+a spatial-\/temporal surface storage data structure  
+
+
+
+
+{\ttfamily \#include $<$v\+Window\+\_\+adv.\+h$>$}
+
+Inheritance diagram for ev\+:\+:v\+Surface2\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1vSurface2}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classev_1_1vSurface2_ada6aeb852479aa111b1f5ad32ac1286b}{v\+Surface2} (int \hyperlink{classev_1_1vSurface2_a1aa8027816352a15d5b9bf1f26f48e76}{width}=128, int height=128)
+\begin{DoxyCompactList}\small\item\em v\+Window constructor \end{DoxyCompactList}\item 
+virtual v\+Queue \hyperlink{classev_1_1vSurface2_a6dee662976048b73d7b19e45871352da}{add\+Event} (event$<$$>$ v)
+\begin{DoxyCompactList}\small\item\em add\+Event adds an event to the window. Also checks for expired events. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a311f0fb7297ee4a070755308e9271398}\label{classev_1_1vSurface2_a311f0fb7297ee4a070755308e9271398}} 
+void {\bfseries fast\+Add\+Event} (event$<$$>$ v, bool only\+Add=false)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_af35870c14a5c94dc7522bdfcf76df2cb}\label{classev_1_1vSurface2_af35870c14a5c94dc7522bdfcf76df2cb}} 
+virtual v\+Queue {\bfseries remove\+Events} (event$<$$>$ to\+Add)=0
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a956e6ab8f419554958961fbbca68029b}\label{classev_1_1vSurface2_a956e6ab8f419554958961fbbca68029b}} 
+virtual void {\bfseries fast\+Remove\+Events} (event$<$$>$ to\+Add)=0
+\item 
+event \hyperlink{classev_1_1vSurface2_af84a860e057aea43831e8e6d16107cd4}{get\+Most\+Recent} ()
+\begin{DoxyCompactList}\small\item\em get\+Most\+Recent \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a67906f1ecd7fab30f1d0f7218388234e}\label{classev_1_1vSurface2_a67906f1ecd7fab30f1d0f7218388234e}} 
+int {\bfseries get\+Event\+Count} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a7897c4e7c034f36f86d29e14e36c2ca4}\label{classev_1_1vSurface2_a7897c4e7c034f36f86d29e14e36c2ca4}} 
+v\+Queue {\bfseries get\+Everything} ()
+\item 
+v\+Queue \hyperlink{classev_1_1vSurface2_aedcc28d0ccdbc343f031506a8fa84bb0}{get\+Surf} ()
+\begin{DoxyCompactList}\small\item\em get\+Window \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_aaa5978b3d040e278db563495585adf86}\label{classev_1_1vSurface2_aaa5978b3d040e278db563495585adf86}} 
+v\+Queue {\bfseries get\+Surf} (int d)
+\item 
+v\+Queue \hyperlink{classev_1_1vSurface2_a42f7a69a075225254ffddc7bb5d4d9ba}{get\+Surf} (int x, int y, int d)
+\begin{DoxyCompactList}\small\item\em get\+Spatial\+Window returns Address\+Events within a spatial window \end{DoxyCompactList}\item 
+v\+Queue \hyperlink{classev_1_1vSurface2_aa74adc0c56d62a6f51c2901ec209233e}{get\+Surf} (int xl, int xh, int yl, int yh)
+\begin{DoxyCompactList}\small\item\em get\+Spatial\+Window returns Address\+Events within a spatial window \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a70e292820956b12c3bc123c4e724e90a}\label{classev_1_1vSurface2_a70e292820956b12c3bc123c4e724e90a}} 
+v\+Queue {\bfseries get\+Surf\+\_\+\+Tlim} (int dt)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_ad487a13d9bcd8433489fb7e7b3fa5dc8}\label{classev_1_1vSurface2_ad487a13d9bcd8433489fb7e7b3fa5dc8}} 
+v\+Queue {\bfseries get\+Surf\+\_\+\+Tlim} (int dt, int d)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a53939fc4b201eaee766114982d0ae9c2}\label{classev_1_1vSurface2_a53939fc4b201eaee766114982d0ae9c2}} 
+v\+Queue {\bfseries get\+Surf\+\_\+\+Tlim} (int dt, int x, int y, int d)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a63c601ec2570dbde037c9ea92342b24b}\label{classev_1_1vSurface2_a63c601ec2570dbde037c9ea92342b24b}} 
+v\+Queue {\bfseries get\+Surf\+\_\+\+Tlim} (int dt, int xl, int xh, int yl, int yh)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_acb41c1eff67ff285be715f8504d37d22}\label{classev_1_1vSurface2_acb41c1eff67ff285be715f8504d37d22}} 
+v\+Queue {\bfseries get\+Surf\+\_\+\+Clim} (int c)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_af9e9a30828d508f49921b02224723a36}\label{classev_1_1vSurface2_af9e9a30828d508f49921b02224723a36}} 
+v\+Queue {\bfseries get\+Surf\+\_\+\+Clim} (int c, int d)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a708416f0ae3b13858f1c96e203898223}\label{classev_1_1vSurface2_a708416f0ae3b13858f1c96e203898223}} 
+v\+Queue {\bfseries get\+Surf\+\_\+\+Clim} (int c, int x, int y, int d)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a1b04ff8d8d449b054a514c092bac1145}\label{classev_1_1vSurface2_a1b04ff8d8d449b054a514c092bac1145}} 
+v\+Queue {\bfseries get\+Surf\+\_\+\+Clim} (int c, int xl, int xh, int yl, int yh)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_aacd14a2e5c73e557b7b6b90a20624e23}\label{classev_1_1vSurface2_aacd14a2e5c73e557b7b6b90a20624e23}} 
+void {\bfseries get\+Surf\+Sorted} (v\+Queue \&fillq)
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_ad26e2a77d859924e39526fe69ad6e8bf}\label{classev_1_1vSurface2_ad26e2a77d859924e39526fe69ad6e8bf}} 
+v\+Queue \hyperlink{classev_1_1vSurface2_ad26e2a77d859924e39526fe69ad6e8bf}{q}
+\begin{DoxyCompactList}\small\item\em event storage \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_aeea3647a3da9c08bd0f3bd577e6ba443}\label{classev_1_1vSurface2_aeea3647a3da9c08bd0f3bd577e6ba443}} 
+std\+::vector$<$ std\+::vector$<$ event$<$$>$ $>$ $>$ \hyperlink{classev_1_1vSurface2_aeea3647a3da9c08bd0f3bd577e6ba443}{spatial}
+\begin{DoxyCompactList}\small\item\em for quick spatial accessing and surfacing \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a1aa8027816352a15d5b9bf1f26f48e76}\label{classev_1_1vSurface2_a1aa8027816352a15d5b9bf1f26f48e76}} 
+int \hyperlink{classev_1_1vSurface2_a1aa8027816352a15d5b9bf1f26f48e76}{width}
+\begin{DoxyCompactList}\small\item\em retina size \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a4cac3483eefdbe9e83ced2ef6bc5f7b2}\label{classev_1_1vSurface2_a4cac3483eefdbe9e83ced2ef6bc5f7b2}} 
+int {\bfseries height}
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface2_a53cfa9932bf60007440cbf535c115222}\label{classev_1_1vSurface2_a53cfa9932bf60007440cbf535c115222}} 
+int \hyperlink{classev_1_1vSurface2_a53cfa9932bf60007440cbf535c115222}{count}
+\begin{DoxyCompactList}\small\item\em active events \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+a spatial-\/temporal surface storage data structure 
+
+\subsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classev_1_1vSurface2_ada6aeb852479aa111b1f5ad32ac1286b}\label{classev_1_1vSurface2_ada6aeb852479aa111b1f5ad32ac1286b}} 
+\index{ev\+::v\+Surface2@{ev\+::v\+Surface2}!v\+Surface2@{v\+Surface2}}
+\index{v\+Surface2@{v\+Surface2}!ev\+::v\+Surface2@{ev\+::v\+Surface2}}
+\subsubsection{\texorpdfstring{v\+Surface2()}{vSurface2()}}
+{\footnotesize\ttfamily ev\+::v\+Surface2\+::v\+Surface2 (\begin{DoxyParamCaption}\item[{int}]{width = {\ttfamily 128},  }\item[{int}]{height = {\ttfamily 128} }\end{DoxyParamCaption})}
+
+
+
+v\+Window constructor 
+
+
+\begin{DoxyParams}{Parameters}
+{\em window\+Size} & optional time to store events (in us) \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classev_1_1vSurface2_a6dee662976048b73d7b19e45871352da}\label{classev_1_1vSurface2_a6dee662976048b73d7b19e45871352da}} 
+\index{ev\+::v\+Surface2@{ev\+::v\+Surface2}!add\+Event@{add\+Event}}
+\index{add\+Event@{add\+Event}!ev\+::v\+Surface2@{ev\+::v\+Surface2}}
+\subsubsection{\texorpdfstring{add\+Event()}{addEvent()}}
+{\footnotesize\ttfamily v\+Queue ev\+::v\+Surface2\+::add\+Event (\begin{DoxyParamCaption}\item[{event$<$$>$}]{v }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+add\+Event adds an event to the window. Also checks for expired events. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em event} & the event to add \\
+\hline
+\end{DoxyParams}
+
+
+Reimplemented in \hyperlink{classev_1_1lifetimeSurface_a8fce037a13281c0e46c7d660e0ea2275}{ev\+::lifetime\+Surface}.
+
+\mbox{\Hypertarget{classev_1_1vSurface2_af84a860e057aea43831e8e6d16107cd4}\label{classev_1_1vSurface2_af84a860e057aea43831e8e6d16107cd4}} 
+\index{ev\+::v\+Surface2@{ev\+::v\+Surface2}!get\+Most\+Recent@{get\+Most\+Recent}}
+\index{get\+Most\+Recent@{get\+Most\+Recent}!ev\+::v\+Surface2@{ev\+::v\+Surface2}}
+\subsubsection{\texorpdfstring{get\+Most\+Recent()}{getMostRecent()}}
+{\footnotesize\ttfamily event ev\+::v\+Surface2\+::get\+Most\+Recent (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+get\+Most\+Recent 
+
+\begin{DoxyReturn}{Returns}
+
+\end{DoxyReturn}
+\mbox{\Hypertarget{classev_1_1vSurface2_aedcc28d0ccdbc343f031506a8fa84bb0}\label{classev_1_1vSurface2_aedcc28d0ccdbc343f031506a8fa84bb0}} 
+\index{ev\+::v\+Surface2@{ev\+::v\+Surface2}!get\+Surf@{get\+Surf}}
+\index{get\+Surf@{get\+Surf}!ev\+::v\+Surface2@{ev\+::v\+Surface2}}
+\subsubsection{\texorpdfstring{get\+Surf()}{getSurf()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily v\+Queue ev\+::v\+Surface2\+::get\+Surf (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+get\+Window 
+
+\begin{DoxyReturn}{Returns}
+
+\end{DoxyReturn}
+\mbox{\Hypertarget{classev_1_1vSurface2_a42f7a69a075225254ffddc7bb5d4d9ba}\label{classev_1_1vSurface2_a42f7a69a075225254ffddc7bb5d4d9ba}} 
+\index{ev\+::v\+Surface2@{ev\+::v\+Surface2}!get\+Surf@{get\+Surf}}
+\index{get\+Surf@{get\+Surf}!ev\+::v\+Surface2@{ev\+::v\+Surface2}}
+\subsubsection{\texorpdfstring{get\+Surf()}{getSurf()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily v\+Queue ev\+::v\+Surface2\+::get\+Surf (\begin{DoxyParamCaption}\item[{int}]{x,  }\item[{int}]{y,  }\item[{int}]{d }\end{DoxyParamCaption})}
+
+
+
+get\+Spatial\+Window returns Address\+Events within a spatial window 
+
+
+\begin{DoxyParams}{Parameters}
+{\em x} & x centre \\
+\hline
+{\em y} & y centre \\
+\hline
+{\em d} & distance of the half-\/length of a square window \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+a v\+Queue containing a copy of the events 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classev_1_1vSurface2_aa74adc0c56d62a6f51c2901ec209233e}\label{classev_1_1vSurface2_aa74adc0c56d62a6f51c2901ec209233e}} 
+\index{ev\+::v\+Surface2@{ev\+::v\+Surface2}!get\+Surf@{get\+Surf}}
+\index{get\+Surf@{get\+Surf}!ev\+::v\+Surface2@{ev\+::v\+Surface2}}
+\subsubsection{\texorpdfstring{get\+Surf()}{getSurf()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily v\+Queue ev\+::v\+Surface2\+::get\+Surf (\begin{DoxyParamCaption}\item[{int}]{xl,  }\item[{int}]{xh,  }\item[{int}]{yl,  }\item[{int}]{yh }\end{DoxyParamCaption})}
+
+
+
+get\+Spatial\+Window returns Address\+Events within a spatial window 
+
+
+\begin{DoxyParams}{Parameters}
+{\em xl} & lower x value of window \\
+\hline
+{\em xh} & upper x value of window \\
+\hline
+{\em yl} & lower y value of window \\
+\hline
+{\em yh} & upper y value of window \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+a v\+Queue containing a copy of the events 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Window\+\_\+adv.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/v\+Window\+\_\+adv.\+cpp\end{DoxyCompactItemize}

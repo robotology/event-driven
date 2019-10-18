@@ -1,0 +1,52 @@
+\hypertarget{classev_1_1vWritePort}{}\section{ev\+:\+:v\+Write\+Port Class Reference}
+\label{classev_1_1vWritePort}\index{ev\+::v\+Write\+Port@{ev\+::v\+Write\+Port}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_a2ae9d0799444e6b08a2741632ca2a844}\label{classev_1_1vWritePort_a2ae9d0799444e6b08a2741632ca2a844}} 
+bool {\bfseries open} (std\+::string name)
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_a8657bd358f9714f5c183ba3038f1e672}\label{classev_1_1vWritePort_a8657bd358f9714f5c183ba3038f1e672}} 
+void {\bfseries close} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_aaf5570455ab1a10e33005ea195f01212}\label{classev_1_1vWritePort_aaf5570455ab1a10e33005ea195f01212}} 
+void {\bfseries set\+Write\+Type} (std\+::string tag)
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_a82bdfad9b345a33f3458c82c65e62305}\label{classev_1_1vWritePort_a82bdfad9b345a33f3458c82c65e62305}} 
+int {\bfseries get\+Output\+Count} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_a30e8556f5ab495ec11cb5f595d0fc679}\label{classev_1_1vWritePort_a30e8556f5ab495ec11cb5f595d0fc679}} 
+bool {\bfseries write} (const vector$<$ int32\+\_\+t $>$ \&q, Stamp \&envelope)
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_ae90dc683d47992ea2374237c130f057b}\label{classev_1_1vWritePort_ae90dc683d47992ea2374237c130f057b}} 
+bool {\bfseries write} (const deque$<$ int32\+\_\+t $>$ \&q, Stamp \&envelope)
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_aa3a656f3748b036cf2a632d9591c13f3}\label{classev_1_1vWritePort_aa3a656f3748b036cf2a632d9591c13f3}} 
+bool {\bfseries write} (const v\+Queue \&q, Stamp \&envelope)
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_a4accfe5230b426f9b863e481d8fb3c6c}\label{classev_1_1vWritePort_a4accfe5230b426f9b863e481d8fb3c6c}} 
+{\footnotesize template$<$class T $>$ }\\bool {\bfseries write} (const std\+::deque$<$ T $>$ \&q, Stamp \&envelope)
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_a1fbcfd268af4278ae3d778b5c1b0284a}\label{classev_1_1vWritePort_a1fbcfd268af4278ae3d778b5c1b0284a}} 
+{\footnotesize template$<$class T $>$ }\\bool {\bfseries write} (const std\+::vector$<$ T $>$ \&q, Stamp \&envelope)
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_a05c3debed09851bd024782ca0e4a7b54}\label{classev_1_1vWritePort_a05c3debed09851bd024782ca0e4a7b54}} 
+bool {\bfseries \+\_\+internal\+\_\+write} (Stamp \&envelope)
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_af9ffcc74c80d4c04f2447c718c52f270}\label{classev_1_1vWritePort_af9ffcc74c80d4c04f2447c718c52f270}} 
+\hyperlink{classev_1_1vPortableInterface}{v\+Portable\+Interface} {\bfseries internal\+\_\+storage}
+\item 
+\mbox{\Hypertarget{classev_1_1vWritePort_a0cb1d83ab6473e736660b9e95a5e35b9}\label{classev_1_1vWritePort_a0cb1d83ab6473e736660b9e95a5e35b9}} 
+Port {\bfseries port}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Port.\+h\end{DoxyCompactItemize}

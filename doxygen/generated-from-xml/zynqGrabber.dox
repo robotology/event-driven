@@ -1,0 +1,67 @@
+
+  /**
+  *
+  * @ingroup hardwareIO 
+  * \defgroup zynqGrabber zynqGrabber
+  * Interfaces to DVS or ATIS sensors connected with zynq-based boards
+  * Version:1.0
+  * \author  Chiara Bartolozzi chiara.bartolozzi@iit.it, 
+                  Arren Glover arren.glover@iit.it
+  * \n
+  * \copyright Released under the terms of the GNU GPL v2.0
+  * \section intro_sec Description
+  *
+  
+      Reads/writes events as well as programs biases for event-based chips connected using a zynq-board interface.
+    
+  * \section parameters_sec Parameters     
+  
+  *- -- name : Modules name
+  *- -- errorcheck : Check for errors in data stream
+  *- -- verbose : Output verbose information
+  *- -- biaswrite : Only write bias values then close
+  *- -- jumpcheck : Check timestamp values are ordered
+  *- -- iBias : Use current bias values
+  *- -- collerDevice : Name of vision controller device
+  *- -- ATIS_BIAS_LEFT : Bias values for left camera
+  *- -- ATIS_BIAS_RIGHT : Bias values for right camera
+  *- -- dataDevice : Name of device to read data from
+  *- -- readPacketSize : Chunk size to read from device
+  *- -- bufferSize : Size of internal buffer for events that need to be sent
+  *- -- maxBottleSize : Maximum size events in the bottles
+  * \section inputports_sec Input Ports
+  * 
+  *- /zynqGrabber/vBottle:i [vBottle]  [default carrier:]: 
+     Accepts events to be sent to the hardware device (i.e. SpiNNaker)
+     
+  *
+  
+  * \section outputports_sec Output Ports
+  * 
+  *- /zynqGrabber/vBottle:o [vBottle]  [default carrier:]: 
+     The events from the camera (or other device) are published on this port
+     
+  *
+  
+  *- /zynqGrabber/eventCount:o [yarp::os::Bottle]  [default carrier:]: 
+     Outputs the number of events read by the zynqGrabber
+     
+  *
+  
+  *
+  * \section services_sec Services
+  * 
+  *- /zynqGrabber/rpc
+  *  [rpc-server]: 
+  * 
+            Start stop the device
+            Set the bias values for a camera
+        
+  * . This service is described in  ()
+  * 
+  *
+  * 
+  *
+  *
+  **/
+

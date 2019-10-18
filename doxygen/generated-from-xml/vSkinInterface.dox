@@ -1,0 +1,69 @@
+
+  /**
+  *
+  * @ingroup processing 
+  * \defgroup vDelayControl vDelayControl
+  * Controlled latency framework for on-line robotics
+  * Version:1.0
+  * \author  Arren Glover arren.glover@iit.it
+  * \n
+  * \copyright Released under the terms of the GNU GPL v2.0
+  * \section intro_sec Description
+  *
+  
+      This module wraps processing with a delay control framework to run an
+      algorithm online on the robot with an optimal balance between algorithm
+      accuracy and latency. The current implementation is a particle filter for
+      circle tracking.
+    
+  * \section parameters_sec Parameters     
+  
+  *- -- name : Specifies the stem name of ports created by the module.
+  *- -- threads : how many threads to use
+  *- -- height : sensor height
+  *- -- width : sensor width
+  *- -- bins : split the observation template into this many positive segments
+  *- -- maxq : How many events to keep in the ROI
+  *- -- gain : delay control gain
+  *- -- adaptive : perform adaptive sampling
+  *- -- particles : number of particles to use
+  *- -- randoms : percentage of particles to randomly resample
+  *- -- see : seed position of particles (x y r)
+  *- -- obsthresh : percentage of maximum likelihood (= bins) to accept as an observation
+  *- -- obsinlier : template positive bin thickness
+  *- -- truethresh : percentage of maximum likelihood (= bins) to accept as a true positive observation
+  * \section inputports_sec Input Ports
+  * 
+  *- /vpf/vBottle:i [vBottle]  [default carrier:]: 
+                Accepts the address events from the camera
+            
+  *
+  
+  * \section outputports_sec Output Ports
+  * 
+  *- /vpf/vBottle:o [vBottle]  [default carrier:]: 
+                Outputs the detected circle positions as a vBottle of GaussianAE
+            
+  *
+  
+  *- /vpf/scope:o [yarp::os::Bottle]  [default carrier:]: 
+                Outputs debug information for use with yarpscope. Five variables
+                can be visualised indicating the delay of the module.
+            
+  *
+  
+  *- /vpf/debug:o [yarp::sig::Image]  [default carrier:]: 
+                Outputs a debugging images displaying events in the event-queue
+                as well as the particles and circle positions.
+            
+  *
+  
+  *
+  * \section services_sec Services
+  * 
+  *
+  * 
+  *
+  *
+  **/
+

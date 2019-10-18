@@ -1,0 +1,55 @@
+Events are serialised and coded in a standardised format for sending and receiving between modules. In addition, a packet containing multiple different types of events is segmented by event-\/type such that a search can quickly retrieve events of only a specific type. The packet is formed as such\+: 
+\begin{DoxyCode}
+EVENTTYPE-1-TAG ( serialised and concatenated events of type 1) EVENTTYPE-2-TAG ( serialised and
+       concatenated events of type 2) ...
+\end{DoxyCode}
+ Each event class defines the T\+AG used to identify itself and also the method with which the event data is serialised. Managing the serialisation and de-\/serialisation of the event data is then simply a case of using the event class to write/read its T\+AG and then call its encode/decode functions on the serialised data. The {\ttfamily eventdriven\+::v\+Bottle} class handles the coding of packets in the event-\/driven project.
+
+Events are defined in a class hierarchy, with each child class calling its parent encode/decode function before its own. Adding a new event therefore only requires defining the serialisation method for any new data that the event-\/class contains ({\itshape e.\+g.} the {\bfseries Flow} event only defines how the velocities are encoded and calls its parent class, the {\bfseries Adress\+Event}, to encode other information, such as position and timestamp).
+
+ \section*{Event Coding Definitions}
+
+The {\bfseries v\+Event} uses 4 bytes to encode a timestamp ({\itshape T}) 
+\begin{DoxyCode}
+[10000000 TTTTTTT TTTTTTTT TTTTTTTT]
+\end{DoxyCode}
+ An {\bfseries Address\+Event} uses 4 bytes to encode position ({\itshape X}, {\itshape Y}), polarity ({\itshape P}) and channel ({\itshape C}). Importantly, as Address\+Event is of type {\ttfamily v\+Event} the timestamp information of this event is always encoded as well. 
+\begin{DoxyCode}
+[00000000 00000000 CYYYYYYY XXXXXXXP]
+\end{DoxyCode}
+ or, if the {\bfseries V\+L\+I\+B\+\_\+10\+B\+I\+T\+C\+O\+D\+EC} C\+Make flag is set {\bfseries ON} (used for the A\+T\+IS camera) the Address\+Event is encoded as\+: 
+\begin{DoxyCode}
+[00000000 000C00YY YYYYYYXX XXXXXXXP]
+\end{DoxyCode}
+
+
+A {\bfseries Flow\+Event} uses 8 bytes to encode velocity (ẋ, ẏ), each 4 bytes represent a {\itshape float}. Similarly as Flow\+Event is of time Address\+Event the Flow\+Event also encodes all the position and timestamp information above. 
+\begin{DoxyCode}
+[ẋẋẋẋẋẋẋẋ ẋẋẋẋẋẋẋẋ ẏẏẏẏẏẏẏẏ ẏẏẏẏẏẏẏẏ]
+\end{DoxyCode}
+ A {\bfseries Labelled\+AE} is labelled as belonging to a group ID ({\itshape I}) using a 4 byte {\itshape int}. 
+\begin{DoxyCode}
+[IIIIIIIII IIIIIIIII IIIIIIIII IIIIIIIII]
+\end{DoxyCode}
+ A {\bfseries Gaussian\+AE} extends a cluster event with a 2 dimensional Gaussian distribution parameterised by ({\itshape sx}, {\itshape sy}, {\itshape sxy}) using a total of 12 bytes. 
+\begin{DoxyCode}
+[sxsxsxsxsxsxsxsx sxsxsxsxsxsxsxsx sxsxsxsxsxsxsxsx sxsxsxsxsxsxsxsx sysysysysysysysy sysysysysysysysy
+       sysysysysysysysy sysysysysysysysy sxysxysxysxysxysxysxysxy sxysxysxysxysxysxysxysxy sxysxysxysxysxysxysxysxy
+       sxysxysxysxysxysxysxysxy]
+\end{DoxyCode}
+
+
+\section*{Coding in Y\+A\+RP}
+
+The {\ttfamily eventdriven\+::v\+Bottle} class wraps the encoding and decoding operations into a {\ttfamily yarp\+::os\+::\+Bottle} such that an example {\ttfamily v\+Bottle} will appear as\+: 
+\begin{DoxyCode}
+AE (-2140812352 15133 -2140811609 13118) FLOW (-2140812301 13865 -1056003417 -1055801578)
+\end{DoxyCode}
+ {\bfseries N\+O\+TE\+:} The actual data sent by Y\+A\+RP for a bottle includes signifiers for data type and data length, adding extra data to the bottle as above.
+
+
+\begin{DoxyCode}
+256 4 4 2 'A' 'E' 257 4 -2140812352 15133 -2140811609 13118 4 4 'F' 'L' 'O' 'W' 257 4 -2140812301 13865
+       -1056003417 -1055801578
+\end{DoxyCode}
+ 

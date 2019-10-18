@@ -1,0 +1,38 @@
+\hypertarget{group__vDelayControl}{}\section{v\+Delay\+Control}
+\label{group__vDelayControl}\index{v\+Delay\+Control@{v\+Delay\+Control}}
+Controlled latency framework for on-\/line robotics Version\+:1.\+0 \begin{DoxyAuthor}{Author}
+Arren Glover \href{mailto:arren.glover@iit.it}{\tt arren.\+glover@iit.\+it} ~\newline
+ 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+Released under the terms of the G\+NU G\+PL v2.\+0 
+\end{DoxyCopyright}
+\hypertarget{group__zynqGrabber_intro_sec}{}\subsection{Description}\label{group__zynqGrabber_intro_sec}
+This module wraps processing with a delay control framework to run an algorithm online on the robot with an optimal balance between algorithm accuracy and latency. The current implementation is a particle filter for circle tracking.\hypertarget{group__zynqGrabber_parameters_sec}{}\subsection{Parameters}\label{group__zynqGrabber_parameters_sec}
+
+\begin{DoxyItemize}
+\item -- name \+: Specifies the stem name of ports created by the module.
+\item -- threads \+: how many threads to use
+\item -- height \+: sensor height
+\item -- width \+: sensor width
+\item -- bins \+: split the observation template into this many positive segments
+\item -- maxq \+: How many events to keep in the R\+OI
+\item -- gain \+: delay control gain
+\item -- adaptive \+: perform adaptive sampling
+\item -- particles \+: number of particles to use
+\item -- randoms \+: percentage of particles to randomly resample
+\item -- see \+: seed position of particles (x y r)
+\item -- obsthresh \+: percentage of maximum likelihood (= bins) to accept as an observation
+\item -- obsinlier \+: template positive bin thickness
+\item -- truethresh \+: percentage of maximum likelihood (= bins) to accept as a true positive observation 
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_inputports_sec}{}\subsection{Input Ports}\label{group__zynqGrabber_inputports_sec}
+
+\begin{DoxyItemize}
+\item /vpf/v\+Bottle\+:i \mbox{[}v\+Bottle\mbox{]} \mbox{[}default carrier\+:\mbox{]}\+: Accepts the address events from the camera
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_outputports_sec}{}\subsection{Output Ports}\label{group__zynqGrabber_outputports_sec}
+
+\begin{DoxyItemize}
+\item /vpf/v\+Bottle\+:o \mbox{[}v\+Bottle\mbox{]} \mbox{[}default carrier\+:\mbox{]}\+: Outputs the detected circle positions as a v\+Bottle of Gaussian\+AE
+\item /vpf/scope\+:o \mbox{[}yarp\+::os\+::\+Bottle\mbox{]} \mbox{[}default carrier\+:\mbox{]}\+: Outputs debug information for use with yarpscope. Five variables can be visualised indicating the delay of the module.
+\item /vpf/debug\+:o \mbox{[}yarp\+::sig\+::\+Image\mbox{]} \mbox{[}default carrier\+:\mbox{]}\+: Outputs a debugging images displaying events in the event-\/queue as well as the particles and circle positions.
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_services_sec}{}\subsection{Services}\label{group__zynqGrabber_services_sec}

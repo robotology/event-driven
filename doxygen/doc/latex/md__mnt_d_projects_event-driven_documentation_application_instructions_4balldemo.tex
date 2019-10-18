@@ -1,0 +1,40 @@
+This tutorial explains how to perform ball tracking with the event-\/driven cameras. The Robot can be commanded to look at the position of the ball, and also move its arm to the position of the ball.
+
+
+
+\subsection*{How it works}
+
+Ball tracking is performed using a particle filter. There are limits on the maximum and minimum size of the ball, and thresholds for minimum \char`\"{}roundness\char`\"{} to be successfully detected. The output of the particle filter is a \hyperlink{classev_1_1GaussianAE}{ev\+::\+Gaussian\+AE} event which describes the position and size of the ball and whether the ball is over the \char`\"{}true detection threshold\char`\"{}. The visualisation will display the ball position as blue if the detection score is above the threshold, and red otherwise.
+
+The application is run with ball tracking performed on both the left and right event-\/streams. The detected position in the left and right cameras are sent to the v\+Gaze\+Demo module, which checks the consistency between left and right streams (are they tracking the same ball?) and if both are above the \char`\"{}true detection threshold\char`\"{}. If all checks pass, the v\+Gaze\+Demo module uses the i\+Cub Gaze Controller to look at the position of the ball, using the 3D position calculated from stereo triangulation. The left arm can also be commanded to move to the same position by setting the appropriate flag on start-\/up.
+
+The ball should then be moved in front of the robot to have the gaze of the robot follow its position. If the position of the ball is lost for some seconds, the particles are resampled to the centre of the image, and the ball will have to be moved to the centre of the image to regain tracking.
+
+\subsection*{Dependencies}
+
+To move the robot a i\+Kin\+Gaze\+Ctrl module needs to be running and connected to the yarprobotinterface (a robot or simulator is required). The i\+Kin\+Gaze\+Ctrl also needs a correctly calibrated camera parameter file.
+
+\subsection*{How to run the application}
+
+The application assumes you are connected to a {\itshape yarpserver} -\/ see \href{http://www.yarp.it/}{\tt http\+://www.\+yarp.\+it/} for basic instructions for using yarp.
+
+
+\begin{DoxyEnumerate}
+\item run a yarpmanager
+\item in the yarpmanager, find and open the v\+Gaze\+Demo application. If the applciation is not available the event-\/driven library has not been correctly installed, or the path to the icub-\/contrib-\/common install folder is not correctly set.
+\item the zynq\+Grabber in the modules panel can only be used if you have the robot environment (with yarprun) correctly installed and set-\/up. If not, you can manually run your event grabbing module on the computer connected to the camera, or use a yarpdataplayer to play a dataset instead.
+\item run all modules (ignoring zynq\+Grabber if you have a custom grabber, and ignoring v\+Gaze\+Demo if no robot is present).
+\item the visualation will show the current estimate of the ball position on the left and the right cameras.
+\end{DoxyEnumerate}
+
+
+
+note\+: shmem connections can only be used if the modules are running on the same physical machine.
+
+\subsection*{Known issues}
+
+
+\begin{DoxyItemize}
+\item Flashing lights, or reflections off the surface of the ball can cause tracking loss, as the conditions for a ball to be \char`\"{}hollow\char`\"{} are no longer met.
+\item There is an upper limit on the speed at which the ball can be moved. This is due to computational limits rather than sensor limits. In post-\/processing (off-\/line) the ball can be tracked at any speed. 
+\end{DoxyItemize}

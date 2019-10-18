@@ -1,0 +1,63 @@
+{\ttfamily zynq\+Grabber} is an application that runs on the Z\+CB or z-\/turn which forms a bridge between the F\+P\+GA (reading events from the sensors), and the {\ttfamily Y\+A\+RP} network, such that the events can be processed on one or more C\+P\+Us or neuromorphic hardware. To run the {\ttfamily zynq\+Grabber}\+:
+\begin{DoxyItemize}
+\item the Z\+CB needs to be running, or connected to, a `yarpserver`,
+\item {\ttfamily event-\/driven} needs to be installed correctly with `zynq\+Grabber E\+N\+A\+B\+L\+E\+D`, and
+\item the configuration file needs to be configured for the sensors connected to the hardware.
+\end{DoxyItemize}
+
+\subsection*{{\ttfamily zynq\+Grabber} configuration file}
+
+When {\ttfamily event-\/driven} is installed ({\ttfamily make install}), it installs also the configuration files for the {\ttfamily zynq\+Grabber}. However the default values in the file need to be modified depending on the hardware that you want to use.
+
+\+:warning\+: We need to make a local copy of the file such that re-\/installing {\ttfamily event-\/driven} won\textquotesingle{}t overwrite your local changes with the default ones!
+
+First of all make an S\+SH connection to the Z\+CB. You can modify the local configuration file using\+: 
+\begin{DoxyCode}
+nano ~/.local/share/yarp/contexts/event-driven/zynqGrabber.ini
+\end{DoxyCode}
+ If the file/folder do not exist you must first import the local copy from the installed copy. Run the following command to automatically import a local copy of the configurations file and re-\/try modifying the file\+: 
+\begin{DoxyCode}
+yarp-config context --import event-driven zynqGrabber.ini
+\end{DoxyCode}
+ The {\ttfamily zynq\+Grabber} has the following options\+:
+\begin{DoxyItemize}
+\item {\itshape name} \+: renames the ports opened, needed if more than one zynq\+Grabber is running on the same network
+\item {\itshape verbose} \+: print out a little more information on start-\/up
+\item {\itshape aps} \+: turn on the A\+T\+IS aps events
+\item {\itshape data\+Device} \+: the full path to the device that will be opened to read events
+\item {\itshape hpu\+\_\+read} \+: open a thread to read data from the H\+PU and publish it to {\ttfamily Y\+A\+RP}
+\item {\itshape hpu\+\_\+write} \+: open a thread to write data to the H\+PU device
+\item {\itshape packet\+\_\+size} \+: the maximum number of events to send in a single packet (too small can lead to latency, too large can lead to packet-\/loss in U\+DP connections)
+\item {\itshape vis\+Ctrl\+Left} \+: connect to a device to configure the left camera
+\item {\itshape vis\+Ctrl\+Right} \+: connect to a device to configure the right camera
+\item {\itshape skin\+Ctrl} \+: connect to a device to configure the skin
+\item {\itshape use\+\_\+spinnaker} \+: configure H\+PU to write to a Spi\+N\+Naker device
+\item {\itshape \mbox{[}A\+T\+I\+S\+\_\+\+B\+I\+A\+S\+\_\+\+L\+E\+FT\mbox{]}} \+: bias values for the left camera
+\item {\itshape \mbox{[}A\+T\+I\+S\+\_\+\+B\+I\+A\+S\+\_\+\+R\+I\+G\+HT\mbox{]}} \+: bias values for the right camera
+\item {\itshape \mbox{[}S\+K\+I\+N\+\_\+\+C\+N\+FG\mbox{]}} \+: configuration parameters for the skin
+\end{DoxyItemize}
+
+Most default values are fine for use of {\ttfamily event-\/driven} sensors. However, the hardware you have means that the file will need to be configured.
+
+
+\begin{DoxyItemize}
+\item Comment out any devices you don\textquotesingle{}t have connected.
+\item Set {\itshape use\+\_\+spinnaker} and the H\+PU device to {\itshape hpu\+\_\+read} and {\itshape hpu\+\_\+write} if connected to the Spi\+N\+Naker.
+\item Change the name if this is not the only {\ttfamily zynq\+Grabber} on the network
+\end{DoxyItemize}
+
+\subsection*{Run the {\ttfamily zynq\+Grabber}}
+
+Once the configuration has been correctly performed, you can run the {\ttfamily zynq\+Grabber} from the terminal\+: 
+\begin{DoxyCode}
+zynqGrabber
+\end{DoxyCode}
+ If {\ttfamily zynq\+Grabber} doesn\textquotesingle{}t open it should give a warning message stating the problem, typically {\ttfamily yarpserver} is not running/connected or it is trying to open a device that is not physically connected.
+
+\subsection*{Check the zynq\+Grabber is streaming data}
+
+On your own laptop that has a connection to the Z\+CB `yarpserver` you can run\+: 
+\begin{DoxyCode}
+yarp read ... /zynqGrabber/AE:o
+\end{DoxyCode}
+ to verify that the data is streaming. The data is not in a human-\/readable format but it\textquotesingle{}s presence indicates that the {\ttfamily zynq\+Grabber} is working. 

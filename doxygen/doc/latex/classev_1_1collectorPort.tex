@@ -1,0 +1,40 @@
+\hypertarget{classev_1_1collectorPort}{}\section{ev\+:\+:collector\+Port Class Reference}
+\label{classev_1_1collectorPort}\index{ev\+::collector\+Port@{ev\+::collector\+Port}}
+
+
+an output port that can safely accept events from multiple threads and sends them at a fixed output rate.  
+
+
+
+
+{\ttfamily \#include $<$v\+Collect\+Send.\+h$>$}
+
+Inheritance diagram for ev\+:\+:collector\+Port\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1collectorPort}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1collectorPort_ac7cd1de9c40bd46df66b67ae824bb258}\label{classev_1_1collectorPort_ac7cd1de9c40bd46df66b67ae824bb258}} 
+\hyperlink{classev_1_1collectorPort_ac7cd1de9c40bd46df66b67ae824bb258}{collector\+Port} ()
+\begin{DoxyCompactList}\small\item\em constructor \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1collectorPort_a164072ae38c4e115873c451984b8e7f4}\label{classev_1_1collectorPort_a164072ae38c4e115873c451984b8e7f4}} 
+bool \hyperlink{classev_1_1collectorPort_a164072ae38c4e115873c451984b8e7f4}{open} (std\+::string name)
+\begin{DoxyCompactList}\small\item\em open the output port \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1collectorPort_ab1d587f6b728b65b22df73bbe674607d}\label{classev_1_1collectorPort_ab1d587f6b728b65b22df73bbe674607d}} 
+void \hyperlink{classev_1_1collectorPort_ab1d587f6b728b65b22df73bbe674607d}{pushevent} (event$<$$>$ v, yarp\+::os\+::\+Stamp y)
+\begin{DoxyCompactList}\small\item\em add an event to be sent on next thread execution \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1collectorPort_a7ec227ae78ec71ca8867a20ae815ea7d}\label{classev_1_1collectorPort_a7ec227ae78ec71ca8867a20ae815ea7d}} 
+void \hyperlink{classev_1_1collectorPort_a7ec227ae78ec71ca8867a20ae815ea7d}{run} ()
+\begin{DoxyCompactList}\small\item\em on each call of the thread, all events that have been added are sent on the port in a \hyperlink{classev_1_1vBottle}{v\+Bottle}. If no events have been added, a \hyperlink{classev_1_1vBottle}{v\+Bottle} is not sent. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+an output port that can safely accept events from multiple threads and sends them at a fixed output rate. 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Collect\+Send.\+h\end{DoxyCompactItemize}

@@ -1,0 +1,28 @@
+\hypertarget{group__vPreProcess}{}\section{v\+Pre\+Process}
+\label{group__vPreProcess}\index{v\+Pre\+Process@{v\+Pre\+Process}}
+Removes salt and pepper noise from the event stream Version\+:1.\+0 \begin{DoxyAuthor}{Author}
+Arren Glover \href{mailto:arren.glover@iit.it}{\tt arren.\+glover@iit.\+it} ~\newline
+ 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+Released under the terms of the G\+NU G\+PL v2.\+0 
+\end{DoxyCopyright}
+\hypertarget{group__zynqGrabber_intro_sec}{}\subsection{Description}\label{group__zynqGrabber_intro_sec}
+Removes salt and pepper noise from the event stream. If an event is the only one occured within its surrounding (spatial\+Size parameter) in a certain temporal window (temporal\+Size parameter), it is ignored.\hypertarget{group__zynqGrabber_parameters_sec}{}\subsection{Parameters}\label{group__zynqGrabber_parameters_sec}
+
+\begin{DoxyItemize}
+\item -- name \+: Specifies the stem name of ports created by the module.
+\item -- height \+: Number of pixels on the y-\/axis of the sensor.
+\item -- width \+: Number of pixels on the x-\/axis of the sensor.
+\item -- spatial\+Size \+: Size of the spatial window around the event 
+
+ temporal\+Size \+: How long the filter will look for events in the past within the spatial window 
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_inputports_sec}{}\subsection{Input Ports}\label{group__zynqGrabber_inputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Pepper/v\+Bottle\+:i \mbox{[}v\+Bottle\mbox{]} \mbox{[}default carrier\+:tcp\mbox{]}\+: Input event stream to be filtered
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_outputports_sec}{}\subsection{Output Ports}\label{group__zynqGrabber_outputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Pepper/v\+Bottle\+:o \mbox{[}v\+Bottle\mbox{]} \mbox{[}default carrier\+:tcp\mbox{]}\+: Outputs the filtered event stream
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_services_sec}{}\subsection{Services}\label{group__zynqGrabber_services_sec}

@@ -1,0 +1,76 @@
+\hypertarget{classev_1_1PAD}{}\section{ev\+:\+:P\+AD Class Reference}
+\label{classev_1_1PAD}\index{ev\+::\+P\+AD@{ev\+::\+P\+AD}}
+Inheritance diagram for ev\+:\+:P\+AD\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1PAD}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_a97c7228c2d197211aba3697c12971396}\label{classev_1_1PAD_a97c7228c2d197211aba3697c12971396}} 
+virtual void {\bfseries init\+Representative\+Taxels} (std\+::vector$<$ int $>$ taxel\+Map)=0
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_a46ca58b885f3508c0d2ca78694cc96cf}\label{classev_1_1PAD_a46ca58b885f3508c0d2ca78694cc96cf}} 
+virtual int $\ast$ {\bfseries get\+ID} (const int index) const =0
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_a2e2d128551f76ad51a9f77b25a6710f4}\label{classev_1_1PAD_a2e2d128551f76ad51a9f77b25a6710f4}} 
+virtual std\+::tuple$<$ double, double $>$ {\bfseries make\+Map} (int ID) const =0
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_adb5f0d48ea06f4edda3d3f7cc3e104bc}\label{classev_1_1PAD_adb5f0d48ea06f4edda3d3f7cc3e104bc}} 
+void {\bfseries get\+\_\+data} (int id, double x, double y, double orientation, double gain, int mirror, int layout\+Num)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_a9091308d3c2f3f098b784891c4439216}\label{classev_1_1PAD_a9091308d3c2f3f098b784891c4439216}} 
+int {\bfseries xoffset} \{0\}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_a817c926d6b55ff09b84f6757310d5d82}\label{classev_1_1PAD_a817c926d6b55ff09b84f6757310d5d82}} 
+int {\bfseries yoffset} \{0\}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_a0aef1dfdf94d229d889abef277800b42}\label{classev_1_1PAD_a0aef1dfdf94d229d889abef277800b42}} 
+int {\bfseries scaling} \{4\}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_ade492e537a0159cb47c07d9da53694a1}\label{classev_1_1PAD_ade492e537a0159cb47c07d9da53694a1}} 
+int {\bfseries radius} \{6\}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_aed64657855e265d0fca71102bb716768}\label{classev_1_1PAD_aed64657855e265d0fca71102bb716768}} 
+int {\bfseries noise} \{2500\}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_a4c080b39fe66cb40d0975ac38e3f749f}\label{classev_1_1PAD_a4c080b39fe66cb40d0975ac38e3f749f}} 
+int {\bfseries max\+\_\+value} \{15000\}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_a0bd154850385c9eeb5b3e67a66963ece}\label{classev_1_1PAD_a0bd154850385c9eeb5b3e67a66963ece}} 
+std\+::map$<$ int, std\+::list$<$ unsigned int $>$ $>$ {\bfseries repr2\+Taxel\+List}
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_ae24c2e7c4e1a805fe18ba89806e032ad}\label{classev_1_1PAD_ae24c2e7c4e1a805fe18ba89806e032ad}} 
+std\+::list$<$ unsigned int $>$ {\bfseries vectorof\+Int\+Equalto} (const std\+::vector$<$ int $>$ vec, const int val)
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_a337eaa97ea7673ac50a85ca45b3b9f4c}\label{classev_1_1PAD_a337eaa97ea7673ac50a85ca45b3b9f4c}} 
+const double {\bfseries D\+E\+G2\+R\+AD} =M\+\_\+\+PI/180.\+0
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_aa1ef226653e839ac1a5087770cc2be7f}\label{classev_1_1PAD_aa1ef226653e839ac1a5087770cc2be7f}} 
+int {\bfseries n\+Taxels}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_ae3afe0ce63f749f004f2a33f6f3e34d7}\label{classev_1_1PAD_ae3afe0ce63f749f004f2a33f6f3e34d7}} 
+double $\ast$ {\bfseries dX} \{nullptr\}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_ae2c6e5d2357e40c73a48e22bd9c558a2}\label{classev_1_1PAD_ae2c6e5d2357e40c73a48e22bd9c558a2}} 
+double $\ast$ {\bfseries dY} \{nullptr\}
+\item 
+\mbox{\Hypertarget{classev_1_1PAD_af9ca2f32dd78d1242658aa49a99b7998}\label{classev_1_1PAD_af9ca2f32dd78d1242658aa49a99b7998}} 
+std\+::map$<$ int, std\+::vector$<$ double $>$ $>$ {\bfseries data}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Draw\+Skin.\+h\end{DoxyCompactItemize}

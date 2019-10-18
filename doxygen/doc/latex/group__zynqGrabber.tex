@@ -1,0 +1,45 @@
+\hypertarget{group__zynqGrabber}{}\section{zynq\+Grabber}
+\label{group__zynqGrabber}\index{zynq\+Grabber@{zynq\+Grabber}}
+Interfaces to D\+VS or A\+T\+IS sensors connected with zynq-\/based boards Version\+:1.\+0 \begin{DoxyAuthor}{Author}
+Chiara Bartolozzi \href{mailto:chiara.bartolozzi@iit.it}{\tt chiara.\+bartolozzi@iit.\+it}, Arren Glover \href{mailto:arren.glover@iit.it}{\tt arren.\+glover@iit.\+it} ~\newline
+ 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+Released under the terms of the G\+NU G\+PL v2.\+0 
+\end{DoxyCopyright}
+\hypertarget{group__zynqGrabber_intro_sec}{}\subsection{Description}\label{group__zynqGrabber_intro_sec}
+Reads/writes events as well as programs biases for event-\/based chips connected using a zynq-\/board interface.\hypertarget{group__zynqGrabber_parameters_sec}{}\subsection{Parameters}\label{group__zynqGrabber_parameters_sec}
+
+\begin{DoxyItemize}
+\item -- name \+: Modules name
+\item -- errorcheck \+: Check for errors in data stream
+\item -- verbose \+: Output verbose information
+\item -- biaswrite \+: Only write bias values then close
+\item -- jumpcheck \+: Check timestamp values are ordered
+\item -- i\+Bias \+: Use current bias values
+\item -- coller\+Device \+: Name of vision controller device
+\item -- A\+T\+I\+S\+\_\+\+B\+I\+A\+S\+\_\+\+L\+E\+FT \+: Bias values for left camera
+\item -- A\+T\+I\+S\+\_\+\+B\+I\+A\+S\+\_\+\+R\+I\+G\+HT \+: Bias values for right camera
+\item -- data\+Device \+: Name of device to read data from
+\item -- read\+Packet\+Size \+: Chunk size to read from device
+\item -- buffer\+Size \+: Size of internal buffer for events that need to be sent
+\item -- max\+Bottle\+Size \+: Maximum size events in the bottles 
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_inputports_sec}{}\subsection{Input Ports}\label{group__zynqGrabber_inputports_sec}
+
+\begin{DoxyItemize}
+\item /zynq\+Grabber/v\+Bottle\+:i \mbox{[}v\+Bottle\mbox{]} \mbox{[}default carrier\+:\mbox{]}\+: Accepts events to be sent to the hardware device (i.\+e. Spi\+N\+Naker)
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_outputports_sec}{}\subsection{Output Ports}\label{group__zynqGrabber_outputports_sec}
+
+\begin{DoxyItemize}
+\item /zynq\+Grabber/v\+Bottle\+:o \mbox{[}v\+Bottle\mbox{]} \mbox{[}default carrier\+:\mbox{]}\+: The events from the camera (or other device) are published on this port
+\item /zynq\+Grabber/event\+Count\+:o \mbox{[}yarp\+::os\+::\+Bottle\mbox{]} \mbox{[}default carrier\+:\mbox{]}\+: Outputs the number of events read by the zynq\+Grabber
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_services_sec}{}\subsection{Services}\label{group__zynqGrabber_services_sec}
+
+\begin{DoxyItemize}
+\item /zynq\+Grabber/rpc \mbox{[}rpc-\/server\mbox{]}\+: \begin{DoxyVerb}   Start stop the device
+   Set the bias values for a camera
+\end{DoxyVerb}
+
+
+. This service is described in () 
+\end{DoxyItemize}

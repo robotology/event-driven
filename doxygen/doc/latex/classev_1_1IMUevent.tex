@@ -1,0 +1,91 @@
+\hypertarget{classev_1_1IMUevent}{}\section{ev\+:\+:I\+M\+Uevent Class Reference}
+\label{classev_1_1IMUevent}\index{ev\+::\+I\+M\+Uevent@{ev\+::\+I\+M\+Uevent}}
+
+
+an event with a pixel location, camera number and polarity  
+
+
+
+
+{\ttfamily \#include $<$v\+Codec.\+h$>$}
+
+Inheritance diagram for ev\+:\+:I\+M\+Uevent\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1IMUevent}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_aeafbaa4f2d7c17e29174ecfe3f285bfc}\label{classev_1_1IMUevent_aeafbaa4f2d7c17e29174ecfe3f285bfc}} 
+{\bfseries I\+M\+Uevent} (const \hyperlink{classev_1_1vEvent}{v\+Event} \&v)
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_a822d3d8bfd6dbcac987dc4eb1861d8d7}\label{classev_1_1IMUevent_a822d3d8bfd6dbcac987dc4eb1861d8d7}} 
+{\bfseries I\+M\+Uevent} (const \hyperlink{classev_1_1IMUevent}{I\+M\+Uevent} \&v)
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_a0dece317ec94e3f0ab1e40d50549e1c8}\label{classev_1_1IMUevent_a0dece317ec94e3f0ab1e40d50549e1c8}} 
+virtual event {\bfseries clone} ()
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_aff5831e99c4174bdd85689c26ce613ba}\label{classev_1_1IMUevent_aff5831e99c4174bdd85689c26ce613ba}} 
+virtual void {\bfseries encode} (yarp\+::os\+::\+Bottle \&b) const
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_a171f128d91d028698062060c3df4f632}\label{classev_1_1IMUevent_a171f128d91d028698062060c3df4f632}} 
+virtual void {\bfseries encode} (std\+::vector$<$ int32\+\_\+t $>$ \&b, unsigned int \&pos) const
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_a7fcb5f10ff8b36f9bd0f55cf50dd889d}\label{classev_1_1IMUevent_a7fcb5f10ff8b36f9bd0f55cf50dd889d}} 
+virtual bool {\bfseries decode} (const yarp\+::os\+::\+Bottle \&packet, size\+\_\+t \&pos)
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_a5c2c5342b24a5ed9cfb5047cb0c04a88}\label{classev_1_1IMUevent_a5c2c5342b24a5ed9cfb5047cb0c04a88}} 
+virtual void {\bfseries decode} (const int32\+\_\+t $\ast$\&data)
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_af4db138021c3a354726f00e1a0fad1c3}\label{classev_1_1IMUevent_af4db138021c3a354726f00e1a0fad1c3}} 
+virtual yarp\+::os\+::\+Property {\bfseries get\+Content} () const
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_a7d8c815714b7dea2aa7636aaddbd4ed4}\label{classev_1_1IMUevent_a7d8c815714b7dea2aa7636aaddbd4ed4}} 
+virtual std\+::string {\bfseries get\+Type} () const
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_a2faf0a821885f934f760b71f4053b670}\label{classev_1_1IMUevent_a2faf0a821885f934f760b71f4053b670}} 
+virtual int {\bfseries get\+Channel} () const
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_ae435c3d018265d56c3968bb2f1728995}\label{classev_1_1IMUevent_ae435c3d018265d56c3968bb2f1728995}} 
+virtual void {\bfseries set\+Channel} (const int channel)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_afb248b213266090a435ff4880b73f0de}\label{classev_1_1IMUevent_afb248b213266090a435ff4880b73f0de}} 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+union \{\\
+\>uint32\_t {\bfseries \_coded\_data}\\
+\mbox{\Hypertarget{unionev_1_1IMUevent_1_1_0D17_a89bbdc2184dc700fff35e8caeead3527}\label{unionev_1_1IMUevent_1_1_0D17_a89bbdc2184dc700fff35e8caeead3527}} 
+\>struct \{\\
+\>\>int {\bfseries value}:16\\
+\>\>unsigned int {\bfseries sensor}:4\\
+\>\>unsigned int {\bfseries \_r1}:2\\
+\>\>unsigned int {\bfseries channel}:1\\
+\>\>unsigned int {\bfseries type}:1\\
+\>\>unsigned int {\bfseries \_r2}:8\\
+\>\} \\
+\}; \\
+
+\end{tabbing}\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_a12ea90ffb6df46ef808eeed4df65fdf1}\label{classev_1_1IMUevent_a12ea90ffb6df46ef808eeed4df65fdf1}} 
+static const std\+::string {\bfseries tag} = \char`\"{}I\+M\+US\char`\"{}
+\item 
+\mbox{\Hypertarget{classev_1_1IMUevent_a95583a57a83bd5fb5363d9ee7085a050}\label{classev_1_1IMUevent_a95583a57a83bd5fb5363d9ee7085a050}} 
+static const unsigned int {\bfseries \+\_\+max\+\_\+value} = 32768
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+an event with a pixel location, camera number and polarity 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Codec.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/codecs/codec\+\_\+\+I\+M\+U\+Event.\+cpp\end{DoxyCompactItemize}

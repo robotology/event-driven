@@ -1,0 +1,63 @@
+\hypertarget{classev_1_1lifetimeSurface}{}\section{ev\+:\+:lifetime\+Surface Class Reference}
+\label{classev_1_1lifetimeSurface}\index{ev\+::lifetime\+Surface@{ev\+::lifetime\+Surface}}
+
+
+a spatio-\/temporal surface storing events for a \char`\"{}lifetime\char`\"{} given by the inverse of velocity  
+
+
+
+
+{\ttfamily \#include $<$v\+Window\+\_\+adv.\+h$>$}
+
+Inheritance diagram for ev\+:\+:lifetime\+Surface\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1lifetimeSurface}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1lifetimeSurface_a8276286d48b5baf2829268333f99b482}\label{classev_1_1lifetimeSurface_a8276286d48b5baf2829268333f99b482}} 
+{\bfseries lifetime\+Surface} (int \hyperlink{classev_1_1vSurface2_a1aa8027816352a15d5b9bf1f26f48e76}{width}=128, int height=128)
+\item 
+virtual v\+Queue \hyperlink{classev_1_1lifetimeSurface_a8fce037a13281c0e46c7d660e0ea2275}{add\+Event} (event$<$$>$ to\+Add)
+\begin{DoxyCompactList}\small\item\em add\+Event adds an event to the window. Also checks for expired events. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1lifetimeSurface_a86fde904d007b5b1e5f52351bfab0b17}\label{classev_1_1lifetimeSurface_a86fde904d007b5b1e5f52351bfab0b17}} 
+virtual v\+Queue {\bfseries remove\+Events} (event$<$$>$ to\+Add)
+\item 
+\mbox{\Hypertarget{classev_1_1lifetimeSurface_a5502828fe59c4394588acb6ffa06d445}\label{classev_1_1lifetimeSurface_a5502828fe59c4394588acb6ffa06d445}} 
+virtual void {\bfseries fast\+Remove\+Events} (event$<$$>$ to\+Add)
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+a spatio-\/temporal surface storing events for a \char`\"{}lifetime\char`\"{} given by the inverse of velocity 
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classev_1_1lifetimeSurface_a8fce037a13281c0e46c7d660e0ea2275}\label{classev_1_1lifetimeSurface_a8fce037a13281c0e46c7d660e0ea2275}} 
+\index{ev\+::lifetime\+Surface@{ev\+::lifetime\+Surface}!add\+Event@{add\+Event}}
+\index{add\+Event@{add\+Event}!ev\+::lifetime\+Surface@{ev\+::lifetime\+Surface}}
+\subsubsection{\texorpdfstring{add\+Event()}{addEvent()}}
+{\footnotesize\ttfamily v\+Queue ev\+::lifetime\+Surface\+::add\+Event (\begin{DoxyParamCaption}\item[{event$<$$>$}]{v }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+add\+Event adds an event to the window. Also checks for expired events. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em event} & the event to add \\
+\hline
+\end{DoxyParams}
+
+
+Reimplemented from \hyperlink{classev_1_1vSurface2_a6dee662976048b73d7b19e45871352da}{ev\+::v\+Surface2}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Window\+\_\+adv.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/v\+Window\+\_\+adv.\+cpp\end{DoxyCompactItemize}

@@ -1,0 +1,120 @@
+\hypertarget{classev_1_1vSurface}{}\section{ev\+:\+:v\+Surface Class Reference}
+\label{classev_1_1vSurface}\index{ev\+::v\+Surface@{ev\+::v\+Surface}}
+
+
+The v\+Window class holds a list of events for a period of time as specified. Event expiry is checked each time new events are added and expired events are removed. At any point in time a copy of the current list of events can be requested.  
+
+
+
+
+{\ttfamily \#include $<$v\+Window\+\_\+basic.\+h$>$}
+
+Inheritance diagram for ev\+:\+:v\+Surface\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classev_1_1vSurface}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classev_1_1vSurface_afb642ce656aee165c54a2238474599c0}{v\+Surface} (int width=128, int height=128)
+\begin{DoxyCompactList}\small\item\em v\+Window constructor \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vSurface_a592c1c79ff294f34e28503d7c7278b8f}\label{classev_1_1vSurface_a592c1c79ff294f34e28503d7c7278b8f}} 
+{\bfseries v\+Surface} (const \hyperlink{classev_1_1vSurface}{v\+Surface} \&)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface_af779bb51b4c9f748a0cd38117cf5e1f9}\label{classev_1_1vSurface_af779bb51b4c9f748a0cd38117cf5e1f9}} 
+\hyperlink{classev_1_1vSurface}{v\+Surface} {\bfseries operator=} (const \hyperlink{classev_1_1vSurface}{v\+Surface} \&)
+\item 
+event$<$ \hyperlink{classev_1_1AddressEvent}{AE} $>$ \hyperlink{classev_1_1vSurface_a60d2f3d18c68d18678040cfabf6d35ea}{add\+Event} (event$<$ \hyperlink{classev_1_1AddressEvent}{AE} $>$ v)
+\begin{DoxyCompactList}\small\item\em add\+Event adds an event to the window. Also checks for expired events. \end{DoxyCompactList}\item 
+event$<$ \hyperlink{classev_1_1AddressEvent}{AE} $>$ \hyperlink{classev_1_1vSurface_a523c84d62fa48db30913dee7e694b895}{get\+Most\+Recent} ()
+\begin{DoxyCompactList}\small\item\em get\+Most\+Recent \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vSurface_aa90e7d977149ee42dff7a2735b367a2b}\label{classev_1_1vSurface_aa90e7d977149ee42dff7a2735b367a2b}} 
+int {\bfseries get\+Event\+Count} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface_a222eadfa9d900d22148d1ffb0bb68661}\label{classev_1_1vSurface_a222eadfa9d900d22148d1ffb0bb68661}} 
+void {\bfseries clear} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface_a2beddf5b5ffdbe12c1592ef8c1c742ab}\label{classev_1_1vSurface_a2beddf5b5ffdbe12c1592ef8c1c742ab}} 
+const v\+Queue {\bfseries get\+Surf} (int d)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface_af6565b2434916ebc73820fb870e6f9a9}\label{classev_1_1vSurface_af6565b2434916ebc73820fb870e6f9a9}} 
+const v\+Queue {\bfseries get\+Surf} (int x, int y, int d)
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface_ae27682a1a876ef2c3b8c37c63c5a531c}\label{classev_1_1vSurface_ae27682a1a876ef2c3b8c37c63c5a531c}} 
+virtual const v\+Queue {\bfseries get\+Surf} (int xl, int xh, int yl, int yh)
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface_a157b4d26be73a1de42b0a043f12cf984}\label{classev_1_1vSurface_a157b4d26be73a1de42b0a043f12cf984}} 
+std\+::vector$<$ std\+::vector$<$ event$<$ \hyperlink{classev_1_1AddressEvent}{AE} $>$ $>$ $>$ \hyperlink{classev_1_1vSurface_a157b4d26be73a1de42b0a043f12cf984}{spatial}
+\begin{DoxyCompactList}\small\item\em for quick spatial accessing and surfacing \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vSurface_a7ba9be674dbe03302b56306b987cff62}\label{classev_1_1vSurface_a7ba9be674dbe03302b56306b987cff62}} 
+\hyperlink{structev_1_1resolution}{resolution} {\bfseries res}
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface_a64339e84abccbb0099e0236fa4339647}\label{classev_1_1vSurface_a64339e84abccbb0099e0236fa4339647}} 
+event$<$ \hyperlink{classev_1_1AddressEvent}{AE} $>$ {\bfseries most\+Recent}
+\item 
+\mbox{\Hypertarget{classev_1_1vSurface_a2b6a8d84a626b8dce15597807da598fb}\label{classev_1_1vSurface_a2b6a8d84a626b8dce15597807da598fb}} 
+int {\bfseries event\+Count}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+The v\+Window class holds a list of events for a period of time as specified. Event expiry is checked each time new events are added and expired events are removed. At any point in time a copy of the current list of events can be requested. 
+
+\subsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classev_1_1vSurface_afb642ce656aee165c54a2238474599c0}\label{classev_1_1vSurface_afb642ce656aee165c54a2238474599c0}} 
+\index{ev\+::v\+Surface@{ev\+::v\+Surface}!v\+Surface@{v\+Surface}}
+\index{v\+Surface@{v\+Surface}!ev\+::v\+Surface@{ev\+::v\+Surface}}
+\subsubsection{\texorpdfstring{v\+Surface()}{vSurface()}}
+{\footnotesize\ttfamily ev\+::v\+Surface\+::v\+Surface (\begin{DoxyParamCaption}\item[{int}]{width = {\ttfamily 128},  }\item[{int}]{height = {\ttfamily 128} }\end{DoxyParamCaption})}
+
+
+
+v\+Window constructor 
+
+
+\begin{DoxyParams}{Parameters}
+{\em window\+Size} & optional time to store events (in us) \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classev_1_1vSurface_a60d2f3d18c68d18678040cfabf6d35ea}\label{classev_1_1vSurface_a60d2f3d18c68d18678040cfabf6d35ea}} 
+\index{ev\+::v\+Surface@{ev\+::v\+Surface}!add\+Event@{add\+Event}}
+\index{add\+Event@{add\+Event}!ev\+::v\+Surface@{ev\+::v\+Surface}}
+\subsubsection{\texorpdfstring{add\+Event()}{addEvent()}}
+{\footnotesize\ttfamily event$<$ \hyperlink{classev_1_1AddressEvent}{AE} $>$ ev\+::v\+Surface\+::add\+Event (\begin{DoxyParamCaption}\item[{event$<$ \hyperlink{classev_1_1AddressEvent}{AE} $>$}]{v }\end{DoxyParamCaption})}
+
+
+
+add\+Event adds an event to the window. Also checks for expired events. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em event} & the event to add \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classev_1_1vSurface_a523c84d62fa48db30913dee7e694b895}\label{classev_1_1vSurface_a523c84d62fa48db30913dee7e694b895}} 
+\index{ev\+::v\+Surface@{ev\+::v\+Surface}!get\+Most\+Recent@{get\+Most\+Recent}}
+\index{get\+Most\+Recent@{get\+Most\+Recent}!ev\+::v\+Surface@{ev\+::v\+Surface}}
+\subsubsection{\texorpdfstring{get\+Most\+Recent()}{getMostRecent()}}
+{\footnotesize\ttfamily event$<$ \hyperlink{classev_1_1AddressEvent}{AE} $>$ ev\+::v\+Surface\+::get\+Most\+Recent (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+get\+Most\+Recent 
+
+\begin{DoxyReturn}{Returns}
+
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Window\+\_\+basic.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/v\+Window\+\_\+basic.\+cpp\end{DoxyCompactItemize}

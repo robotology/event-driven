@@ -1,0 +1,37 @@
+\hypertarget{group__vCluster}{}\section{v\+Cluster}
+\label{group__vCluster}\index{v\+Cluster@{v\+Cluster}}
+Clustering and tracking events Version\+:1.\+0 \begin{DoxyAuthor}{Author}
+Chiara Bartolozzi \href{mailto:chiara.bartolozzi@iit.it}{\tt chiara.\+bartolozzi@iit.\+it}, Arren Glover \href{mailto:arren.glover@iit.it}{\tt arren.\+glover@iit.\+it} ~\newline
+ 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+Released under the terms of the G\+NU G\+PL v2.\+0 
+\end{DoxyCopyright}
+\hypertarget{group__zynqGrabber_intro_sec}{}\subsection{Description}\label{group__zynqGrabber_intro_sec}
+The module creates clusters of events assuming a Gaussian distribution. Tracks clusters as they move.\hypertarget{group__zynqGrabber_parameters_sec}{}\subsection{Parameters}\label{group__zynqGrabber_parameters_sec}
+
+\begin{DoxyItemize}
+\item -- name \+: Specifies the stem name of ports created by the module.
+\item -- alpha\+Shape \+: Specifies how quickly cluster shape changes given new events.
+\item -- alpha\+Pos \+: Specifies how quickly cluster position changes given new events.
+\item -- t\+Act \+: Threshold for a cluster to become active.
+\item -- t\+Inact \+: Threshold for a cluster to become inactive.
+\item -- t\+Free \+: Threshold for a cluster to become free.
+\item -- t\+Clus\+Refr \+: Maximum period at which a cluster can output a cluster event.
+\item -- sigX \+: Initial cluster size on the x-\/axis.
+\item -- sigY \+: Initial cluster size on the y-\/axis.
+\item -- sig\+XY \+: Initial angle between x and y-\/axes.
+\item -- fixed\+Shape \+: Sets clusters to fixed shape.
+\item -- reg\+Rate \+: Specifies how often clusters decay.
+\item -- max\+Dista \+: Specifies the maximum distance an event can be from the centre of the cluster.
+\item -- decay \+: Specifies how slowly events decay.
+\item -- cluster\+Limit \+: Specifies a limit on the number of clusters. 
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_inputports_sec}{}\subsection{Input Ports}\label{group__zynqGrabber_inputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Cluster/v\+Bottle\+:i \mbox{[}eventdriven\+::v\+Bottle\mbox{]} \mbox{[}default carrier\+:tcp\mbox{]}\+: Accepts the address events in the v\+Bottle container
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_outputports_sec}{}\subsection{Output Ports}\label{group__zynqGrabber_outputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Cluster/v\+Bottle\+:o \mbox{[}eventdriven\+::v\+Bottle\mbox{]} \mbox{[}default carrier\+:tcp\mbox{]}\+: Outputs cluster events in the form of an eventdriven\+::\+Gaussian\+AE. The v\+Bottle also contains all events in the v\+Bottle received as input.
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_services_sec}{}\subsection{Services}\label{group__zynqGrabber_services_sec}

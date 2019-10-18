@@ -1,0 +1,25 @@
+\subsection*{Introduction }
+
+This module is used to generate events in static scenes. When the event rate drops below a certain threshold, a circular motion of the eye is triggered. The resulting event stream gives an idea about the shapes of the objects in the scene. Instead, if there are enough events, then the robot gazes to their center of mass. The app launches the zynq\+Grabber which sends the events both to the v\+Framer for visualization and to the autosaccade module which decides how to move the robot eyes.
+
+In the following image an overview of the opened ports and how they are connected.
+
+
+
+\subsection*{Dependencies }
+
+This app needs the robot (or the \href{http://wiki.icub.org/brain/group__icub__Simulation.html}{\tt simulator}) to be up and running together with the \href{http://www.yarp.it/yarprobotinterface.html}{\tt yarprobotinterface} and the \href{http://wiki.icub.org/brain/group__iKinGazeCtrl.html}{\tt i\+Kin\+Gaze\+Ctrl} .
+
+\subsection*{How to run the application }
+
+On a console, run yarpserver (if not already running).
+
+You can now run yarpmanager.
+
+Inside the Application folder in the yarpmanager gui, you should see an entry called v\+Autosaccade\+Demo. Double click and open it.
+
+Run the robot (or the i\+Cub\+Sim), the yarprobotinterface and the i\+Kin\+Gaze\+Ctrl. Make sure to specify the correct robot name passing the proper parameter to the autosaccade module.
+
+Now you are ready to run the application! Hit the run button and then connect on the yarpmanager gui.
+
+You will now see the robot (or the simulator) gazing to the center of mass of the events or, if the event rate is not high enough, performing a circular eyes motion to generate events. 

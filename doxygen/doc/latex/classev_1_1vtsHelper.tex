@@ -1,0 +1,59 @@
+\hypertarget{classev_1_1vtsHelper}{}\section{ev\+:\+:vts\+Helper Class Reference}
+\label{classev_1_1vtsHelper}\index{ev\+::vts\+Helper@{ev\+::vts\+Helper}}
+
+
+helper class to deal with timestamp conversion and wrapping  
+
+
+
+
+{\ttfamily \#include $<$vts\+Helper.\+h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vtsHelper_a44b5e8174eb7a317001e395bf0d917e8}\label{classev_1_1vtsHelper_a44b5e8174eb7a317001e395bf0d917e8}} 
+\hyperlink{classev_1_1vtsHelper_a44b5e8174eb7a317001e395bf0d917e8}{vts\+Helper} ()
+\begin{DoxyCompactList}\small\item\em constructor \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vtsHelper_a399c3a719f7544209ba77f442c97c135}\label{classev_1_1vtsHelper_a399c3a719f7544209ba77f442c97c135}} 
+unsigned long int \hyperlink{classev_1_1vtsHelper_a399c3a719f7544209ba77f442c97c135}{operator()} (int timestamp)
+\begin{DoxyCompactList}\small\item\em unwrap a timestamp, given previously unwrapped timestamps \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vtsHelper_ab8b7f4f4240f2a0f0279bda5f5f2caff}\label{classev_1_1vtsHelper_ab8b7f4f4240f2a0f0279bda5f5f2caff}} 
+unsigned long int \hyperlink{classev_1_1vtsHelper_ab8b7f4f4240f2a0f0279bda5f5f2caff}{current\+Time} ()
+\begin{DoxyCompactList}\small\item\em ask for the current unwrapped time, without updating the time. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vtsHelper_aa7f1c13eb051773e9413b52bb52caad0}\label{classev_1_1vtsHelper_aa7f1c13eb051773e9413b52bb52caad0}} 
+static long int \hyperlink{classev_1_1vtsHelper_aa7f1c13eb051773e9413b52bb52caad0}{max\+Stamp} ()
+\begin{DoxyCompactList}\small\item\em D\+E\+P\+R\+E\+C\+A\+T\+ED -\/ access to max\+\_\+stamp member variable is public. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vtsHelper_a07d0dc3cd7743eff7d594e838ae23a01}\label{classev_1_1vtsHelper_a07d0dc3cd7743eff7d594e838ae23a01}} 
+static double \hyperlink{classev_1_1vtsHelper_a07d0dc3cd7743eff7d594e838ae23a01}{tstosecs} ()
+\begin{DoxyCompactList}\small\item\em D\+E\+P\+R\+E\+C\+A\+T\+ED -\/ access to timestamp conversion member variables is public. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vtsHelper_a49e6d2f2f4c93f2ba8935630735c6fa5}\label{classev_1_1vtsHelper_a49e6d2f2f4c93f2ba8935630735c6fa5}} 
+static int {\bfseries delta\+Ticks} (const int current\+\_\+tick, const int prev\+\_\+tick)
+\item 
+\mbox{\Hypertarget{classev_1_1vtsHelper_a398f00887ff3412590800a800ce6a052}\label{classev_1_1vtsHelper_a398f00887ff3412590800a800ce6a052}} 
+static double {\bfseries delta\+MS} (const int current\+\_\+tick, const int prev\+\_\+tick)
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vtsHelper_a059fdcf455b471e69446e565ed017f65}\label{classev_1_1vtsHelper_a059fdcf455b471e69446e565ed017f65}} 
+static unsigned int \hyperlink{classev_1_1vtsHelper_a059fdcf455b471e69446e565ed017f65}{max\+\_\+stamp} = (1 $<$$<$ T\+I\+M\+E\+R\+\_\+\+B\+I\+TS) -\/ 1
+\begin{DoxyCompactList}\small\item\em the maximum value of the timestamp before a wrap occurs \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vtsHelper_ad3ad427d18c24f9655bbc73295abf678}\label{classev_1_1vtsHelper_ad3ad427d18c24f9655bbc73295abf678}} 
+static double \hyperlink{classev_1_1vtsHelper_ad3ad427d18c24f9655bbc73295abf678}{tsscaler} = 0.\+000000001 $\ast$ C\+L\+O\+C\+K\+\_\+\+P\+E\+R\+I\+OD
+\begin{DoxyCompactList}\small\item\em a multiplier to convert an event timestamp to seconds \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vtsHelper_afa2dd46ae7113668bc6ebea88ab8fa11}\label{classev_1_1vtsHelper_afa2dd46ae7113668bc6ebea88ab8fa11}} 
+static double \hyperlink{classev_1_1vtsHelper_afa2dd46ae7113668bc6ebea88ab8fa11}{vtsscaler} = 1.\+0 / \hyperlink{classev_1_1vtsHelper_ad3ad427d18c24f9655bbc73295abf678}{vts\+Helper\+::tsscaler}
+\begin{DoxyCompactList}\small\item\em a multiplier to convert seconds to an event timestamp \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+helper class to deal with timestamp conversion and wrapping 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/vts\+Helper.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/vts\+Helper.\+cpp\end{DoxyCompactItemize}

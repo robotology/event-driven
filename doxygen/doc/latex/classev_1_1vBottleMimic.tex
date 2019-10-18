@@ -1,0 +1,46 @@
+\hypertarget{classev_1_1vBottleMimic}{}\section{ev\+:\+:v\+Bottle\+Mimic Class Reference}
+\label{classev_1_1vBottleMimic}\index{ev\+::v\+Bottle\+Mimic@{ev\+::v\+Bottle\+Mimic}}
+
+
+a \hyperlink{classev_1_1vBottle}{v\+Bottle} that avoids memory allocation where possible and can be correctly decoded when read from a receiving port. Only works with a single event-\/type.  
+
+
+
+
+{\ttfamily \#include $<$v\+Bottle.\+h$>$}
+
+Inheritance diagram for ev\+:\+:v\+Bottle\+Mimic\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1vBottleMimic}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vBottleMimic_ae7a95df35d75378e949ceff50d169ddf}\label{classev_1_1vBottleMimic_ae7a95df35d75378e949ceff50d169ddf}} 
+\hyperlink{classev_1_1vBottleMimic_ae7a95df35d75378e949ceff50d169ddf}{v\+Bottle\+Mimic} ()
+\begin{DoxyCompactList}\small\item\em instantiate the correct headers for a Bottle \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottleMimic_ac3e34609dfb06ed5c10509741751c053}\label{classev_1_1vBottleMimic_ac3e34609dfb06ed5c10509741751c053}} 
+void \hyperlink{classev_1_1vBottleMimic_ac3e34609dfb06ed5c10509741751c053}{set\+External\+Data} (const char $\ast$datablock, unsigned int datalength)
+\begin{DoxyCompactList}\small\item\em for data already allocated in contiguous space. Just send this data on a port without memory reallocation. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottleMimic_ae32460f8fb474c394171f783d9e4aba1}\label{classev_1_1vBottleMimic_ae32460f8fb474c394171f783d9e4aba1}} 
+void \hyperlink{classev_1_1vBottleMimic_ae32460f8fb474c394171f783d9e4aba1}{set\+Internal\+Data} (const v\+Queue \&q)
+\begin{DoxyCompactList}\small\item\em send an entire v\+Queue. The queue is encoded and allocated into a single contiguous memory space. Faster than a standard \hyperlink{classev_1_1vBottle}{v\+Bottle}. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottleMimic_ac0f5995820702df0aea2ede33d65cace}\label{classev_1_1vBottleMimic_ac0f5995820702df0aea2ede33d65cace}} 
+void \hyperlink{classev_1_1vBottleMimic_ac0f5995820702df0aea2ede33d65cace}{set\+Header} (std\+::string eventtype)
+\begin{DoxyCompactList}\small\item\em set the type of event that this \hyperlink{classev_1_1vBottleMimic}{v\+Bottle\+Mimic} will send \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottleMimic_a5c7ead7b0484b9abe99e922196c074ff}\label{classev_1_1vBottleMimic_a5c7ead7b0484b9abe99e922196c074ff}} 
+virtual bool \hyperlink{classev_1_1vBottleMimic_a5c7ead7b0484b9abe99e922196c074ff}{read} (yarp\+::os\+::\+Connection\+Reader \&connection)
+\begin{DoxyCompactList}\small\item\em does nothing as this is a write-\/only port. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vBottleMimic_a70d7add0350d3254f6867a3dd7f6c50b}\label{classev_1_1vBottleMimic_a70d7add0350d3254f6867a3dd7f6c50b}} 
+virtual bool \hyperlink{classev_1_1vBottleMimic_a70d7add0350d3254f6867a3dd7f6c50b}{write} (yarp\+::os\+::\+Connection\+Writer \&connection) const
+\begin{DoxyCompactList}\small\item\em write the data on the connection. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+a \hyperlink{classev_1_1vBottle}{v\+Bottle} that avoids memory allocation where possible and can be correctly decoded when read from a receiving port. Only works with a single event-\/type. 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Bottle.\+h\end{DoxyCompactItemize}

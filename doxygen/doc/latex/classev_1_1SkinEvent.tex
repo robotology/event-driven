@@ -1,0 +1,87 @@
+\hypertarget{classev_1_1SkinEvent}{}\section{ev\+:\+:Skin\+Event Class Reference}
+\label{classev_1_1SkinEvent}\index{ev\+::\+Skin\+Event@{ev\+::\+Skin\+Event}}
+
+
+an event with a taxel location, body-\/part and polarity  
+
+
+
+
+{\ttfamily \#include $<$v\+Codec.\+h$>$}
+
+Inheritance diagram for ev\+:\+:Skin\+Event\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classev_1_1SkinEvent}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1SkinEvent_a8921fcb24d5b22cbb4640cc78d37eb6b}\label{classev_1_1SkinEvent_a8921fcb24d5b22cbb4640cc78d37eb6b}} 
+{\bfseries Skin\+Event} (const \hyperlink{classev_1_1vEvent}{v\+Event} \&v)
+\item 
+\mbox{\Hypertarget{classev_1_1SkinEvent_a8e8554c5d291013c572eb93723f95138}\label{classev_1_1SkinEvent_a8e8554c5d291013c572eb93723f95138}} 
+{\bfseries Skin\+Event} (const \hyperlink{classev_1_1SkinEvent}{Skin\+Event} \&v)
+\item 
+\mbox{\Hypertarget{classev_1_1SkinEvent_a3571bc8aba54704e0f2835ab0f0a71b0}\label{classev_1_1SkinEvent_a3571bc8aba54704e0f2835ab0f0a71b0}} 
+virtual event {\bfseries clone} ()
+\item 
+\mbox{\Hypertarget{classev_1_1SkinEvent_a5996a03de9a5711704365084ca13c410}\label{classev_1_1SkinEvent_a5996a03de9a5711704365084ca13c410}} 
+virtual void {\bfseries encode} (yarp\+::os\+::\+Bottle \&b) const
+\item 
+\mbox{\Hypertarget{classev_1_1SkinEvent_aaaafe7c85dc5439da54a9924ee6e669e}\label{classev_1_1SkinEvent_aaaafe7c85dc5439da54a9924ee6e669e}} 
+virtual void {\bfseries encode} (std\+::vector$<$ int32\+\_\+t $>$ \&b, unsigned int \&pos) const
+\item 
+\mbox{\Hypertarget{classev_1_1SkinEvent_a8708aa78b532d8518bd194095930c915}\label{classev_1_1SkinEvent_a8708aa78b532d8518bd194095930c915}} 
+virtual bool {\bfseries decode} (const yarp\+::os\+::\+Bottle \&packet, size\+\_\+t \&pos)
+\item 
+\mbox{\Hypertarget{classev_1_1SkinEvent_a52c6901440f63cb00914c343ab7a4eb2}\label{classev_1_1SkinEvent_a52c6901440f63cb00914c343ab7a4eb2}} 
+virtual void {\bfseries decode} (const int32\+\_\+t $\ast$\&data)
+\item 
+\mbox{\Hypertarget{classev_1_1SkinEvent_a0441e22892786d232040ab275da33ae4}\label{classev_1_1SkinEvent_a0441e22892786d232040ab275da33ae4}} 
+virtual yarp\+::os\+::\+Property {\bfseries get\+Content} () const
+\item 
+\mbox{\Hypertarget{classev_1_1SkinEvent_ab38d415129fd823bb99190c1711c4038}\label{classev_1_1SkinEvent_ab38d415129fd823bb99190c1711c4038}} 
+virtual std\+::string {\bfseries get\+Type} () const
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1SkinEvent_afb407a5519d25f22eb740e6ea63e59b9}\label{classev_1_1SkinEvent_afb407a5519d25f22eb740e6ea63e59b9}} 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+union \{\\
+\>uint32\_t {\bfseries \_skei}\\
+\mbox{\Hypertarget{unionev_1_1SkinEvent_1_1_0D5_a8200e9dff378e05d18f6e37dd77ab9a0}\label{unionev_1_1SkinEvent_1_1_0D5_a8200e9dff378e05d18f6e37dd77ab9a0}} 
+\>struct \{\\
+\>\>unsigned int {\bfseries polarity}:1\\
+\>\>unsigned int {\bfseries taxel}:10\\
+\>\>unsigned int {\bfseries \_reserved1}:2\\
+\>\>unsigned int {\bfseries cross\_base}:1\\
+\>\>unsigned int {\bfseries \_sample}:1\\
+\>\>unsigned int {\bfseries \_error}:1\\
+\>\>unsigned int {\bfseries body\_part}:3\\
+\>\>unsigned int {\bfseries \_reserved2}:3\\
+\>\>unsigned int {\bfseries side}:1\\
+\>\>unsigned int {\bfseries type}:1\\
+\>\>unsigned int {\bfseries skin}:1\\
+\>\} \\
+\}; \\
+
+\end{tabbing}\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1SkinEvent_a04891c06417b71a75dc0d4d377301aa5}\label{classev_1_1SkinEvent_a04891c06417b71a75dc0d4d377301aa5}} 
+static const std\+::string {\bfseries tag} = \char`\"{}S\+KE\char`\"{}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+an event with a taxel location, body-\/part and polarity 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Codec.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/codecs/codec\+\_\+\+Skin\+Event.\+cpp\end{DoxyCompactItemize}

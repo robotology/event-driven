@@ -1,0 +1,118 @@
+\hypertarget{classev_1_1vReadPort}{}\section{ev\+:\+:v\+Read\+Port$<$ T $>$ Class Template Reference}
+\label{classev_1_1vReadPort}\index{ev\+::v\+Read\+Port$<$ T $>$@{ev\+::v\+Read\+Port$<$ T $>$}}
+Inheritance diagram for ev\+:\+:v\+Read\+Port$<$ T $>$\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1vReadPort}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a8c559db85d642d2779d2ea02acf75bc9}\label{classev_1_1vReadPort_a8c559db85d642d2779d2ea02acf75bc9}} 
+\hyperlink{classev_1_1vReadPort_a8c559db85d642d2779d2ea02acf75bc9}{v\+Read\+Port} ()
+\begin{DoxyCompactList}\small\item\em constructor \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a7ce21badb00708a6914d8620bf17c797}\label{classev_1_1vReadPort_a7ce21badb00708a6914d8620bf17c797}} 
+\hyperlink{classev_1_1vReadPort_a7ce21badb00708a6914d8620bf17c797}{$\sim$v\+Read\+Port} ()
+\begin{DoxyCompactList}\small\item\em desctructor \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a73b4f47c06fac76af81d14a704b35fe4}\label{classev_1_1vReadPort_a73b4f47c06fac76af81d14a704b35fe4}} 
+bool {\bfseries open} (std\+::string name)
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a3458fb297eee91f29aa6d719876181b7}\label{classev_1_1vReadPort_a3458fb297eee91f29aa6d719876181b7}} 
+void {\bfseries interrupt} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_ab7356731a6a6818d52f77de0aff5e423}\label{classev_1_1vReadPort_ab7356731a6a6818d52f77de0aff5e423}} 
+void {\bfseries resume} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_adcdefc13d430033e876351bd383866bc}\label{classev_1_1vReadPort_adcdefc13d430033e876351bd383866bc}} 
+void {\bfseries close} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a1ff6550f46135f4d0a4e08436d90fa26}\label{classev_1_1vReadPort_a1ff6550f46135f4d0a4e08436d90fa26}} 
+void {\bfseries on\+Stop} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a383d2b1d3f896fce2fa352f76fe2fefb}\label{classev_1_1vReadPort_a383d2b1d3f896fce2fa352f76fe2fefb}} 
+void {\bfseries run} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a2c6aabe520b140ff5c6bc5f8231cadd5}\label{classev_1_1vReadPort_a2c6aabe520b140ff5c6bc5f8231cadd5}} 
+const T $\ast$ \hyperlink{classev_1_1vReadPort_a2c6aabe520b140ff5c6bc5f8231cadd5}{read} (yarp\+::os\+::\+Stamp \&yarpstamp, bool wait=true)
+\begin{DoxyCompactList}\small\item\em ask for a pointer to the next v\+Queue. if wait is true Blocks if no data is ready. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a1f8d56c7a4ec77f622c448c46c65afd8}\label{classev_1_1vReadPort_a1f8d56c7a4ec77f622c448c46c65afd8}} 
+void \hyperlink{classev_1_1vReadPort_a1f8d56c7a4ec77f622c448c46c65afd8}{set\+Q\+Limit} (unsigned int number\+\_\+of\+\_\+qs)
+\begin{DoxyCompactList}\small\item\em set the maximum number of qs that can be stored in the buffer. A value of 0 keeps all qs. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_ab451342e9bc479c3db4a937ce41f7795}\label{classev_1_1vReadPort_ab451342e9bc479c3db4a937ce41f7795}} 
+void \hyperlink{classev_1_1vReadPort_ab451342e9bc479c3db4a937ce41f7795}{release\+Data\+Lock} ()
+\begin{DoxyCompactList}\small\item\em un\+Blocks the blocking call in get\+NextQ. Useful to ensure a graceful shutdown. No guarantee the return of get\+NextQ will be valid. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a43a2b8ca3db8938e8200072de2957ef8}\label{classev_1_1vReadPort_a43a2b8ca3db8938e8200072de2957ef8}} 
+unsigned int \hyperlink{classev_1_1vReadPort_a43a2b8ca3db8938e8200072de2957ef8}{queryunprocessed} ()
+\begin{DoxyCompactList}\small\item\em ask for the number of v\+Queues currently allocated. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a61466cf1cfcd794c5735c8bcc43dd8b5}\label{classev_1_1vReadPort_a61466cf1cfcd794c5735c8bcc43dd8b5}} 
+unsigned int \hyperlink{classev_1_1vReadPort_a61466cf1cfcd794c5735c8bcc43dd8b5}{query\+DelayN} ()
+\begin{DoxyCompactList}\small\item\em ask for the number of events in all v\+Queues. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_ab84604a7b938a15a67c7db82d1bc82ac}\label{classev_1_1vReadPort_ab84604a7b938a15a67c7db82d1bc82ac}} 
+double \hyperlink{classev_1_1vReadPort_ab84604a7b938a15a67c7db82d1bc82ac}{query\+DelayT} ()
+\begin{DoxyCompactList}\small\item\em ask for the total time spanned by all v\+Queues. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_af78cee18124aa9f6729aed6b8de529a5}\label{classev_1_1vReadPort_af78cee18124aa9f6729aed6b8de529a5}} 
+double \hyperlink{classev_1_1vReadPort_af78cee18124aa9f6729aed6b8de529a5}{query\+Rate} ()
+\begin{DoxyCompactList}\small\item\em ask for the high precision event rate \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_abfafe13fd97b9a2f86b0c16f9f77f640}\label{classev_1_1vReadPort_abfafe13fd97b9a2f86b0c16f9f77f640}} 
+std\+::string {\bfseries delay\+Stat\+String} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a174e9ccf70d44d4230822b7558873630}\label{classev_1_1vReadPort_a174e9ccf70d44d4230822b7558873630}} 
+void {\bfseries set\+Reporter} (Port\+Report \&reporter)
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a7d2052a556597fb452648acfc9c69c7c}\label{classev_1_1vReadPort_a7d2052a556597fb452648acfc9c69c7c}} 
+\hyperlink{classev_1_1vPortableInterface}{v\+Portable\+Interface} {\bfseries internal\+\_\+storage}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_af7dc70719d3d3b747410cac249375cd1}\label{classev_1_1vReadPort_af7dc70719d3d3b747410cac249375cd1}} 
+Port {\bfseries port}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a16253ae31557093d1678bcf7b9907208}\label{classev_1_1vReadPort_a16253ae31557093d1678bcf7b9907208}} 
+T $\ast$ {\bfseries working\+\_\+queue}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a0a644757f74909b9ffc65cdf573c62a9}\label{classev_1_1vReadPort_a0a644757f74909b9ffc65cdf573c62a9}} 
+deque$<$ T $\ast$$>$ {\bfseries qq}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a1f90047aed50cbf8b76e0b75e2330eb1}\label{classev_1_1vReadPort_a1f90047aed50cbf8b76e0b75e2330eb1}} 
+deque$<$ Stamp $>$ {\bfseries sq}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a550f6ee0b8c13aa3f9a4e0e030896cff}\label{classev_1_1vReadPort_a550f6ee0b8c13aa3f9a4e0e030896cff}} 
+deque$<$ int $>$ {\bfseries t\+\_\+q}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_ad71bb0a275e553468d7bedf1949dd2d1}\label{classev_1_1vReadPort_ad71bb0a275e553468d7bedf1949dd2d1}} 
+deque$<$ int $>$ {\bfseries n\+\_\+q}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a35bb3489d3fa7fe86c0ef7b563305976}\label{classev_1_1vReadPort_a35bb3489d3fa7fe86c0ef7b563305976}} 
+Mutex {\bfseries m}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a1481febbd2f80b1874090aea1365e9dd}\label{classev_1_1vReadPort_a1481febbd2f80b1874090aea1365e9dd}} 
+Mutex {\bfseries read\+\_\+mutex}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_afbcd0f47ccdafcedc57a2f23d104a145}\label{classev_1_1vReadPort_afbcd0f47ccdafcedc57a2f23d104a145}} 
+Semaphore {\bfseries dataavailable}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a35f6fe719860861eaaf9b2ebc30ac99e}\label{classev_1_1vReadPort_a35f6fe719860861eaaf9b2ebc30ac99e}} 
+unsigned int {\bfseries qlimit}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_acdcf63464771194e87d0fdd8226361a0}\label{classev_1_1vReadPort_acdcf63464771194e87d0fdd8226361a0}} 
+unsigned int {\bfseries unprocdqs}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_af6ce0d204c3fc755b32a31cdcc3b55b0}\label{classev_1_1vReadPort_af6ce0d204c3fc755b32a31cdcc3b55b0}} 
+unsigned int {\bfseries delay\+\_\+nv}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a440488d899ba95a07ec610616ffc9cd2}\label{classev_1_1vReadPort_a440488d899ba95a07ec610616ffc9cd2}} 
+long unsigned int {\bfseries delay\+\_\+t}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a9888128c255eaf3cc2d528590b8bf12f}\label{classev_1_1vReadPort_a9888128c255eaf3cc2d528590b8bf12f}} 
+double {\bfseries event\+\_\+rate}
+\item 
+\mbox{\Hypertarget{classev_1_1vReadPort_a6c737cc37c6a88eeaf01c62d82c40d3a}\label{classev_1_1vReadPort_a6c737cc37c6a88eeaf01c62d82c40d3a}} 
+int {\bfseries p\+\_\+time}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Port.\+h\end{DoxyCompactItemize}

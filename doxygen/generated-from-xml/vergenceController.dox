@@ -1,0 +1,49 @@
+
+  /**
+  *
+  * @ingroup applications 
+  * \defgroup vVergence vVergence
+  * Controlling the iCub to Verge on a Stimulus
+  * Version:1.0
+  * \author  Valentina Vasco valentina.vasco@iit.it
+  * \n
+  * \copyright Released under the terms of the GNU GPL v2.0
+  * \section intro_sec Description
+  *
+  
+    Controls the iCub to verge on a target
+    
+  * \section parameters_sec Parameters     
+  
+  *- -- name : Specifies the stem name of ports created by the module.
+  * \section inputports_sec Input Ports
+  * 
+  *- /vVergence/vBottle:i [eventdriven::vBottle]  [default carrier:udp]: 
+                Accepts the address events in the vBottle
+                container
+            
+  *
+  
+  * \section outputports_sec Output Ports
+  * 
+  *- /vVergence/debug:o [yarp::sig::ImageOf]  [default carrier:tcp]: 
+                Outputs a debugging image displaying events from left
+                and right cameras
+            
+  *
+  
+  *- /vVergence/scopefilters:o [yarp::os::Bottle]  [default carrier:udp]: 
+                Outputs debug information for use with yarpscope. Energies of
+                several filters are shown with different colors.
+            
+  *
+  
+  *
+  * \section services_sec Services
+  * 
+  *
+  * 
+  *
+  *
+  **/
+

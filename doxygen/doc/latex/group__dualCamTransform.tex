@@ -1,0 +1,25 @@
+\hypertarget{group__dualCamTransform}{}\section{dual\+Cam\+Transform}
+\label{group__dualCamTransform}\index{dual\+Cam\+Transform@{dual\+Cam\+Transform}}
+Transform events into the frame-\/based camera image plane Version\+:1.\+0 \begin{DoxyAuthor}{Author}
+Massimiliano Iacono \href{mailto:massimiliano.iacono@iit.it}{\tt massimiliano.\+iacono@iit.\+it} ~\newline
+ 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+Released under the terms of the G\+NU G\+PL v2.\+0 
+\end{DoxyCopyright}
+\hypertarget{group__zynqGrabber_intro_sec}{}\subsection{Description}\label{group__zynqGrabber_intro_sec}
+The module maps events to their location in the frame camera\hypertarget{group__zynqGrabber_parameters_sec}{}\subsection{Parameters}\label{group__zynqGrabber_parameters_sec}
+
+\begin{DoxyItemize}
+\item -- name \+: Specifies the stem name of ports created by the module. 
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_inputports_sec}{}\subsection{Input Ports}\label{group__zynqGrabber_inputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Mapping/v\+Bottle\+:i \mbox{[}eventdriven\+::v\+Bottle\mbox{]} \mbox{[}default carrier\+:tcp\mbox{]}\+: Accepts the address events and/or flow events in the v\+Bottle container
+\item /v\+Mapping/img\+:i \mbox{[}yarp\+::sig\+::\+Image\mbox{]} \mbox{[}default carrier\+:tcp\mbox{]}\+: Input frame based image
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_outputports_sec}{}\subsection{Output Ports}\label{group__zynqGrabber_outputports_sec}
+
+\begin{DoxyItemize}
+\item /v\+Mapping/img\+:o \mbox{[}yarp\+::sig\+::\+Image\mbox{]} \mbox{[}default carrier\+:udp\mbox{]}\+: Image overlapped with events
+\item /v\+Mapping/v\+Bottle\+:o \mbox{[}\hyperlink{classev_1_1vBottle}{ev\+::v\+Bottle}\mbox{]} \mbox{[}default carrier\+:udp\mbox{]}\+: Transformed events
+\end{DoxyItemize}\hypertarget{group__zynqGrabber_services_sec}{}\subsection{Services}\label{group__zynqGrabber_services_sec}

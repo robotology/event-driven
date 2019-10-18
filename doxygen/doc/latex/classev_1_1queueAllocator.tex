@@ -1,0 +1,64 @@
+\hypertarget{classev_1_1queueAllocator}{}\section{ev\+:\+:queue\+Allocator Class Reference}
+\label{classev_1_1queueAllocator}\index{ev\+::queue\+Allocator@{ev\+::queue\+Allocator}}
+
+
+an asynchronous reading port that accepts v\+Bottles and decodes them  
+
+
+
+
+{\ttfamily \#include $<$v\+Surface\+Handler\+Th.\+h$>$}
+
+Inheritance diagram for ev\+:\+:queue\+Allocator\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1queueAllocator}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_aecc5317205f3d9d5d753dfefcb2d3228}\label{classev_1_1queueAllocator_aecc5317205f3d9d5d753dfefcb2d3228}} 
+\hyperlink{classev_1_1queueAllocator_aecc5317205f3d9d5d753dfefcb2d3228}{queue\+Allocator} ()
+\begin{DoxyCompactList}\small\item\em constructor \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_a30954e25aa82ffd21aa513987a36bb40}\label{classev_1_1queueAllocator_a30954e25aa82ffd21aa513987a36bb40}} 
+\hyperlink{classev_1_1queueAllocator_a30954e25aa82ffd21aa513987a36bb40}{$\sim$queue\+Allocator} ()
+\begin{DoxyCompactList}\small\item\em desctructor \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_a12ae388a8d2deb71ca5b927c3eb0a860}\label{classev_1_1queueAllocator_a12ae388a8d2deb71ca5b927c3eb0a860}} 
+void \hyperlink{classev_1_1queueAllocator_a12ae388a8d2deb71ca5b927c3eb0a860}{on\+Read} (\hyperlink{classev_1_1vBottle}{ev\+::v\+Bottle} \&inputbottle)
+\begin{DoxyCompactList}\small\item\em the callback decodes the incoming \hyperlink{classev_1_1vBottle}{v\+Bottle} and adds it to the list of received v\+Bottles. The yarp, and event timestamps are updated. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_aa7d2e90c0cb859b798da083eb01b486a}\label{classev_1_1queueAllocator_aa7d2e90c0cb859b798da083eb01b486a}} 
+ev\+::v\+Queue $\ast$ \hyperlink{classev_1_1queueAllocator_aa7d2e90c0cb859b798da083eb01b486a}{read} (yarp\+::os\+::\+Stamp \&yarpstamp)
+\begin{DoxyCompactList}\small\item\em ask for a pointer to the next v\+Queue. Blocks if no data is ready. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_a1a914bc39f534dc50a7eb2ba846753bf}\label{classev_1_1queueAllocator_a1a914bc39f534dc50a7eb2ba846753bf}} 
+void \hyperlink{classev_1_1queueAllocator_a1a914bc39f534dc50a7eb2ba846753bf}{scrapQ} ()
+\begin{DoxyCompactList}\small\item\em remove the most recently read v\+Queue from the list and deallocate the memory \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_af6ca03ee35af1cf7dd5e2d8d8141e704}\label{classev_1_1queueAllocator_af6ca03ee35af1cf7dd5e2d8d8141e704}} 
+void \hyperlink{classev_1_1queueAllocator_af6ca03ee35af1cf7dd5e2d8d8141e704}{set\+Q\+Limit} (unsigned int number\+\_\+of\+\_\+qs)
+\begin{DoxyCompactList}\small\item\em set the maximum number of qs that can be stored in the buffer. A value of 0 keeps all qs. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_aa3ab79f1da7f2930811ab980347b0305}\label{classev_1_1queueAllocator_aa3ab79f1da7f2930811ab980347b0305}} 
+void \hyperlink{classev_1_1queueAllocator_aa3ab79f1da7f2930811ab980347b0305}{release\+Data\+Lock} ()
+\begin{DoxyCompactList}\small\item\em un\+Blocks the blocking call in get\+NextQ. Useful to ensure a graceful shutdown. No guarantee the return of get\+NextQ will be valid. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_adb785d0d33ba16522f8846da35c7ebab}\label{classev_1_1queueAllocator_adb785d0d33ba16522f8846da35c7ebab}} 
+int \hyperlink{classev_1_1queueAllocator_adb785d0d33ba16522f8846da35c7ebab}{queryunprocessed} ()
+\begin{DoxyCompactList}\small\item\em ask for the number of v\+Queues currently allocated. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_a557861a4f3730b4d8da7895173c6986a}\label{classev_1_1queueAllocator_a557861a4f3730b4d8da7895173c6986a}} 
+unsigned int \hyperlink{classev_1_1queueAllocator_a557861a4f3730b4d8da7895173c6986a}{query\+DelayN} ()
+\begin{DoxyCompactList}\small\item\em ask for the number of events in all v\+Queues. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_a439a2729d5474986977e26e63a9edf03}\label{classev_1_1queueAllocator_a439a2729d5474986977e26e63a9edf03}} 
+double \hyperlink{classev_1_1queueAllocator_a439a2729d5474986977e26e63a9edf03}{query\+DelayT} ()
+\begin{DoxyCompactList}\small\item\em ask for the total time spanned by all v\+Queues. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_a39005a8e9337279debe435ae26c7d6fd}\label{classev_1_1queueAllocator_a39005a8e9337279debe435ae26c7d6fd}} 
+double \hyperlink{classev_1_1queueAllocator_a39005a8e9337279debe435ae26c7d6fd}{query\+Rate} ()
+\begin{DoxyCompactList}\small\item\em ask for the high precision event rate \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1queueAllocator_a10282570a776a59efd302bb336109748}\label{classev_1_1queueAllocator_a10282570a776a59efd302bb336109748}} 
+std\+::string {\bfseries delay\+Stat\+String} ()
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+an asynchronous reading port that accepts v\+Bottles and decodes them 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Surface\+Handler\+Th.\+h\end{DoxyCompactItemize}

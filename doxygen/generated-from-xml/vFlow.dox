@@ -1,0 +1,48 @@
+
+  /**
+  *
+  * @ingroup processing 
+  * \defgroup vFlow vFlow
+  * Event-based Optical Flow Calculation
+  * Version:1.0
+  * \author  Arren Glover arren.glover@iit.it
+  * \n
+  * \copyright Released under the terms of the GNU GPL v2.0
+  * \section intro_sec Description
+  *
+  
+      The module calculates event-based Optical Flow by fitting planes in spatio-temporal space.
+    
+  * \section parameters_sec Parameters     
+  
+  *- -- name : Specifies the stem name of ports created by the module.
+  *- -- strict : Sets both input and ouput ports to use strict protocols.
+  *- -- width : Number of pixels on the x-axis of the sensor.
+  *- -- height : Number of pixels on the y-axis of the sensor.
+  *- -- filterSize : Lenght of the spatial window in pixels.
+  *- -- minEvtsThresh : Minimum number of events on the plane.
+  * \section inputports_sec Input Ports
+  * 
+  *- /vFlow/vBottle:i [eventdriven::vBottle]  [default carrier:tcp]: 
+                Accepts the address events in the vBottle container
+            
+  *
+  
+  * \section outputports_sec Output Ports
+  * 
+  *- /vFlow/vBottle:o [eventdriven::vBottle]  [default carrier:tcp]: 
+                Outputs flow events in the form of an
+                eventdriven::FlowEvent. The vBottle also contains all
+                events in the vBottle received as input.
+            
+  *
+  
+  *
+  * \section services_sec Services
+  * 
+  *
+  * 
+  *
+  *
+  **/
+

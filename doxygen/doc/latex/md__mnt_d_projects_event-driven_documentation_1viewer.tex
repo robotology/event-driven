@@ -1,0 +1,64 @@
+Visualise a stream of events either from real hardware/camera or from a pre-\/recorded sequence.
+
+\subsection*{Description}
+
+This application demonstrates how to visualise a stream of address events either from the cameras or from a pre-\/recorded sequence. The event stream is transmitted from the cameras ({\ttfamily /zynq\+Grabber/\+AE\+:o}) to the v\+Pre\+Process ({\ttfamily /v\+Pre\+Process/\+AE\+:i}), that removes salt-\/and-\/pepper noise from the event stream. The filtered stream ({\ttfamily /v\+Pre\+Process/left\+:o} and {\ttfamily /v\+Pre\+Process/right\+:o}) is sent to v\+Framer ({\ttfamily /v\+Framer/left/\+AE\+:i}), that converts it to a yarpview-\/able image. The \char`\"{}images\char`\"{} from left ({\ttfamily /v\+Framer/left/image\+:o}) and right camera ({\ttfamily /v\+Framer/right/image\+:o}) are then sent to the yarp viewers ({\ttfamily /view\+Ch0} and {\ttfamily /view\+Ch1}).
+
+Here is a visualisation of the instantiated modules and connections.
+
+
+
+\subsection*{How to run the application}
+
+These are basic instructions for first time Y\+A\+RP users, assuming the comprehensive instructions have been followed.
+
+\subsubsection*{Using actual hardware/camera? Skip \href{#using-real-hardwarecamera}{\tt ahead}. Using a dataset? Follow these instructions\+:}
+
+
+\begin{DoxyItemize}
+\item Download the sample dataset from \href{https://doi.org/10.5281/zenodo.2556755}{\tt here} and unpack to a location of your choosing.
+\item Set the yarp namespace\+: 
+\begin{DoxyCode}
+yarp namespace /<yourname>
+\end{DoxyCode}
+
+\item Run a yarpserver\+: 
+\begin{DoxyCode}
+yarpserver --write
+\end{DoxyCode}
+
+\item In a separate terminal, run a yarpdataplayer\+: 
+\begin{DoxyCode}
+yarpdataplayer
+\end{DoxyCode}
+
+\item In the yarpdataplayer gui, open the downloaded datsets (File-\/$>$open) by pressing \char`\"{}\+Choose\char`\"{} on the upper-\/level folder (e.\+g. folder name\+: fasthandtrim).
+\item The dataset should be open in the yarpdataplayer window with a \char`\"{}\+Port Name\char`\"{} of {\ttfamily /zynq\+Grabber/\+AE\+:o}.
+\end{DoxyItemize}
+
+\subsubsection*{Using real hardware/camera?}
+
+
+\begin{DoxyItemize}
+\item You should have followed the instructions to run install hardware and run zynq\+Grabber.
+\item If everything went smoothly, your laptop should be connected to the {\ttfamily yarpserver} running on the Z\+CB, your zynq\+Grabber should be running and a port {\ttfamily /zynq\+Grabber/\+AE\+:o} should be already open (check with {\ttfamily yarp name list}).
+\end{DoxyItemize}
+
+\subsubsection*{Okay -\/ yarpdataplayer users, and hardware users back together here\+:}
+
+
+\begin{DoxyItemize}
+\item In a separate terminal, run a yarpmanager\+: 
+\begin{DoxyCode}
+yarpmanager
+\end{DoxyCode}
+
+\item The yarpmanager gui should be open.
+\item On the entities tab (left) open the \char`\"{}\+Applications\char`\"{} folder -\/ the v\+View application should be visible. Double click the {\ttfamily event-\/viewer-\/example} application to load it.
+\item If you do not have the {\ttfamily event-\/viewer-\/example} application, make sure you followed the installation steps correctly, and that your {\ttfamily Y\+A\+R\+P\+\_\+\+D\+A\+T\+A\+\_\+\+D\+I\+RS} environment variable correctly points to the share folders in your install folder ({\ttfamily echo \$\+Y\+A\+R\+P\+\_\+\+D\+A\+T\+A\+\_\+\+D\+I\+RS})
+\item Run all the modules in the {\ttfamily event-\/viewer-\/example} app by choosing \char`\"{}\+Run All\char`\"{} in the left-\/most vertical toolbar. All applications should become green.
+\item If not all applications are green, it means the executable files could not be found on the {\ttfamily P\+A\+TH}. Verfify your installation and your {\ttfamily P\+A\+TH} environment variable ({\ttfamily echo \$\+P\+A\+TH}).
+\item Connect all yarp ports by choosing \char`\"{}\+Connect All\char`\"{} in the same toolbar. All connections should turn green.
+\item Press \char`\"{}\+Play\char`\"{} on the yarpdataplayer. The dataset should be visible in the yarpview windows (split into left and right cameras).
+\item To close all applications first \char`\"{}\+Disconnect All\char`\"{} and then \char`\"{}\+Close All\char`\"{} on the left-\/hand toolbar. G\+UI\textquotesingle{}s are closed as per a normal window. The yarpserver can be closed using {\ttfamily ctrl+c} in the appropriate terminal. 
+\end{DoxyItemize}

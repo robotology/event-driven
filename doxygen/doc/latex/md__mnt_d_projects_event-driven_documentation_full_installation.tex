@@ -1,0 +1,68 @@
+We\textquotesingle{}ll go through the recommended set-\/up of {\ttfamily event-\/driven} for a first time user of the {\ttfamily Y\+A\+RP} environment. The first step is to create a directory in which to install {\ttfamily Y\+A\+RP}, {\ttfamily event-\/driven} and the eventual modules you will write. For example\+: 
+\begin{DoxyCode}
+mkdir ~/yarp-install
+\end{DoxyCode}
+ Secondly, we want to set up some environment variables that will make the install go smoother. Use your favourite text editor to open {\ttfamily $\sim$/.bashrc} and add the following lines\+: 
+\begin{DoxyCode}
+export INSTALL\_DIR=~/yarp-install
+export CMAKE\_PREFIX\_PATH=$CMAKE\_PREFIX\_PATH:$INSTALL\_DIR
+export YARP\_DATA\_DIRS=$INSTALL\_DIR/share/yarp:$INSTALL\_DIR/share/event-driven
+export PATH=$PATH:$INSTALL\_DIR/bin
+\end{DoxyCode}
+ and don\textquotesingle{}t forget to {\ttfamily source $\sim$/.bashrc} to apply the changes!
+
+Next we want to get the required repositories. Change directory into one in which you want these projects, for example\+: 
+\begin{DoxyCode}
+mkdir ~/projects && cd ~/projects
+\end{DoxyCode}
+ then, 
+\begin{DoxyCode}
+git clone https://github.com/robotology/YCM.git
+git clone https://github.com/robotology/yarp.git
+git clone https://github.com/robotology/event-driven.git
+\end{DoxyCode}
+ \+:warning\+: We are going to build the repositories in the above order too! However, first you might need some extra dependencies for {\ttfamily Y\+A\+RP}. One option is to go \href{http://wiki.icub.org/wiki/Linux:Installation_from_sources}{\tt here} and follow the {\itshape Getting all dependencies} instructions (either installing dependencies yourself or adding to the {\ttfamily apt} path).
+
+\+:warning\+: the versions of each software that you checkout are current as of the writing of this tutorial. If a newer {\itshape stable} version of Y\+CM or Y\+A\+RP is available it is recommended to upgrade to that version. Use {\ttfamily git ls-\/remote -\/-\/tags origin} to see all versions available.
+
+Now you have dependencies, let\textquotesingle{}s install {\ttfamily Y\+CM}\+: 
+\begin{DoxyCode}
+cd ~/projects/YCM
+git checkout v0.10.4
+mkdir build && cd build
+cmake .. -DCMAKE\_INSTALL\_PREFIX=$INSTALL\_DIR
+make install -j$(nproc)
+\end{DoxyCode}
+
+
+Then let\textquotesingle{}s install {\ttfamily Y\+A\+RP}\+: 
+\begin{DoxyCode}
+cd ~/projects/yarp
+git checkout v3.2.1
+mkdir build && cd build
+cmake .. -DCMAKE\_INSTALL\_PREFIX=$INSTALL\_DIR
+make install -j$(nproc)
+\end{DoxyCode}
+ Finally, let\textquotesingle{}s install {\ttfamily event-\/driven}\+: 
+\begin{DoxyCode}
+cd ~/projects/event-driven
+mkdir build && cd build
+cmake .. -DCMAKE\_INSTALL\_PREFIX=$INSTALL\_DIR
+make install -j$(nproc)
+\end{DoxyCode}
+
+
+Continue with the tutorials to test your installation, or\+:
+
+\subsubsection*{Install icub-\/main (optional)}
+
+{\ttfamily icub-\/main} is used if you are using the i\+Cub robot and want to enable some of the {\ttfamily event-\/driven} modules that control the robot. To install {\ttfamily icub-\/main} do\+: 
+\begin{DoxyCode}
+cd ~/projects
+git clone https://github.com/robotology/icub-main.git
+cd icub-main
+mkdir build && cd build
+cmake .. -DCMAKE\_INSTALL\_PREFIX=$INSTALL\_DIR
+make install -j$(nproc)
+\end{DoxyCode}
+ 

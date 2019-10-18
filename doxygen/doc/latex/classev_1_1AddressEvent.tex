@@ -1,0 +1,91 @@
+\hypertarget{classev_1_1AddressEvent}{}\section{ev\+:\+:Address\+Event Class Reference}
+\label{classev_1_1AddressEvent}\index{ev\+::\+Address\+Event@{ev\+::\+Address\+Event}}
+
+
+an event with a pixel location, camera number and polarity  
+
+
+
+
+{\ttfamily \#include $<$v\+Codec.\+h$>$}
+
+Inheritance diagram for ev\+:\+:Address\+Event\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.000000cm]{classev_1_1AddressEvent}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_a62e810ce50e155828957e61c99a165d2}\label{classev_1_1AddressEvent_a62e810ce50e155828957e61c99a165d2}} 
+{\bfseries Address\+Event} (const \hyperlink{classev_1_1vEvent}{v\+Event} \&v)
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_a5072b43ca93fdcdf0294ecff78f3b424}\label{classev_1_1AddressEvent_a5072b43ca93fdcdf0294ecff78f3b424}} 
+{\bfseries Address\+Event} (const \hyperlink{classev_1_1AddressEvent}{Address\+Event} \&v)
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_adabe75246de88f722d65b4994c7955eb}\label{classev_1_1AddressEvent_adabe75246de88f722d65b4994c7955eb}} 
+virtual event {\bfseries clone} ()
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_a88fd7ed5398113959b148b3ff48dc9bb}\label{classev_1_1AddressEvent_a88fd7ed5398113959b148b3ff48dc9bb}} 
+virtual void {\bfseries encode} (yarp\+::os\+::\+Bottle \&b) const
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_ab61870d54423584f9c1c5e48bf989df9}\label{classev_1_1AddressEvent_ab61870d54423584f9c1c5e48bf989df9}} 
+virtual void {\bfseries encode} (std\+::vector$<$ int32\+\_\+t $>$ \&b, unsigned int \&pos) const
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_aadf6cc5f4681b4c4028ac2be4317ed55}\label{classev_1_1AddressEvent_aadf6cc5f4681b4c4028ac2be4317ed55}} 
+virtual bool {\bfseries decode} (const yarp\+::os\+::\+Bottle \&packet, size\+\_\+t \&pos)
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_a0f898c7319ceb94bf6c5eb688ef1df46}\label{classev_1_1AddressEvent_a0f898c7319ceb94bf6c5eb688ef1df46}} 
+virtual void {\bfseries decode} (const int32\+\_\+t $\ast$\&data)
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_a8defcdc4c7ab81cae0c608ef3d5c1dec}\label{classev_1_1AddressEvent_a8defcdc4c7ab81cae0c608ef3d5c1dec}} 
+virtual yarp\+::os\+::\+Property {\bfseries get\+Content} () const
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_ab052f9d6d9ba89660e2e1c1e3dff07e9}\label{classev_1_1AddressEvent_ab052f9d6d9ba89660e2e1c1e3dff07e9}} 
+virtual std\+::string {\bfseries get\+Type} () const
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_a4f0e15a8300d1018cbb813fa83aedb43}\label{classev_1_1AddressEvent_a4f0e15a8300d1018cbb813fa83aedb43}} 
+virtual int {\bfseries get\+Channel} () const
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_a50e188b1c5702cab67a2175b81c32767}\label{classev_1_1AddressEvent_a50e188b1c5702cab67a2175b81c32767}} 
+virtual void {\bfseries set\+Channel} (const int channel)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_a359b9c530269e582a058112a34a48383}\label{classev_1_1AddressEvent_a359b9c530269e582a058112a34a48383}} 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+union \{\\
+\>uint32\_t {\bfseries \_coded\_data}\\
+\mbox{\Hypertarget{unionev_1_1AddressEvent_1_1_0D1_a51f7d79230871a81eca60e6fe852b2df}\label{unionev_1_1AddressEvent_1_1_0D1_a51f7d79230871a81eca60e6fe852b2df}} 
+\>struct \{\\
+\>\>unsigned int {\bfseries polarity}:1\\
+\>\>unsigned int {\bfseries x}:9\\
+\>\>unsigned int {\bfseries \_xfill}:2\\
+\>\>unsigned int {\bfseries y}:8\\
+\>\>unsigned int {\bfseries \_yfill}:2\\
+\>\>unsigned int {\bfseries channel}:1\\
+\>\>unsigned int {\bfseries type}:1\\
+\>\>unsigned int {\bfseries skin}:1\\
+\>\>unsigned int {\bfseries \_fill}:7\\
+\>\} \\
+\}; \\
+
+\end{tabbing}\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1AddressEvent_a9a2d3e863964a1247ae4203a4ad2c646}\label{classev_1_1AddressEvent_a9a2d3e863964a1247ae4203a4ad2c646}} 
+static const std\+::string {\bfseries tag} = \char`\"{}AE\char`\"{}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+an event with a pixel location, camera number and polarity 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Codec.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/codecs/codec\+\_\+\+Address\+Event.\+cpp\end{DoxyCompactItemize}

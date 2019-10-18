@@ -1,0 +1,105 @@
+Event-\/driven datasets contain the stream of events captured from a single or stereo event cameras. Each dataset can be played using the {\itshape yarpdataplayer}. Once the dataset is loaded in the {\itshape yarpdataplayer}, the specified output port (default={\ttfamily /zynq\+Grabber/\+AE\+:o}) is opened and can be connected to any event-\/driven processing module, the event-\/driven pre-\/processing module ({\itshape v\+Pre\+Process}), or directly to the event-\/driven visualizer ({\itshape v\+Framer\+Lite}).
+
+Each dataset may also contain\+:
+
+
+\begin{DoxyItemize}
+\item other sensors on the i\+Cub (also re-\/playable with the {\itshape yarpdataplayer}),
+\item ground truth measurements, given the task ({\itshape e.\+g.} ball locations, corner locations), and
+\item Matlab scripts to generate the result figures as in the relevant papers.
+\end{DoxyItemize}
+
+Datasets recorded with the D\+VS and A\+T\+IS have the following properties which must be set correctly in the module parameters ({\itshape i.\+e.} width and height) and the C\+Make options ({\itshape i.\+e.} {\ttfamily V\+L\+I\+B\+\_\+\+C\+O\+D\+E\+C\+\_\+\+T\+Y\+PE}, {\ttfamily V\+L\+I\+B\+\_\+\+T\+I\+M\+E\+R\+\_\+\+B\+I\+TS} and {\ttfamily V\+L\+I\+B\+\_\+\+C\+L\+O\+C\+K\+\_\+\+P\+E\+R\+I\+O\+D\+\_\+\+NS}), to interpret the data\+:
+
+\tabulinesep=1mm
+\begin{longtabu} spread 0pt [c]{*{6}{|X[-1]}|}
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Sensor Type }&\textbf{ width }&\textbf{ height }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+O\+D\+E\+C\+\_\+\+T\+Y\+PE} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+T\+I\+M\+E\+R\+\_\+\+B\+I\+TS} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+L\+O\+C\+K\+\_\+\+P\+E\+R\+I\+O\+D\+\_\+\+NS}  }\\\cline{1-6}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Sensor Type }&\textbf{ width }&\textbf{ height }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+O\+D\+E\+C\+\_\+\+T\+Y\+PE} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+T\+I\+M\+E\+R\+\_\+\+B\+I\+TS} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+L\+O\+C\+K\+\_\+\+P\+E\+R\+I\+O\+D\+\_\+\+NS}  }\\\cline{1-6}
+\endhead
+D\+VS &128 &128 &C\+O\+D\+E\+C\+\_\+128x128 &24 &128 \\\cline{1-6}
+\end{longtabu}
+\tabulinesep=1mm
+\begin{longtabu} spread 0pt [c]{*{6}{|X[-1]}|}
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Sensor Type }&\textbf{ width }&\textbf{ height }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+O\+D\+E\+C\+\_\+\+T\+Y\+PE} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+T\+I\+M\+E\+R\+\_\+\+B\+I\+TS} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+L\+O\+C\+K\+\_\+\+P\+E\+R\+I\+O\+D\+\_\+\+NS}  }\\\cline{1-6}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Sensor Type }&\textbf{ width }&\textbf{ height }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+O\+D\+E\+C\+\_\+\+T\+Y\+PE} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+T\+I\+M\+E\+R\+\_\+\+B\+I\+TS} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+L\+O\+C\+K\+\_\+\+P\+E\+R\+I\+O\+D\+\_\+\+NS}  }\\\cline{1-6}
+\endhead
+A\+T\+I\+S\+\_\+20 &304 &240 &C\+O\+D\+E\+C\+\_\+304x240\+\_\+20 &24 &80 \\\cline{1-6}
+\end{longtabu}
+\tabulinesep=1mm
+\begin{longtabu} spread 0pt [c]{*{6}{|X[-1]}|}
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Sensor Type }&\textbf{ width }&\textbf{ height }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+O\+D\+E\+C\+\_\+\+T\+Y\+PE} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+T\+I\+M\+E\+R\+\_\+\+B\+I\+TS} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+L\+O\+C\+K\+\_\+\+P\+E\+R\+I\+O\+D\+\_\+\+NS}  }\\\cline{1-6}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Sensor Type }&\textbf{ width }&\textbf{ height }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+O\+D\+E\+C\+\_\+\+T\+Y\+PE} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+T\+I\+M\+E\+R\+\_\+\+B\+I\+TS} }&\textbf{ {\ttfamily V\+L\+I\+B\+\_\+\+C\+L\+O\+C\+K\+\_\+\+P\+E\+R\+I\+O\+D\+\_\+\+NS}  }\\\cline{1-6}
+\endhead
+A\+T\+I\+S\+\_\+24 &304 &240 &C\+O\+D\+E\+C\+\_\+304x240\+\_\+24 &30 &80 \\\cline{1-6}
+\end{longtabu}
+\subsection*{Available Datasets}
+
+\subsubsection*{Sample Dataset}
+
+
+\begin{DoxyItemize}
+\item simple dataset to visualise
+\item A\+T\+I\+S\+\_\+24
+\end{DoxyItemize}
+
+\href{https://doi.org/10.5281/zenodo.2556755}{\tt download}
+
+\subsubsection*{Ball Detection and Tracking}
+
+
+\begin{DoxyItemize}
+\item 2 Datasets = hand-\/move, eye-\/move
+\item D\+VS
+\item ground truth supplied
+\end{DoxyItemize}
+
+\href{https://figshare.com/s/0abd8f18312bec15b121}{\tt download}
+
+\subsubsection*{Corner Detection}
+
+
+\begin{DoxyItemize}
+\item 2 Datasets = checkboard (multiple different speeds and angles), naturalscene
+\item D\+VS
+\item ground truth supplied for naturalscene
+\end{DoxyItemize}
+
+\href{https://figshare.com/s/0abd8f18312bec15b121}{\tt download}
+
+\subsubsection*{V\+V\+V18-\/\+E\+V\+E\+N\+T\+D\+R\+I\+V\+E\+N-\/\+D\+A\+T\+A\+S\+ET}
+
+
+\begin{DoxyItemize}
+\item 3 Datasets = 1, 2, 3 with different motions of the object and the robot
+\item robot encoder positions for head and torso supplied, stereo A\+T\+IS output, stereo R\+GB camera supplied
+\item scripts to recreate the movement of the robot supplied
+\item A\+T\+I\+S\+\_\+20
+\end{DoxyItemize}
+
+\href{https://figshare.com/s/0abd8f18312bec15b121}{\tt download}
+
+\subsubsection*{Parallel Visual Tracking}
+
+
+\begin{DoxyItemize}
+\item 10 datasets with moving circular target
+\item contains ground truth and outputs of tracking algorithm run on the C\+PU and on the Spi\+N\+N\+Aker
+\item A\+T\+I\+S\+\_\+24
+\end{DoxyItemize}
+
+\href{https://doi.org/10.5281/zenodo.2556755}{\tt download} 

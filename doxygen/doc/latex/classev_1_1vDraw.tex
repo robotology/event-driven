@@ -1,0 +1,146 @@
+\hypertarget{classev_1_1vDraw}{}\section{ev\+:\+:v\+Draw Class Reference}
+\label{classev_1_1vDraw}\index{ev\+::v\+Draw@{ev\+::v\+Draw}}
+
+
+The \hyperlink{classev_1_1vDraw}{v\+Draw} class is the base class from which all v\+Drawers should inherit. It contains the draw and get\+Tag functions which must be overloaded, and the sensor size for reference.  
+
+
+
+
+{\ttfamily \#include $<$v\+Draw.\+h$>$}
+
+Inheritance diagram for ev\+:\+:v\+Draw\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=12.000000cm]{classev_1_1vDraw}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{classev_1_1vDraw_a0362710d8ca805d19b013818660bc867}{set\+Retina\+Limits} (int Xlimit, int Ylimit)
+\begin{DoxyCompactList}\small\item\em set\+Limits sets the maximum possible values of the position of events that could be drawn (mostly governed by the sensor size). \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a67241ea174704ad575646713fc045b17}\label{classev_1_1vDraw_a67241ea174704ad575646713fc045b17}} 
+void {\bfseries set\+Temporal\+Limits} (unsigned int display\+\_\+window, unsigned int max\+\_\+window)
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a82a972ba5dd41bcaaffa2565bd400e89}\label{classev_1_1vDraw_a82a972ba5dd41bcaaffa2565bd400e89}} 
+void {\bfseries set\+Flip} (bool flip)
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_ad4370892e94e8dafcc763addf50bd164}\label{classev_1_1vDraw_ad4370892e94e8dafcc763addf50bd164}} 
+virtual void {\bfseries initialise} ()
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a98e3b5b7114c777f4e02351b86cc7d75}\label{classev_1_1vDraw_a98e3b5b7114c777f4e02351b86cc7d75}} 
+virtual void {\bfseries reset\+Image} (cv\+::\+Mat \&image)
+\item 
+virtual void \hyperlink{classev_1_1vDraw_af1eee5dcdf3b4cfee6a3024e5cd706f8}{draw} (cv\+::\+Mat \&canvas, const ev\+::v\+Queue \&e\+Set, int v\+Time)=0
+\begin{DoxyCompactList}\small\item\em draw takes an image and overlays the new visualisation textures \end{DoxyCompactList}\item 
+virtual std\+::string \hyperlink{classev_1_1vDraw_ac01381befeffef2b930cbceb28b18a28}{get\+Draw\+Type} ()=0
+\begin{DoxyCompactList}\small\item\em get\+Tag returns the unique code for this drawing method. The arguments given on the command line must match this code exactly \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a0f9ef3a3f08b34cc0952c16329181d75}\label{classev_1_1vDraw_a0f9ef3a3f08b34cc0952c16329181d75}} 
+virtual std\+::string {\bfseries get\+Event\+Type} ()=0
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_abb01af9562deeee5c654819da8f8ed48}\label{classev_1_1vDraw_abb01af9562deeee5c654819da8f8ed48}} 
+int {\bfseries Xlimit}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_ac8576f64274527917d90b3bd366d30cb}\label{classev_1_1vDraw_ac8576f64274527917d90b3bd366d30cb}} 
+int {\bfseries Ylimit}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a1b39d618b4b05ae1af7c1f244ade51fc}\label{classev_1_1vDraw_a1b39d618b4b05ae1af7c1f244ade51fc}} 
+unsigned int {\bfseries display\+\_\+window}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a3f0d8becb738e2c5b8f1035de3a68ec4}\label{classev_1_1vDraw_a3f0d8becb738e2c5b8f1035de3a68ec4}} 
+unsigned int {\bfseries max\+\_\+window}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a35a10630b77794a8275e5fa1ba211c28}\label{classev_1_1vDraw_a35a10630b77794a8275e5fa1ba211c28}} 
+bool {\bfseries flip}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_ae6064a6b7d3e7ceac8c25023f65df312}\label{classev_1_1vDraw_ae6064a6b7d3e7ceac8c25023f65df312}} 
+cv\+::\+Vec3b {\bfseries aqua} \{151, 174, 6\}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a70ac397a8d4cbea13fc6935bf1b15ef5}\label{classev_1_1vDraw_a70ac397a8d4cbea13fc6935bf1b15ef5}} 
+cv\+::\+Vec3b {\bfseries violet} \{180, 10, 155\}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a1076d8ade59f536f331a32c4f01741cc}\label{classev_1_1vDraw_a1076d8ade59f536f331a32c4f01741cc}} 
+cv\+::\+Vec3b {\bfseries orange} \{9, 111, 255\}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a89d68710f6031add1a4fc1b152b49a73}\label{classev_1_1vDraw_a89d68710f6031add1a4fc1b152b49a73}} 
+cv\+::\+Vec3b {\bfseries lime} \{9, 250, 222\}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_aa6e44598c13ee4f84d40b85416d5d5a7}\label{classev_1_1vDraw_aa6e44598c13ee4f84d40b85416d5d5a7}} 
+cv\+::\+Vec3b {\bfseries white} \{255, 255, 255\}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a7b5f1fc47b30fed175f258447adc8cc4}\label{classev_1_1vDraw_a7b5f1fc47b30fed175f258447adc8cc4}} 
+cv\+::\+Vec3b {\bfseries black} \{0, 0, 0\}
+\item 
+\mbox{\Hypertarget{classev_1_1vDraw_a00d2b2e84b9ea5bf0ee3a04cd613d22a}\label{classev_1_1vDraw_a00d2b2e84b9ea5bf0ee3a04cd613d22a}} 
+cv\+::\+Vec3b {\bfseries red} \{0, 0, 255\}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+The \hyperlink{classev_1_1vDraw}{v\+Draw} class is the base class from which all v\+Drawers should inherit. It contains the draw and get\+Tag functions which must be overloaded, and the sensor size for reference. 
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classev_1_1vDraw_af1eee5dcdf3b4cfee6a3024e5cd706f8}\label{classev_1_1vDraw_af1eee5dcdf3b4cfee6a3024e5cd706f8}} 
+\index{ev\+::v\+Draw@{ev\+::v\+Draw}!draw@{draw}}
+\index{draw@{draw}!ev\+::v\+Draw@{ev\+::v\+Draw}}
+\subsubsection{\texorpdfstring{draw()}{draw()}}
+{\footnotesize\ttfamily virtual void ev\+::v\+Draw\+::draw (\begin{DoxyParamCaption}\item[{cv\+::\+Mat \&}]{canvas,  }\item[{const ev\+::v\+Queue \&}]{e\+Set,  }\item[{int}]{v\+Time }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+draw takes an image and overlays the new visualisation textures 
+
+
+\begin{DoxyParams}{Parameters}
+{\em canvas} & is the image which may or may not yet exist \\
+\hline
+{\em e\+Set} & is the set of events which could possibly be drawn \\
+\hline
+\end{DoxyParams}
+
+
+Implemented in \hyperlink{classev_1_1taxeleventDraw_ad2ff0348ee1b362e3c50508ffefdf9d1}{ev\+::taxelevent\+Draw}, \hyperlink{classev_1_1taxelsampleDraw_a43e40e8cfc4ed342f8d616eb9ddecf0a}{ev\+::taxelsample\+Draw}, \hyperlink{classev_1_1skinsampleDraw_a1c2492038e7fe94fe88d2286ac18f2c6}{ev\+::skinsample\+Draw}, \hyperlink{classev_1_1skinDraw_a4cbf578dd04c6a634c8959fea7295060}{ev\+::skin\+Draw}, \hyperlink{classev_1_1isoDrawSkin_a2d4ed05b06bea443974f5b07a4d69374}{ev\+::iso\+Draw\+Skin}, \hyperlink{classev_1_1isoInterestDraw_a3276f946c09d4cd0009f8379ea24d409}{ev\+::iso\+Interest\+Draw}, \hyperlink{classev_1_1clusterDraw_aa70978bb98c7bde912eb03288f21cbb5}{ev\+::cluster\+Draw}, \hyperlink{classev_1_1interestDraw_aeca2c7248d34d6817e853aad6a254380}{ev\+::interest\+Draw}, \hyperlink{classev_1_1flowDraw_a15d97ddaf93734a912be64fb60977ee2}{ev\+::flow\+Draw}, \hyperlink{classev_1_1cochleaDraw_a2b06c53991065506fcdaa9afec8282af}{ev\+::cochlea\+Draw}, \hyperlink{classev_1_1rasterDraw_a0cc698fe53b645a8a1ed8cdb40c8b7a9}{ev\+::raster\+Draw}, \hyperlink{classev_1_1imuDraw_addbaf0eff95fe6e791ca53c36218267e}{ev\+::imu\+Draw}, \hyperlink{classev_1_1addressDraw_a9ff5e558766f8b6cec2b11a60907b455}{ev\+::address\+Draw}, and \hyperlink{classev_1_1isoDraw_ad481b618ae2d08664481ffc4b3c4dd95}{ev\+::iso\+Draw}.
+
+\mbox{\Hypertarget{classev_1_1vDraw_ac01381befeffef2b930cbceb28b18a28}\label{classev_1_1vDraw_ac01381befeffef2b930cbceb28b18a28}} 
+\index{ev\+::v\+Draw@{ev\+::v\+Draw}!get\+Draw\+Type@{get\+Draw\+Type}}
+\index{get\+Draw\+Type@{get\+Draw\+Type}!ev\+::v\+Draw@{ev\+::v\+Draw}}
+\subsubsection{\texorpdfstring{get\+Draw\+Type()}{getDrawType()}}
+{\footnotesize\ttfamily virtual std\+::string ev\+::v\+Draw\+::get\+Draw\+Type (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+get\+Tag returns the unique code for this drawing method. The arguments given on the command line must match this code exactly 
+
+\begin{DoxyReturn}{Returns}
+the tag code 
+\end{DoxyReturn}
+
+
+Implemented in \hyperlink{classev_1_1taxeleventDraw_a474b409ea48a97749caaf172f5fd467a}{ev\+::taxelevent\+Draw}, \hyperlink{classev_1_1taxelsampleDraw_a7bf19e7de1e4851b5567308e95334942}{ev\+::taxelsample\+Draw}, \hyperlink{classev_1_1skinsampleDraw_a32064d959f2c127d25a9fa6773384850}{ev\+::skinsample\+Draw}, \hyperlink{classev_1_1skinDraw_a7015a083dffe5c055808c20b9372bce4}{ev\+::skin\+Draw}, \hyperlink{classev_1_1isoDrawSkin_a9f1bce77ba050a37dfe151e2246779bc}{ev\+::iso\+Draw\+Skin}, \hyperlink{classev_1_1isoInterestDraw_a93b2142d5652f725e21d34fedde103df}{ev\+::iso\+Interest\+Draw}, \hyperlink{classev_1_1clusterDraw_a21cd4ba2277ad5258b39d135e445b32f}{ev\+::cluster\+Draw}, \hyperlink{classev_1_1interestDraw_a97dbea009b993f0d8f4b6967b2b241ad}{ev\+::interest\+Draw}, \hyperlink{classev_1_1flowDraw_a6caf6d848d79407e62b7bf13c58d583e}{ev\+::flow\+Draw}, \hyperlink{classev_1_1cochleaDraw_a722aac2b6c1af1f6691721beb8a25325}{ev\+::cochlea\+Draw}, \hyperlink{classev_1_1rasterDraw_a687569e3beafa6aa9e73e3eeaad64d59}{ev\+::raster\+Draw}, \hyperlink{classev_1_1imuDraw_ab622b53cbe53421958cb7572919a0318}{ev\+::imu\+Draw}, \hyperlink{classev_1_1addressDraw_a92e98d08d1fdbf47d7e0cb9fcf7a9937}{ev\+::address\+Draw}, and \hyperlink{classev_1_1isoDraw_abd32cc393e5489ee97b5a8b94e6dd88d}{ev\+::iso\+Draw}.
+
+\mbox{\Hypertarget{classev_1_1vDraw_a0362710d8ca805d19b013818660bc867}\label{classev_1_1vDraw_a0362710d8ca805d19b013818660bc867}} 
+\index{ev\+::v\+Draw@{ev\+::v\+Draw}!set\+Retina\+Limits@{set\+Retina\+Limits}}
+\index{set\+Retina\+Limits@{set\+Retina\+Limits}!ev\+::v\+Draw@{ev\+::v\+Draw}}
+\subsubsection{\texorpdfstring{set\+Retina\+Limits()}{setRetinaLimits()}}
+{\footnotesize\ttfamily void ev\+::v\+Draw\+::set\+Retina\+Limits (\begin{DoxyParamCaption}\item[{int}]{Xlimit,  }\item[{int}]{Ylimit }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+set\+Limits sets the maximum possible values of the position of events that could be drawn (mostly governed by the sensor size). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em Xlimit} & is the maximum x value (width) \\
+\hline
+{\em Ylimit} & is the maximium y value (height) \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Draw.\+h\end{DoxyCompactItemize}

@@ -1,0 +1,130 @@
+\hypertarget{classev_1_1isoDraw}{}\section{ev\+:\+:iso\+Draw Class Reference}
+\label{classev_1_1isoDraw}\index{ev\+::iso\+Draw@{ev\+::iso\+Draw}}
+Inheritance diagram for ev\+:\+:iso\+Draw\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classev_1_1isoDraw}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a8a59ea1dc5d3ceba63edc7812b57cc8b}\label{classev_1_1isoDraw_a8a59ea1dc5d3ceba63edc7812b57cc8b}} 
+void {\bfseries initialise} ()
+\item 
+virtual void \hyperlink{classev_1_1isoDraw_ad481b618ae2d08664481ffc4b3c4dd95}{draw} (cv\+::\+Mat \&image, const ev\+::v\+Queue \&e\+Set, int v\+Time)
+\begin{DoxyCompactList}\small\item\em draw takes an image and overlays the new visualisation textures \end{DoxyCompactList}\item 
+virtual std\+::string \hyperlink{classev_1_1isoDraw_abd32cc393e5489ee97b5a8b94e6dd88d}{get\+Draw\+Type} ()
+\begin{DoxyCompactList}\small\item\em get\+Tag returns the unique code for this drawing method. The arguments given on the command line must match this code exactly \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a65bb091100e7f29b9268d9163af675d9}\label{classev_1_1isoDraw_a65bb091100e7f29b9268d9163af675d9}} 
+virtual std\+::string {\bfseries get\+Event\+Type} ()
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_af2ab4661d476d7fb42f3208165f42e0c}\label{classev_1_1isoDraw_af2ab4661d476d7fb42f3208165f42e0c}} 
+static const std\+::string {\bfseries drawtype} = \char`\"{}I\+SO\char`\"{}
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a9e4a4d519846970a5d0f12af596a7188}\label{classev_1_1isoDraw_a9e4a4d519846970a5d0f12af596a7188}} 
+void {\bfseries pttr} (int \&x, int \&y, int \&z)
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_aa2e02ca38ca08436fed9710f16a68cc0}\label{classev_1_1isoDraw_aa2e02ca38ca08436fed9710f16a68cc0}} 
+double {\bfseries thetaY}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a84f3c0bfdeeaa5d87e34bb2b515c8f68}\label{classev_1_1isoDraw_a84f3c0bfdeeaa5d87e34bb2b515c8f68}} 
+double {\bfseries thetaX}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a7bd0a4b981347fd910ef6b1105a1e44c}\label{classev_1_1isoDraw_a7bd0a4b981347fd910ef6b1105a1e44c}} 
+double {\bfseries CY}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a8bc247333b8bf395ef587da07e91e6c1}\label{classev_1_1isoDraw_a8bc247333b8bf395ef587da07e91e6c1}} 
+double {\bfseries SY}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a04de977fa3e40414ef08261bbce7d625}\label{classev_1_1isoDraw_a04de977fa3e40414ef08261bbce7d625}} 
+double {\bfseries CX}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a7bb0a3450b029f16162c3b2384fdcdbb}\label{classev_1_1isoDraw_a7bb0a3450b029f16162c3b2384fdcdbb}} 
+double {\bfseries SX}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a581e58c379835002d7118d07b051b825}\label{classev_1_1isoDraw_a581e58c379835002d7118d07b051b825}} 
+double {\bfseries ts\+\_\+to\+\_\+axis}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a817091f39e3c95e92064527c22e239f1}\label{classev_1_1isoDraw_a817091f39e3c95e92064527c22e239f1}} 
+int {\bfseries Zlimit}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a19bb2e090dffb88145fbd976064a1438}\label{classev_1_1isoDraw_a19bb2e090dffb88145fbd976064a1438}} 
+int {\bfseries imagewidth}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a7ee831adfe4c3dc13718b158a6e53ae8}\label{classev_1_1isoDraw_a7ee831adfe4c3dc13718b158a6e53ae8}} 
+int {\bfseries imageheight}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_ac105029057405105a559f119b6a794db}\label{classev_1_1isoDraw_ac105029057405105a559f119b6a794db}} 
+int {\bfseries imagexshift}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_a250c4a31d28b85f4151d7a92b02fc0d3}\label{classev_1_1isoDraw_a250c4a31d28b85f4151d7a92b02fc0d3}} 
+int {\bfseries imageyshift}
+\item 
+\mbox{\Hypertarget{classev_1_1isoDraw_ae1d11e5f0c8bf377b8c90474aa9705b6}\label{classev_1_1isoDraw_ae1d11e5f0c8bf377b8c90474aa9705b6}} 
+cv\+::\+Mat {\bfseries baseimage}
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classev_1_1isoDraw_ad481b618ae2d08664481ffc4b3c4dd95}\label{classev_1_1isoDraw_ad481b618ae2d08664481ffc4b3c4dd95}} 
+\index{ev\+::iso\+Draw@{ev\+::iso\+Draw}!draw@{draw}}
+\index{draw@{draw}!ev\+::iso\+Draw@{ev\+::iso\+Draw}}
+\subsubsection{\texorpdfstring{draw()}{draw()}}
+{\footnotesize\ttfamily void ev\+::iso\+Draw\+::draw (\begin{DoxyParamCaption}\item[{cv\+::\+Mat \&}]{canvas,  }\item[{const ev\+::v\+Queue \&}]{e\+Set,  }\item[{int}]{v\+Time }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+draw takes an image and overlays the new visualisation textures 
+
+
+\begin{DoxyParams}{Parameters}
+{\em canvas} & is the image which may or may not yet exist \\
+\hline
+{\em e\+Set} & is the set of events which could possibly be drawn \\
+\hline
+\end{DoxyParams}
+
+
+Implements \hyperlink{classev_1_1vDraw_af1eee5dcdf3b4cfee6a3024e5cd706f8}{ev\+::v\+Draw}.
+
+
+
+Reimplemented in \hyperlink{classev_1_1isoDrawSkin_a2d4ed05b06bea443974f5b07a4d69374}{ev\+::iso\+Draw\+Skin}, and \hyperlink{classev_1_1isoInterestDraw_a3276f946c09d4cd0009f8379ea24d409}{ev\+::iso\+Interest\+Draw}.
+
+\mbox{\Hypertarget{classev_1_1isoDraw_abd32cc393e5489ee97b5a8b94e6dd88d}\label{classev_1_1isoDraw_abd32cc393e5489ee97b5a8b94e6dd88d}} 
+\index{ev\+::iso\+Draw@{ev\+::iso\+Draw}!get\+Draw\+Type@{get\+Draw\+Type}}
+\index{get\+Draw\+Type@{get\+Draw\+Type}!ev\+::iso\+Draw@{ev\+::iso\+Draw}}
+\subsubsection{\texorpdfstring{get\+Draw\+Type()}{getDrawType()}}
+{\footnotesize\ttfamily std\+::string ev\+::iso\+Draw\+::get\+Draw\+Type (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+get\+Tag returns the unique code for this drawing method. The arguments given on the command line must match this code exactly 
+
+\begin{DoxyReturn}{Returns}
+the tag code 
+\end{DoxyReturn}
+
+
+Implements \hyperlink{classev_1_1vDraw_ac01381befeffef2b930cbceb28b18a28}{ev\+::v\+Draw}.
+
+
+
+Reimplemented in \hyperlink{classev_1_1isoDrawSkin_a9f1bce77ba050a37dfe151e2246779bc}{ev\+::iso\+Draw\+Skin}, and \hyperlink{classev_1_1isoInterestDraw_a93b2142d5652f725e21d34fedde103df}{ev\+::iso\+Interest\+Draw}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Draw.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/v\+Draw\+\_\+\+I\+S\+O.\+cpp\end{DoxyCompactItemize}

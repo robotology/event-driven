@@ -1,0 +1,66 @@
+You are ready to write your own code that uses the tools in the {\ttfamily event-\/driven} library to process events. An example module is provided in example\+\_\+module that you can use as the basis for writing a module that can be integrated into the {\ttfamily Y\+A\+RP} framework.
+
+The module has the following functionality\+:
+
+
+\begin{DoxyItemize}
+\item Reading a {\ttfamily $\ast$.ini} file to load configuration options, and setting options via command line arguments.
+\item Clean exit by capturing {\ttfamily ctrl+c} commands and allowing functions to close ports and clean memory.
+\item Example {\ttfamily event-\/driven} ports for reading and writing events.
+\item A synchronous thread, typically used to show a visualisation or status/debug messages at a readable rate.
+\item An asynchronous thread, used to read events at sub-\/millisecond rates and perform processing as required.
+\item An example C\+Make file for installing the generated binaries in the install location of {\ttfamily event-\/driven}, as well as installation of the configuration and application files in locations required by {\ttfamily Y\+A\+RP}.
+\end{DoxyItemize}
+
+\subsection*{How to use the example-\/module}
+
+First, copy the example files to the new location of your project, {\itshape e.\+g.} the same folder where you have cloned {\ttfamily event-\/driven}. Assuming a{\ttfamily $<$path\+\_\+to\+\_\+projects$>$} directory\+: 
+\begin{DoxyCode}
+cp -r <path\_to\_projects>/event-driven/documentation/example-module <path\_to\_projects>
+\end{DoxyCode}
+
+
+The project can be compiled with modifications\+: 
+\begin{DoxyCode}
+cd <path\_to\_projects>/example-module
+mkdir build && cd build
+cmake .. -DCMAKE\_INSTALL\_PREFIX=$INSTALL\_DIR
+make install -j4
+\end{DoxyCode}
+
+
+However, some modifications should be made to personalise the project. The first step would be to change the folder, file and project name\+: 
+\begin{DoxyCode}
+cd <path\_to\_projects>
+mv example-module <my-module-name>
+mv <my-module-name>/example-module.cpp <my-module-name>/<my-module-name>.cpp
+mv example-module.ini <my-module-name>.ini
+mv app\_example-module.xml app\_<my-module-name>.xml
+nano <my-module-name> CMakeLists.txt
+\end{DoxyCode}
+ On \href{https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/CMakeLists.txt#L5}{\tt line 5} change the project name to {\ttfamily $<$my-\/module-\/name$>$}, then save ({\ttfamily ctrl+o}) and exit ({\ttfamily ctrl+x}). 
+\begin{DoxyCode}
+nano <my-module-name>/<my-module-name>.cpp
+\end{DoxyCode}
+ On line \href{https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/example-module.cpp#L7}{\tt 7}, \href{https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/example-module.cpp#L19}{\tt 19},\href{https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/example-module.cpp#L24}{\tt 24}, and \href{https://github.com/robotology/event-driven/blob/99a1f941141b33266900e034d3e7789d55fd0d99/documentation/example-module/example-module.cpp#L124}{\tt 124} change the class, constructor and declaration to {\ttfamily $<$my-\/module-\/name$>$}, then save ({\ttfamily ctrl+o}) and exit ({\ttfamily ctrl+x}).
+
+Change the first line of the default configuration file and the lines that refer to {\ttfamily example-\/module} in the example {\ttfamily yarpmanager} application. For example\+:
+
+
+\begin{DoxyCode}
+nano <my-module-name>/<my-module-name>.ini
+nano <my-module-name>/app\_<my-module-name>.xml
+\end{DoxyCode}
+
+
+or if you like\+:
+
+
+\begin{DoxyCode}
+sed -i 's/example-module/<my-module-name>/g' <my-module-name>.xml
+\end{DoxyCode}
+
+
+The module should now be personalised to your processing task.
+
+If you like, you can import the project into your favourite I\+DE. To do so, {\itshape e.\+g.} for \href{https://www.qt.io/product}{\tt Qt\+Creator} {\itshape open a new project} by selecting {\ttfamily $<$path\+\_\+to\+\_\+projects$>$/$<$my-\/module-\/name$>$/\+Cmake\+Lists.txt}. Select the kits {\ttfamily release} and {\ttfamily debug} modifying the build directory to {\ttfamily $<$path\+\_\+to\+\_\+projects$>$/$<$my-\/module-\/name$>$/build} and {\ttfamily $<$path\+\_\+to\+\_\+projects$>$/$<$my-\/module-\/name$>$/build-\/debug} respectively. You should now be able to edit, compile, run and debug the module from within Qt\+Creator. 

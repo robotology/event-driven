@@ -1,0 +1,48 @@
+
+  /**
+  *
+  * @ingroup processing 
+  * \defgroup vPreProcess vPreProcess
+  * Removes salt and pepper noise from the event stream
+  * Version:1.0
+  * \author  Arren Glover arren.glover@iit.it
+  * \n
+  * \copyright Released under the terms of the GNU GPL v2.0
+  * \section intro_sec Description
+  *
+  
+      Removes salt and pepper noise from the event stream. If an event is the only one occured within its surrounding
+        (spatialSize parameter) in a certain temporal window (temporalSize parameter), it is ignored.
+    
+  * \section parameters_sec Parameters     
+  
+  *- -- name : Specifies the stem name of ports created by the module.
+  *- -- height : Number of pixels on the y-axis of the sensor.
+  *- -- width : Number of pixels on the x-axis of the sensor.
+  *- -- spatialSize : Size of the spatial window around the event
+  *- --
+            temporalSize
+        : How long the filter will look for events in the past within the spatial window
+  * \section inputports_sec Input Ports
+  * 
+  *- /vPepper/vBottle:i [vBottle]  [default carrier:tcp]: 
+                Input event stream to be filtered
+            
+  *
+  
+  * \section outputports_sec Output Ports
+  * 
+  *- /vPepper/vBottle:o [vBottle]  [default carrier:tcp]: 
+                Outputs the filtered event stream
+            
+  *
+  
+  *
+  * \section services_sec Services
+  * 
+  *
+  * 
+  *
+  *
+  **/
+

@@ -1,0 +1,97 @@
+You have a Z\+CB that is powered on and sitting in front of you and you want to read events from the camera/skin/cochlea that is attached to it. We want to make an {\ttfamily ssh} connection to it, connect to the {\ttfamily yarpserver}, and run {\ttfamily zynq\+Grabber}. Here are the steps\+:
+
+First you are going to make a serial connection so you can configure the network connection. You need the network for {\ttfamily Y\+A\+RP} to function.
+
+\subsection*{Serial connection over (ubuntu instructions)}
+
+
+\begin{DoxyItemize}
+\item Plug in a micro-\/usb cable from your laptop to the Z\+CB. Wait! There are two usb ports on the Z\+CB. Use the one that says uart next to it -\/ it should be on the opposite side to the sd-\/card port. 
+\begin{DoxyCode}
+sudo apt install screen
+sudo screen /dev/ttyUSB0 115200
+\end{DoxyCode}
+ The login and password should be given to you by E\+D\+P\+R-\/\+I\+IT.
+\end{DoxyItemize}
+
+Okay now you have a terminal {\itshape inside the Z\+C\+B!} You need to decide how you are going to connect the Z\+CB to the network\+:
+
+To exit {\ttfamily screen} do {\ttfamily ctrl+a} to open the list of commands,, then press {\ttfamily k}, then {\ttfamily y} to close the session.
+
+\subsubsection*{Option 1\+: External network}
+
+Connect both your own laptop and the Z\+CB to the same local network using an ethernet cable. The router should allocate the IP addresses and, if the network has internet connection, the Z\+CB should have connection too.
+
+\+:warning\+: The IP address might change from time-\/to-\/time.
+
+Set-\/up the Z\+CB with a D\+H\+CP connection.
+
+\subsubsection*{Option 2\+: External network with Static IP}
+
+Connect both your own laptop and the Z\+CB to the same local network using an ethernet cable. Ask your network administrator for an available address to assign to the Z\+CB. It will have internet connectivety and the IP won\textquotesingle{}t change.
+
+Set-\/up the Z\+CB with a static ip.
+
+\subsubsection*{Option 3\+: Ad-\/hoc with Static IP}
+
+Connect your laptop ethernet directly to the Z\+CB ethernet port. The Z\+CB won\textquotesingle{}t have internet connection, so if you need to configure the install/update the software, this option isn\textquotesingle{}t valid -\/ but it could be the easiest for a demo once you know the Z\+CB is already working.
+
+You\textquotesingle{}ll need to set your own laptop as well as the Z\+CB to have a static IP.
+
+\subsubsection*{Option 4\+: Ad-\/hoc with Internet Connection Sharing}
+
+Connect your laptop ethernet directly to the Z\+CB ethernet port. With Internet connection sharing you should be able to share your laptops wifi connection to the Z\+CB over the ethernet. Your laptop assigns the IP so it can change every time you connect. To do so use run {\ttfamily nm-\/connection-\/editor} from terminal, press the {\ttfamily +} button to add a new connection, configure it to be ethernet and under {\ttfamily I\+Pv4 Settings} use the \char`\"{}\+Shared to other computers\char`\"{} method. Name your connection something informative e.\+g. \char`\"{}\+Z\+C\+B connection\char`\"{}.
+
+Set the Z\+CB to a dynamic IP address
+
+\subsection*{Setting the IP address of the Z\+CB}
+
+On the {\ttfamily screen} connection to the Z\+CB do the following\+: 
+\begin{DoxyCode}
+nano /etc/network/interfaces
+\end{DoxyCode}
+ Add the following lines depending on the IP type\+:
+\begin{DoxyItemize}
+\item {\bfseries Dynamic IP} 
+\begin{DoxyCode}
+auto eth0
+iface eth0 inet dhcp
+hwaddress ether 00:0a:35:00:01:X
+\end{DoxyCode}
+
+\item {\bfseries Static IP} 
+\begin{DoxyCode}
+auto eth0
+iface eth0 inet static
+hwaddress ether 00:0a:35:00:01:X
+address <ip address>
+netmask 255.255.255.0
+\end{DoxyCode}
+
+\end{DoxyItemize}
+
+Note\+: X here needs to be set such that each Z\+C\+B/z-\/turn you have on the same network has a different hardware address. It should be 2 letters in hex (i.\+e. 00 to FF)
+
+Save and exit {\ttfamily nano}.
+
+
+\begin{DoxyCode}
+sudo ifdown eth0
+sudo ifup eth0
+ifconfig
+\end{DoxyCode}
+
+
+The {\ttfamily $<$ip address$>$} of the board should be reported. Take note so you can connect to the board over S\+SH.
+
+\subsection*{S\+SH connection}
+
+On your laptop 
+\begin{DoxyCode}
+ping <ip address>
+\end{DoxyCode}
+ if a connection is found 
+\begin{DoxyCode}
+ssh icub@<ip address>
+\end{DoxyCode}
+ The password should be given to you by E\+D\+P\+R-\/\+I\+IT. 

@@ -1,0 +1,9 @@
+1. make sure devel/master is updated with the latest documentation changes and pushed
+2. git checkout gh-pages
+3. git rebase devel/master
+4. cd doxygen
+5. ./doc-compile.sh
+6. git add -A
+7. git commit --amend
+8. git push --force-with-lease
+

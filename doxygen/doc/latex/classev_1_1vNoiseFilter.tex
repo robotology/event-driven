@@ -1,0 +1,52 @@
+\hypertarget{classev_1_1vNoiseFilter}{}\section{ev\+:\+:v\+Noise\+Filter Class Reference}
+\label{classev_1_1vNoiseFilter}\index{ev\+::v\+Noise\+Filter@{ev\+::v\+Noise\+Filter}}
+
+
+an efficient event-\/based salt and pepper filter  
+
+
+
+
+{\ttfamily \#include $<$v\+Filters.\+h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1vNoiseFilter_a762260be3ee9eb0923fe08f906da975f}\label{classev_1_1vNoiseFilter_a762260be3ee9eb0923fe08f906da975f}} 
+\hyperlink{classev_1_1vNoiseFilter_a762260be3ee9eb0923fe08f906da975f}{v\+Noise\+Filter} ()
+\begin{DoxyCompactList}\small\item\em constructor \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vNoiseFilter_a9bdcff0c39c0c0d88c763050ba69cf19}\label{classev_1_1vNoiseFilter_a9bdcff0c39c0c0d88c763050ba69cf19}} 
+void \hyperlink{classev_1_1vNoiseFilter_a9bdcff0c39c0c0d88c763050ba69cf19}{initialise} (unsigned int width, unsigned int height)
+\begin{DoxyCompactList}\small\item\em initialise the sensor size and the filter parameters. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1vNoiseFilter_a9038e484f9ad53c9cf9c59f4f76a567d}\label{classev_1_1vNoiseFilter_a9038e484f9ad53c9cf9c59f4f76a567d}} 
+void {\bfseries use\+\_\+temporal\+\_\+filter} (int t\+\_\+param)
+\item 
+\mbox{\Hypertarget{classev_1_1vNoiseFilter_a667c37cc198f5410b071bab22117dd2e}\label{classev_1_1vNoiseFilter_a667c37cc198f5410b071bab22117dd2e}} 
+void {\bfseries use\+\_\+spatial\+\_\+filter} (int t\+\_\+param, unsigned int s\+\_\+param)
+\item 
+bool \hyperlink{classev_1_1vNoiseFilter_a8aa612fbfc163398c600853329768892}{check} (int x, int y, int p, int ts)
+\begin{DoxyCompactList}\small\item\em classifies the event as noise or signal \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+an efficient event-\/based salt and pepper filter 
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classev_1_1vNoiseFilter_a8aa612fbfc163398c600853329768892}\label{classev_1_1vNoiseFilter_a8aa612fbfc163398c600853329768892}} 
+\index{ev\+::v\+Noise\+Filter@{ev\+::v\+Noise\+Filter}!check@{check}}
+\index{check@{check}!ev\+::v\+Noise\+Filter@{ev\+::v\+Noise\+Filter}}
+\subsubsection{\texorpdfstring{check()}{check()}}
+{\footnotesize\ttfamily bool ev\+::v\+Noise\+Filter\+::check (\begin{DoxyParamCaption}\item[{int}]{x,  }\item[{int}]{y,  }\item[{int}]{p,  }\item[{int}]{ts }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+classifies the event as noise or signal 
+
+\begin{DoxyReturn}{Returns}
+false if the event is noise 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Filters.\+h\end{DoxyCompactItemize}

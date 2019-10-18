@@ -1,0 +1,110 @@
+\+:warning\+: These instructions are the standard way to set-\/up the Y\+A\+R\+P/event-\/driven environment on an sd-\/card meant for the zcb or z-\/turn. If you already have a working sd-\/card you can simply copy the sd-\/card. You can find instructions for copying an sd-\/card at the \href{#how-copy-an-entire-sd-card-for-a-new-board}{\tt bottom}.
+
+\section*{How to set-\/up an SD for a zynq board}
+
+\+:warning\+: These instructions are only needed if your SD card has a fresh OS install and the {\ttfamily event-\/driven} library is not yet compiled. These instructions shuold be performed on the Z\+C\+B/z-\/turn and not your own laptop.
+
+\subsection*{Set-\/up icub user}
+
+As {\bfseries root}\+: 
+\begin{DoxyCode}
+adduser icub
+groups icub
+visudo
+\end{DoxyCode}
+ Add line\+: {\ttfamily icub A\+LL=(A\+LL\+:A\+LL) A\+LL}
+
+\subsection*{Set up repositories}
+
+As {\bfseries icub}\+:
+\begin{DoxyItemize}
+\item Follow the installation instructions putting projects into {\ttfamily $\sim$/projects} and installing into {\ttfamily $\sim$/install}. You will need to make these folders in the home directory of icub.
+\end{DoxyItemize}
+
+\subsubsection*{Note 1\+:}
+
+As only basic {\ttfamily Y\+A\+RP} support is needed, not all dependencies are required to be installed, instead install only\+: 
+\begin{DoxyCode}
+sudo apt install [TODO]
+\end{DoxyCode}
+ \subsubsection*{Note 2\+:}
+
+The newest Y\+A\+RP requires C\+Make$>$3.\+5, which is not installable via {\ttfamily apt} on the Debian 8.\+10 (jessie) distribution we have installed on the zynq. To upgrade C\+Make you need to install it via backports (reference\+: \href{https://backports.debian.org/Instructions}{\tt https\+://backports.\+debian.\+org/\+Instructions}).
+
+\+:warning\+: these instructions are out of date (see this \href{https://unix.stackexchange.com/questions/508724/failed-to-fetch-jessie-backports-repository}{\tt solution})
+
+To do so\+:
+\begin{DoxyItemize}
+\item add to {\ttfamily /etc/apt/sources.list} the line below\+: ```bash deb \href{http://ftp.debian.org/debian}{\tt http\+://ftp.\+debian.\+org/debian} jessie-\/backports main ``` Then\+: 
+\begin{DoxyCode}
+sudo apt update
+sudo apt -t jessie-backports install cmake
+\end{DoxyCode}
+ At this point you should be able to recompile Y\+A\+RP 3.\+0 and {\ttfamily event-\/driven} {\bfseries master} branch.
+\end{DoxyItemize}
+
+{\bfseries We can consider updating the Debian distribution of the zynq boards since the Debian 8.\+10 is no longer supported by Y\+A\+RP}
+
+\subsubsection*{Note 3\+:}
+
+When installing {\ttfamily event-\/driven} use the following options for cmake\+: 
+\begin{DoxyCode}
+cmake .. -DCMAKE\_INSTALL\_PREFIX=$INSTALL\_DIR -DBUILD\_HARDWAREIO=ON -DENABLE\_zynqgrabber=ON
+\end{DoxyCode}
+ \subsection*{Set up device drivers}
+
+As {\bfseries icub}\+: 
+\begin{DoxyCode}
+sudo usermod -a -G i2c icub
+sudo vim /lib/udev/rules.d/77-iit-hpu.rules
+\end{DoxyCode}
+ Add lines\+: 
+\begin{DoxyCode}
+SUBSYSTEM=="iit-hpu-class", GROUP="i2c"
+\end{DoxyCode}
+ Then 
+\begin{DoxyCode}
+sudo vim /etc/rc.local
+\end{DoxyCode}
+ Add lines\+: 
+\begin{DoxyCode}
+insmod /home/icub/iit-hpucore-dma.ko rx\_pn=1024 rx\_ps=8192 rx\_to=5000
+\end{DoxyCode}
+ \subsection*{Misc}
+
+Check the device driver meta data\+: 
+\begin{DoxyCode}
+udevadm info -q all -a /dev/iit-hpu0
+\end{DoxyCode}
+ Check the device driver parameters\+: 
+\begin{DoxyCode}
+cat /sys/module/iit\_hpucore\_dma/parameters/ps
+\end{DoxyCode}
+
+
+\section*{How copy an entire sd-\/card for a new board}
+
+\subsection*{P\+A\+R\+T\+I\+T\+I\+ON T\+HE N\+EW SD}
+
+
+\begin{DoxyItemize}
+\item Insert the new SD
+\item {\ttfamily sudo gparted} ({\ttfamily sudo apt-\/get install gparted} if needed)
+\item {\ttfamily gparted} G\+UI should detect the SD
+\item Unmount the SD in gparted G\+UI (you cannot partition a mounted drive)
+\item Create new partitions\+: 1. F\+A\+T32 name\+:B\+O\+OT 50\+MiB 2. E\+X\+T4 name\+:rootfs (max-\/250) 3. linux-\/swap name\+:swap 200\+MiB
+\item Edit -\/$>$ apply all operations
+\end{DoxyItemize}
+
+\subsection*{C\+O\+PY T\+HE F\+I\+L\+ES}
+
+
+\begin{DoxyItemize}
+\item Insert old SD (mount the boot and filesystem partitions)
+\item Copy B\+O\+OT (old) -\/$>$ B\+O\+OT (new) (use {\ttfamily /tmp} as a temporary location to store files if you cannot mount both SD cards simultaneously)
+\item {\ttfamily sudo tar zcvf filesystem.\+tgz /media/\$username/rootfs} (from the old SD -\/ again do this in {\ttfamily /tmp})
+\item {\ttfamily sudo sync} (ensure files are copied by flushing file writing queue)
+\item {\ttfamily cd /media/\$username/rootfs} (on the new SD)
+\item {\ttfamily sudo tar zxvf /tmp/filesystem.tgz -\/-\/strip-\/components=3}
+\item {\ttfamily sudo sync} 
+\end{DoxyItemize}

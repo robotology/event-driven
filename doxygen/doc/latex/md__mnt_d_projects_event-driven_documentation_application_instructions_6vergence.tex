@@ -1,0 +1,40 @@
+Control the i\+Cub to verge on a stimulus placed in the center of the field of view.
+
+\subsection*{Description}
+
+This application demonstrates how the i\+Cub verges on a stimulus placed in the center of the field of view, based on the responses of a set of binocular Gabor filters. The event stream is transmitted from the cameras (/zynq\+Grabber/v\+Bottle\+:o) to v\+Pre\+Process (/v\+Pre\+Process/v\+Bottle\+:i), that removes salt-\/and-\/pepper noise. The filtered stream (/v\+Pre\+Process/v\+Bottle\+:o) is sent to v\+Vergence (/v\+Vergence/v\+Bottle\+:i), that updates the responses of the filter bank and sends a command to the robot encoders. Events from left and right cameras are superimposed (/v\+Vergence/debug\+:o) and sent to the yarp viewer (/view\+Debug).
+
+The {\itshape depthgt} module is useful for evaluating the performances of the algorithm, but not necessary for the demonstration. It automatically connects to the device (/\+Open\+N\+I2/depth\+Frame\+:o) that exposes depth image from a Kinect sensor (/depthgt/depthim\+:i) and produces a depth value that can be used as ground truth (/depthgt/gt\+:o). The depth image (/depthgt/depthim\+:o) is then sent for visualisation to the yarp viewer (/view\+GT).
+
+Here is a visualisation of the instantiated modules and connections.
+
+
+
+If you\textquotesingle{}re going to use this controller for your work, please quote it within any resulting publication\+: V. Vasco, A. Glover, Y. Tirupachuri, F. Solari, M. Chessa, and Bartolozzi C. Vergence control with a neuromorphic i\+Cub. In I\+E\+E\+E-\/\+R\+AS International Conference on Humanoid Robots (Humanoids), November 2016, Mexico.
+
+\subsection*{Dependencies}
+
+This application assumes that \href{http://www.yarp.it/yarprobotinterface.html}{\tt yarprobotinterface} is running. This application requires \href{http://wiki.icub.org/wiki/OpenNI2}{\tt Open\+N\+I2} installed to obtain the ground truth depth image, but it is not necessary for the demonstration.
+
+\subsection*{How to run the application}
+
+The application assumes you are connected to a {\itshape yarpserver} -\/ see \href{http://www.yarp.it/}{\tt http\+://www.\+yarp.\+it/} for basic instructions for using yarp.
+
+Inside the {\itshape Application} folder in the yarpmanager gui, you should see an entry called {\itshape v\+Vergence}. Double click and open it.
+
+Hit the {\itshape run} button and then {\itshape connect} on the yarpmanager gui. You will now see the yarpview windows, displaying events from both camera and the ground truth depth image (if you are using a depth sensor). An additional yarpscope window will open, to visualise the responses of the filter bank. This loads the xml file {\itshape scope\+\_\+filters\+Conf.\+xml}, in the {\itshape vergence\+Controller}, that you can modify according to your needs.
+
+The i\+Cub is not controlled yet. To start the control, open a terminal and type \begin{DoxyVerb}    yarp rpc /vVergence/rpctrigger:i
+\end{DoxyVerb}
+
+
+You can send commands to the {\itshape vergence\+Controller}. Type {\ttfamily start} in the command prompt. You should get the following output\+: \begin{DoxyVerb}    >>start
+    Response: "Starting Verging..."
+\end{DoxyVerb}
+
+
+Now the vergence is controlled and the i\+Cub will start verging on the object. Move the object in depth to see the i\+Cub vergence following the taget. You should always see events from left and right cameras superimposed in the yarpview window {\itshape view\+Debug}.
+
+When you are done, type {\ttfamily reset} in the command prompt. This will stop the {\itshape vergence\+Controller}. You should get the following output\+: \begin{DoxyVerb}    >>reset
+    Response: "Resetting..."\end{DoxyVerb}
+ 

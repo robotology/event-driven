@@ -1,0 +1,81 @@
+\hypertarget{classev_1_1FlowEvent}{}\section{ev\+:\+:Flow\+Event Class Reference}
+\label{classev_1_1FlowEvent}\index{ev\+::\+Flow\+Event@{ev\+::\+Flow\+Event}}
+
+
+an \hyperlink{classev_1_1AddressEvent}{Address\+Event} with a velocity in visual space  
+
+
+
+
+{\ttfamily \#include $<$v\+Codec.\+h$>$}
+
+Inheritance diagram for ev\+:\+:Flow\+Event\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classev_1_1FlowEvent}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_aa268bbbeb75a7ec0634e7eff9bf9dda5}\label{classev_1_1FlowEvent_aa268bbbeb75a7ec0634e7eff9bf9dda5}} 
+{\bfseries Flow\+Event} (const \hyperlink{classev_1_1vEvent}{v\+Event} \&v)
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_a0784e0ce0b0b1fb1d9c61f8134efa70b}\label{classev_1_1FlowEvent_a0784e0ce0b0b1fb1d9c61f8134efa70b}} 
+{\bfseries Flow\+Event} (const \hyperlink{classev_1_1FlowEvent}{Flow\+Event} \&v)
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_a6a108ba6028ea69a9398745074d7300f}\label{classev_1_1FlowEvent_a6a108ba6028ea69a9398745074d7300f}} 
+virtual event {\bfseries clone} ()
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_a5105689e47975ead26caf7b68b62463e}\label{classev_1_1FlowEvent_a5105689e47975ead26caf7b68b62463e}} 
+virtual void {\bfseries encode} (yarp\+::os\+::\+Bottle \&b) const
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_a4861e688ba3175ab80f0e2cbd3cc477b}\label{classev_1_1FlowEvent_a4861e688ba3175ab80f0e2cbd3cc477b}} 
+virtual void {\bfseries encode} (std\+::vector$<$ int32\+\_\+t $>$ \&b, unsigned int \&pos) const
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_a0c6e4d68d303d9cc4016959dc065c12a}\label{classev_1_1FlowEvent_a0c6e4d68d303d9cc4016959dc065c12a}} 
+virtual bool {\bfseries decode} (const yarp\+::os\+::\+Bottle \&packet, size\+\_\+t \&pos)
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_af10d2b90b62f4c45dffc33abea193d09}\label{classev_1_1FlowEvent_af10d2b90b62f4c45dffc33abea193d09}} 
+virtual void {\bfseries decode} (const int32\+\_\+t $\ast$\&data)
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_affda6cd024d5edc8d9d437d3194cc8c4}\label{classev_1_1FlowEvent_affda6cd024d5edc8d9d437d3194cc8c4}} 
+virtual yarp\+::os\+::\+Property {\bfseries get\+Content} () const
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_ab2544edc7563366b97bf69c229b797fe}\label{classev_1_1FlowEvent_ab2544edc7563366b97bf69c229b797fe}} 
+virtual std\+::string {\bfseries get\+Type} () const
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_a550ab5ead40a7107247a64ab83492002}\label{classev_1_1FlowEvent_a550ab5ead40a7107247a64ab83492002}} 
+int {\bfseries get\+Death} () const
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_a6f7cdf3ec22ead9e2faaebd4a213279f}\label{classev_1_1FlowEvent_a6f7cdf3ec22ead9e2faaebd4a213279f}} 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+union \{\\
+\>uint32\_t {\bfseries \_fei} \mbox{[}2\mbox{]}\\
+\mbox{\Hypertarget{unionev_1_1FlowEvent_1_1_0D9_a174994f064562221bd6c96077d16eeb9}\label{unionev_1_1FlowEvent_1_1_0D9_a174994f064562221bd6c96077d16eeb9}} 
+\>struct \{\\
+\>\>float {\bfseries vx}\\
+\>\>float {\bfseries vy}\\
+\>\} \\
+\}; \\
+
+\end{tabbing}\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1FlowEvent_a583ae9aaa6cbcbe1779eab526b5df1de}\label{classev_1_1FlowEvent_a583ae9aaa6cbcbe1779eab526b5df1de}} 
+static const std\+::string {\bfseries tag} = \char`\"{}F\+L\+OW\char`\"{}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+an \hyperlink{classev_1_1AddressEvent}{Address\+Event} with a velocity in visual space 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Codec.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/codecs/codec\+\_\+\+Flow\+Event.\+cpp\end{DoxyCompactItemize}

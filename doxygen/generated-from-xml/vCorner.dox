@@ -1,0 +1,59 @@
+
+  /**
+  *
+  * @ingroup processing 
+  * \defgroup vCorner vCorner
+  * Event-driven corner detection adapting the Harris method
+  * Version:1.0
+  * \author  Valentina Vasco valentina.vasco@iit.it
+  * \n
+  * \copyright Released under the terms of the GNU GPL v2.0
+  * \section intro_sec Description
+  *
+  
+      The module detects corner events in address events using the adapted Harris method.
+    
+  * \section parameters_sec Parameters     
+  
+  *- -- name : Specifies the stem name of ports created by the module.
+  *- -- strict : Sets ouput port to use strict protocol.
+  *- -- width : Number of pixels on the x-axis of the sensor.
+  *- -- height : Number of pixels on the y-axis of the sensor.
+  *- -- filterSize : Size of Sobel filter used for the detection.
+  *- -- tempsize : Length of the temporal window in seconds used to accumulate events.
+  *- -- windowRad : Radius of the spatial window in pixels.
+  *- -- sigma : Standard deviation of the Gaussian filter.
+  *- -- thresh : Threshold for a confirmed corner event detection.
+  *- -- nthreads : Number of threads used for the computation.
+  * \section inputports_sec Input Ports
+  * 
+  *- /vCorner/vBottle:i [eventdriven::vBottle]  [default carrier:udp]: 
+                Accepts the address events in the vBottle container
+            
+  *
+  
+  * \section outputports_sec Output Ports
+  * 
+  *- /vCorner/vBottle:o [eventdriven::vBottle]  [default carrier:udp]: 
+                Outputs corner events in the form of an
+                eventdriven::LabelledAE. The vBottle also contains all
+                events in the vBottle received as input.
+            
+  *
+  
+  *- /vCorner/score:o [yarp::os::Bottle]  [default carrier:udp]: 
+                Outputs debug information for use with yarpscope. The gap
+                between the time required to get and process events
+                to detect data being lost.
+            
+  *
+  
+  *
+  * \section services_sec Services
+  * 
+  *
+  * 
+  *
+  *
+  **/
+

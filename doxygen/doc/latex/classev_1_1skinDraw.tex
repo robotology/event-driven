@@ -1,0 +1,78 @@
+\hypertarget{classev_1_1skinDraw}{}\section{ev\+:\+:skin\+Draw Class Reference}
+\label{classev_1_1skinDraw}\index{ev\+::skin\+Draw@{ev\+::skin\+Draw}}
+Inheritance diagram for ev\+:\+:skin\+Draw\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classev_1_1skinDraw}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1skinDraw_ad3d3dab23e10ceafc546720fddab60e1}\label{classev_1_1skinDraw_ad3d3dab23e10ceafc546720fddab60e1}} 
+void {\bfseries initialise} ()
+\item 
+\mbox{\Hypertarget{classev_1_1skinDraw_a0203a5fa2e0d18785c96f1d8bcacbdfd}\label{classev_1_1skinDraw_a0203a5fa2e0d18785c96f1d8bcacbdfd}} 
+virtual void {\bfseries reset\+Image} (cv\+::\+Mat \&image)
+\item 
+virtual void \hyperlink{classev_1_1skinDraw_a4cbf578dd04c6a634c8959fea7295060}{draw} (cv\+::\+Mat \&image, const ev\+::v\+Queue \&e\+Set, int v\+Time)
+\begin{DoxyCompactList}\small\item\em draw takes an image and overlays the new visualisation textures \end{DoxyCompactList}\item 
+virtual std\+::string \hyperlink{classev_1_1skinDraw_a7015a083dffe5c055808c20b9372bce4}{get\+Draw\+Type} ()
+\begin{DoxyCompactList}\small\item\em get\+Tag returns the unique code for this drawing method. The arguments given on the command line must match this code exactly \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classev_1_1skinDraw_aa054c667234061c84ebcd94368bb5939}\label{classev_1_1skinDraw_aa054c667234061c84ebcd94368bb5939}} 
+virtual std\+::string {\bfseries get\+Event\+Type} ()
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classev_1_1skinDraw_a95970aec26d3174050d36bb4f15d5413}\label{classev_1_1skinDraw_a95970aec26d3174050d36bb4f15d5413}} 
+static const std\+::string {\bfseries drawtype} = \char`\"{}S\+K\+IN\char`\"{}
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classev_1_1skinDraw_a4cbf578dd04c6a634c8959fea7295060}\label{classev_1_1skinDraw_a4cbf578dd04c6a634c8959fea7295060}} 
+\index{ev\+::skin\+Draw@{ev\+::skin\+Draw}!draw@{draw}}
+\index{draw@{draw}!ev\+::skin\+Draw@{ev\+::skin\+Draw}}
+\subsubsection{\texorpdfstring{draw()}{draw()}}
+{\footnotesize\ttfamily void ev\+::skin\+Draw\+::draw (\begin{DoxyParamCaption}\item[{cv\+::\+Mat \&}]{canvas,  }\item[{const ev\+::v\+Queue \&}]{e\+Set,  }\item[{int}]{v\+Time }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+draw takes an image and overlays the new visualisation textures 
+
+
+\begin{DoxyParams}{Parameters}
+{\em canvas} & is the image which may or may not yet exist \\
+\hline
+{\em e\+Set} & is the set of events which could possibly be drawn \\
+\hline
+\end{DoxyParams}
+
+
+Implements \hyperlink{classev_1_1vDraw_af1eee5dcdf3b4cfee6a3024e5cd706f8}{ev\+::v\+Draw}.
+
+\mbox{\Hypertarget{classev_1_1skinDraw_a7015a083dffe5c055808c20b9372bce4}\label{classev_1_1skinDraw_a7015a083dffe5c055808c20b9372bce4}} 
+\index{ev\+::skin\+Draw@{ev\+::skin\+Draw}!get\+Draw\+Type@{get\+Draw\+Type}}
+\index{get\+Draw\+Type@{get\+Draw\+Type}!ev\+::skin\+Draw@{ev\+::skin\+Draw}}
+\subsubsection{\texorpdfstring{get\+Draw\+Type()}{getDrawType()}}
+{\footnotesize\ttfamily std\+::string ev\+::skin\+Draw\+::get\+Draw\+Type (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+get\+Tag returns the unique code for this drawing method. The arguments given on the command line must match this code exactly 
+
+\begin{DoxyReturn}{Returns}
+the tag code 
+\end{DoxyReturn}
+
+
+Implements \hyperlink{classev_1_1vDraw_ac01381befeffef2b930cbceb28b18a28}{ev\+::v\+Draw}.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/mnt/d/projects/event-\/driven/lib/include/event-\/driven/v\+Draw\+Skin.\+h\item 
+/mnt/d/projects/event-\/driven/lib/src/v\+Draw\+\_\+skin.\+cpp\end{DoxyCompactItemize}
