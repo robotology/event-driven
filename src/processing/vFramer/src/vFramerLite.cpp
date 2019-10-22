@@ -56,13 +56,13 @@ string channelInstance::getName()
 
 bool channelInstance::addDrawer(string drawer_name, unsigned int width,
                                 unsigned int height, unsigned int window_size,
-                                bool flip)
+                                double isoWindow, bool flip)
 {
     //make the drawer
     vDraw * new_drawer = createDrawer(drawer_name);
     if(new_drawer) {
         new_drawer->setRetinaLimits(width, height);
-        new_drawer->setTemporalLimits(window_size, limit_time);
+        new_drawer->setTemporalLimits(window_size, isoWindow);
         new_drawer->setFlip(flip);
         new_drawer->initialise();
         drawers.push_back(new_drawer);
@@ -79,6 +79,7 @@ bool channelInstance::addDrawer(string drawer_name, unsigned int width,
     //open the port
     total_time[event_type] = 0;
     prev_vstamp[event_type] = 0;
+    limit_time = isoWindow;
     return read_ports[event_type].open(channel_name + "/" + event_type + ":i");
 
 }
@@ -251,7 +252,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
         for(unsigned int j = 0; j < drawtypelist->size(); j++)
         {
             string draw_type = drawtypelist->get(j).asString();
-            if(!new_ci->addDrawer(draw_type, width, height, eventWindow, flip))
+            if(!new_ci->addDrawer(draw_type, width, height, eventWindow, isoWindow, flip))
             {
                 yError() << "Could not create specified publisher"
                          << channel_name << draw_type;

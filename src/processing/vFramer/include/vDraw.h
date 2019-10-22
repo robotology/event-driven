@@ -187,18 +187,22 @@ public:
 
 };
 
-class rasterDraw : public vDraw {               ///////////////////////////////////////////////////
+class rasterDraw : public vDraw {
 
 protected:
 
-    unsigned int numNeurs;
+    float time_scaler;
+    unsigned int num_neurons;
 
 public:
 
-    vDraw() : Xlimit(304), Ylimit(240), flip(false), numNeurs(240)
+    virtual void initialise()
     {
-        display_window = 0.1*ev::vtsHelper::vtsscaler;
-        max_window = 0.5*ev::vtsHelper::vtsscaler;
+        Xlimit = 1024;
+        Ylimit = 1024;
+
+        num_neurons = 1;
+        time_scaler = (double) Xlimit / max_window;
     }
 
     static const std::string drawtype;
