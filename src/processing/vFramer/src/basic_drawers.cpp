@@ -214,11 +214,10 @@ std::string skinDraw::getEventType()
 
 void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
-    cv::Scalar pos = CV_RGB(160, 0, 160);
-    cv::Scalar neg = CV_RGB(0, 60, 1);
+    
 
-    int radius = 2;
-
+    int radius = 5;
+    
     if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
         image.setTo(255);
@@ -236,25 +235,29 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 
         auto aep = is_event<SkinEvent>(*qi);
-        int x = aep->taxel;
+        auto it = t_map.begin();//iterator over taxel map
+        std:: advance(it,aep->taxel);
+        //int x = aep->taxel;
 
-        if((x & 0xF) == 0xD) //accelerometer
-            continue;
-        int y = Ylimit - radius;
+        // if((aep->taxel & 0xF) == 0xD) //accelerometer
+        //     continue;
+        //int y = Ylimit - radius;
 
         // decode the event here: i.e. do the mapping from the x value to x,y location on the image
 
         // get the pixel: substitute with code to draw a circle from circleDrawer
-        y = radius - 1;
+        //y = radius - 1;
+        int x =20* std :: get<0>(*it);
+        int y = 20* std :: get<1>(*it);
         cv::Point centr(x, y);
 
         if(!aep->polarity)
         {
-            cv::circle(image, centr, radius, pos, CV_FILLED);
+            cv::circle(image, centr, radius, aqua, CV_FILLED,CV_AA);
         }
         else
         {
-            cv::circle(image, centr, radius, neg, CV_FILLED);
+            cv::circle(image, centr, radius, violet, CV_FILLED,CV_AA);
         }
     }
 }
@@ -276,10 +279,9 @@ std::string skinsampleDraw::getEventType()
 
 void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
-    cv::Scalar pos = CV_RGB(160, 0, 160);
-    cv::Scalar neg = CV_RGB(0, 60, 1);
 
-    int radius = 2;
+    int radius_min = 10;
+    int radius_max = 30;
 
     if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
@@ -298,22 +300,39 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 
         auto aep = is_event<SkinSample>(*qi);
-        int x = aep->taxel;
+        //int x = aep->taxel;
+        auto it = t_map.begin();//iterator over taxel map
+        std:: advance(it,aep->taxel);
+        
+        // if((aep->taxel & 0xF) == 0xD) //accelerometer
+        //     continue;
 
-        if((x & 0xF) == 0xD) //accelerometer
-            continue;
-        int y = Ylimit - (radius + 200.0 * aep->value / 65535.0);
 
+        //int y = Ylimit - (radius + 200.0 * aep->value / 65535.0);
+
+
+        int noise = 2500;// 2047
+
+        int x =20* std :: get<0>(*it);
+        int y = 20* std :: get<1>(*it);
         cv::Point centr(x, y);
-
-        if(!aep->polarity)
-        {
-            cv::circle(image, centr, radius, pos, CV_FILLED);
+        cv::circle(image, centr, radius_min, black,1, CV_AA);
+        if(aep->value > noise){
+            float max_value = 15000;//31176
+            int radius = radius_min + (radius_max-radius_min)* aep->value /max_value;
+            if(radius>radius_max){
+               radius = radius_max;
+            }
+            cv::circle(image, centr, radius, red, 1, CV_AA);
         }
-        else
-        {
-            cv::circle(image, centr, radius, neg, CV_FILLED);
-        }
+        // if(!aep->polarity)
+        // {
+        //     cv::circle(image, centr, radius, black,1, CV_AA);
+        // }
+        // else
+        // {
+        //     cv::circle(image, centr, radius, black,1, CV_AA);
+        // }
     }
 }
 
