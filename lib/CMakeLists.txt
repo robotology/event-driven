@@ -29,6 +29,12 @@ set(folder_source
   src/codecs/codec_SkinSample.cpp
   src/codecs/codec_vEvent.cpp)
 
+if(OpenCV_FOUND)
+    list(APPEND folder_source src/vIPT.cpp
+                              src/vDraw_basic.cpp
+                              src/vDraw_ISO.cpp)
+endif()
+
 if(VLIB_DEPRECATED)
   list(APPEND folder_source
     src/vWindow_adv.cpp
@@ -43,6 +49,11 @@ set(folder_header
   include/event-driven/vCollectSend.h
   include/event-driven/all.h
 )
+
+if(OpenCV_FOUND)
+    list(APPEND folder_header include/event-driven/vIPT.h
+                              include/event-driven/vDraw.h)
+endif()
 
 if(VLIB_DEPRECATED)
   list(APPEND folder_header
@@ -68,8 +79,16 @@ target_compile_definitions(${EVENTDRIVEN_LIBRARY} PRIVATE "${VLIB_CODEC_TYPE}"
                                                             CLOCK_PERIOD=${VLIB_CLOCK_PERIOD_NS}
                                                             TIMER_BITS=${VLIB_TIMER_BITS})
 
-target_link_libraries(${EVENTDRIVEN_LIBRARY} PUBLIC YARP::YARP_OS
-                                                      YARP::YARP_sig)
+target_compile_options(${EVENTDRIVEN_LIBRARY} PRIVATE -Wall)
+
+if(OpenCV_FOUND)
+    target_link_libraries(${EVENTDRIVEN_LIBRARY} PUBLIC YARP::YARP_OS
+                                                        YARP::YARP_sig
+                                                        ${OpenCV_LIBRARIES})
+else()
+    target_link_libraries(${EVENTDRIVEN_LIBRARY} PUBLIC YARP::YARP_OS
+                                                        YARP::YARP_sig)
+endif()
 
 install(TARGETS ${EVENTDRIVEN_LIBRARY}
         EXPORT eventdriven

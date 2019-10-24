@@ -19,9 +19,9 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "vDraw.h"
+#include "event-driven/vDraw.h"
 
-using namespace ev;
+namespace ev {
 
 // ISO (AE) //
 // ======== //
@@ -171,11 +171,15 @@ void isoDraw::initialise()
 void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
 
+    auto light_violet = (white - (white - violet) * 0.25);
+    auto light_aqua = (white - (white - aqua) * 0.25);
+
     cv::Mat isoimage = baseimage.clone();
     isoimage.setTo(255);
 
-    if(eSet.empty()) return;
-    if(vTime < 0) vTime = eSet.back()->stamp;
+    //if() return;
+    if(!eSet.empty() && vTime < 0)
+        vTime = eSet.back()->stamp;
 
     int skip = 1 + eSet.size() / 100000;
 
@@ -204,9 +208,9 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         }
 
         if(!aep->polarity) {
-            isoimage.at<cv::Vec3b>(py, px) = cv::Vec3b(255, 160, 255);
+            isoimage.at<cv::Vec3b>(py, px) = light_violet;
         } else {
-            isoimage.at<cv::Vec3b>(py, px) = cv::Vec3b(160, 255, 160);
+            isoimage.at<cv::Vec3b>(py, px) = light_aqua;
         }
     }
 
@@ -228,8 +232,6 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             }
         }
     }
-
-
 
     image = isoimage - baseimage;
 
@@ -319,70 +321,4 @@ void isoInterestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 }
 
-// ISO (CIRC) //
-// ========= //
-
-
-const std::string isoCircDraw::drawtype = "ISO-CIRC";
-std::string isoCircDraw::getDrawType()
-{
-    return isoCircDraw::drawtype;
-}
-std::string isoCircDraw::getEventType()
-{
-    return ev::GaussianAE::tag;
-}
-void isoCircDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
-{
-    cv::Scalar blue = CV_RGB(0, 0, 255);
-    cv::Scalar red = CV_RGB(255, 0, 0);
-
-    if(eSet.empty()) return;
-
-    if(image.rows != imageheight || image.cols != imagewidth) {
-        yWarning() << "Could not draw isoCircDraw. Please draw ISO first";
-        return;
-    }
-
-    auto v = is_event<GaussianAE>(eSet.back());
-    //if(v->x < 0 || v->x >= Xlimit || v->y < 0 || v->y >= Ylimit) continue;
-
-    int px1 = v->x;
-    int py1 = v->y;
-    int pz1 = 0;
-
-    if(flip) {
-        px1 = Xlimit - 1 - px1;
-        py1 = Ylimit - 1 - py1;
-    }
-
-    int px2 = px1;
-    int py2 = py1;
-    int pz2 = Zlimit * (v->sigy / ev::vtsHelper::max_stamp) + 0.5;
-
-    pttr(px1, py1, pz1);
-    pttr(px2, py2, pz2);
-
-    px1 += imagexshift;
-    py1 += imageyshift;
-    px2 += imagexshift;
-    py2 += imageyshift;
-
-    if(px1 < 0) px1 = 0;
-    if(px1 >= imagewidth) px1 = imagewidth -1;
-    if(py1 < 0) py1 = 0;
-    if(py1 >= imageheight) py1 = imageheight -1;
-    if(px2 < 0) px2 = 0;
-    if(px2 >= imagewidth) px2 = imagewidth -1;
-    if(py2 < 0) py2 = 0;
-    if(py2 >= imageheight) py2 = imageheight -1;
-
-    cv::Point p1(px1, py1);
-    cv::Point p2(px2, py2);
-
-    if(v->polarity)
-        cv::line(image, p1, p2, blue, 2.0);
-    else
-        cv::line(image, p1, p2, red, 2.0);
-
-}
+} //namespace ev::

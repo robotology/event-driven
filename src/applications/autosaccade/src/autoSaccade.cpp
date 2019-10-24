@@ -21,7 +21,6 @@
 
 using namespace yarp::os;
 using namespace yarp::sig;
-using namespace yarp::math;
 using namespace std;
 
 int main(int argc, char * argv[])
@@ -30,7 +29,7 @@ int main(int argc, char * argv[])
     yarp::os::Network yarp;
     if(!yarp.checkNetwork()) {
         std::cout << "Could not connect to YARP" << std::endl;
-        return false;
+        return -1;
     }
 
     /* create the module */

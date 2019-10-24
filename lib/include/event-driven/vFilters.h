@@ -36,10 +36,8 @@ private:
     int s_sfilter;
     int t_tfilter;
 
-    yarp::sig::ImageOf <yarp::sig::PixelInt> TSleftL;
-    yarp::sig::ImageOf <yarp::sig::PixelInt> TSleftH;
-    yarp::sig::ImageOf <yarp::sig::PixelInt> TSrightL;
-    yarp::sig::ImageOf <yarp::sig::PixelInt> TSrightH;
+    yarp::sig::ImageOf <yarp::sig::PixelInt> SAE;
+    yarp::sig::ImageOf <yarp::sig::PixelMono> POL;
 
     resolution res;
 
@@ -55,17 +53,11 @@ public:
         res.height = height;
         res.width = width;
 
-        TSleftL.resize(width, height);
-        TSleftH.resize(width, height);
-        TSrightL.resize(width, height);
-        TSrightH.resize(width, height);
+        SAE.resize(width, height);
+        POL.resize(width, height);
 
-        TSleftL.zero();
-        TSleftH.zero();
-        TSrightL.zero();
-        TSrightH.zero();
-
-
+        SAE.zero();
+        POL.zero();
     }
 
     void use_temporal_filter(int t_param)
@@ -83,35 +75,25 @@ public:
 
     /// \brief classifies the event as noise or signal
     /// \returns false if the event is noise
-    bool check(int x, int y, int p, int c, int ts)
+    bool check(int x, int y, int p, int ts)
     {
-
-        yarp::sig::ImageOf<yarp::sig::PixelInt> *active = nullptr;
-        if(c == 0) {
-            if(p == 0) {
-                active = &TSleftL;
-            } else if(p == 1) {
-                active = &TSleftH;
-            }
-        } else if(c == 1) {
-            if(p == 0) {
-                active = &TSrightL;
-            } else if(p == 1) {
-                active = &TSrightH;
-            }
-        }
 
         auto add = true;
 
         if(x_tfilter) {
-            int dt = ts - (*active)(x, y);
-            if(dt < 0)
-                dt += vtsHelper::max_stamp;
-            if(dt < t_tfilter)
-                return false;
+            if(p == POL(x, y)) {
+                int dt = ts - SAE(x, y);
+                if(dt < 0)
+                    dt += vtsHelper::max_stamp;
+                if(dt < t_tfilter) {
+                    SAE(x, y) = ts;
+                    return false;
+                }
+            }
         }
 
-        (*active)(x, y) = ts;
+        POL(x, y) = p;
+        SAE(x, y) = ts;
 
         if(x_sfilter) {
             add = false;
@@ -122,10 +104,10 @@ public:
 
             for(auto xi = xl; xi < xh; ++xi) {
                 for(auto yi = yl; yi < yh; ++yi) {
-                    int dt = ts - (*active)(xi, yi);
+                    int dt = ts - SAE(xi, yi);
                     if(dt < 0) {
                         dt += vtsHelper::max_stamp;
-                        (*active)(xi, yi) -= vtsHelper::max_stamp;
+                        SAE(xi, yi) -= vtsHelper::max_stamp;
                     }
                     if(dt && dt < t_sfilter) {
                         add = true;
