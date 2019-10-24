@@ -41,6 +41,7 @@ void addressDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
     ev::vQueue::const_reverse_iterator qi;
+
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
 
         int dt = vTime - (*qi)->stamp;
@@ -399,6 +400,47 @@ void imuDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             break;}
 
         }
+    }
+}
+
+// RASTER DRAW //
+// ======= //
+
+const std::string rasterDraw::drawtype = "RASTER";
+
+std::string rasterDraw::getDrawType()
+{
+    return rasterDraw::drawtype;
+}
+
+std::string rasterDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+
+    for(auto qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+
+        auto aep = is_event<AddressEvent>(*qi);
+
+        num_neurons = std::max(num_neurons, aep->_coded_data + 1);
+
+        int y = aep->_coded_data * ((double)Ylimit / num_neurons);
+        int x = dt * time_scaler;
+
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
+        image.at<cv::Vec3b>(y, x) = this->black;
     }
 }
 
