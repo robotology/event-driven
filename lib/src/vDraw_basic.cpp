@@ -440,16 +440,16 @@ void rasterDraw::initialise()
     lines.push_back(5);
     texts.push_back("unknown");
 
+    for(auto i : output_con5)
+        rmap[i] = y++;
+    lines.push_back(y + 2);
+    texts.push_back("vision");
+    y+= 5;
+
     for(auto i : output_con1)
         rmap[i] = y++;
     lines.push_back(y + 2);
     texts.push_back("yaw ring");
-    y+= 5;
-
-    for(auto i : output_con2)
-        rmap[i] = y++;
-    lines.push_back(y + 2);
-    texts.push_back("pitch ring");
     y+= 5;
 
     for(auto i : output_con3)
@@ -458,16 +458,16 @@ void rasterDraw::initialise()
     texts.push_back("desired yaw");
     y+= 5;
 
+    for(auto i : output_con2)
+        rmap[i] = y++;
+    lines.push_back(y + 2);
+    texts.push_back("pitch ring");
+    y+= 5;
+
     for(auto i : output_con4)
         rmap[i] = y++;
     lines.push_back(y + 2);
     texts.push_back("desired pitch");
-    y+= 5;
-
-    for(auto i : output_con5)
-        rmap[i] = y++;
-    lines.push_back(y + 2);
-    texts.push_back("vision");
     y+= 3;
 
     neuron_max = y;
@@ -507,7 +507,7 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         }
 
         //image.at<cv::Vec3b>(y, x) = this->black;
-        cv::circle(image, cv::Point(x, y), 10, black, CV_FILLED);
+        cv::circle(image, cv::Point(x, y), 5, black, CV_FILLED);
     }
 }
 
