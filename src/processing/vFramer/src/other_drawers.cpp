@@ -196,6 +196,68 @@ void grayDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
 }
 
+
+
+// BLACK DRAW //
+// =========== //
+
+const std::string blackDraw::drawtype = "BLACK";
+
+std::string blackDraw::getDrawType()
+{
+    return blackDraw::drawtype;
+}
+
+std::string blackDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void blackDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    image = cv::Scalar(255, 255, 255);
+    
+	if(eSet.empty()) return;
+	if(vTime < 0) vTime = eSet.back()->stamp;
+    
+    ev::vQueue::const_reverse_iterator qi;
+	for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+        auto aep = is_event<AddressEvent>(*qi);
+        if(!aep) continue;
+        
+		int y = aep->y;
+        int x = aep->x;
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
+        image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+    }
+	/*
+	cv::Mat kernel = (cv::Mat_<float>(3,3) << 
+        1,  1, 1,
+        1, -8, 1,
+        1,  1, 1);
+
+	imgLaplacian = Mat::zeros(img.size());
+	filter2D(img, imgLaplacian, kernel);
+
+	cv::GaussianBlur(image, temp, cv::Size(3,3), 3);
+	cv::addWeighted(temp, 1.5, image, -0.5, 0, image);
+	*/
+}
+
+
+
+
+
+
 // STEREO OVERLAY DRAW //
 // =================== //
 
