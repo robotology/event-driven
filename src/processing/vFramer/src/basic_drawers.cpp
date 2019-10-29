@@ -216,7 +216,7 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
     
 
-    int radius = 5;
+    int radius = 10;
     
     if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
@@ -235,30 +235,30 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 
         auto aep = is_event<SkinEvent>(*qi);
-        auto it = t_map.begin();//iterator over taxel map
-        std:: advance(it,aep->taxel);
-        //int x = aep->taxel;
 
-        // if((aep->taxel & 0xF) == 0xD) //accelerometer
-        //     continue;
-        //int y = Ylimit - radius;
+        int index = aep->taxel;
 
-        // decode the event here: i.e. do the mapping from the x value to x,y location on the image
-
-        // get the pixel: substitute with code to draw a circle from circleDrawer
-        //y = radius - 1;
-        int x =20* std :: get<0>(*it);
-        int y = 20* std :: get<1>(*it);
-        cv::Point centr(x, y);
-
-        if(!aep->polarity)
-        {
-            cv::circle(image, centr, radius, aqua, CV_FILLED,CV_AA);
+        
+        if(tmap.find(index) != tmap.end()){
+            //yInfo() << "\n Index " << index <<"  mapped to   "<< std :: get<0>(tmap[index]) << std :: get<1>(tmap[index]) << "\n";
+            int x = xoffset + scaling* std :: get<0>(tmap[index]);
+            int y =  Ylimit-(yoffset + scaling* std :: get<1>(tmap[index]));
+            cv::Point centr(x, y);
+            if(!aep->polarity)
+            {
+                cv::circle(image, centr, radius, aqua, CV_FILLED,CV_AA);
+            }
+            else
+            {
+                cv::circle(image, centr, radius, violet, CV_FILLED,CV_AA);
+            }
         }
         else
         {
-            cv::circle(image, centr, radius, violet, CV_FILLED,CV_AA);
+            yWarning() << "\n Index " << index <<"not mapped! \n";
         }
+        
+
     }
 }
 
@@ -283,11 +283,6 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     int radius_min = 10;
     int radius_max = 30;
 
-    if(image.empty()) {
-        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
-        image.setTo(255);
-    }
-
     if(eSet.empty()) return;
 
     ev::vQueue::const_reverse_iterator qi;
@@ -300,39 +295,31 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 
         auto aep = is_event<SkinSample>(*qi);
-        //int x = aep->taxel;
-        auto it = t_map.begin();//iterator over taxel map
-        std:: advance(it,aep->taxel);
+
+        int index = aep->taxel;
         
-        // if((aep->taxel & 0xF) == 0xD) //accelerometer
-        //     continue;
+        int noise = 2500;
 
-
-        //int y = Ylimit - (radius + 200.0 * aep->value / 65535.0);
-
-
-        int noise = 2500;// 2047
-
-        int x =20* std :: get<0>(*it);
-        int y = 20* std :: get<1>(*it);
-        cv::Point centr(x, y);
-        cv::circle(image, centr, radius_min, black,1, CV_AA);
-        if(aep->value > noise){
-            float max_value = 15000;//31176
-            int radius = radius_min + (radius_max-radius_min)* aep->value /max_value;
-            if(radius>radius_max){
-               radius = radius_max;
+        if(tmap.find(index) != tmap.end()){
+            // yInfo() << "\n Index = " << index ;
+            // std :: cout << "\n Index " << index <<"mapped to "<< x << y << "\n";
+            if(aep->value > noise){
+                int x = xoffset + scaling* std :: get<0>(tmap[index]);
+                int y =  Ylimit - (yoffset +scaling* std :: get<1>(tmap[index]));
+                cv::Point centr(x, y);
+                float max_value = 15000;//31176 observed by Ali, theoretical aximum is 2**16-1=65535
+                int radius = radius_min + (radius_max-radius_min)* aep->value /max_value;
+                if(radius>radius_max){
+                    radius = radius_max;
+                }
+                
+                cv::circle(image, centr, radius, red, 1, CV_AA);
             }
-            cv::circle(image, centr, radius, red, 1, CV_AA);
         }
-        // if(!aep->polarity)
-        // {
-        //     cv::circle(image, centr, radius, black,1, CV_AA);
-        // }
-        // else
-        // {
-        //     cv::circle(image, centr, radius, black,1, CV_AA);
-        // }
+        else{
+            yWarning() << "\n Index " << index <<"not mapped! \n";
+            //std :: cout << "\n Index " << index <<"not mapped! \n";
+        }
     }
 }
 
@@ -353,7 +340,7 @@ std::string imuDraw::getEventType()
 
 void imuDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
-    auto radius = 20;
+    auto radius = 2;
     auto axes = cv::Size(radius, radius);
     auto centre = cv::Point(Xlimit/2, Ylimit/2);
     auto lin_scaler = std::min(Xlimit, Ylimit) * 0.5 / IMUevent::_max_value;
