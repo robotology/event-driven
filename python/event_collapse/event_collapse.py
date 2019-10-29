@@ -4,14 +4,14 @@ import argparse
 import os
 
 
-def pretty_print_AE(bottlenumber, timestamp, events):
-    return '%d %f AE (%s)' %(bottlenumber, timestamp,
+def pretty_print_AE(bottlenumber, timestamp, v_type, events):
+    return '%d %f %s (%s)' %(bottlenumber, timestamp, v_type,
                              ' '.join(map(str, list(events))))
 
 
 def collapse(filename, min_bot_duration=2e-3):
 
-    pattern = re.compile('(\d+) (\d+\.\d+) AE \((.*)\)')
+    pattern = re.compile('(\d+) (\d+\.\d+) (\w+) \((.*)\)')
 
     with open(filename, 'r') as f:
         content = f.read()
@@ -21,16 +21,17 @@ def collapse(filename, min_bot_duration=2e-3):
         perc_done = 0
         for n, elem in enumerate(found):
 
-            events = np.int32(elem[2].split())
+            events = np.int32(elem[3].split())
             bottlenumber = np.int32(elem[0])
             timestamp = np.float64(elem[1])
+            v_type = elem[2]
             buffer.append(events)
             if first_timestamp is None:
                 first_timestamp = timestamp
             if timestamp - first_timestamp > min_bot_duration:
                 first_timestamp = timestamp
                 pp = pretty_print_AE(bottlenumber, timestamp,
-                                      np.concatenate(buffer))
+                                      v_type, np.concatenate(buffer))
                 buffer = []
                 yield pp
             if n / len(found) > perc_done + 0.05:
