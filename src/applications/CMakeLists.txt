@@ -29,7 +29,6 @@ endif(ENABLE_vergence)
 
 if(ENABLE_calibrate)
     add_subdirectory(calibrate)
-    add_subdirectory(calibrateFlashingScreen)
 endif(ENABLE_calibrate)
 
 if(ENABLE_view)
