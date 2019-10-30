@@ -1,4 +1,4 @@
-project(vCalib)
+project(vCalibChess)
 
 yarp_install(FILES app_${PROJECT_NAME}.xml.template
              DESTINATION ${EVENT-DRIVEN_APPLICATIONS_TEMPLATES_INSTALL_DIR})
