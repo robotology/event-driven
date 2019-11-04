@@ -99,9 +99,9 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
     precheck = rf.check("precheck") &&
             rf.check("precheck", Value(true)).asBool();
     split_stereo = rf.check("split_stereo") &&
-                  rf.check("split_stereo", Value(true)).asBool();
+            rf.check("split_stereo", Value(true)).asBool();
     combined_stereo = rf.check("combined_stereo") &&
-                  rf.check("combined_stereo", Value(true)).asBool();
+            rf.check("combined_stereo", Value(true)).asBool();
     use_local_stamp = rf.check("local_stamp") &&
             rf.check("local_stamp", Value(true)).asBool();
 
@@ -158,9 +158,10 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
 
         if(calibrator.configure("camera", "stefi_calib.ini"))
             calibrator.showMapProjections(3.0);
-        else
+        else {
             yWarning() << "Could not correctly configure the cameras";
-        return false;
+            return false;
+        }
     }
 
     return Thread::start();
@@ -180,10 +181,10 @@ bool vPreProcess::threadInit()
             return false;
     }
     if(combined_stereo) {
-      if(!outPortCamStereo.open(getName() + "/AE:o"))
-          return false;
-      if(!out_port_aps_stereo.open(getName() + "/APS:o"))
-          return false;
+        if(!outPortCamStereo.open(getName() + "/AE:o"))
+            return false;
+        if(!out_port_aps_stereo.open(getName() + "/APS:o"))
+            return false;
     }
 
     if(!out_port_imu_samples.open(getName() + "/imu_samples:o"))
@@ -362,29 +363,29 @@ void vPreProcess::run()
                 }
                 if(split_stereo)
                 {
-                  if(v.channel)
-                  {
-                    if(v.type)
-                      qright_aps.push_back(v);
+                    if(v.channel)
+                    {
+                        if(v.type)
+                            qright_aps.push_back(v);
+                        else
+                            qright.push_back(v);
+                    }
                     else
-                      qright.push_back(v);
-                  }
-                  else
-                  {
-                    if(v.type)
-                      qleft_aps.push_back(v);
-                    else
-                      qleft.push_back(v);
-                  }
+                    {
+                        if(v.type)
+                            qleft_aps.push_back(v);
+                        else
+                            qleft.push_back(v);
+                    }
                 }
                 if(combined_stereo)
                 {
-                  if(v.type)
-                    qstereo_aps.push_back(v);
-                  else
-                    qstereo.push_back(v);
+                    if(v.type)
+                        qstereo_aps.push_back(v);
+                    else
+                        qstereo.push_back(v);
                 }
-              }
+            }
             
         }
 
