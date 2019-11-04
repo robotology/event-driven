@@ -26,16 +26,7 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
-class vDraw;
-
-/**
- * @brief createDrawer returns an instance of a drawer that matches the tag
- * specified
- * @param tag is the code of the drawer
- * @return a pointer to a drawer on success. 0 if no appropiate drawer was
- * found
- */
-vDraw * createDrawer(std::string tag);
+namespace ev {
 
 /**
  * @brief The vDraw class is the base class from which all vDrawers should
@@ -121,148 +112,6 @@ public:
 
 };
 
-class accDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class addressDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class grayDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class skinDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class skinsampleDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class imuDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class cochleaDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class flowDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class clusterDraw : public vDraw {
-
-protected:
-
-    std::map<int, ev::event<ev::GaussianAE>> persistance;
-    int stagnantCount;
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class circleDraw : public vDraw {
-
-protected:
-
-    std::map<int, ev::event<ev::GaussianAE>> persistance;
-    int stagnantCount;
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class blobDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class interestDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
 class isoDraw : public vDraw {
 
 protected:
@@ -308,6 +157,124 @@ public:
 
 };
 
+class addressDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class skinDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class skinsampleDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class imuDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class rasterDraw : public vDraw {
+
+protected:
+
+    float time_scaler;
+    unsigned int num_neurons;
+
+public:
+
+    virtual void initialise()
+    {
+        Xlimit = 1024;
+        Ylimit = 1024;
+
+        num_neurons = 1;
+        time_scaler = (double) Xlimit / max_window;
+    }
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class cochleaDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class flowDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class interestDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class clusterDraw : public vDraw {
+
+protected:
+
+    std::map<int, ev::event<ev::GaussianAE>> persistance;
+    int stagnantCount;
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
 class isoInterestDraw : public isoDraw {
 
 public:
@@ -319,38 +286,10 @@ public:
 
 };
 
-class isoCircDraw : public isoDraw {
 
-public:
 
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
 
-};
-
-class overlayStereoDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class saeDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
+} //namespace ev::
 
 #endif
 

@@ -29,7 +29,6 @@
 #include <event-driven/all.h>
 #include <event-driven/vBottle.h>
 #include <yarp/dev/all.h>
-#include <yarp/math/Math.h>
 
 
 class EventBottleManager : public yarp::os::BufferedPort<ev::vBottle>
