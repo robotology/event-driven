@@ -30,6 +30,7 @@ namespace ev {
 
 vIPT::vIPT()
 {
+    size_shared = Size(0, 0);
 }
 
 bool vIPT::importIntrinsics(int cam, Bottle &parameters)
@@ -149,7 +150,13 @@ bool vIPT::computeForwardReverseMaps(int cam)
     return true;
 }
 
-bool vIPT::configure(const string calibContext, const string calibFile)
+void vIPT::setProjectedImageSize(int height, int width)
+{
+    size_shared.height = height;
+    size_shared.width = width;
+}
+
+bool vIPT::configure(const string calibContext, const string calibFile, int size_scaler)
 
 {
     ResourceFinder calibfinder;
@@ -166,9 +173,11 @@ bool vIPT::configure(const string calibContext, const string calibFile)
     if(!valid_cam1 && !valid_cam2)
         return false;
 
-    size_shared = cv::Size2i(cv::max(size_cam[0].width, size_cam[1].width),
-            cv::max(size_cam[0].height, size_cam[1].height));
-    //size_shared *= 2;
+    if(size_shared.area() == 0) {
+        size_shared = cv::Size2i(cv::max(size_cam[0].width, size_cam[1].width),
+                cv::max(size_cam[0].height, size_cam[1].height));
+        size_shared *= size_scaler;
+    }
 
     //compute projection and rotation
     if(valid_cam1 && valid_cam2 && valid_stereo) {
