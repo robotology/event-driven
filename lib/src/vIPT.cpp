@@ -30,6 +30,7 @@ namespace ev {
 
 vIPT::vIPT()
 {
+    size_shared = Size(0, 0);
 }
 
 bool vIPT::importIntrinsics(int cam, Bottle &parameters)
@@ -104,8 +105,19 @@ bool vIPT::computeForwardReverseMaps(int cam)
                                 projection[cam], size_shared, CV_32FC2,
                                 mat_reverse_map[cam], cv::noArray());
 
-    if(mat_reverse_map[cam].empty())
+    if(mat_reverse_map[cam].empty()) {
+        yError() << "Camera Calibration failed";
+        std::cout << "Camera Matrix: " << std::endl << cam_matrix[cam]
+                  << std::endl << std::endl;
+        std::cout << "Distortion Coefficients: " << std::endl << dist_coeff[cam]
+                  << std::endl << std::endl;
+        std::cout << "Rotation Matrix: " << std::endl << rotation[cam]
+                  << std::endl << std::endl;
+        std::cout << "Projection Matrix: " << std::endl << projection[cam]
+                  << std::endl << std::endl;
+        std::cout << "Size of Projection Space: " << size_shared << std::endl;
         return false;
+    }
 
     // !!mat_reverse_map is points ordered [x, y]!!
 
@@ -138,7 +150,13 @@ bool vIPT::computeForwardReverseMaps(int cam)
     return true;
 }
 
-bool vIPT::configure(const string calibContext, const string calibFile)
+void vIPT::setProjectedImageSize(int height, int width)
+{
+    size_shared.height = height;
+    size_shared.width = width;
+}
+
+bool vIPT::configure(const string calibContext, const string calibFile, int size_scaler)
 
 {
     ResourceFinder calibfinder;
@@ -155,9 +173,11 @@ bool vIPT::configure(const string calibContext, const string calibFile)
     if(!valid_cam1 && !valid_cam2)
         return false;
 
-    size_shared = cv::Size2i(cv::max(size_cam[0].width, size_cam[1].width),
-            cv::max(size_cam[1].height, size_cam[1].height));
-    size_shared *= 2;
+    if(size_shared.area() == 0) {
+        size_shared = cv::Size2i(cv::max(size_cam[0].width, size_cam[1].width),
+                cv::max(size_cam[0].height, size_cam[1].height));
+        size_shared *= size_scaler;
+    }
 
     //compute projection and rotation
     if(valid_cam1 && valid_cam2 && valid_stereo) {
@@ -203,6 +223,29 @@ bool vIPT::configure(const string calibContext, const string calibFile)
             return false;
 
     return true;
+}
+
+void vIPT::showMonoProjections(int cam, double seconds)
+{
+    cv::Mat test_image_left(size_cam[cam], CV_8UC1);
+    for(int y = 0; y < size_cam[cam].height; y++) {
+        for(int x = 0; x < size_cam[cam].width; x++) {
+            if(y > size_cam[cam].height / 2) {
+                test_image_left.at<uchar>(y, x) = x % 20 > 10 ? 0 : 120;
+            } else {
+                test_image_left.at<uchar>(y, x) = x % 20 < 10 ? 0 : 120;
+            }
+        }
+    }
+
+    cv::Mat remapped = test_image_left.clone();
+    denseForwardTransform(cam, remapped);
+    cv::imshow("Original Image", test_image_left);
+    cv::imshow("Undistorted Image", remapped);
+
+    cv::waitKey(static_cast<int>(seconds * 1000));
+    cv::destroyAllWindows();
+
 }
 
 bool vIPT::showMapProjections(double seconds)
