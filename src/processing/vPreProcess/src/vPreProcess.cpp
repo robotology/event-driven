@@ -156,7 +156,7 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
 
     if(undistort) {
 
-        if(calibrator.configure("camera", "stefi_calib.ini"))
+        if(calibrator.configure("camera", "stefi_calib.ini", 1))
             calibrator.showMapProjections(3.0);
         else
             yWarning() << "Could not correctly configure the cameras";
