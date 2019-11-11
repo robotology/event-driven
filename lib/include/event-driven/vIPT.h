@@ -50,8 +50,10 @@ public:
 
     vIPT();
 
-    bool configure(const std::string calibContext, const std::string calibFile);
+    void setProjectedImageSize(int height, int width);
+    bool configure(const std::string calibContext, const std::string calibFile, int size_scaler = 2);
     bool showMapProjections(double seconds = 0);
+    void showMonoProjections(int cam, double seconds);
 
     bool sparseForwardTransform(int cam, int &y, int &x);
     bool sparseReverseTransform(int cam, int &y, int &x);
