@@ -52,6 +52,7 @@ public:
 
     bool configure(const std::string calibContext, const std::string calibFile);
     bool showMapProjections(double seconds = 0);
+    void showMonoProjections(int cam, double seconds);
 
     bool sparseForwardTransform(int cam, int &y, int &x);
     bool sparseReverseTransform(int cam, int &y, int &x);
