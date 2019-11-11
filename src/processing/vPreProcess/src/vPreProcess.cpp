@@ -266,8 +266,6 @@ void vPreProcess::run()
     resmod.width -= 1;
     int nm0 = 0, nm1 = 0, nm2 = 0, nm3 = 0, nm4 = 0;
     AE v;
-    SkinEvent se;
-    SkinSample ss;
     bool received_half_sample = false;
     int32_t salvage_sample[2] = {-1, 0};
 
