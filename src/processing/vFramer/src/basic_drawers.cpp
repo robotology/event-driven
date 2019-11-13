@@ -257,7 +257,7 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         }
         else
         {
-            yWarning() << "\n Index " << index <<"not mapped! \n";
+           // yWarning() << "\n Index " << index <<"not mapped! \n";
         }
     }
 }
@@ -297,14 +297,20 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if((unsigned int)dt > display_window) break;
 
 
-        auto aep = is_event<SkinSample>(*qi);
+        auto aep = as_event<SkinSample>(*qi);
+        if(!aep) {
+            yError() << "data corruption";
+            continue;
+        }
+
 
         int index = aep->taxel;
         
         int noise = 2500;
-
+        // stamp 18 ns
+        //yInfo() << "\n Index  " << index << "= "<< aep->value <<"time stamp= " <<aep->stamp ;
         if(tmap.find(index) != tmap.end()){
-            // yInfo() << "\n Index = " << index ;
+            
             // std :: cout << "\n Index " << index <<"mapped to "<< x << y << "\n";
             if(aep->value > noise){
                 int x = xoffset + scaling* std :: get<0>(tmap[index]);
@@ -320,7 +326,7 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             }
         }
         else{
-            yWarning() << "\n Index " << index <<"not mapped! \n";
+          //  yWarning() << "\n Index " << index <<"not mapped! \n";
             //std :: cout << "\n Index " << index <<"not mapped! \n";
         }
     }

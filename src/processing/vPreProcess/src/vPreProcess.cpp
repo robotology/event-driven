@@ -385,15 +385,34 @@ void vPreProcess::run()
             
         }
 
+
+
         if(qskinsamples.size() > 2) { //if we have skin samples
+
+        if(qskinsamples.size() % 4)
+            yWarning() << "Problem : qskinsamples size =" << qskinsamples.size();
+
+for (int i = 1; i<qskinsamples.size();i+=4){
+    if(IS_SSV(qskinsamples[i])) {
+        yWarning()<<"misaligned skin address!";
+    }
+    if(!IS_SSA(qskinsamples[i+2])) {
+         yWarning()<<"misaligned skin sample!";
+    }
+}
+
             //check if we need to fix the ordering
             if(IS_SSV(qskinsamples[1])) { // missing address
                 if(received_half_sample) { // but we have it from last bottle
                     qskinsamples.push_front(salvage_sample[1]);
                     qskinsamples.push_front(salvage_sample[0]);
+                    yWarning() << "missing address but we have it from the previous packet";
                 } else { // otherwise we are misaligned due to missing data
                     qskinsamples.pop_front();
                     qskinsamples.pop_front();
+                    yWarning() << "missing address AND WE DROPPED IT";
+                    //yWarning() << qskinsamples.size() << qskinsamples[0] << qskinsamples[1] << qskinsamples.back();
+                    return;
                 }
             }
             received_half_sample = false; //either case the half sample is no longer valid
@@ -401,6 +420,7 @@ void vPreProcess::run()
             //check if we now have a cut event
             int samples_overrun = qskinsamples.size() % packetSize(SkinSample::tag);
             if(samples_overrun == 2) {
+                yWarning() << "missing value - saving address for next packet";
                 salvage_sample[1] = qskinsamples.back();
                 qskinsamples.pop_back();
                 salvage_sample[0] = qskinsamples.back();
