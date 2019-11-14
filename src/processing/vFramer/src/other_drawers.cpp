@@ -19,7 +19,7 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "vDraw.h"
+#include "vFramerLite.h"
 
 using namespace ev;
 
@@ -196,6 +196,68 @@ void grayDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
 }
 
+
+
+// BLACK DRAW //
+// =========== //
+
+const std::string blackDraw::drawtype = "BLACK";
+
+std::string blackDraw::getDrawType()
+{
+    return blackDraw::drawtype;
+}
+
+std::string blackDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void blackDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    image = cv::Scalar(255, 255, 255);
+    
+	if(eSet.empty()) return;
+	if(vTime < 0) vTime = eSet.back()->stamp;
+    
+    ev::vQueue::const_reverse_iterator qi;
+	for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+        auto aep = is_event<AddressEvent>(*qi);
+        if(!aep) continue;
+        
+		int y = aep->y;
+        int x = aep->x;
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
+        image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+    }
+	/*
+	cv::Mat kernel = (cv::Mat_<float>(3,3) << 
+        1,  1, 1,
+        1, -8, 1,
+        1,  1, 1);
+
+	imgLaplacian = Mat::zeros(img.size());
+	filter2D(img, imgLaplacian, kernel);
+
+	cv::GaussianBlur(image, temp, cv::Size(3,3), 3);
+	cv::addWeighted(temp, 1.5, image, -0.5, 0, image);
+	*/
+}
+
+
+
+
+
+
 // STEREO OVERLAY DRAW //
 // =================== //
 
@@ -309,4 +371,146 @@ void saeDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             cpc = violet + (white - violet) * decay;
 
     }
+}
+
+// ACCELEROMETER DRAW //
+// ================== //
+
+const std::string accDraw::drawtype = "ACC";
+
+std::string accDraw::getDrawType()
+{
+    return accDraw::drawtype;
+}
+
+std::string accDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void accDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    cv::Scalar pos = CV_RGB(160, 0, 160);
+    cv::Scalar neg = CV_RGB(0, 60, 1);
+
+    int radius = 4;
+
+    if(image.empty()) {
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+        image.setTo(255);
+    }
+
+    if(eSet.empty()) return;
+
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+
+        int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
+        if(dt < 0) dt += ev::vtsHelper::maxStamp();
+        if(dt > (int)display_window) break;
+
+
+        auto aep = is_event<AddressEvent>(*qi);
+        int y = aep->y;
+        int x = aep->x;
+
+        if((x & 0xF) != 0xD) //accelerometer
+            continue;
+        x = (x & 0xFF);
+        if(aep->type == 0)
+            y = Ylimit - radius;
+        else {
+            if(y <= 127)
+                y = radius + 100 + y * 100.0 / 127.0;
+            else
+                y = radius + 100 + ((y) * 99.0 / 127.0 - 199.78); //negative half-plane
+            //x = x;
+        }
+
+        // decode the event here: i.e. do the mapping from the x value to x,y location on the image
+
+        // get the pixel: substitute with code to draw a circle from circleDrawer
+        y = Ylimit - y - 1;
+        cv::Point centr(x, y);
+
+        if(!aep->polarity)
+        {
+            cv::circle(image, centr, radius, pos, CV_FILLED);
+        }
+        else
+        {
+            cv::circle(image, centr, radius, neg, CV_FILLED);
+        }
+
+    }
+}
+
+
+// ISO (CIRC) //
+// ========= //
+
+
+const std::string isoCircDraw::drawtype = "ISO-CIRC";
+std::string isoCircDraw::getDrawType()
+{
+    return isoCircDraw::drawtype;
+}
+std::string isoCircDraw::getEventType()
+{
+    return ev::GaussianAE::tag;
+}
+void isoCircDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    cv::Scalar blue = CV_RGB(0, 0, 255);
+    cv::Scalar red = CV_RGB(255, 0, 0);
+
+    if(eSet.empty()) return;
+
+    if(image.rows != imageheight || image.cols != imagewidth) {
+        yWarning() << "Could not draw isoCircDraw. Please draw ISO first";
+        return;
+    }
+
+    auto v = is_event<GaussianAE>(eSet.back());
+    //if(v->x < 0 || v->x >= Xlimit || v->y < 0 || v->y >= Ylimit) continue;
+
+    int px1 = v->x;
+    int py1 = v->y;
+    int pz1 = 0;
+
+    if(flip) {
+        px1 = Xlimit - 1 - px1;
+        py1 = Ylimit - 1 - py1;
+    }
+
+    int px2 = px1;
+    int py2 = py1;
+    int pz2 = Zlimit * (v->sigy / ev::vtsHelper::max_stamp) + 0.5;
+
+    pttr(px1, py1, pz1);
+    pttr(px2, py2, pz2);
+
+    px1 += imagexshift;
+    py1 += imageyshift;
+    px2 += imagexshift;
+    py2 += imageyshift;
+
+    if(px1 < 0) px1 = 0;
+    if(px1 >= imagewidth) px1 = imagewidth -1;
+    if(py1 < 0) py1 = 0;
+    if(py1 >= imageheight) py1 = imageheight -1;
+    if(px2 < 0) px2 = 0;
+    if(px2 >= imagewidth) px2 = imagewidth -1;
+    if(py2 < 0) py2 = 0;
+    if(py2 >= imageheight) py2 = imageheight -1;
+
+    cv::Point p1(px1, py1);
+    cv::Point p2(px2, py2);
+
+    if(v->polarity)
+        cv::line(image, p1, p2, blue, 2.0);
+    else
+        cv::line(image, p1, p2, red, 2.0);
+
 }

@@ -39,6 +39,53 @@ int main(int argc, char * argv[])
     vFramerModule framerModule;
     return framerModule.runModule(rf);
 }
+/*////////////////////////////////////////////////////////////////////////////*/
+// drawer factory
+/*////////////////////////////////////////////////////////////////////////////*/
+vDraw * createDrawer(std::string tag)
+{
+
+    if(tag == addressDraw::drawtype)
+        return new addressDraw();
+    if(tag == grayDraw::drawtype)
+        return new grayDraw();
+    if(tag == blackDraw::drawtype)
+        return new blackDraw();
+	if(tag == isoDraw::drawtype)
+        return new isoDraw();
+    if(tag == interestDraw::drawtype)
+        return new interestDraw();
+    if(tag == circleDraw::drawtype)
+        return new circleDraw();
+    if(tag == flowDraw::drawtype)
+        return new flowDraw();
+    if(tag == clusterDraw::drawtype)
+        return new clusterDraw();
+    if(tag == blobDraw::drawtype)
+        return new blobDraw();
+    if(tag == skinDraw::drawtype)
+        return new skinDraw();
+    if(tag == skinsampleDraw::drawtype)
+        return new skinsampleDraw();
+    if(tag == accDraw::drawtype)
+        return new accDraw();
+    if(tag == isoInterestDraw::drawtype)
+        return new isoInterestDraw();
+    if(tag == isoCircDraw::drawtype)
+        return new isoCircDraw();
+    if(tag == overlayStereoDraw::drawtype)
+        return new overlayStereoDraw();
+    if(tag == saeDraw::drawtype)
+        return new saeDraw();
+    if(tag == imuDraw::drawtype)
+        return new imuDraw();
+    if(tag == cochleaDraw::drawtype)
+        return new cochleaDraw();
+    if(tag == rasterDraw::drawtype)
+        return new rasterDraw();
+    return 0;
+
+}
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //channelInstance
@@ -47,6 +94,7 @@ channelInstance::channelInstance(string channel_name) : RateThread(0.1)
 {
     this->channel_name = channel_name;
     this->limit_time = 1.0 * vtsHelper::vtsscaler;
+    calib_configured = false;
 }
 
 string channelInstance::getName()
@@ -54,15 +102,26 @@ string channelInstance::getName()
     return channel_name;
 }
 
+bool channelInstance::addFrameDrawer(unsigned int width, unsigned int height)
+{
+    calib_configured = unwarp.configure("camera", "stefi_calib.ini");
+    if(!calib_configured)
+        yWarning() << "Calibration was not configured";
+
+    desired_res.width = width;
+    desired_res.height = height;
+    return frame_read_port.open(channel_name + "/frame:i");
+}
+
 bool channelInstance::addDrawer(string drawer_name, unsigned int width,
                                 unsigned int height, unsigned int window_size,
-                                bool flip)
+                                double isoWindow, bool flip)
 {
     //make the drawer
     vDraw * new_drawer = createDrawer(drawer_name);
     if(new_drawer) {
         new_drawer->setRetinaLimits(width, height);
-        new_drawer->setTemporalLimits(window_size, limit_time);
+        new_drawer->setTemporalLimits(window_size, isoWindow);
         new_drawer->setFlip(flip);
         new_drawer->initialise();
         drawers.push_back(new_drawer);
@@ -79,6 +138,7 @@ bool channelInstance::addDrawer(string drawer_name, unsigned int width,
     //open the port
     total_time[event_type] = 0;
     prev_vstamp[event_type] = 0;
+    limit_time = isoWindow;
     return read_ports[event_type].open(channel_name + "/" + event_type + ":i");
 
 }
@@ -125,6 +185,21 @@ bool channelInstance::updateQs()
         }
     }
 
+    if(!frame_read_port.isClosed()) {
+        auto image_p = frame_read_port.read(false);
+        if(image_p) {
+            updated = true;
+            cv::Mat temp = yarp::cv::toCvMat(*image_p);
+            temp.copyTo(current_frame);
+            if(calib_configured) {
+                unwarp.denseProjectCam1ToCam0(current_frame);
+            }
+            cv::resize(current_frame, current_frame,
+                       cv::Size(desired_res.width,
+                                desired_res.height));
+        }
+    }
+
     return updated;
 }
 
@@ -135,29 +210,23 @@ void channelInstance::run()
     if(!updateQs())
         return;
 
-
-    //get the image to be written and make a cv::Mat pointing to the same
-    ImageOf<PixelBgr> &o = image_port.prepare();
-    cv::Mat canvas = yarp::cv::toCvMat(o);
-
+    cv::Mat canvas;
     //the first drawer will reset the base image, then drawing proceeds
-    drawers.front()->resetImage(canvas);
+    if(!current_frame.empty()) {
+        current_frame.copyTo(canvas);
+    } else {
+        drawers.front()->resetImage(canvas);
+    }
 
     vector<vDraw *>::iterator drawer_i;
     for(drawer_i = drawers.begin(); drawer_i != drawers.end(); drawer_i++) {
         (*drawer_i)->draw(canvas, event_qs[(*drawer_i)->getEventType()], -1);
     }
 
-    //tell the actual YARP image what size the final image became
-    o.resize(canvas.cols, canvas.rows);
-
-    //write
-    //if(cEnv.isValid()) outports[i]->setEnvelope(cEnv);
+    image_port.prepare().copy(yarp::cv::fromCvMat<PixelBgr>(canvas));
     ts.update();
     image_port.setEnvelope(ts);
     image_port.write();
-
-    //updateQs();
 
 }
 
@@ -168,6 +237,8 @@ void channelInstance::threadRelease()
     for(port_i = read_ports.begin(); port_i != read_ports.end(); port_i++) {
         port_i->second.close();
     }
+
+    frame_read_port.close();
 
     //close output port
     image_port.close();
@@ -182,7 +253,7 @@ void channelInstance::threadRelease()
 
 
 /*////////////////////////////////////////////////////////////////////////////*/
-//channelInstance
+//module
 /*////////////////////////////////////////////////////////////////////////////*/
 bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
 {
@@ -251,7 +322,10 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
         for(unsigned int j = 0; j < drawtypelist->size(); j++)
         {
             string draw_type = drawtypelist->get(j).asString();
-            if(!new_ci->addDrawer(draw_type, width, height, eventWindow, flip))
+            if(draw_type == "F") {
+                new_ci->addFrameDrawer(width, height);
+            }
+            else if(!new_ci->addDrawer(draw_type, width, height, eventWindow, isoWindow, flip))
             {
                 yError() << "Could not create specified publisher"
                          << channel_name << draw_type;

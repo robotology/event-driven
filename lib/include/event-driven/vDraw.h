@@ -26,16 +26,7 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 
-class vDraw;
-
-/**
- * @brief createDrawer returns an instance of a drawer that matches the tag
- * specified
- * @param tag is the code of the drawer
- * @return a pointer to a drawer on success. 0 if no appropiate drawer was
- * found
- */
-vDraw * createDrawer(std::string tag);
+namespace ev {
 
 /**
  * @brief The vDraw class is the base class from which all vDrawers should
@@ -127,9 +118,43 @@ public:
 
 };
 
-class accDraw : public vDraw {
+class isoDraw : public vDraw {
+
+protected:
+
+    //angles
+    double thetaY;
+    double thetaX;
+    double CY, SY;
+    double CX, SX;
+
+    double ts_to_axis;
+    int Zlimit;
+    int imagewidth;
+    int imageheight;
+    int imagexshift;
+    int imageyshift;
+
+    //private functions
+    inline void pttr(int &x, int &y, int &z) {
+        // we want a negative rotation around the y axis (yaw)
+        // a positive rotation around the x axis (pitch) (no roll)
+        // the z should always be negative values.
+        // the points need to be shifted across by negligble amount
+        // the points need to be shifted up by (x = max, y = 0, ts = 0 rotation)
+
+        int xmod = x*CY + z*SY + 0.5; // +0.5 rounds rather than floor
+        int ymod = y*CX - SX*(-x*SY + z*CY) + 0.5;
+        int zmod = y*SX + CX*(-x*SY + z*CY) + 0.5;
+        x = xmod; y = ymod; z = zmod;
+    }
+
+    //image with warped square drawn
+    cv::Mat baseimage;
 
 public:
+
+    void initialise();
 
     static const std::string drawtype;
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
@@ -139,17 +164,6 @@ public:
 };
 
 class addressDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class grayDraw : public vDraw {
 
 public:
 
@@ -337,6 +351,31 @@ public:
 
 };
 
+class rasterDraw : public vDraw {
+
+protected:
+
+    float time_scaler;
+    unsigned int num_neurons;
+
+public:
+
+    virtual void initialise()
+    {
+        Xlimit = 1024;
+        Ylimit = 1024;
+
+        num_neurons = 1;
+        time_scaler = (double) Xlimit / max_window;
+    }
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
 class cochleaDraw : public vDraw {
 
 public:
@@ -349,6 +388,17 @@ public:
 };
 
 class flowDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class interestDraw : public vDraw {
 
 public:
 
@@ -375,89 +425,6 @@ public:
 
 };
 
-class circleDraw : public vDraw {
-
-protected:
-
-    std::map<int, ev::event<ev::GaussianAE>> persistance;
-    int stagnantCount;
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class blobDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class interestDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class isoDraw : public vDraw {
-
-protected:
-
-    //angles
-    double thetaY;
-    double thetaX;
-    double CY, SY;
-    double CX, SX;
-
-    double ts_to_axis;
-    int Zlimit;
-    int imagewidth;
-    int imageheight;
-    int imagexshift;
-    int imageyshift;
-
-    //private functions
-    inline void pttr(int &x, int &y, int &z) {
-        // we want a negative rotation around the y axis (yaw)
-        // a positive rotation around the x axis (pitch) (no roll)
-        // the z should always be negative values.
-        // the points need to be shifted across by negligble amount
-        // the points need to be shifted up by (x = max, y = 0, ts = 0 rotation)
-
-        int xmod = x*CY + z*SY + 0.5; // +0.5 rounds rather than floor
-        int ymod = y*CX - SX*(-x*SY + z*CY) + 0.5;
-        int zmod = y*SX + CX*(-x*SY + z*CY) + 0.5;
-        x = xmod; y = ymod; z = zmod;
-    }
-
-    //image with warped square drawn
-    cv::Mat baseimage;
-
-public:
-
-    void initialise();
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
 class isoInterestDraw : public isoDraw {
 
 public:
@@ -469,38 +436,10 @@ public:
 
 };
 
-class isoCircDraw : public isoDraw {
 
-public:
 
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
 
-};
-
-class overlayStereoDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class saeDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
+} //namespace ev::
 
 #endif
 
