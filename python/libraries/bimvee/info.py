@@ -45,7 +45,7 @@ def infoForImportedDicts(importedDicts, **kwargs):
                 if 'tsOffset' in dataTypeDict:
                     print('            Ts offset: ', dataTypeDict['tsOffset'])
                 for dataType in ['pol', 'x', 'y']:
-                    fieldMinMax(dataTypeDict, 'pol')
+                    fieldMinMax(dataTypeDict, dataType)
 
 def infoTsForImportedDicts(importedDicts, **kwargs):
     if not isinstance(importedDicts, list):

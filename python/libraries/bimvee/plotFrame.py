@@ -106,3 +106,7 @@ def plotFrame(inDict, **kwargs):
             set(gca, 'XDir', 'reverse')
         '''
         ax.set_title('Time: ' + str(roundToSf(timePoint)) + ' s; frame number: ' + str(frameIdx))
+
+def framesToGif():
+    
+    

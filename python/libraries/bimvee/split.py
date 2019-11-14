@@ -20,8 +20,9 @@ splitDvsByLabel TODO: this could be generalised to any data type ...
 """
 
 #%%
-
 import numpy as np
+
+from timestamps import rezeroTimestampsForImportedDicts
 
 '''
 2019_11_11 This function currently unused, (importIitYarp handles this internally)
@@ -128,3 +129,47 @@ def splitByLabelled(inDict):
             'pol': inDict['pol'][~lblBool],
                 }
     return outDict
+
+''' 
+expecting startTime, stopTime or both
+If given a single dataType dict, will just cut down all arrays by masking on the ts array. 
+If given a larger container, will split down all that it finds, realigning timestamps.
+If the container contains an info field, then the start and stopTime params
+will be added.
+'''
+
+def cropTime(inDict, **kwargs):
+    # TODO: handle list case
+    if 'ts' in inDict:
+        ts = inDict['ts']
+        startTime = kwargs.get('startTime', ts[0])
+        stopTime = kwargs.get('startTime', ts[-1])
+        numElements = len(ts)
+        selectedIds = range(np.searchsorted(ts, startTime), np.searchsorted(ts, stopTime))
+        #mask = np.bitwise_and((inDict['ts']>=startTime), (inDict['ts']<=stopTime))
+        tsNew = ts[selectedIds] - startTime
+        outDict = {'ts': tsNew}
+        for fieldName in inDict.keys():
+            if fieldName != 'ts':
+                field = inDict[fieldName]
+                try:
+                    lenField = len(field)
+                except TypeError:
+                    lenField = 0
+                if lenField == numElements:
+                    outDict[fieldName] = field[selectedIds]
+                else:
+                    outDict[fieldName] = field.copy() # This might fail for certain data types
+        tsOffsetOriginal = inDict.get('tsOffset', 0)
+        outDict['tsOffset'] = tsOffsetOriginal - startTime
+        return outDict
+    elif 'info' in inDict:
+        outDict = {'info': inDict['info'].copy(),
+                   'data': {}}
+        for channelName in inDict['data'].keys():
+            outDict['data'][channelName] = {}
+            for dataTypeName in inDict['data'][channelName].keys():
+                outDict['data'][channelName][dataTypeName] = cropTime(inDict['data'][channelName][dataTypeName])                
+        return rezeroTimestampsForImportedDicts(outDict)
+    else:
+        raise ValueError('input not in the form expected')
