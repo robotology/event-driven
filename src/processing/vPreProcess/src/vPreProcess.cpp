@@ -385,7 +385,7 @@ void vPreProcess::run()
             
         }
 
-        if(qskinsamples.size() > 2) { //if we have skin samples
+        if(qskinsamples.size()) { //if we have skin samples
             //check if we need to fix the ordering
             if(IS_SSV(qskinsamples[1])) { // missing address
                 if(received_half_sample) { // but we have it from last bottle
