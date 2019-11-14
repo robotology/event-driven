@@ -202,6 +202,14 @@ public:
             return false;
         }
 
+        if(ints_to_read % event_size) {
+            yError() << "Data corruption: incompatible data size."
+                     << ints_to_read << "32 bit ints, but needed a multiple of"
+                     << event_size;
+            return false;
+        }
+
+
         event<> v = createEvent(event_type);
         if(v == nullptr) {
             yError() << "Cannot create new event of type:" << event_type;
@@ -225,8 +233,16 @@ public:
             return false;
         }
 
+        auto event_size = packetSize(event_type);
+        if(ints_to_read % event_size) {
+            yError() << "Data corruption: incompatible data size."
+                     << ints_to_read << "32 bit ints, but needed a multiple of"
+                     << event_size;
+            return false;
+        }
+
         const int32_t *data = internaldata.data();
-        read_q.resize(ints_to_read / packetSize(event_type));
+        read_q.resize(ints_to_read / event_size);
         for(unsigned int i = 0; i < read_q.size(); i++) {
             read_q[i].decode(data);
         }
