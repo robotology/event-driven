@@ -31,7 +31,7 @@ git clone https://github.com/robotology/event-driven.git
 Now you have dependencies, let's install `YCM`:
 ```bash
 cd ~/projects/YCM
-git checkout v0.9.1
+git checkout v0.10.4
 mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR
 make install -j$(nproc)
