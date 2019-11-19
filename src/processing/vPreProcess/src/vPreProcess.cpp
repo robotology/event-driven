@@ -99,9 +99,9 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
     precheck = rf.check("precheck") &&
             rf.check("precheck", Value(true)).asBool();
     split_stereo = rf.check("split_stereo") &&
-                  rf.check("split_stereo", Value(true)).asBool();
+            rf.check("split_stereo", Value(true)).asBool();
     combined_stereo = rf.check("combined_stereo") &&
-                  rf.check("combined_stereo", Value(true)).asBool();
+            rf.check("combined_stereo", Value(true)).asBool();
     use_local_stamp = rf.check("local_stamp") &&
             rf.check("local_stamp", Value(true)).asBool();
 
@@ -156,8 +156,10 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
 
     if(undistort) {
 
-        calibrator.configure("camera", "atis_calib.ini");
-        calibrator.showMapProjections();
+        if(calibrator.configure("camera", "stefi_calib.ini", 1))
+            calibrator.showMapProjections(3.0);
+        else
+            yWarning() << "Could not correctly configure the cameras";
     }
 
     return Thread::start();
@@ -177,10 +179,10 @@ bool vPreProcess::threadInit()
             return false;
     }
     if(combined_stereo) {
-      if(!outPortCamStereo.open(getName() + "/AE:o"))
-          return false;
-      if(!out_port_aps_stereo.open(getName() + "/APS:o"))
-          return false;
+        if(!outPortCamStereo.open(getName() + "/AE:o"))
+            return false;
+        if(!out_port_aps_stereo.open(getName() + "/APS:o"))
+            return false;
     }
 
     if(!out_port_imu_samples.open(getName() + "/imu_samples:o"))
@@ -264,8 +266,6 @@ void vPreProcess::run()
     resmod.width -= 1;
     int nm0 = 0, nm1 = 0, nm2 = 0, nm3 = 0, nm4 = 0;
     AE v;
-    SkinEvent se;
-    SkinSample ss;
     bool received_half_sample = false;
     int32_t salvage_sample[2] = {-1, 0};
 
@@ -359,48 +359,33 @@ void vPreProcess::run()
                 }
                 if(split_stereo)
                 {
-                  if(v.channel)
-                  {
-                    if(v.type)
-                      qright_aps.push_back(v);
+                    if(v.channel)
+                    {
+                        if(v.type)
+                            qright_aps.push_back(v);
+                        else
+                            qright.push_back(v);
+                    }
                     else
-                      qright.push_back(v);
-                  }
-                  else
-                  {
-                    if(v.type)
-                      qleft_aps.push_back(v);
-                    else
-                      qleft.push_back(v);
-                  }
+                    {
+                        if(v.type)
+                            qleft_aps.push_back(v);
+                        else
+                            qleft.push_back(v);
+                    }
                 }
                 if(combined_stereo)
                 {
-                  if(v.type)
-                    qstereo_aps.push_back(v);
-                  else
-                    qstereo.push_back(v);
+                    if(v.type)
+                        qstereo_aps.push_back(v);
+                    else
+                        qstereo.push_back(v);
                 }
-              }
+            }
             
         }
 
-
-
-        if(qskinsamples.size() > 2) { //if we have skin samples
-
-        if(qskinsamples.size() % 4)
-            yWarning() << "Problem : qskinsamples size =" << qskinsamples.size();
-
-for (int i = 1; i<qskinsamples.size();i+=4){
-    if(IS_SSV(qskinsamples[i])) {
-        yWarning()<<"misaligned skin address!";
-    }
-    if(!IS_SSA(qskinsamples[i+2])) {
-         yWarning()<<"misaligned skin sample!";
-    }
-}
-
+        if(qskinsamples.size()) { //if we have skin samples
             //check if we need to fix the ordering
             if(IS_SSV(qskinsamples[1])) { // missing address
                 if(received_half_sample) { // but we have it from last bottle

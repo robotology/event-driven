@@ -30,13 +30,15 @@ namespace ev {
 
 vIPT::vIPT()
 {
-
+    size_shared = Size(0, 0);
 }
 
 bool vIPT::importIntrinsics(int cam, Bottle &parameters)
 {
-    if(parameters.isNull())
+    if(parameters.isNull()) {
+        yWarning() << "Could not find camera" << cam <<"parameters";
         return false;
+    }
 
     if(!parameters.check("fx") || !parameters.check("fy") ||
             !parameters.check("cx") || !parameters.check("cy") ||
@@ -64,6 +66,7 @@ bool vIPT::importIntrinsics(int cam, Bottle &parameters)
     dist_coeff[cam].at<double>(0, 2) = parameters.find("p1").asDouble();
     dist_coeff[cam].at<double>(0, 3) = parameters.find("p2").asDouble();
 
+    return true;
 }
 
 bool vIPT::importStereo(Bottle &parameters)
@@ -94,16 +97,32 @@ bool vIPT::computeForwardReverseMaps(int cam)
 
     point_forward_map[cam] = cv::Mat(size_cam[cam], CV_32SC2);
     mat_forward_map[cam] = cv::Mat(size_cam[cam], CV_32FC2);
+    point_reverse_map[cam] = cv::Mat(size_shared, CV_32SC2);
+    mat_reverse_map[cam] = cv::Mat(size_shared, CV_32FC2);
 
     //mat_reverse_map fill
     cv::initUndistortRectifyMap(cam_matrix[cam], dist_coeff[cam], rotation[cam],
                                 projection[cam], size_shared, CV_32FC2,
                                 mat_reverse_map[cam], cv::noArray());
-    point_reverse_map[cam] = cv::Mat(size_shared, CV_32SC2);
-    // !!urmap is points ordered [x, y]!!
 
-    for(unsigned int y = 0; y < size_shared.height; y++) {
-        for(unsigned int x = 0; x < size_shared.width; x++) {
+    if(mat_reverse_map[cam].empty()) {
+        yError() << "Camera Calibration failed";
+        std::cout << "Camera Matrix: " << std::endl << cam_matrix[cam]
+                  << std::endl << std::endl;
+        std::cout << "Distortion Coefficients: " << std::endl << dist_coeff[cam]
+                  << std::endl << std::endl;
+        std::cout << "Rotation Matrix: " << std::endl << rotation[cam]
+                  << std::endl << std::endl;
+        std::cout << "Projection Matrix: " << std::endl << projection[cam]
+                  << std::endl << std::endl;
+        std::cout << "Size of Projection Space: " << size_shared << std::endl;
+        return false;
+    }
+
+    // !!mat_reverse_map is points ordered [x, y]!!
+
+    for(int y = 0; y < size_shared.height; y++) {
+        for(int x = 0; x < size_shared.width; x++) {
             cv::Vec2f distorted_point = mat_reverse_map[cam].at<cv::Vec2f>(y, x);
 
             //point_reverse_map fill
@@ -128,9 +147,16 @@ bool vIPT::computeForwardReverseMaps(int cam)
         }
     }
 
+    return true;
 }
 
-bool vIPT::configure(const string calibContext, const string calibFile)
+void vIPT::setProjectedImageSize(int height, int width)
+{
+    size_shared.height = height;
+    size_shared.width = width;
+}
+
+bool vIPT::configure(const string calibContext, const string calibFile, int size_scaler)
 
 {
     ResourceFinder calibfinder;
@@ -144,11 +170,18 @@ bool vIPT::configure(const string calibContext, const string calibFile)
     bool valid_cam2 = importIntrinsics(1, calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT"));
     bool valid_stereo = importStereo(calibfinder.findGroup("STEREO_DISPARITY"));
 
-    size_shared = cv::Size2i(cv::max(size_cam[0].width, size_cam[1].width),
-            cv::max(size_cam[1].height, size_cam[1].height));
+    if(!valid_cam1 && !valid_cam2)
+        return false;
+
+    if(size_shared.area() == 0) {
+        size_shared = cv::Size2i(cv::max(size_cam[0].width, size_cam[1].width),
+                cv::max(size_cam[0].height, size_cam[1].height));
+        size_shared *= size_scaler;
+    }
 
     //compute projection and rotation
     if(valid_cam1 && valid_cam2 && valid_stereo) {
+        yInfo() << "Camera 0 and Camera 1 is and Extrinsic parameters exist - creating rectified transforms";
         //compute stereo + rectification
 
         cv::Mat Q(4, 4, CV_64FC1);
@@ -158,31 +191,71 @@ bool vIPT::configure(const string calibContext, const string calibFile)
                 rotation[0], rotation[1], projection[0],projection[1], Q,
                 CV_CALIB_ZERO_DISPARITY, 1, size_shared);
 
-    } else if(valid_cam1) {
-        //compute for camera 1
-        projection[0] = cv::getOptimalNewCameraMatrix(cam_matrix[0],
-                dist_coeff[0], size_cam[0], 1, size_shared);
-        rotation[0] = cv::Mat::eye(3, 3, CV_32F);
-    } else if(valid_cam2) {
-        //compute for camera 2
-        projection[1] = cv::getOptimalNewCameraMatrix(cam_matrix[1],
-                dist_coeff[1], size_cam[1], 1, size_shared);
-        rotation[1] = cv::Mat::eye(3, 3, CV_32F);
+    } else {
+        if(valid_cam1)
+        {
+
+            yInfo() << "Camera 0 is valid - creating optimal camera matrix";
+
+            //compute for camera 1
+            projection[0] = cv::getOptimalNewCameraMatrix(cam_matrix[0],
+                    dist_coeff[0], size_cam[0], 1, size_shared);
+            rotation[0] = cv::Mat::eye(3, 3, CV_32F);
+        }
+        if(valid_cam2)
+        {
+
+            yInfo() << "Camera 1 is valid - creating optimal camera matrix";
+
+            //compute for camera 2
+            projection[1] = cv::getOptimalNewCameraMatrix(cam_matrix[1],
+                    dist_coeff[1], size_cam[1], 1, size_shared);
+            rotation[1] = cv::Mat::eye(3, 3, CV_32F);
+        }
     }
 
     //compute the forward mapping (saving the forward map size and offset)
     if(valid_cam1)
-        computeForwardReverseMaps(0);
+        if(!computeForwardReverseMaps(0))
+            return false;
     if(valid_cam2)
-        computeForwardReverseMaps(1);
+        if(!computeForwardReverseMaps(1))
+            return false;
+
+    return true;
+}
+
+void vIPT::showMonoProjections(int cam, double seconds)
+{
+    cv::Mat test_image_left(size_cam[cam], CV_8UC1);
+    for(int y = 0; y < size_cam[cam].height; y++) {
+        for(int x = 0; x < size_cam[cam].width; x++) {
+            if(y > size_cam[cam].height / 2) {
+                test_image_left.at<uchar>(y, x) = x % 20 > 10 ? 0 : 120;
+            } else {
+                test_image_left.at<uchar>(y, x) = x % 20 < 10 ? 0 : 120;
+            }
+        }
+    }
+
+    cv::Mat remapped = test_image_left.clone();
+    denseForwardTransform(cam, remapped);
+    cv::imshow("Original Image", test_image_left);
+    cv::imshow("Undistorted Image", remapped);
+
+    cv::waitKey(static_cast<int>(seconds * 1000));
+    cv::destroyAllWindows();
 
 }
 
-bool vIPT::showMapProjections()
+bool vIPT::showMapProjections(double seconds)
 {
+
+    yInfo() << "Showing example projections";
+
     cv::Mat test_image_left(size_cam[0], CV_8UC1);
-    for(unsigned int y = 0; y < size_cam[0].height; y++) {
-        for(unsigned int x = 0; x < size_cam[0].width; x++) {
+    for(int y = 0; y < size_cam[0].height; y++) {
+        for(int x = 0; x < size_cam[0].width; x++) {
             if(y > size_cam[0].height / 2) {
                 test_image_left.at<uchar>(y, x) = x % 20 > 10 ? 0 : 120;
             } else {
@@ -193,8 +266,8 @@ bool vIPT::showMapProjections()
     cv::imshow("Cam 0", test_image_left);
 
     cv::Mat test_image_right(size_cam[1], CV_8UC1);
-    for(unsigned int y = 0; y < size_cam[1].height; y++) {
-        for(unsigned int x = 0; x < size_cam[1].width; x++) {
+    for(int y = 0; y < size_cam[1].height; y++) {
+        for(int x = 0; x < size_cam[1].width; x++) {
             if(x > size_cam[0].width / 2) {
                 test_image_right.at<uchar>(y, x) = y % 20 > 10 ? 0 : 120;
             } else {
@@ -204,12 +277,20 @@ bool vIPT::showMapProjections()
     }
     cv::imshow("Cam 1", test_image_right);
 
+    yInfo() << "Test image creation success";
+
+    if(this->mat_forward_map[0].empty() || mat_forward_map[1].empty()) {
+        yError() << "invalid forward maps";
+        return false;
+    }
     cv::Mat remapped = test_image_left.clone();
     cv::Mat remapped2 = test_image_right.clone();
     denseForwardTransform(0, remapped);
     denseForwardTransform(1, remapped2);
     remapped = remapped * 0.5 + remapped2 * 0.5;
     cv::imshow("Dense Shared", remapped);
+
+    yInfo() << "Dense Shared success";
 
     cv::Mat mat_remap_back1 = remapped.clone();
     denseReverseTransform(0, mat_remap_back1);
@@ -219,28 +300,31 @@ bool vIPT::showMapProjections()
     denseReverseTransform(1, mat_remap_back2);
     cv::imshow("Cam2 Dense Reverse", mat_remap_back2);
 
+    yInfo() << "Dense remaps success";
+
     cv::Mat shared_space = cv::Mat::zeros(size_shared, CV_8UC1);
-    for(unsigned int y = 0; y < size_cam[0].height; y++) {
-        for(unsigned int x = 0; x < size_cam[0].width; x++) {
+    for(int y = 0; y < size_cam[0].height; y++) {
+        for(int x = 0; x < size_cam[0].width; x++) {
             int xf = x; int yf = y;
             if(sparseForwardTransform(0, yf, xf))
                 shared_space.at<uchar>(cv::Vec2i(yf, xf)) += test_image_left.at<uchar>(y, x);
         }
     }
 
-    for(unsigned int y = 0; y < size_cam[1].height; y++) {
-        for(unsigned int x = 0; x < size_cam[1].width; x++) {
+    for(int y = 0; y < size_cam[1].height; y++) {
+        for(int x = 0; x < size_cam[1].width; x++) {
             int xf = x; int yf = y;
             if(sparseForwardTransform(1, yf, xf))
                 shared_space.at<uchar>(cv::Vec2i(yf, xf)) += test_image_right.at<uchar>(y, x);
         }
     }
     cv::imshow("Sparse Shared", shared_space);
+    yInfo() << "Sparse shared success";
 
 
     cv::Mat test_left_remapped = cv::Mat::zeros(size_cam[0], CV_8UC1);
-    for(unsigned int y = 0; y < size_shared.height; y++) {
-        for(unsigned int x = 0; x < size_shared.width; x++) {
+    for(int y = 0; y < size_shared.height; y++) {
+        for(int x = 0; x < size_shared.width; x++) {
             int xf = x; int yf = y;
             if(sparseReverseTransform(0, yf, xf))
                 test_left_remapped.at<uchar>(cv::Vec2i(yf, xf)) = shared_space.at<uchar>(y, x);
@@ -249,8 +333,8 @@ bool vIPT::showMapProjections()
     cv::imshow("Cam1 Sparse Reverse", test_left_remapped);
 
     cv::Mat test_right_remapped = cv::Mat::zeros(size_cam[1], CV_8UC1);
-    for(unsigned int y = 0; y < size_shared.height; y++) {
-        for(unsigned int x = 0; x < size_shared.width; x++) {
+    for(int y = 0; y < size_shared.height; y++) {
+        for(int x = 0; x < size_shared.width; x++) {
             int xf = x; int yf = y;
             if(sparseReverseTransform(1, yf, xf))
                 test_right_remapped.at<uchar>(cv::Vec2i(yf, xf)) = shared_space.at<uchar>(y, x);
@@ -258,7 +342,10 @@ bool vIPT::showMapProjections()
     }
     cv::imshow("Cam2 Sparse Reverse", test_right_remapped);
 
-    cv::waitKey(2);
+    yInfo() << "Sparse remaps success";
+
+
+    cv::waitKey(static_cast<int>(seconds * 1000));
     cv::destroyAllWindows();
 
     return true;
@@ -309,7 +396,7 @@ bool vIPT::sparseProjectCam1ToCam0(int &y, int &x)
 bool vIPT::denseForwardTransform(int cam, cv::Mat &m)
 {
     cv::Mat remapped;
-    cv::remap(m, remapped, mat_reverse_map[cam], cv::noArray(), CV_INTER_LINEAR);
+    cv::remap(m, remapped, mat_reverse_map[cam], cv::noArray(), CV_INTER_LINEAR, BORDER_CONSTANT, CV_RGB(255, 255, 255));
     m = remapped;
     return true;
 }
@@ -317,7 +404,7 @@ bool vIPT::denseForwardTransform(int cam, cv::Mat &m)
 bool vIPT::denseReverseTransform(int cam, cv::Mat &m)
 {
     cv::Mat remapped;
-    cv::remap(m, remapped, mat_forward_map[cam], cv::noArray(), CV_INTER_LINEAR);
+    cv::remap(m, remapped, mat_forward_map[cam], cv::noArray(), CV_INTER_LINEAR, BORDER_CONSTANT, CV_RGB(255, 255, 255));
     m = remapped;
     return true;
 }

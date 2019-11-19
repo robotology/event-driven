@@ -1,0 +1,85 @@
+<application>
+<name>vCalibChess</name>
+
+<dependencies>	
+</dependencies>
+
+<module>
+    <name> vFramerLite</name>
+    <parameters> --frameRate 30 --displays "(/left (BLACK) /right (BLACK))" --flip </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+    <name> vPreProcess</name>
+    <parameters> --split --undistort false --flipx --flipy --filter_temporal false --filter_spatial true </parameters>
+    <node> localhost </node>
+</module>
+
+<module>
+   <name> yarpdev </name>
+   <parameters>--device usbCamera --split true --d /dev/video2 --camModel leopard_python --name /stefi/cam --height 240 --width 640</parameters>
+   <node> localhost </node>
+</module>
+
+<module>
+    <name> stereoCalib </name>
+    <parameters> --STEREO_CALIBRATION_CONFIGURATION::MonoCalib 0 --STEREO_CALIBRATION_CONFIGURATION::boardSize 0.029444 --STEREO_CALIBRATION_CONFIGURATION::boardWidth 8 --STEREO_CALIBRATION_CONFIGURATION::boardHeight 6 --STEREO_CALIBRATION_CONFIGURATION::numberOfPairs 20 --STEREO_CALIBRATION_CONFIGURATION::boardType CHESSBOARD --standalone</parameters>
+    <node>localhost</node>
+</module>
+
+<module>
+   <name> yarpview </name>
+   <parameters>--name /viewCh0 --x 30 --y 30 --w 608 --h 480 --synch </parameters>
+   <node>localhost</node>
+</module>
+
+<module>
+   <name> yarpview </name>
+   <parameters>--name /viewCh1 --x 658 --y 30 --w 608 --h 480 --synch </parameters>
+   <node>localhost</node>
+</module>
+
+<module>
+   <name> frameGrabberGui2 </name>
+   <parameters>--local /frameGrabberGui --remote /stefi/cam/rpc</parameters>
+   <node>localhost</node>
+</module>
+
+<connection>
+  <from>/zynqGrabber/AE:o</from>
+  <to>/vPreProcess/AE:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vPreProcess/right:o</from>
+  <to>/vFramer/right/AE:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/stefi/cam/right</from>
+  <to>/stereoCalib/cam/right:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/vFramer/right/image:o</from>
+  <to>/stereoCalib/cam/left:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/stereoCalib/cam/right:o</from>
+  <to>/viewCh0</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/stereoCalib/cam/left:o</from>
+  <to>/viewCh1</to>
+  <protocol>udp</protocol>
+</connection>
+
+</application>
