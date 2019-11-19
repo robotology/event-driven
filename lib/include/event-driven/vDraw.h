@@ -174,26 +174,20 @@ public:
 
 };
 
-class skinDraw : public vDraw {
-private:
+class loadMap {
 
-std::map<int,std::tuple<int, int>> tmap{};//,tmap_ref{};
-int scaling =20;
-int xoffset = 80;
-int yoffset = 120;
-//Luca: create parent class for events and sample based skin plots ?
-cv::Mat baseimage;
+ public:
+    int scaling =20;
+    int xoffset = 80;
+    int yoffset = 120;
+    void read_map();//read from file the taxel position map (remember to update N)
 
-public:
-    
-    void initialise(){
+    std::map<int,std::tuple<int, int>> pos {};
 
-/* Luca :builds the taxel map 
-Hardcoding but could be interesting maybe to read it from file?*/
-        Xlimit = 700;
-        Ylimit = 800;
+    unsigned  N;
 
-        tmap={{0,{24, 9}},{1,{24, 7}},{2,{23, 8}},{3,{23, 10}},{4,{22, 9}},{5,{21, 10}},{7,{22, 11}},{8,{23, 12}},{9,{24, 13}},{11,{24, 11}},{16,{22, 17}},{17,{23, 16}},
+    loadMap(){
+        pos={{0,{24, 9}},{1,{24, 7}},{2,{23, 8}},{3,{23, 10}},{4,{22, 9}},{5,{21, 10}},{7,{22, 11}},{8,{23, 12}},{9,{24, 13}},{11,{24, 11}},{16,{22, 17}},{17,{23, 16}},
         {18,{22, 15}},{19,{21, 16}},{20,{21, 14}},{21,{20, 13}},{23,{20, 15}},{24,{20, 17}},{25,{20, 19}},{27,{21, 18}},{32,{24, 21}},{33,{24, 19}},
         {34,{23, 20}},{35,{23, 22}},{36,{22, 21}},{37,{21, 22}},{39,{22, 23}},{40,{23, 24}},{41,{24, 25}},{43,{24, 23}},{48,{2, 11}},{49,{2, 13}},
         {50,{3, 12}},{51,{3, 10}},{52,{4, 11}},{53,{5, 10}},{55,{4, 9}},{56,{3, 8}},{57,{2, 7}},{59,{2, 9}},{64,{4, 3}},{65,{3, 4}},
@@ -209,17 +203,63 @@ Hardcoding but could be interesting maybe to read it from file?*/
         {210,{16, 21}},{211,{15, 22}},{212,{15, 20}},{213,{14, 19}},{215,{14, 21}},{216,{14, 23}},{217,{14, 25}},{219,{15, 24}},{224,{16, 3}},{225,{15, 4}},
         {226,{16, 5}},{227,{17, 4}},{228,{17, 6}},{229,{18, 7}},{231,{18, 5}},{232,{18, 3}},{233,{18, 1}},{235,{17, 2}},{240,{21, 2}},{241,{20, 1}},
         {242,{20, 3}},{243,{21, 4}},{244,{20, 5}},{245,{20, 7}},{247,{21, 6}},{248,{22, 5}},{249,{23, 4}},{251,{22, 3}}};
+
+        N = pos.size();
+    };
+
+};
+
+class skinIso :public isoDraw{
+
+    private: 
+
+    loadMap tmap;
+
+    public:
+    
+    void initialise(){
+        Xlimit = 700;
+        Ylimit = 800;
         
+        isoDraw :: initialise();
+    };
+    
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+};
+
+
+
+
+class skinDraw : public vDraw {
+    
+private:
+
+    loadMap tmap;
+
+    
+    cv::Mat baseimage;
+
+public:
+    
+    void initialise(){
+
+/* Luca :builds the taxel map 
+Hardcoding but could be interesting maybe to read it from file?*/
+        Xlimit = 700;
+        Ylimit = 800;
 
         baseimage = cv::Mat(cv::Size(Xlimit, Ylimit), CV_8UC3);
         baseimage.setTo(255);
 
         int x;
         int y;
-        for (auto it = tmap.begin(); it != tmap.end(); it++)
+        for (auto it = tmap.pos.begin(); it != tmap.pos.end(); it++)
         {
-            x = xoffset + scaling* std :: get<0>(it->second);
-            y =  Ylimit - (yoffset +scaling* std :: get<1>(it->second));
+            x = tmap.xoffset + tmap.scaling* std :: get<0>(it->second);
+            y =  Ylimit - (tmap.yoffset +tmap.scaling* std :: get<1>(it->second));
             cv::Point centr_all(x, y);
             cv::circle(baseimage, centr_all, 10, black,1, CV_AA);
         }
@@ -240,48 +280,28 @@ Hardcoding but could be interesting maybe to read it from file?*/
 };
 
 class skinsampleDraw : public vDraw {
+
+
 private:
 
-std::map<int,std::tuple<int, int>> tmap{};//,tmap_ref{};
-cv::Mat baseimage;
-
-int scaling =20;
-int xoffset = 80;
-int yoffset = 120;
+    loadMap tmap();
+    cv::Mat baseimage;
 
 public:
   void initialise(){
+
         Xlimit = 700;
         Ylimit = 800;
-
-
-        tmap= {{0,{24, 9}},{1,{24, 7}},{2,{23, 8}},{3,{23, 10}},{4,{22, 9}},{5,{21, 10}},{7,{22, 11}},{8,{23, 12}},{9,{24, 13}},{11,{24, 11}},{16,{22, 17}},{17,{23, 16}},
-        {18,{22, 15}},{19,{21, 16}},{20,{21, 14}},{21,{20, 13}},{23,{20, 15}},{24,{20, 17}},{25,{20, 19}},{27,{21, 18}},{32,{24, 21}},{33,{24, 19}},
-        {34,{23, 20}},{35,{23, 22}},{36,{22, 21}},{37,{21, 22}},{39,{22, 23}},{40,{23, 24}},{41,{24, 25}},{43,{24, 23}},{48,{2, 11}},{49,{2, 13}},
-        {50,{3, 12}},{51,{3, 10}},{52,{4, 11}},{53,{5, 10}},{55,{4, 9}},{56,{3, 8}},{57,{2, 7}},{59,{2, 9}},{64,{4, 3}},{65,{3, 4}},
-        {66,{4, 5}},{67,{5, 4}},{68,{5, 6}},{69,{6, 7}},{71,{6, 5}},{72,{6, 3}},{73,{6, 1}},{75,{5, 2}},{80,{8, 5}},{81,{8, 7}},
-        {82,{9, 6}},{83,{9, 4}},{84,{10, 5}},{85,{11, 4}},{87,{10, 3}},{88,{9, 2}},{89,{8, 1}},{91,{8, 3}},{96,{5, 18}},{97,{6, 19}},
-        {98,{6, 17}},{99,{5, 16}},{100,{6, 15}},{101,{6, 13}},{103,{5, 14}},{104,{4, 15}},{105,{3, 16}},{107,{4, 17}},{112,{4, 23}},{113,{5, 22}},
-        {114,{4, 21}},{115,{3, 22}},{116,{3, 20}},{117,{2, 19}},{119,{2, 21}},{120,{2, 23}},{121,{2, 25}},{123,{3, 24}},{128,{11, 24}},{129,{12, 25}},
-        {130,{12, 23}},{131,{11, 22}},{132,{12, 21}},{133,{12, 19}},{135,{11, 20}},{136,{10, 21}},{137,{9, 22}},{139,{10, 23}},{144,{8, 17}},{145,{8, 19}},
-        {146,{9, 18}},{147,{9, 16}},{148,{10, 17}},{149,{11, 16}},{151,{10, 15}},{152,{9, 14}},{153,{8, 13}},{155,{8, 15}},{160,{10, 9}},{161,{9, 10}},
-        {162,{10, 11}},{163,{11, 10}},{164,{11, 12}},{165,{12, 13}},{167,{12, 11}},{168,{12, 9}},{169,{12, 7}},{171,{11, 8}},{176,{15, 8}},{177,{14, 7}},
-        {178,{14, 9}},{179,{15, 10}},{180,{14, 11}},{181,{14, 13}},{183,{15, 12}},{184,{16, 11}},{185,{17, 10}},{187,{16, 9}},{192,{17, 18}},{193,{18, 19}},
-        {194,{18, 17}},{195,{17, 16}},{196,{18, 15}},{197,{18, 13}},{199,{17, 14}},{200,{16, 15}},{201,{15, 16}},{203,{16, 17}},{208,{16, 23}},{209,{17, 22}},
-        {210,{16, 21}},{211,{15, 22}},{212,{15, 20}},{213,{14, 19}},{215,{14, 21}},{216,{14, 23}},{217,{14, 25}},{219,{15, 24}},{224,{16, 3}},{225,{15, 4}},
-        {226,{16, 5}},{227,{17, 4}},{228,{17, 6}},{229,{18, 7}},{231,{18, 5}},{232,{18, 3}},{233,{18, 1}},{235,{17, 2}},{240,{21, 2}},{241,{20, 1}},
-        {242,{20, 3}},{243,{21, 4}},{244,{20, 5}},{245,{20, 7}},{247,{21, 6}},{248,{22, 5}},{249,{23, 4}},{251,{22, 3}}};
-        
 
         baseimage = cv::Mat(cv::Size(Xlimit, Ylimit), CV_8UC3);
         baseimage.setTo(255);
 
         int x;
         int y;
-        for (auto it = tmap.begin(); it != tmap.end(); it++)
+        for (auto it = tmap.pos.begin(); it != tmap.pos.end(); it++)
         {
-            x = xoffset + scaling* std :: get<0>(it->second);
-            y =  Ylimit - (yoffset +scaling* std :: get<1>(it->second));
+            x = tmap.xoffset + tmap.scaling* std :: get<0>(it->second);
+            y =  Ylimit - (tmap.yoffset +tmap.scaling* std :: get<1>(it->second));
             cv::Point centr_all(x, y);
             cv::circle(baseimage, centr_all, 10, black,1, CV_AA);
         }
@@ -312,7 +332,7 @@ class taxelsampleDraw : public taxel {
     virtual void resetImage(cv::Mat &image){
         if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
-        image.setTo(255);
+        image.setTo(0);
         }
     }
     static const std::string drawtype;
