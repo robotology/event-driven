@@ -323,11 +323,128 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             }
         }
         else{
-          //  yWarning() << "\n Index " << index <<"not mapped! \n";
+            yWarning() << "\n Index " << index <<"not mapped! \n";
             //std :: cout << "\n Index " << index <<"not mapped! \n";
         }
     }
 }
+
+
+
+// SKIN TAXEL DRAW //
+// ================ //
+
+const std::string taxelsampleDraw :: drawtype = "TAXEL_SAMPLE";
+
+std::string  taxelsampleDraw :: getDrawType()
+{
+    return taxelsampleDraw::drawtype;
+}
+
+std::string  taxelsampleDraw ::getEventType()
+{
+    return SkinSample::tag;
+}
+//--------------------------------
+
+float taxel :: T = 0 ;//make it an array which get filled ?
+//float taxel :: sampleT =0;
+//cv:: Mat (taxel :: oldimage = cv::Mat(Ylimit, Xlimit, CV_8UC3));
+
+void taxelsampleDraw :: draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{   
+    //static unsigned increment; 
+    if(eSet.empty()) return;
+    ev::vQueue::const_reverse_iterator qi;
+    //increment+=0.5;
+    T +=0.5;
+    //T.pushback(increment);ecc..
+   // image.setTo(oldimage);
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        if(T>=float(Xlimit)) {
+            //image.release();
+            image.setTo(cv ::Scalar(0,0,0));
+            //oldimage.setTo(cv ::Scalar(0,0,0));
+            // T.clear();
+            // sampleT.clear();
+            T=0;
+        }
+
+        int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+        auto aep = is_event<SkinSample>(*qi);
+
+        int noise = 2500;
+
+        int index = aep->taxel;
+
+        float sample = aep->value/float(noise)*20;
+
+        if(index ==163){
+
+            cv::Point dot(T, Ylimit - sample);
+
+            cv::circle(image, dot, 1, red, 1, CV_FILLED);
+        }
+
+    }
+
+}
+
+const std::string taxeleventDraw :: drawtype = "TAXEL_EVENT";
+
+std::string  taxeleventDraw :: getDrawType()
+{
+    return taxeleventDraw::drawtype;
+}
+
+std::string  taxeleventDraw ::getEventType()
+{
+    return SkinEvent::tag;
+}
+//--------------------------------
+
+void taxeleventDraw :: draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    if(eSet.empty()) return;
+    ev::vQueue::const_reverse_iterator qi;
+
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+
+        int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+        if((unsigned int)dt > display_window) break;
+
+        auto aep = is_event<SkinEvent>(*qi);
+
+        int index = aep->taxel;
+
+
+
+        if(index ==163){
+
+            cv::Point dot(T, Ylimit -2);
+
+            if(!aep->polarity)
+            {
+                cv::circle(image, dot, 2, aqua, CV_FILLED);
+            }
+            else
+            {
+                cv::circle(image, dot, 2, violet, CV_FILLED);
+            }
+
+        }
+    }
+
+}
+
+
+
 
 // IMU SAMPLE DRAW //
 // ================ //

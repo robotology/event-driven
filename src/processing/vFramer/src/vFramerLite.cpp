@@ -67,6 +67,8 @@ vDraw * createDrawer(std::string tag)
         return new skinDraw();
     if(tag == skinsampleDraw::drawtype)
         return new skinsampleDraw();
+    if(tag == isoDrawSkin::drawtype)
+        return new isoDrawSkin();
     if(tag == taxelsampleDraw::drawtype)
         return new taxelsampleDraw();
     if(tag == taxeleventDraw::drawtype)

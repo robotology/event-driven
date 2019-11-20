@@ -94,9 +94,10 @@ public:
 
     virtual void resetImage(cv::Mat &image)
     {
-        if(image.empty())
+        if(image.empty()){
             image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
-        image.setTo(255);
+            image.setTo(255);
+        }
     }
 
     ///
@@ -209,7 +210,7 @@ class loadMap {
 
 };
 
-class skinIso :public isoDraw{
+class isoDrawSkin : public isoDraw{
 
     private: 
 
@@ -218,10 +219,13 @@ class skinIso :public isoDraw{
     public:
     
     void initialise(){
+
+
         Xlimit = 700;
         Ylimit = 800;
         
         isoDraw :: initialise();
+
     };
     
     static const std::string drawtype;
@@ -284,7 +288,7 @@ class skinsampleDraw : public vDraw {
 
 private:
 
-    loadMap tmap();
+    loadMap tmap;
     cv::Mat baseimage;
 
 public:
@@ -320,14 +324,15 @@ public:
 
 };
 
+/// CHANGE THIS ----
 class taxel : public vDraw{
     protected:
-    static float T;
+    static float T ;
+    static cv :: Mat oldimage;
 };
-
+//////////////
 class taxelsampleDraw : public taxel {
 
-    
     public:
     virtual void resetImage(cv::Mat &image){
         if(image.empty()) {
@@ -348,7 +353,7 @@ class taxeleventDraw : public taxel {
     virtual void resetImage(cv::Mat &image){
         if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
-        image.setTo(255);
+        image.setTo(0);
         }
     }
     static const std::string drawtype;
