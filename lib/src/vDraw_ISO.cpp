@@ -299,11 +299,15 @@ void isoDrawSkin::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if(px < 0 || px >= imagewidth || py < 0 || py >= imageheight) {
             continue;
         }
-
+        
         if(!aep->polarity) {
-            isoimage.at<cv::Vec3b>(py, px) = light_violet;
+            //isoimage.at<cv::Vec3b>(py, px) = light_violet;
+            cv::Point center(px,py);
+            cv::circle(isoimage, center, 6, light_aqua, CV_FILLED,CV_AA);
         } else {
-            isoimage.at<cv::Vec3b>(py, px) = light_aqua;
+            //  isoimage.at<cv::Vec3b>(py, px) = light_aqua;
+            cv::Point center(px,py);
+            cv::circle(isoimage, center, 6, light_violet,CV_FILLED,CV_AA);
         }
     }
 

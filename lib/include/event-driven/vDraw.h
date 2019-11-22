@@ -181,14 +181,28 @@ class loadMap {
     int scaling =20;
     int xoffset = 80;
     int yoffset = 120;
-    void read_map();//read from file the taxel position map (remember to update N)
+    // void read_map(const std::string filePath){
+
+        
+    //     if ()
+    //     {
+           
+    //     }
+    //     else{
+    //         yWarning("Taxel position file not");
+    //     }
+    // };//read from file the taxel position map (remember to update N)
 
     std::map<int,std::tuple<int, int>> pos {};
 
     unsigned  N;
 
     loadMap(){
-        pos={{0,{24, 9}},{1,{24, 7}},{2,{23, 8}},{3,{23, 10}},{4,{22, 9}},{5,{21, 10}},{7,{22, 11}},{8,{23, 12}},{9,{24, 13}},{11,{24, 11}},{16,{22, 17}},{17,{23, 16}},
+        pos=default_pos;
+        N = pos.size();
+    };
+    private:
+        std::map<int,std::tuple<int, int>> default_pos={{0,{24, 9}},{1,{24, 7}},{2,{23, 8}},{3,{23, 10}},{4,{22, 9}},{5,{21, 10}},{7,{22, 11}},{8,{23, 12}},{9,{24, 13}},{11,{24, 11}},{16,{22, 17}},{17,{23, 16}},
         {18,{22, 15}},{19,{21, 16}},{20,{21, 14}},{21,{20, 13}},{23,{20, 15}},{24,{20, 17}},{25,{20, 19}},{27,{21, 18}},{32,{24, 21}},{33,{24, 19}},
         {34,{23, 20}},{35,{23, 22}},{36,{22, 21}},{37,{21, 22}},{39,{22, 23}},{40,{23, 24}},{41,{24, 25}},{43,{24, 23}},{48,{2, 11}},{49,{2, 13}},
         {50,{3, 12}},{51,{3, 10}},{52,{4, 11}},{53,{5, 10}},{55,{4, 9}},{56,{3, 8}},{57,{2, 7}},{59,{2, 9}},{64,{4, 3}},{65,{3, 4}},
@@ -204,9 +218,6 @@ class loadMap {
         {210,{16, 21}},{211,{15, 22}},{212,{15, 20}},{213,{14, 19}},{215,{14, 21}},{216,{14, 23}},{217,{14, 25}},{219,{15, 24}},{224,{16, 3}},{225,{15, 4}},
         {226,{16, 5}},{227,{17, 4}},{228,{17, 6}},{229,{18, 7}},{231,{18, 5}},{232,{18, 3}},{233,{18, 1}},{235,{17, 2}},{240,{21, 2}},{241,{20, 1}},
         {242,{20, 3}},{243,{21, 4}},{244,{20, 5}},{245,{20, 7}},{247,{21, 6}},{248,{22, 5}},{249,{23, 4}},{251,{22, 3}}};
-
-        N = pos.size();
-    };
 
 };
 
@@ -250,8 +261,6 @@ public:
     
     void initialise(){
 
-/* Luca :builds the taxel map 
-Hardcoding but could be interesting maybe to read it from file?*/
         Xlimit = 700;
         Ylimit = 800;
 
@@ -313,10 +322,9 @@ public:
 
 
 
-    virtual void resetImage(cv::Mat &image)
-    {
+    virtual void resetImage(cv::Mat &image){
         baseimage.copyTo(image);
-    }
+    };
     static const std::string drawtype;
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
     virtual std::string getDrawType();
@@ -324,22 +332,22 @@ public:
 
 };
 
-/// CHANGE THIS ----
-class taxel : public vDraw{
-    protected:
-    static float T ;
-    static cv :: Mat oldimage;
-};
-//////////////
-class taxelsampleDraw : public taxel {
+
+class taxelsampleDraw : public vDraw {
 
     public:
-    virtual void resetImage(cv::Mat &image){
+    void resetImage(cv::Mat &image){
         if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
         image.setTo(0);
         }
-    }
+    };
+    void initialise(){
+
+        Xlimit = 200;
+        Ylimit = 300;
+      
+    };
     static const std::string drawtype;
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
     virtual std::string getDrawType();
@@ -347,7 +355,7 @@ class taxelsampleDraw : public taxel {
 
 };
 
-class taxeleventDraw : public taxel {
+class taxeleventDraw : public vDraw {
    
     public:
     virtual void resetImage(cv::Mat &image){
@@ -355,7 +363,13 @@ class taxeleventDraw : public taxel {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
         image.setTo(0);
         }
-    }
+    };
+    void initialise(){
+
+        Xlimit = 200;
+        Ylimit = 300;
+       
+    };
     static const std::string drawtype;
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
     virtual std::string getDrawType();

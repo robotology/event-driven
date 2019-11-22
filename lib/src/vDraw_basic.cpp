@@ -347,30 +347,15 @@ std::string  taxelsampleDraw ::getEventType()
 }
 //--------------------------------
 
-float taxel :: T = 0 ;//make it an array which get filled ?
-//float taxel :: sampleT =0;
-//cv:: Mat (taxel :: oldimage = cv::Mat(Ylimit, Xlimit, CV_8UC3));
+
 
 void taxelsampleDraw :: draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {   
-    //static unsigned increment; 
+
     if(eSet.empty()) return;
     ev::vQueue::const_reverse_iterator qi;
-    //increment+=0.5;
-    T +=0.5;
-    //T.pushback(increment);ecc..
-   // image.setTo(oldimage);
+    // static float T =0;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
-
-        if(T>=float(Xlimit)) {
-            //image.release();
-            image.setTo(cv ::Scalar(0,0,0));
-            //oldimage.setTo(cv ::Scalar(0,0,0));
-            // T.clear();
-            // sampleT.clear();
-            T=0;
-        }
-
         int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
         if((unsigned int)dt > display_window) break;
@@ -385,9 +370,9 @@ void taxelsampleDraw :: draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         if(index ==163){
 
-            cv::Point dot(T, Ylimit - sample);
+            cv::Point dot(10 + dt*vtsHelper::tsscaler*500, Ylimit - sample);
 
-            cv::circle(image, dot, 1, red, 1, CV_FILLED);
+            cv::circle(image, dot, 1, red, CV_FILLED);
         }
 
     }
@@ -411,13 +396,12 @@ void taxeleventDraw :: draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
     if(eSet.empty()) return;
     ev::vQueue::const_reverse_iterator qi;
-
+    
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
-
-
         int dt = eSet.back()->stamp - (*qi)->stamp; // start with newest event
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        if((unsigned int)dt > display_window) break;
+       // if((unsigned int)dt > display_window) break;
+
 
         auto aep = is_event<SkinEvent>(*qi);
 
@@ -427,15 +411,15 @@ void taxeleventDraw :: draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         if(index ==163){
 
-            cv::Point dot(T, Ylimit -2);
+            cv::Point dot(10 + dt*vtsHelper::tsscaler*500, 10);
 
             if(!aep->polarity)
             {
-                cv::circle(image, dot, 2, aqua, CV_FILLED);
+                cv::circle(image, dot, 1, aqua, CV_FILLED);
             }
             else
             {
-                cv::circle(image, dot, 2, violet, CV_FILLED);
+                cv::circle(image, dot, 1, violet, CV_FILLED);
             }
 
         }
