@@ -4,6 +4,7 @@ CMakeLists.txt.user
 CMakeLists.txt.user.*
 *.autosave
 *.orig
+*.swp
 
 # ignore all temporary files
 *~
