@@ -97,6 +97,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             if(lwo) logwriter << "Could not configure left camera" << std::endl;
             return false;
         }
+        if(!rf.check("visLeftOn", yarp::os::Value(true)).asBool()) {
+            yWarning() << "Left camera configured but initialised TURNED OFF";
+            vsctrlMngLeft.suspend();
+        }
         if(lwo) logwriter << "Connected to and configured left camera" << std::endl;
 
     }
@@ -129,6 +133,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             std::cerr << "Could not configure Right camera" << std::endl;
             if(lwo) logwriter << "Could not configure Right camera" << std::endl;
             return false;
+        }
+        if(!rf.check("visRightOn", yarp::os::Value(true)).asBool()) {
+            yWarning() << "Right camera configured but initialised TURNED OFF";
+            vsctrlMngRight.suspend();
         }
         if(lwo) logwriter << "Connected to and configured Right camera" << std::endl;
 
