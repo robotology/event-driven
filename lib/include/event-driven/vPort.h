@@ -386,7 +386,6 @@ public:
 
     bool open(std::string name)
     {
-        //port.setTimeout(1.0);
         if(!port.open(name)) {
             yError() << "Could not open vGenReadPort input port: " << name;
             return false;
@@ -466,8 +465,9 @@ public:
 
     }
 
-    /// \brief ask for a pointer to the next vQueue. Blocks if no data is ready.
-    const T* read(yarp::os::Stamp &yarpstamp)
+    /// \brief ask for a pointer to the next vQueue.
+    /// if wait is true Blocks if no data is ready.
+    const T* read(yarp::os::Stamp &yarpstamp, bool wait = true)
     {
         if(working_queue) {
             m.lock();
@@ -483,16 +483,29 @@ public:
             m.unlock();
         }
 
-        dataavailable.wait();
+        if(wait) {
+            dataavailable.wait();
 
-        if(qq.size()) {
-            yarpstamp = sq.front();
-            working_queue = qq.front();
-            m.lock();
-            unprocdqs--;
-            m.unlock();
-        }  else {
-            working_queue =  0;
+            if(qq.size()) {
+                yarpstamp = sq.front();
+                working_queue = qq.front();
+                m.lock();
+                unprocdqs--;
+                m.unlock();
+            }  else {
+                working_queue =  0;
+            }
+
+        } else {
+            if(dataavailable.check() && qq.size()) {
+                yarpstamp = sq.front();
+                working_queue = qq.front();
+                m.lock();
+                unprocdqs--;
+                m.unlock();
+            } else {
+                working_queue = 0;
+            }
         }
 
         return working_queue;
