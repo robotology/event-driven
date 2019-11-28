@@ -28,6 +28,11 @@
 #include <iomanip>
 #include <cstring>
 
+using namespace yarp::os;
+using namespace ev;
+using std::string;
+using std::vector;
+
 /******************************************************************************/
 //device2yarp
 /******************************************************************************/
@@ -61,15 +66,15 @@ void  device2yarp::run() {
     if(fd < 0) {
         yError() << "HPU reading device not open";
         return;
-    }
-
-    vPortableInterface external_storage;
-    external_storage.setHeader(AE::tag);
+    }  
 
     unsigned int event_count = 0;
     unsigned int prev_ts = 0;
 
     while(!isStopping()) {
+
+        vPortableInterface& external_storage = output_port.prepare();
+        external_storage.setHeader(AE::tag);
 
         int r = max_dma_pool_size;
         unsigned int n_bytes_read = 0;
@@ -88,11 +93,11 @@ void  device2yarp::run() {
             yWarning() << prev_ts << "->" << first_ts;
         prev_ts = first_ts;
 
-
-        external_storage.setExternalData((const char *)data.data(), n_bytes_read);
         yarp_stamp.update();
         output_port.setEnvelope(yarp_stamp);
-        output_port.write(external_storage);
+        external_storage.setExternalData((const char *)data.data(), n_bytes_read);
+        output_port.waitForWrite();
+        output_port.writeStrict();
 
         event_count += n_bytes_read / 8;
 
