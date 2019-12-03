@@ -75,28 +75,32 @@ void  device2yarp::run() {
 
         vPortableInterface& external_storage = output_port.prepare();
         external_storage.setHeader(AE::tag);
+        external_storage.internaldata.resize(max_packet_size / 4);
 
         int r = max_dma_pool_size;
         unsigned int n_bytes_read = 0;
         while(r >= (int)max_dma_pool_size && n_bytes_read < max_packet_size) {
-            r = read(fd, data.data() + n_bytes_read, max_packet_size - n_bytes_read);
+            r = read(fd, (char *)external_storage.internaldata.data() + n_bytes_read, max_packet_size - n_bytes_read);
             if(r < 0)
                 yInfo() << "[READ ]" << std::strerror(errno);
             else
                 n_bytes_read += r;
         }
 
-        if(n_bytes_read == 0) continue;
+        if(n_bytes_read == 0) {
+            output_port.unprepare();
+            continue;
+        }
 
         unsigned int first_ts = *(unsigned int *)data.data();
         if(prev_ts > first_ts)
             yWarning() << prev_ts << "->" << first_ts;
         prev_ts = first_ts;
 
+        external_storage.setExternalData((const char *)external_storage.internaldata.data(), n_bytes_read);
+        output_port.waitForWrite();
         yarp_stamp.update();
         output_port.setEnvelope(yarp_stamp);
-        external_storage.setExternalData((const char *)data.data(), n_bytes_read);
-        output_port.waitForWrite();
         output_port.writeStrict();
 
         event_count += n_bytes_read / 8;

@@ -44,7 +44,6 @@ protected:
     //data
     const char * datablock;
     unsigned int datalength; //<- set the number of bytes here
-    vector<int32_t> internaldata;
     string event_type;
     unsigned int ints_to_read; //<- in integers
 
@@ -53,6 +52,8 @@ protected:
     unsigned int elementBYTES;
 
 public:
+
+    vector<int32_t> internaldata;
 
     /// \brief instantiate the correct headers for a Bottle
     vPortableInterface() {
