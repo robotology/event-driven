@@ -1,5 +1,7 @@
 bimvee - Batch Import, Manipulation, Visualisation, and Export Events etc.
 
+Quickstart: Look at 'examples.py' for examples of how to use the functionality in this library.
+
 Working with timestamped address-event data from event cameras (dvs), and 
 possibly other neuromorphic sensors (e.g. icub skin, maybe INI silicon cochlea etc), 
 alongside other timestamped data that we need for our experiments, 
@@ -24,8 +26,9 @@ Samsung (SEC) Gen3 VGA .bin
 Celex v5 .bin
 Maybe Prophesee raw?
 
-import functions:
-Aim is to bring the different formats into as common a format as possible.
+Import functions:
+
+The aim is to bring the different formats into as common a format as possible.
 Parameters: at least the param "filePathOrName" (otherwise working from current directory)
 Returns a dict containing:
 
@@ -63,7 +66,7 @@ int with unit increments of 1 us for DAVIS, etc)
 
 Currently (2019_11_13) there's no alignment on how to interpret polarity (i.e. 1 = ON or OFF?)
 
-plot functions:
+Visualisation functions:
 A set of general functions for common visualisations of imported datasets.
 
 - plotDvsContrast
@@ -74,18 +77,17 @@ A set of general functions for common visualisations of imported datasets.
 - plotImu
 - plotPose
 
-There are some functions for standard manipulations of data.
+info.py includes various functions to give quick text info about the contents 
+of the containers that result from imports. 
+
+There are some functions for standard manipulations of data:
 
 timestamps.py contains timestamp manipulations 
 including jointly zeroing timestamps across multiple files, channels and datatypes. 
 split.py includes various common ways by which datasets need to be split, e.g. splitByPolarity
-info.py includes various functions to give quick text info about the contents 
-of the containers that result from imports. 
-
 
 Export functions:
 
 exportIitYarp - exports to IIT's EDPR YARP format. Alongside data.log and 
 info.log files, it exports an xml which specifies to yarpmanager how to 
 visualise the resulting data. 
-
