@@ -49,9 +49,10 @@ def plotImu(inDict, **kwargs):
     axesAngV.set_title('Angular velocity (rad/s)')
     axesAngV.legend(['x', 'y', 'z'])
 
-    axesTemp = allAxes[2]
-    axesTemp.plot(inDict['ts'], inDict['temp'])
-    axesTemp.set_title('Temp (K)')
+    if 'temp' in inDict: 
+        axesTemp = allAxes[2]
+        axesTemp.plot(inDict['ts'], inDict['temp'])
+        axesTemp.set_title('Temp (K)')
 
     axesMag = allAxes[3]
     axesMag.plot(inDict['ts'], inDict['mag'])

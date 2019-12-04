@@ -143,11 +143,11 @@ def cropTime(inDict, **kwargs):
     if 'ts' in inDict:
         ts = inDict['ts']
         startTime = kwargs.get('startTime', ts[0])
-        stopTime = kwargs.get('startTime', ts[-1])
+        stopTime = kwargs.get('stopTime', ts[-1])
         numElements = len(ts)
-        selectedIds = range(np.searchsorted(ts, startTime), np.searchsorted(ts, stopTime))
-        #mask = np.bitwise_and((inDict['ts']>=startTime), (inDict['ts']<=stopTime))
-        tsNew = ts[selectedIds] - startTime
+        startIdx = np.searchsorted(ts, startTime)
+        stopIdx = np.searchsorted(ts, stopTime)
+        tsNew = ts[startIdx:stopIdx] - startTime
         outDict = {'ts': tsNew}
         for fieldName in inDict.keys():
             if fieldName != 'ts':
@@ -157,7 +157,10 @@ def cropTime(inDict, **kwargs):
                 except TypeError:
                     lenField = 0
                 if lenField == numElements:
-                    outDict[fieldName] = field[selectedIds]
+#                    if isinstance(outDict[fieldName], list):
+#                        outDict[fieldName] = field[]
+#                    else:
+                    outDict[fieldName] = field[startIdx:stopIdx]
                 else:
                     outDict[fieldName] = field.copy() # This might fail for certain data types
         tsOffsetOriginal = inDict.get('tsOffset', 0)
@@ -169,7 +172,10 @@ def cropTime(inDict, **kwargs):
         for channelName in inDict['data'].keys():
             outDict['data'][channelName] = {}
             for dataTypeName in inDict['data'][channelName].keys():
-                outDict['data'][channelName][dataTypeName] = cropTime(inDict['data'][channelName][dataTypeName])                
-        return rezeroTimestampsForImportedDicts(outDict)
+                outDict['data'][channelName][dataTypeName] = cropTime(inDict['data'][channelName][dataTypeName], **kwargs)                
+        rezeroTimestampsForImportedDicts(outDict)
+        return outDict
     else:
-        raise ValueError('input not in the form expected')
+        # We assume that this is a datatype which doesn't contain ts, 
+        # so we pass it out unmodified
+        return inDict

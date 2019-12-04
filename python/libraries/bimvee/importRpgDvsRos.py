@@ -307,13 +307,15 @@ def interpretMsgsAsFrame(msgs):
         'frames': framesAll}
     return outDict
 
-def interpretMsgsAsPose6q(msgs):
+def interpretMsgsAsPose6q(msgs, **kwargs):
     '''
     ros message is defined here:
         http://docs.ros.org/api/geometry_msgs/html/msg/PoseStamped.html
     the result is a ts plus a 7-column np array of np.float64,
     where the cols are x, y, z, q-x, q-y, q-z, q-w (i.e. quaternion orientation)
     '''
+    if kwargs.get('poseAsTransform', False):
+        return interpretMsgsAsPose6qTransform(msgs)
     #if 'Stamped' not in kwargs.get('messageType', 'Stamped'):
     #    return interpretMsgsAsPose6qAlt(msgs, **kwargs)
     numEvents = 0
@@ -341,10 +343,10 @@ def interpretMsgsAsPose6q(msgs):
         'pose': poseAll}
     return outDict
 
-def interpretMsgsAsPose6qAlt(msgs):
+def interpretMsgsAsPose6qTransform(msgs):
     '''
-    I don't have a good name for this yet, but whereas rpg used PoseStamped
-    message type, realsense use Transform:
+    Hmm - it's a bit hack how this is stuck in here at the moment, 
+    but whereas rpg used PoseStamped message type, realsense use Transform:
     ros message is defined here:
         http://docs.ros.org/api/geometry_msgs/html/msg/Transform.html
     the result is a 7-column np array of np.float64,
@@ -367,10 +369,10 @@ def interpretMsgsAsPose6qAlt(msgs):
     # Crop arrays to number of events
     tsAll = tsAll[:numEvents]
     poseAll = poseAll[:numEvents]
-    unwrapTimestamps(tsAll, wrapTime = 2**62)
-    tsAll = tsAll / (6*10**18) # probably specific to realsense ...
+    tsUnwrapped = unwrapTimestamps(tsAll) # here we could pass in wrapTime=2**62, but actually it handles this internally
+    tsUnwrapped = tsUnwrapped / (6*10**18) # probably specific to realsense ...
     outDict = {
-        'ts': tsAll,
+        'ts': tsUnwrapped,
         'pose': poseAll}
     return outDict
 
@@ -513,7 +515,7 @@ def importRpgDvsRos(**kwargs):
                 # Interpret these messages as EventArray
                 outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsDvs(msgs)
             elif dataType == 'pose6q':
-                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsPose6q(msgs)
+                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsPose6q(msgs, **kwargs)
             elif dataType == 'frame':
                 outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsFrame(msgs)
             elif dataType == 'cam':
