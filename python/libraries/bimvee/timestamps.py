@@ -113,6 +113,7 @@ def unwrapTimestamps(ts, **kwargs):
         ts[wrapPoint+1:] = ts[wrapPoint+1:] + wrapTime
     return ts
 
+# TODO: Is this obsolete?
 def getFieldListForDataType(dataType):
     if dataType == 'dvs':
         return ['ts', 'x', 'y', 'pol']

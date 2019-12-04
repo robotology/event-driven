@@ -29,4 +29,5 @@ def importIntelRealsense(**kwargs):
                         'pose6q': '/device_0/sensor_0/Pose_0/pose/transform/data',
                         }
                 }
+        kwargs['poseAsTransform'] = True
     return importRpgDvsRos(**kwargs)
