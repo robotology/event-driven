@@ -200,9 +200,9 @@ def breakChunksIntoMsgs(chunks):
     return msgs
 
 def importRosbag(**kwargs):
-    filePathAndName = kwargs.get('filePathOrName', kwargs.get('filePathAndName'))
-    print('Importing file: ', filePathAndName) 
-    conns, chunks = readFile(filePathAndName)
+    filePathOrName = kwargs.get('filePathOrName')
+    print('Importing file: ', filePathOrName) 
+    conns, chunks = readFile(filePathOrName)
     msgs = breakChunksIntoMsgs(chunks)
     # Restructure conns as a dictionary keyed by conn number
     connDict = {}
@@ -499,7 +499,7 @@ def importRpgDvsRos(**kwargs):
     template = kwargs.get('template', {})
     # The template becomes the data branch of the importedDict
     outDict = {
-        'info': {'filePathOrName': kwargs.get('filePathOrName', kwargs.get('filePathAndName'))},
+        'info': {'filePathOrName': kwargs.get('filePathOrName')},
         'data': {}
             }            
     for channelKey in template:

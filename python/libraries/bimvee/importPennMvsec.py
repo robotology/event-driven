@@ -35,7 +35,7 @@ Not yet handled:
 
 from importRpgDvsRos import importRpgDvsRos
     
-def importPennMvsec(**kwargs):
+def importPennMvsecDavis(**kwargs):
     if kwargs.get('template') is None:
         kwargs['template'] = {
             'left': {
@@ -52,6 +52,21 @@ def importPennMvsec(**kwargs):
             }
     return importRpgDvsRos(**kwargs)
 
+# TODO: There are other elements of the ground truth for various files, not handled in this template
+def importPennMvsecGt(**kwargs): # Ground truth
+    if kwargs.get('template') is None:
+        kwargs['template'] = {
+            'poseLocal': {
+                'pose6q': '/davis/left/odometry',
+            }, 'poseGlobal': {
+                'pose6q': '/davis/left/pose',
+            }, 'left': {
+                'frame': '/davis/left/depth_image_raw',
+            }, 'right': {
+                'frame': '/davis/right/depth_image_raw',
+                }
+            }
+    return importRpgDvsRos(**kwargs)
 
 '''
 import h5py
