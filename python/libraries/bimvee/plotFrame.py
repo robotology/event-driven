@@ -85,6 +85,8 @@ def plotFrame(inDict, **kwargs):
         timePoints = ts(int(np.ceil(np.arange(framesPerStep * 0.5, numFrames, framesPerStep))))
 
     fig, axes = plt.subplots(numPlotsY, numPlotsX)
+    fig.suptitle(kwargs.get('title', ''))
+    
     axes = axes.flatten().tolist()
     for ax, timePoint in zip(axes, timePoints):
 

@@ -18,22 +18,29 @@ importIitYarp opens a data.log file, initially assumed to contain 24-bit encoded
 Returns a list of dicts, where each dict contains
 {'info': {},
  'data': {
-         channel0: {}
-         channel1: {}
+         channel0: {} (usually the 'left' channel)
+         channel1: {} (usually the 'right' channel)
          ...
          }}
 
-each channel is a dict containing:
+Each channel is a dict containing:
     For dvs:
-        - "pol": numpy array of uint8 in [0, 1]
+        - "ts": numpy array of float - seconds
         - "x": numpy array of uint16
         - "y": numpy array of uint16
+        - "pol": numpy array of uint8 in [0, 1]
+    For imu:
         - "ts": numpy array of float - seconds
-    For imu ...
-    Can also handle LAE (labelled event) bottles ...
 
-Under the hood, the algorithm always creates the array form, and then may optionally convert it. 
+    Can also handle LAE (labelled event) bottles, IMU
 
+This function combines the import of two distinctly different cases:
+    1) pre-split output directly from zynqGrabber
+    2) split and processed events from vPreProcess or other downstream modules
+The former may combine samples and events in the same bottles and never contains
+explicit IMU / LAE / FLOW events. samples such as IMU are contained within AE type bottles.
+The latter usually has distinct bottles for each datatype, and channels
+have probably, but not definitely, been split into left and right. 
 """
 # TODO: get initial ts from yarp info.log 
 # TODO: support LAE import
@@ -90,7 +97,12 @@ def decodeEvents24Bit(data):
         sensor = np.uint8(dataSample[:, 1] & 0x0F)    
         dataSample[:, 1] >>= 6
         ch  = np.uint8(dataSample[:, 1] & 0x01)
-        samplesOut = (ts, ch, sensor, value)
+        samplesOut = {
+                'ts': ts, 
+                'ch': ch, 
+                'sensor': sensor, 
+                'value': value
+            }
     else:
         samplesOut = None
     if np.any(~isNotDvsEvent):
@@ -107,7 +119,13 @@ def decodeEvents24Bit(data):
         y = np.uint16(dataDvs[:, 1] & 0xFF)    
         dataDvs[:, 1] >>= 10
         ch  = np.uint8(dataDvs[:, 1] & 0x01)
-        dvsOut = (ts, ch, x, y, pol)
+        dvsOut = {
+                'ts': ts, 
+                'ch': ch, 
+                'x': x, 
+                'y': y,
+                'pol': pol
+            }
     else:
         dvsOut = None
     return dvsOut, samplesOut
@@ -152,9 +170,9 @@ def samplesToImu(inDict, **kwargs):
     # Otherwise, iterate through this sample by sample - slowest and most robust method
     # Possible to do this much faster, but only my assuming no gaps in data
     tsAll = inDict['ts']
-    sAll = inDict['s'].astype(np.int16)
-    vAll = inDict['v']
-    wrapIds = np.where((sAll[1:]-sAll[:-1])<1)[0]
+    sensorAll = inDict['sensor'].astype(np.int16)
+    valueAll = inDict['value']
+    wrapIds = np.where((sensorAll[1:]-sensorAll[:-1])<1)[0]
     numImu = len(wrapIds) + 1
     tsOut = np.zeros((numImu, 1), dtype=np.uint32)
     acc = np.zeros((numImu, 3), dtype=np.int16)
@@ -163,7 +181,7 @@ def samplesToImu(inDict, **kwargs):
     mag = np.zeros((numImu, 3), dtype=np.int16)
     imuPtr = -1
     sPrev = 100
-    for ts, s, v in zip(tsAll, sAll, vAll):
+    for ts, s, v in zip(tsAll, sensorAll, valueAll):
         if s <= sPrev:
             imuPtr += 1
             tsOut[imuPtr] = ts # Just take the first ts for a group of samples
@@ -201,117 +219,108 @@ def samplesToImu(inDict, **kwargs):
             }
     return outDict
 
-def importIitYarpHavingFoundFile(**kwargs):
-    numEvents = 0
-    numSamples = 0
-    # dvs data
-    sizeOfArrayDvs = 1024
-    tsDvs = np.zeros((sizeOfArrayDvs), dtype=np.uint32)
-    chDvs = np.zeros((sizeOfArrayDvs), dtype=np.uint8)
-    xDvs = np.zeros((sizeOfArrayDvs), dtype=np.uint16)
-    yDvs = np.zeros((sizeOfArrayDvs), dtype=np.uint16)
-    polDvs = np.zeros((sizeOfArrayDvs), dtype=np.bool)
-    lblDvs = np.zeros((sizeOfArrayDvs), dtype=np.int64) - 1 #Tag for not labelled
-    # sample data
-    sizeOfArraySample = 1024
-    tsSample = np.zeros((sizeOfArraySample), dtype=np.uint32)
-    chSample = np.zeros((sizeOfArraySample), dtype=np.uint8)
-    vSample = np.zeros((sizeOfArraySample), dtype=np.uint16)
-    sSample = np.zeros((sizeOfArraySample), dtype=np.uint8)
-    with open(kwargs['filePathAndName'], 'r') as inFile:
-        content = inFile.read()
-        found = pattern.findall(content)
-        for elem in tqdm(found):
-            # The following values would be useful for indexing the input file:
-            #bottlenumber = np.uint32(elem[0])
-            #timestamp = np.float64(elem[1])
-            bottleType = elem[2]
-            if bottleType in ['AE', 'LAE', 'IMUS']:
-                try:
-                    events = np.array(elem[3].split(' '), dtype=np.uint32)
-                    if bottleType == 'LAE':
-                        numEventsInBatch = int(len(events) / 3)
-                        events = events.reshape(numEventsInBatch, 3)
-                        lblBatch = events[:, 2]
-                    else:
-                        numEventsInBatch = int(len(events) / 2)
-                        events = events.reshape(numEventsInBatch, 2)
-                    dvs, samples = decodeEvents24Bit(events[:, :2])
-                    if dvs:
-                        tsBatch, chBatch, xBatch, yBatch, polBatch = dvs
-                        numEventsInBatch = len(tsBatch)
-                        while sizeOfArrayDvs < numEvents + numEventsInBatch:
-                            tsDvs = np.append(tsDvs, np.zeros((sizeOfArrayDvs), dtype=np.uint32))
-                            chDvs = np.append(chDvs, np.zeros((sizeOfArrayDvs), dtype=np.uint8))
-                            xDvs = np.append(xDvs, np.zeros((sizeOfArrayDvs), dtype=np.uint16))
-                            yDvs = np.append(yDvs, np.zeros((sizeOfArrayDvs), dtype=np.uint16))
-                            polDvs = np.append(polDvs, np.zeros((sizeOfArrayDvs), dtype=np.bool))
-                            lblDvs = np.append(lblDvs, np.zeros((sizeOfArrayDvs), dtype=np.int64) - 1)
-                            sizeOfArrayDvs *= 2
-                        tsDvs[numEvents:numEvents + numEventsInBatch] = tsBatch
-                        chDvs[numEvents:numEvents + numEventsInBatch] = chBatch
-                        xDvs[numEvents:numEvents + numEventsInBatch] = xBatch
-                        yDvs[numEvents:numEvents + numEventsInBatch] = yBatch
-                        polDvs[numEvents:numEvents + numEventsInBatch] = polBatch
-                        if bottleType == 'LAE':
-                            lblDvs[numEvents:numEvents + numEventsInBatch] = lblBatch
-                        numEvents += numEventsInBatch        
-                    if samples:
-                        tsBatch, chBatch, sBatch, vBatch = samples
-                        numSamplesInBatch = len(tsBatch)
-                        while sizeOfArraySample < numSamples + numSamplesInBatch:
-                            tsSample = np.append(tsSample, np.zeros((sizeOfArraySample), dtype=np.uint32))
-                            chSample = np.append(chSample, np.zeros((sizeOfArraySample), dtype=np.uint8))
-                            sSample = np.append(sSample, np.zeros((sizeOfArraySample), dtype=np.uint16))
-                            vSample = np.append(vSample, np.zeros((sizeOfArraySample), dtype=np.uint16))
-                            sizeOfArraySample *= 2
-                        tsSample[numSamples:numSamples + numSamplesInBatch] = tsBatch
-                        chSample[numSamples:numSamples + numSamplesInBatch] = chBatch
-                        sSample[numSamples:numSamples + numSamplesInBatch] = sBatch
-                        vSample[numSamples:numSamples + numSamplesInBatch] = vBatch
-                        if bottleType == 'LAE':
-                            raise Exception('Samples in labelled event bottles ...')
-                        numSamples += numSamplesInBatch
-                except ValueError: # sometimes finding malformed packets at the end of files - ignoring
-                    continue
-    # Crop arrays to number of events
-    tsDvs = tsDvs[:numEvents]
-    chDvs = chDvs[:numEvents]
-    xDvs = xDvs[:numEvents]
-    yDvs = yDvs[:numEvents]
-    polDvs = polDvs[:numEvents]
-    lblDvs = lblDvs[:numEvents]
-    # Crop arrays to number of samples
-    tsSample = tsSample[:numSamples]
-    chSample = chSample[:numSamples]
-    sSample = sSample[:numSamples]
-    vSample = vSample[:numSamples]
+def importIitYarpBinHavingFoundFile(**kwargs):
+    with open(kwargs['filePathAndName'], 'rb') as inFile:
+        events = inFile.read()
+    events = np.frombuffer(events, np.uint32)
+    events = events.reshape((-1, 2))
+    dvs, samples = decodeEvents24Bit(events)
+    return importPostProcessing(dvs, samples, dvslbl=None, flow=None, **kwargs)
 
+# Sample is an intermediate data type - later it gets converted to IMU etc
+def createDataTypeSample():
+    sizeOfArray = 1024
+    return {
+        'ts': np.zeros((sizeOfArray), dtype=np.uint32),
+        'ch': np.zeros((sizeOfArray), dtype=np.uint8),
+        'sensor': np.zeros((sizeOfArray), dtype=np.uint8),
+        'value': np.zeros((sizeOfArray), dtype=np.int16),
+        'numEvents': 0
+    }   
+       
+def createDataTypeDvs():
+    sizeOfArray = 1024
+    return {
+        'ts': np.zeros((sizeOfArray), dtype=np.uint32),
+        'ch': np.zeros((sizeOfArray), dtype=np.uint8),
+        'x': np.zeros((sizeOfArray), dtype=np.uint16),
+        'y': np.zeros((sizeOfArray), dtype=np.uint16),
+        'pol': np.zeros((sizeOfArray), dtype=np.bool),
+        'numEvents': 0 
+        }
+                    
+def createDataTypeDvslbl():
+    dvs = createDataTypeDvs()
+    sizeOfArray = len(dvs['ts'])
+    dvs['lbl'] = np.zeros((sizeOfArray), dtype=np.int64)
+    return dvs
+                    
+def createDataTypeDvsFlow():
+    dvs = createDataTypeDvs()
+    sizeOfArray = len(dvs['ts'])
+    dvs['vx'] = np.zeros((sizeOfArray), dtype=np.float64)
+    dvs['vy'] = np.zeros((sizeOfArray), dtype=np.float64)
+    return dvs
+                
+def appendBatch(mainDict, batch):
+    if batch is None: return mainDict
+    # Check if the main array has enough free space for this batch
+    sizeOfMain = len(mainDict['ts'])
+    numEventsInMain = mainDict['numEvents']
+    numEventsInBatch = len(batch['ts'])
+    while numEventsInBatch + numEventsInMain > sizeOfMain:
+        for fieldName in mainDict.keys():
+            if fieldName != 'numEvents':
+                # Double the size of the array
+                mainDict[fieldName] = np.append(mainDict[fieldName], np.empty_like(mainDict[fieldName]))
+        sizeOfMain *= 2
+    # Add the batch into the main array
+    for fieldName in batch.keys():
+        mainDict[fieldName][numEventsInMain:numEventsInMain + numEventsInBatch] = \
+            batch[fieldName]
+    mainDict['numEvents'] = numEventsInMain + numEventsInBatch
+    return mainDict
+ 
+def cropArraysToNumEvents(inDict):
+    numEvents = inDict.pop('numEvents')
+    for fieldName in inDict.keys():
+        inDict[fieldName] = inDict[fieldName][:numEvents]
+
+def selectByChannel(inDict, channelLabel):
+    selectedEvents = inDict['ch'] == channelLabel
+    if not np.any(selectedEvents):
+        return None    
+    outDict = {}
+    for fieldName in inDict:
+        if fieldName != 'ch':
+            outDict[fieldName] = inDict[fieldName][selectedEvents]
+    return outDict
+            
+'''
+Having imported data from the either a datadumper log or a bin file, 
+carry out common post-processing steps: 
+    convert samples to IMU (etc)
+    split by channel
+    unwrap timestamps
+'''
+def importPostProcessing(dvs, samples, dvslbl=None, flow=None, **kwargs):
     '''
-    The iit yarp format assumes that the channel bit corresponds to 
-    'left' and 'right' sensors, so it's handled explicitly here
+    Split by channel: The iit yarp format assumes that the channel bit 
+    corresponds to 'left' and 'right' sensors, so it's handled explicitly here
     '''
     channels = {}
     for ch in [0, 1]:
         chDict = {}
-        selectedEvents = chDvs == ch
-        if np.any(selectedEvents):
-            chDictDvs = {
-                    'lbl': lblDvs[selectedEvents],
-                    'ts': tsDvs[selectedEvents],
-                    'x': xDvs[selectedEvents],
-                    'y': yDvs[selectedEvents],
-                    'pol': polDvs[selectedEvents] }
-            # If there are labelled data, it will be split out to a separate datatype
-            chDict.update(splitByLabelled(chDictDvs))
-        selectedSamples = chSample == ch
-        if np.any(selectedSamples):
-            chDictSamples = {
-                    'ts': tsSample[selectedSamples],
-                    's': sSample[selectedSamples],
-                    'v': vSample[selectedSamples], }
-            # If there are labelled data, it will be split out to a separate datatype
-            chDict['imu'] = samplesToImu(chDictSamples, **kwargs)
+        dvsCh = selectByChannel(dvs, ch)
+        if dvsCh:
+            chDict['dvs'] = dvsCh
+        if dvslbl:
+            dvslblCh = selectByChannel(dvslbl, ch)
+            if dvslblCh:
+                chDict['dvslbl'] = dvslblCh
+        samplesCh = selectByChannel(samples, ch)
+        if samplesCh:
+            chDict['imu'] = samplesToImu(samplesCh, **kwargs)
         if any(chDict):
             for dataType in chDict:
                 chDict[dataType]['ts'] = unwrapTimestamps(chDict[dataType]['ts'], **kwargs) * 0.00000008 # Convert to seconds
@@ -326,10 +335,46 @@ def importIitYarpHavingFoundFile(**kwargs):
         'info': kwargs,
         'data': channels
         }
-    outDict['info']['fileFormat'] = 'iityarp'
-    # Split by channel
-    # First check if there is any splitting that needs to be done
+    outDict['info']['fileFormat'] = 'iityarp'    
     return outDict
+
+def importIitYarpHavingFoundFile(**kwargs):
+    # Create dicts for each possible datatype
+    dvs = createDataTypeDvs()
+    dvslbl = createDataTypeDvslbl()
+    flow = createDataTypeDvsFlow()
+    samples = createDataTypeSample() # Sample is an intermediate datatype - later it gets converted to IMU etc
+    with open(kwargs['filePathAndName'], 'r') as inFile:
+        content = inFile.read()
+    found = pattern.findall(content)
+    for elem in tqdm(found):
+        # The following values would be useful for indexing the input file:
+        #bottlenumber = np.uint32(elem[0])
+        #timestamp = np.float64(elem[1])
+        bottleType = elem[2]
+        if bottleType in ['AE', 'LAE', 'IMUS']:
+            try:
+                events = np.array(elem[3].split(' '), dtype=np.uint32)
+                if bottleType == 'LAE':
+                    numEventsInBatch = int(len(events) / 3)
+                    events = events.reshape(numEventsInBatch, 3)
+                    # TODO: finish handling this case
+                    dvsBatch, samplesBatch = decodeEvents24Bit(events[:, :2])
+                    dvsBatch['lbl'] = events[:, 2]          
+                    appendBatch(dvslbl, dvsBatch)
+                else:
+                    numEventsInBatch = int(len(events) / 2)
+                    events = events.reshape(numEventsInBatch, 2)
+                    dvsBatch, samplesBatch = decodeEvents24Bit(events[:, :2])
+                    appendBatch(dvs, dvsBatch)
+                appendBatch(samples, samplesBatch)
+            except ValueError: # sometimes finding malformed packets at the end of files - ignoring
+                continue
+    # Crop arrays to number of events
+    cropArraysToNumEvents(dvs)
+    cropArraysToNumEvents(dvslbl)
+    cropArraysToNumEvents(samples)
+    return importPostProcessing(dvs, samples, dvslbl=dvslbl, flow=flow, **kwargs)
 
 def importIitYarpRecursive(**kwargs):
     '''
@@ -352,13 +397,15 @@ def importIitYarpRecursive(**kwargs):
         if os.path.isdir(filePathAndName):
             kwargs['filePathOrName'] = filePathAndName
             importedDicts = importedDicts + importIitYarpRecursive(**kwargs)
+        if file == 'binaryevents.log': # TODO: Placeholder - how shall we denote that this is a binary file?
+            kwargs['filePathOrName'] = filePathAndName
+            importedDicts.append(importIitYarpBinHavingFoundFile(filePathAndName = filePathAndName, **kwargs))                      
         if file == 'data.log':
             kwargs['filePathOrName'] = filePathAndName
             importedDicts.append(importIitYarpHavingFoundFile(filePathAndName = filePathAndName, **kwargs))          
     if len(importedDicts) == 0:
         raise FileNotFoundError('"data.log" file not found')
     return importedDicts
-        
         
 def importIitYarp(**kwargs):
     importedDicts = importIitYarpRecursive(**kwargs)
@@ -369,7 +416,6 @@ def importIitYarp(**kwargs):
     if len(importedDicts) == 1:
         importedDicts = importedDicts[0]
     return importedDicts
-    
     
 #%% LEGACY CODE
 # Import functions from marco monforte, fro reference

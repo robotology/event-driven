@@ -130,7 +130,7 @@ def plotDvsContrast(inDict, **kwargs):
         for inDictInst in inDict:
             plotDvsContrast(inDictInst, **kwargs)
         return
-    if 'info' in inDict:
+    if 'info' in inDict: # Top level container
         fileName = inDict['info'].get('filePathOrName', '')
         print('plotDvs was called for file ' + fileName)
         if not inDict['data']:
@@ -234,35 +234,3 @@ def plotDvsContrast(inDict, **kwargs):
         image = plotDvsContrastSingle(inDict=dvsDataDict, axes=axes, **kwargs)
     fig.colorbar(image)
     return timeCentres
-
-'''
-Takes an importedDict or a list of them
-For each channel in each, which contains polarity data , call PlotPolarity
-'''
-
-def plotDvsContrastForImportedDicts(inDicts, **kwargs):
-    if not isinstance(inDicts, list):
-        inDicts = [inDicts]
-    for inDict in inDicts:
-        fileName = inDict['info'].get('filePathOrName', '')
-        print('plotDvs was called for file ' + fileName)
-        if not inDict['data']:
-            print('The import contains no data.')
-            return
-        for channelName in inDict['data']:
-            channelData = inDict['data'][channelName]
-            if 'dvs' in channelData and len(channelData['dvs']['ts']) > 0:
-                kwargs['title'] = ' '.join([fileName, str(channelName)])
-                plotDvsContrast(channelData['dvs'], **kwargs)
-            else:
-                print('Channel ' + channelName + ' skipped because it contains no polarity data')
-
-''' generalised plot function for a container at multiple levels '''
-def plotDvs(inDicts, **kwargs):
-    plotType = kwargs.get('plotType', 'contrast')
-    if plotType == 'lastTs':
-        plotDvsLastTs(inDicts, **kwargs)
-        # TODO: branch off other plot types here
-    else:
-        plotDvsContrast(inDicts, **kwargs)
-                    

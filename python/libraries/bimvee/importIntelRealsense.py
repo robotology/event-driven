@@ -25,9 +25,17 @@ from importRpgDvsRos import importRpgDvsRos
 def importIntelRealsense(**kwargs):
     if kwargs.get('template') is None:
         kwargs['template'] = {
-                'ch0': {
-                        'pose6q': '/device_0/sensor_0/Pose_0/pose/transform/data',
-                        }
+            'pose': {
+                    'pose6q': '/device_0/sensor_0/Pose_0/pose/transform/data',
+                    },
+            'left': {
+                    'frame': '/device_0/sensor_0/Fisheye_1/image/data',
+                    'cam': '/device_0/sensor_0/Fisheye_1/info/camera_info',
+                    },
+            'right': {
+                    'frame': '/device_0/sensor_0/Fisheye_2/image/data'
+                    'cam': '/device_0/sensor_0/Fisheye_2/info/camera_info',
+                    }
                 }
         kwargs['poseAsTransform'] = True
     return importRpgDvsRos(**kwargs)
