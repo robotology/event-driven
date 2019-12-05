@@ -559,6 +559,12 @@ public:
         return oss.str();
     }
 
+    void setReporter(PortReport &reporter)
+    {
+        port.setReporter(reporter);
+    }
+
+
 };
 
 
