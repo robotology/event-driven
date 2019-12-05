@@ -104,9 +104,9 @@ def unpackHeader(headerLen, headerBytes):
         fields[fieldName] = fieldValue
     return fields
 
-def readFile(filePathAndName):
-    print('Attempting to import ' + filePathAndName + ' as a rosbag 2.0 file.')
-    with open(filePathAndName, 'rb') as file:
+def readFile(filePathOrName):
+    print('Attempting to import ' + filePathOrName + ' as a rosbag 2.0 file.')
+    with open(filePathOrName, 'rb') as file:
         # File format string
         fileFormatString = file.readline().decode("utf-8")
         print('ROSBAG file format: ' + fileFormatString)
@@ -290,7 +290,7 @@ def interpretMsgsAsFrame(msgs):
         ptr += 4 #step = unpack('L', data[ptr:ptr+4])[0]
         # I don't know why, but there is an ip address in the next 4 bytes
         ptr += 4
-        if fmtString == 'mono8':
+        if fmtString in ['mono8', '8UC1']:
             frameData = np.frombuffer(data[ptr:ptr+height*width],np.uint8)
         elif fmtString == '32FC1':
             frameData = np.frombuffer(data[ptr:ptr+height*width*4],np.float32)
@@ -476,6 +476,15 @@ def interpretMsgsAsCam(msgs):
         outDict['R'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
         ptr += 72
         outDict['P'] = np.frombuffer(data[ptr:ptr+96], dtype=np.float64).reshape(3, 4)
+    elif outDict['distortionModel'] == 'Kannala Brandt4':
+        ptr +=4 # There's an IP address in there, not sure why
+        outDict['D'] = np.frombuffer(data[ptr:ptr+32], dtype=np.float64)
+        ptr += 40
+        outDict['K'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
+        ptr += 72
+        outDict['R'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
+        ptr += 72
+        outDict['P'] = np.frombuffer(data[ptr:ptr+96], dtype=np.float64).reshape(3, 4)
     else:
         #print('Distortion model not supported:' + outDict['distortionModel'])
         #return None
@@ -499,7 +508,7 @@ def importRpgDvsRos(**kwargs):
     template = kwargs.get('template', {})
     # The template becomes the data branch of the importedDict
     outDict = {
-        'info': {'filePathOrName': kwargs.get('filePathOrName')},
+        'info': kwargs,
         'data': {}
             }            
     for channelKey in template:

@@ -66,7 +66,7 @@ def splitByChannel(inDict):
 
 def splitByPolarity(inDict):
     ''' 
-    receives a dict containing dvs events
+    receives a dict containing (probably) dvs events
     returns a dict containing two dicts, labelled 0 and 1, for the polarities found
     Although redundant, the pol field is maintained within each dict for compatibility
     '''
@@ -74,7 +74,7 @@ def splitByPolarity(inDict):
         '0': {},
         '1': {} }
     for key in inDict:
-        if key in ['ts', 'x', 'y', 'pol']:
+        if type(inDict[key]) == np.ndarray:
             outDict['0'][key] = inDict[key][inDict['pol'] == 0]
             outDict['1'][key] = inDict[key][inDict['pol'] == 1]
         else:
@@ -110,6 +110,9 @@ def dvsSelectLabels(inDict, labels):
             outDict[field] = inDict[field]
     return outDict    
 
+'''
+2019_12_04 Also obsolete - importIitYarp now handles this internally
+'''
 def splitByLabelled(inDict):
     outDict = {}
     lblBool = inDict['lbl'] > -1
@@ -137,7 +140,6 @@ If given a larger container, will split down all that it finds, realigning times
 If the container contains an info field, then the start and stopTime params
 will be added.
 '''
-
 def cropTime(inDict, **kwargs):
     # TODO: handle list case
     if 'ts' in inDict:

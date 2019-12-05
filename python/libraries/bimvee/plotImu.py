@@ -39,6 +39,7 @@ def plotImu(inDict, **kwargs):
                 print('Channel ' + channelName + ' skipped because it contains no polarity data')
         return
     fig, allAxes = plt.subplots(4, 1)
+    fig.suptitle(kwargs.get('title', ''))
     axesAcc = allAxes[0]
     axesAcc.plot(inDict['ts'], inDict['acc'])
     axesAcc.set_title('Acceleration (m/s)')

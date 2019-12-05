@@ -17,6 +17,7 @@ tries to run the appropriate general visualisation function
 """
 
 from plotDvsContrast import plotDvsContrast
+from plotEventRate import plotEventRate
 from plotFrame import plotFrame
 from plotPose import plotPose
 from plotImu import plotImu
@@ -33,6 +34,7 @@ def plot(inDict, **kwargs):
         kwargs['title'] = title
         if 'dvs' in channel:
             plotDvsContrast(channel['dvs'], **kwargs)
+            plotEventRate(channel['dvs'], **kwargs)
         if 'frame' in channel:
             plotFrame(channel['frame'], **kwargs)
         if 'imu' in channel:
