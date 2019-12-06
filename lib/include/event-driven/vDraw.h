@@ -376,8 +376,8 @@ class Right_hand : public PAD{
             yoffset = 400;
             scaling =6;
             palmShift = shift;
-            noise = 2100;
-            max_value = 8000;
+            noise = 2300;
+            max_value = 10000;
 
             dX = new double[48];
             dY = new double[48];
@@ -623,8 +623,8 @@ class Left_hand : public PAD{
             yoffset = 400;
             scaling =6;
             palmShift = shift;
-            noise = 2100;
-            max_value = 8000;
+            noise = 2300;
+            max_value = 10000;
 
             dX = new double[48];
             dY = new double[48];

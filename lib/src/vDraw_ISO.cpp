@@ -303,11 +303,11 @@ void isoDrawSkin::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if(!aep->polarity) {
             //isoimage.at<cv::Vec3b>(py, px) = light_violet;
             cv::Point center(px,py);
-            cv::circle(isoimage, center, radius, light_aqua, CV_FILLED,CV_AA);
+            cv::circle(isoimage, center, radius, aqua, CV_FILLED,CV_AA);
         } else {
             //  isoimage.at<cv::Vec3b>(py, px) = light_aqua;
             cv::Point center(px,py);
-            cv::circle(isoimage, center, radius, light_violet,CV_FILLED,CV_AA);
+            cv::circle(isoimage, center, radius, violet,CV_FILLED,CV_AA);
         }
     }
 
