@@ -64,7 +64,7 @@ sudo vim /etc/rc.local
 ```
 Add lines:
 ```bash
-insmod /home/icub/iit-hpucore-dma.ko rx_pn=1024 rx_ps=8096 rx_to=5000
+insmod /home/icub/iit-hpucore-dma.ko rx_pn=1024 rx_ps=8192 rx_to=5000
 ```
 ## Misc
 

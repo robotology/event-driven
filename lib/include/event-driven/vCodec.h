@@ -315,23 +315,29 @@ template <class T> size_t countEvents(const T &q) { return q.size(); }
 //template <> size_t countEvents<vQueue>(const T &q) { return q.size(); }
 
 /// \brief count the time within a vQueue
-template <typename T> inline int countTime(const T &q)
+template <typename T> inline int countTime(const T &q, int &p_time)
 {
+    if(!p_time) p_time = q.front().stamp;
     int dt = q.back().stamp - q.front().stamp;
+    p_time = q.back().stamp;
     if(dt < 0) dt += vtsHelper::max_stamp;
     return dt;
 }
 
-template <> inline int countTime<vQueue> (const vQueue &q)
+template <> inline int countTime<vQueue> (const vQueue &q, int &p_time)
 {
+    if(!p_time) p_time = q.front()->stamp;
     int dt = q.back()->stamp - q.front()->stamp;
+    p_time = q.back()->stamp;
     if(dt < 0) dt += vtsHelper::max_stamp;
     return dt;
 }
 
-template <> inline int countTime< std::vector<int32_t> > (const std::vector<int32_t> &q)
+template <> inline int countTime< std::vector<int32_t> > (const std::vector<int32_t> &q, int &p_time)
 {
-    int dt = (q[q.size()-2] & vtsHelper::max_stamp) - (q[0] & vtsHelper::max_stamp);
+    if(!p_time) p_time = q[0] & vtsHelper::max_stamp;
+    int dt = (q[q.size()-2] & vtsHelper::max_stamp) - p_time;
+    p_time = q[q.size()-2] & vtsHelper::max_stamp;
     if(dt < 0) dt += vtsHelper::max_stamp;
     return dt;
 }

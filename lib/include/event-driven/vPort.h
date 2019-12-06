@@ -335,9 +335,12 @@ protected:
     vPortableInterface internal_storage;
     Port port;
 
+    T *working_queue;
     deque< T* > qq;
     deque<Stamp> sq;
-    T *working_queue;
+    deque<int> t_q;
+    deque<int> n_q;
+
 
     Mutex m;
     Mutex read_mutex;
@@ -348,6 +351,7 @@ protected:
     unsigned int delay_nv;
     long unsigned int delay_t;
     double event_rate;
+    int p_time;
 
 
 public:
@@ -361,6 +365,7 @@ public:
         event_rate = 0;
         unprocdqs = 0;
         working_queue = nullptr;
+        p_time = 0;
 
         setPriority(99, SCHED_FIFO);
 
@@ -445,13 +450,13 @@ public:
 
             unprocdqs++;
 
-            int q_events = countEvents<T>(*next_queue);
-            int q_time = countTime<T>(*next_queue);
+            n_q.push_back(countEvents<T>(*next_queue));
+            t_q.push_back(countTime<T>(*next_queue, p_time));
 
-            delay_nv += q_events;
-            delay_t += q_time;
-            if(q_time)
-                event_rate = q_events / (double)q_time;
+            delay_nv += n_q.back();
+            delay_t += t_q.back();
+            if(t_q.back())
+                event_rate = n_q.back() / (double)(t_q.back());
 
             m.unlock();
 
@@ -467,8 +472,10 @@ public:
         if(working_queue) {
             m.lock();
 
-            delay_nv -= countEvents<T>(*qq.front());
-            delay_t -= countTime<T>(*qq.front());
+            delay_nv -= n_q.front();
+            n_q.pop_front();
+            delay_t  -= t_q.front();
+            t_q.pop_front();
 
             delete qq.front();
             qq.pop_front();
