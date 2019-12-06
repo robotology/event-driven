@@ -12,13 +12,14 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 
 Intended as part of bimvee (Batch Import, Manipulation, Visualisation and Export of Events etc)
-plotSpikeogram received "inDict", which is a container for (2D) polarity events, 
-containing fields with numpy arrays:    
+plotCorrelogram receives "inDict", which is a container for (2D) polarity events, 
+(Or a higher level container), containing fields with numpy arrays:    
     ts
     x
     y
     pol
-A spikeogram has a row for each address-event represented, where the x dim 
+Autocorrelation
+A correlogram is created for a has a row for each address-event represented, where the x dim 
 represents time. Color represents polarity (blue vs red for 1 vs 0)
 By default, all addresses will be plotted as a row, 
 but this will usually be impractical. So the kwargs
@@ -40,11 +41,11 @@ import matplotlib.lines as lines
 import numpy as np
 from tqdm import tqdm
 
-def plotSpikeogram(inDict, **kwargs):
+def plotAutoCorrelation():
     # Boilerplate for descending container hierarchy
     if isinstance(inDict, list):
         for inDictInst in inDict:
-            plotSpikeogram(inDictInst, **kwargs)
+            plotCorrelogram(inDictInst, **kwargs)
         return
     if 'info' in inDict: # Top level container
         fileName = inDict['info'].get('filePathOrName', '')
@@ -56,7 +57,7 @@ def plotSpikeogram(inDict, **kwargs):
             channelData = inDict['data'][channelName]
             if 'dvs' in channelData and len(channelData['dvs']['ts']) > 0:
                 kwargs['title'] = ' '.join([fileName, str(channelName)])
-                plotSpikeogram(channelData['dvs'], **kwargs)
+                plotCorrelogram(channelData['dvs'], **kwargs)
             else:
                 print('Channel ' + channelName + ' skipped because it contains no polarity data')
         return
@@ -105,3 +106,7 @@ def plotSpikeogram(inDict, **kwargs):
     callback = kwargs.get('callback')
     if callback is not None:
         callback(**kwargs)
+
+# For now, this is synonymous with autocrrelation
+# TODO: cross-correlation could be useful
+def plotCorrelogram(inDict, **kwargs):
