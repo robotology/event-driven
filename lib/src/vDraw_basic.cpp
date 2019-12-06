@@ -273,7 +273,7 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
 
     int radius_min = radius;
-    int radius_max = 4*radius;
+    int radius_max = 6*radius;
 
     if(eSet.empty()) return;
 
