@@ -217,7 +217,7 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
     
 
-    int radius = 10;
+    //int radius = 5;
     
     if(image.empty()) {
         image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
@@ -243,7 +243,7 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if(tmap.pos.find(index) != tmap.pos.end()){
             //yInfo() << "\n Index " << index <<"  mapped to   "<< std :: get<0>(tmap[index]) << std :: get<1>(tmap[index]) << "\n";
             int x = tmap.xoffset + tmap.scaling* std :: get<0>(tmap.pos[index]);
-            int y =  Ylimit-(tmap.yoffset + tmap.scaling* std :: get<1>(tmap.pos[index]));
+            int y =  tmap.yoffset + tmap.scaling* std :: get<1>(tmap.pos[index]);
             cv::Point centr(x, y);
             if(!aep->polarity)
             {
@@ -281,8 +281,8 @@ std::string skinsampleDraw::getEventType()
 void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
 
-    int radius_min = 10;
-    int radius_max = 30;
+    int radius_min = radius;
+    int radius_max = 3*radius;
 
     if(eSet.empty()) return;
 
@@ -304,16 +304,15 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         int index = aep->taxel;
         
-        int noise = 2500;
 
         if(tmap.pos.find(index) != tmap.pos.end()){
             // yInfo() << "\n Index = " << index ;
             // std :: cout << "\n Index " << index <<"mapped to "<< x << y << "\n";
             if(aep->value > noise){
                 int x = tmap.xoffset + tmap.scaling* std :: get<0>(tmap.pos[index]);
-                int y =  Ylimit - (tmap.yoffset +tmap.scaling* std :: get<1>(tmap.pos[index]));
+                int y =  tmap.yoffset +tmap.scaling* std :: get<1>(tmap.pos[index]);
                 cv::Point centr(x, y);
-                float max_value = 15000;//31176 observed by Ali, theoretical aximum is 2**16-1=65535
+                
                 int radius = radius_min + (radius_max-radius_min)* aep->value /max_value;
                 if(radius>radius_max){
                     radius = radius_max;
@@ -323,7 +322,7 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             }
         }
         else{
-            yWarning() << "\n Index " << index <<"not mapped! \n";
+            //yWarning() << "\n Index " << index <<"not mapped! \n";
             //std :: cout << "\n Index " << index <<"not mapped! \n";
         }
     }

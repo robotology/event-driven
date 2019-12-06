@@ -177,32 +177,15 @@ public:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //////////////////////////////////////////
+/////////////////
+
+
+
+
+
+
+
 
 class PAD{
 protected :
@@ -229,11 +212,13 @@ protected :
     
 public: 
     int xoffset,yoffset;
-    double scaling =4;
+    int scaling =4, radius = 6;
+    int noise = 2500;
+    int max_value = 15000;//good for default flat skin patch
 
     std::map<int, std::list<unsigned int> > repr2TaxelList;
     virtual void initRepresentativeTaxels(std::vector<int> taxelMap){};
-    virtual int* getID(const int index)  {};
+    virtual int* getID(const int index) const {};
     virtual std::tuple<double,double> makeMap( int ID, int taxelIntriangle) const {};
     void get_data(int id,double x,double y, double orientation,double gain, int mirror,int layoutNum){
         data.insert(std::make_pair(id,std::vector<double> {x,y,orientation,gain,double(mirror)}));
@@ -313,7 +298,7 @@ int* getID(const int index)const {
         dX[ 7]=-257.2; dY[ 7]=0.0;        
     };
 
-    void initRepresentativeTaxels(std::vector<int> taxelMap){//correct only for 10 pad triangle (?)
+    void initRepresentativeTaxels(std::vector<int> taxelMap){
         //yarp::os::RecursiveLockGuard rlg(recursive_mutex);
         std::list<int> mapp(taxelMap.begin(), taxelMap.end());
         mapp.sort();
@@ -373,20 +358,27 @@ int* getID(const int index)const {
 
         double u=cx+CST*x-SNT*y;
         double v=cy+SNT*x+CST*y;
-        if ((taxelIntriangle!=6) || (taxelIntriangle!=10)) return std :: make_tuple(abs(u), v);
+        if ((taxelIntriangle!=6) && (taxelIntriangle!=10)) return std :: make_tuple(abs(u), v);
+        else return std :: make_tuple(-1000,-1000);//dummy location
     };
 
 };
 
 
 
-class handR : public PAD{
+class Right_hand : public PAD{
+    private: 
+    int palmShift;
 //hand must be a wrapper for fingers and palm. Indeed the calibration file is unique 
     public:
-        handR(){
+        Right_hand(int shift){
             xoffset = 352;
             yoffset = 400;
-            scaling =4;
+            scaling =6;
+            palmShift = shift;
+            noise = 2100;
+            max_value = 8000;
+
             dX = new double[48];
             dY = new double[48];
             std::cout<< "\nInitialise hand"<<std::endl;
@@ -404,18 +396,25 @@ class handR : public PAD{
                 repr2TaxelList[mapp.front()]=vectorofIntEqualto(taxelMap,mapp.front());
                 mapp.pop_front();
             }
-            
 
-            int s=0,r=-1,t=0;
+            int s=0,t=-1;
             
             for (auto it =repr2TaxelList.begin();it!=repr2TaxelList.end();it++){
                 for (auto it2 =  it->second.begin(); it2 !=it->second.end(); it2++){
                     if(it->first ==-1)*it2=10000;//dummy value ;
+                    
                     if(it->first>60){
+                        //if(s==5) s+=1;/ skip 6th
                         
-                        if(s%12==0) {r+=1;s=0;}// skip 6th //NOT SURE THIS IS THE HEAT PAD..
-                        if(s==5) s+=1;
-                        *it2 =128+s+ r*16;//enforces good separation between each 12 addresses(like for triangle pad)
+                        if (t==3){
+                            if(s==7)s+=1;
+                            }
+                        else{
+                            if(s==11) s+=1;//skip 12th except the 4th triangle where it skips the 8th
+                        }
+                        if(s%12==0) {t+=1;s=0;}
+
+                        *it2 =128+s+ t*16;
                         s+=1;
                     
                     } 
@@ -441,15 +440,19 @@ class handR : public PAD{
             if(it != listIntriangle.end()){
                 
                 triangleID = mapit->first;
-            
+               
                 if (triangleID==-1){
                     //working in progress
                   
                     triangleID =8; //palm ID, heat pads should be only in the palm
+                    
                     taxelInTriangle = std :: distance(listIntriangle.begin(),it);
-                    taxelInTriangle = (taxelInTriangle%4 +1)*12-1; //11,23,35,43 or 5,17,29,41?
+                   
+                    //taxelInTriangle = (taxelInTriangle%4)*12+5;//5,17,29,41
+                    taxelInTriangle = (taxelInTriangle%4 +1)*12-1; //11,23,35,43
                     if(taxelInTriangle==47) taxelInTriangle=43;
-          
+                  
+                    
                 }
                 else if(triangleID<60){
                     //yWarning("Finger");
@@ -458,8 +461,9 @@ class handR : public PAD{
                 }
                 else{ 
                     //yWarning("Palm");
-                    taxelInTriangle = (*it-128)-4*((*it-128)/16);//have been built skipping each sixth address change if location heat pads changes..
-                   std:: cout << "\n"<<triangleID << "\t"<<taxelInTriangle<<std::endl;
+                   
+                    taxelInTriangle = (*it-128)-4*((*it-128)/16);
+                   
                     triangleID = 8;
 
                 }
@@ -590,8 +594,260 @@ std::tuple<double,double> makeMap(int index)const{
             double u=cx+CST*x-SNT*y;
             double v=cy+SNT*x+CST*y;
         
-            //if ((taxelIntriangle!=43) && (taxelIntriangle!=23) && (taxelIntriangle!=11) || (taxelIntriangle!=35) )return std :: make_tuple(abs(u)-38,v);
-            if ((taxelIntriangle!=41) && (taxelIntriangle!=29) && (taxelIntriangle!=17) || (taxelIntriangle!=5) )return std :: make_tuple(abs(u)-38,v);
+            if ((taxelIntriangle!=43) && (taxelIntriangle!=23) && (taxelIntriangle!=11) && (taxelIntriangle!=35) )return std :: make_tuple(abs(u)+palmShift,v);
+           //if ((taxelIntriangle!=41) && (taxelIntriangle!=29) && (taxelIntriangle!=17) && (taxelIntriangle!=5) )return std :: make_tuple(abs(u)+palmShift,v);
+            else return std :: make_tuple(-1000,-1000);//dummy location
+        }
+       
+        else{
+            yWarning("\n Unexpected ID");
+            return std :: make_tuple(-10000,-10000);
+        }
+        
+        
+
+        
+            
+        
+    };
+};
+
+
+class Left_hand : public PAD{
+    private: 
+    int palmShift;
+//hand must be a wrapper for fingers and palm. Indeed the calibration file is unique 
+    public:
+        Left_hand(int shift){
+            xoffset = 352;
+            yoffset = 400;
+            scaling =6;
+            palmShift = shift;
+            noise = 2100;
+            max_value = 8000;
+
+            dX = new double[48];
+            dY = new double[48];
+            std::cout<< "\nInitialise hand"<<std::endl;
+        };
+
+        void initRepresentativeTaxels(std::vector<int> taxelMap){//correct only for 10 pad triangle (?)
+            //yarp::os::RecursiveLockGuard rlg(recursive_mutex);
+            std::list<int> mapp(taxelMap.begin(), taxelMap.end());
+            mapp.sort();
+            mapp.unique();
+
+            size_t mappsize = mapp.size();
+            for (size_t i = 0; i < mappsize; i++)
+            {
+                repr2TaxelList[mapp.front()]=vectorofIntEqualto(taxelMap,mapp.front());
+                mapp.pop_front();
+            }
+            
+
+            int s=0,t=-1;
+            
+            for (auto it =repr2TaxelList.begin();it!=repr2TaxelList.end();it++){
+                for (auto it2 =  it->second.begin(); it2 !=it->second.end(); it2++){
+                    if(it->first ==-1)*it2=10000;//dummy value ;
+                    
+                    if(it->first>60){
+                        //if(s==5) s+=1;/ skip 6th
+                        
+                        if (t==3){
+                            if(s==7)s+=1;
+                            }
+                        else{
+                            if(s==11) s+=1;//skip 12th except the 4th triangle where it skips the 8th
+                        }
+                        if(s%12==0) {t+=1;s=0;}
+
+                        *it2 =128+s+ t*16;
+                        s+=1;
+                    
+                    } 
+                    else{
+                        int triangleID = (it->first-3)/12;
+                        *it2 += triangleID *4;
+                    }
+                }
+            
+            }
+        };
+
+    int* getID(const int index) const{
+
+        static int result[3];
+        int triangleID,taxelInTriangle;
+        bool success =0;
+        //std::cout<<"\n HERE"<<index<<std::endl;
+
+        for(auto mapit=repr2TaxelList.begin();mapit!=repr2TaxelList.end();mapit++){
+            auto listIntriangle= mapit->second;
+            auto it = std::find(listIntriangle.begin(), listIntriangle.end(), index);
+            if(it != listIntriangle.end()){
+                
+                triangleID = mapit->first;
+               
+                if (triangleID==-1){
+                    //working in progress
+                  
+                    triangleID =8; //palm ID, heat pads should be only in the palm
+                    
+                    taxelInTriangle = std :: distance(listIntriangle.begin(),it);
+                   
+                    //taxelInTriangle = (taxelInTriangle%4)*12+5;//5,17,29,41
+                    taxelInTriangle = (taxelInTriangle%4 +1)*12-1; //11,23,35,43
+                    if(taxelInTriangle==47) taxelInTriangle=43;
+                  
+                    
+                }
+                else if(triangleID<60){
+                    //yWarning("Finger");
+                    triangleID = (triangleID-9)/12;
+                    taxelInTriangle = std :: distance(listIntriangle.begin(),it);
+                }
+                else{ 
+                    //yWarning("Palm");
+                   
+                    taxelInTriangle = (*it-128)-4*((*it-128)/16);
+                   
+                    triangleID = 8;
+
+                }
+                success =1;
+                break;
+            }
+        }
+
+        result[0] = triangleID;
+        result[1] = taxelInTriangle;
+        result[2] = success;
+        return result;
+    };
+
+    std::tuple<double,double> makeMap(int index)const{
+
+        int ID = getID(index)[0];
+        int taxelIntriangle =getID(index)[1];
+
+        std::vector<double> info = data.find(ID)->second;
+
+        double cx = info[0];
+        double cy = info[1];
+        double th = info[2];
+        double gain = info[3];
+        int lrMirror = int (info[4]);
+        const double CST=cos(DEG2RAD*th);
+        const double SNT=sin(DEG2RAD*th);
+        
+
+        if(ID<=4){
+            // yInfo("\n Quest for finger map \n");
+            const double scale=2.7/15.3;
+            
+            dX[0]= 41.0; dY[0]=10.0; 
+            dX[1]= 15.0; dY[1]=10.0; 
+            dX[2]= 15.0; dY[2]=35.0; 
+            dX[3]= 41.0; dY[3]=35.0; 
+            dX[4]= 30.0; dY[4]=64.0; 
+            dX[5]= 11.0; dY[5]=58.0; 
+            dX[6]=  0.0; dY[6]=82.0; 
+            dX[7]=-11.0; dY[7]=58.0; 
+            dX[8]=-30.0; dY[8]=64.0; 
+            dX[9]=-41.0; dY[9]=35.0; 
+            dX[10]=-15.0; dY[10]=35.0;
+            dX[11]=-15.0; dY[11]=10.0;        
+
+                    
+
+
+            // std :: cout << "HERE"<<std ::endl;
+            double x=scale*dX[taxelIntriangle];
+            double y=scale*dY[taxelIntriangle];
+            
+            double u=cx+CST*x-SNT*y;
+            double v=cy+SNT*x+CST*y;
+
+            
+            return std :: make_tuple(u,v);
+
+        }
+        else if(ID==8){
+            // yInfo("\n Quest for palm map \n");
+            
+            const double scale=1.2;
+
+            dX[29]=1.5;  dY[29]=6.5;
+            dX[28]=6.5;  dY[28]=6;
+            dX[30]=11.5; dY[30]=6;
+            dX[31]=16.5; dY[31]=6;
+            dX[33]=21.5; dY[33]=6;
+            dX[27]=6.5;  dY[27]=1;
+            dX[26]=11.5; dY[26]=1;
+            dX[32]=16.5; dY[32]=1;
+            dX[34]=21.5; dY[34]=1;
+            dX[35]=9.5;  dY[35]=-2; //thermal_pad
+            dX[25]=14.5; dY[25]=-3.5;
+            dX[24]=21.5; dY[24]=-4;
+
+
+            dX[6]=27;   dY[6]=6;
+            dX[7]=32;   dY[7]=6;
+            dX[8]=37;   dY[8]=6;
+            dX[9]=42;   dY[9]=5.5;
+            dX[10]=47;   dY[10]=4.5;
+            dX[11]=51.7; dY[11]=4; //thermal_pad
+            dX[3]=27;    dY[3]=1;
+            dX[1]=32;    dY[1]=1;
+            dX[4]=37;    dY[4]=1;
+            dX[5]=42;   dY[5]=0;
+            dX[2]=27;    dY[2]=-3.5;
+            dX[0]=32;    dY[0]=-3.5;
+
+
+            dX[17]=37.5;    dY[17]=-4.5;
+            dX[20]=42;     dY[20]=-5.5;
+            dX[21]=46.5;    dY[21]=-8;
+            dX[15]=27;    dY[15]=-9;
+            dX[14]=32;    dY[14]=-9;
+            dX[16]=37;    dY[16]=-9;
+            dX[19]=42;    dY[19]=-10.5;
+            
+            dX[13]=38;    dY[13]=-14;
+            dX[18]=43;    dY[18]=-16;
+            dX[22]=47;    dY[22]=-13;
+            dX[12]=47.5;    dY[12]=-18;
+            dX[23]=43.5;    dY[23]=-20; //thermal_pad
+
+            dX[45]=28;    dY[45]=-19.5;
+            dX[42]=33;    dY[42]=-19.5;
+            dX[36]=38;    dY[36]=-19.5;
+            dX[44]=28;    dY[44]=-24.5;
+            dX[40]=33;    dY[40]=-24.5;
+            dX[38]=38;    dY[38]=-24.5;
+            dX[37]=43;    dY[37]=-26;
+            dX[41]=35;    dY[41]=-29;
+            dX[39]=40;    dY[39]=-29.5;
+            dX[43]=37;    dY[43]=-32.5; //thermal pad
+            dX[47]=33;    dY[47]=-14.5;
+            dX[46]=28;    dY[46]=-14.5; 
+
+
+        
+            double x=scale*dX[taxelIntriangle];
+            double y=scale*dY[taxelIntriangle];
+
+            //std :: cout<< "\nHERE"<<std::endl;
+
+            if (lrMirror==1) x=-x;
+
+            double u=cx+CST*x-SNT*y;
+            double v=cy+SNT*x+CST*y;
+        
+            if ((taxelIntriangle!=43) && (taxelIntriangle!=23) && (taxelIntriangle!=11) && (taxelIntriangle!=35) )return std :: make_tuple(abs(u)+palmShift,v);
+        //    if ((taxelIntriangle!=41) && (taxelIntriangle!=29) && (taxelIntriangle!=17) && (taxelIntriangle!=5) )return std :: make_tuple(abs(u)+palmShift,v);
+            else return std :: make_tuple(-1000,-1000);//dummy location
         }
        
         else{
@@ -614,12 +870,7 @@ std::tuple<double,double> makeMap(int index)const{
 
 class loadMap {
     private:
-
-    
-        Triangle_10pad skin;
-        handR hand; 
-        
-
+ 
         std::map<int,std::tuple<double, double>> default_pos={{0,{24, 9}},{1,{24, 7}},{2,{23, 8}},{3,{23, 10}},{4,{22, 9}},{5,{21, 10}},{7,{22, 11}},{8,{23, 12}},{9,{24, 13}},{11,{24, 11}},{16,{22, 17}},{17,{23, 16}},
         {18,{22, 15}},{19,{21, 16}},{20,{21, 14}},{21,{20, 13}},{23,{20, 15}},{24,{20, 17}},{25,{20, 19}},{27,{21, 18}},{32,{24, 21}},{33,{24, 19}},
         {34,{23, 20}},{35,{23, 22}},{36,{22, 21}},{37,{21, 22}},{39,{22, 23}},{40,{23, 24}},{41,{24, 25}},{43,{24, 23}},{48,{2, 11}},{49,{2, 13}},
@@ -641,54 +892,62 @@ class loadMap {
 
         std::map<int,std::tuple<double, double>> pos {};
 
-        unsigned  N;
-        int xoffset,yoffset,scaling;
+        int xoffset,yoffset,scaling,radius,noise,max_value;
         
 
         loadMap(){
             
-            pos = default_pos;
-            N = pos.size();
+            noise = 2500;
+            max_value = 15000;
+
             xoffset = 80;
-            yoffset = 120;
+            //yoffset = 120;
+            yoffset = 680;
             scaling=20;
+            radius =10;
 
         };
 
-        void init(std::string bodypart){
+        void initialise(std::string bodypart){
 
             std::vector<int> taxel2Repr;
-            yarp::os::ResourceFinder rf;
+            yarp::os::ResourceFinder rf1, rf2;
             std :: string filename1,filename2;
 
             int check=0;
 
             if (bodypart == "arm"){
-                filename1 = "right_forearm_V2.ini";
-                filename2 = "right_forearm_V2.txt";
-                rf.setVerbose(false);
-                rf.setDefaultContext("skinGui");            //overridden by --context parameter
-                rf.setDefaultConfigFile(filename1); //overridden by --from parameter
-                rf.configure(0,NULL);   
-                rf.setVerbose(true);
+                Triangle_10pad skin;
+
+                filename1 = "skinGui/right_forearm_V2.ini";
+                filename2 = "positions/right_forearm_V2.txt";
+
+                rf2.setVerbose(true);
+                rf2.setDefaultContext("skinGui");            //overridden by --context parameter
+                rf2.setDefaultConfigFile(filename2); //overridden by --from parameter
+                rf2.configure(0,NULL);   
                 
-                if (rf.check("taxel2Repr")){
+                
+                if (rf2.check("taxel2Repr")){
                     check+=1;
                     std :: cout << "Calibration data";
-                    yarp::os::Bottle calibration_data = *(rf.find("taxel2Repr").asList());
+                    yarp::os::Bottle calibration_data = *(rf2.find("taxel2Repr").asList());
                     for (int i = 0; i < calibration_data.size(); i++){
                             taxel2Repr.push_back(calibration_data.get(i).asInt());
                     }
+                    skin.initRepresentativeTaxels(taxel2Repr);
                 }
-                rf.setVerbose(false);
-                rf.setDefaultContext("skinGui");            //overridden by --context parameter
-                rf.setDefaultConfigFile(filename2); //overridden by --from parameter
-                rf.configure(0,NULL);   
-                rf.setVerbose(true);
-                if (rf.check("SENSORS")){
+
+                rf1.setVerbose(true);
+                rf1.setDefaultContext("skinGui");            //overridden by --context parameter
+                rf1.setDefaultConfigFile(filename1); //overridden by --from parameter
+                rf1.configure(0,NULL);   
+                
+                
+                if (rf1.check("SENSORS")){
                     check+=1;
                     std:: cout<< "\n Sensors data"<<std::endl;
-                    yarp::os::Bottle &ini_data = rf.findGroup("SENSORS");
+                    yarp::os::Bottle &ini_data = rf1.findGroup("SENSORS");
 
                     for (int i = 1; i < (ini_data.size()); i++){   
 
@@ -714,47 +973,55 @@ class loadMap {
                     yInfo("Building taxel map from file");
                     for (auto it =skin.repr2TaxelList.begin();it!=skin.repr2TaxelList.end();it++){
                         for (auto it2 =  it->second.begin(); it2 !=it->second.end(); it2++){
-                            pos.insert(std::pair<int,std::tuple<int, int>>(*it2,skin.makeMap(*it2)));
+                            pos.insert(std::pair<int,std::tuple<double, double>>(*it2,skin.makeMap(*it2)));
                         }
                     }
                     xoffset=skin.xoffset;
                     yoffset=skin.yoffset;
                     scaling =skin.scaling;
+                    radius = skin.radius;
+                    // for (auto it =pos.begin();it!=pos.end();it++){
+                    // std:: cout <<"\n Address "<< it->first <<"\t Coordinate ="<< std :: get<0>(it->second)<<"   "<<std :: get<1>(it->second)<<std::endl;
+                    // }
                 }
                 else{
                     yWarning("Unable to build the taxel map from file");
                     pos = default_pos;
                 }
-
-                
             }
 
-            if(bodypart == "hand"){
-                filename1 = "right_hand_V2_1.ini";
-                filename2 = "right_hand_V2_1.txt";
+            if(bodypart == "rightHand"){
+                Right_hand handR = Right_hand(-40); 
 
-                rf.setVerbose(false);
-                rf.setDefaultContext("skinGui");            //overridden by --context parameter
-                rf.setDefaultConfigFile(filename1); //overridden by --from parameter
-                rf.configure(0,NULL);   
-                rf.setVerbose(true);
-                if (rf.check("taxel2Repr")){
+                filename1 = "skinGui/right_hand_V2_1.ini";
+                filename2 = "positions/right_hand_V2_1.txt";
+
+                rf2.setVerbose(false);
+                rf2.setDefaultContext("skinGui");            //overridden by --context parameter
+                rf2.setDefaultConfigFile(filename2); //overridden by --from parameter
+                rf2.configure(0,NULL);   
+                rf2.setVerbose(true);
+
+                if (rf2.check("taxel2Repr")){
                     check+=1;
                     std :: cout << "Calibration data";
-                    yarp::os::Bottle calibration_data = *(rf.find("taxel2Repr").asList());
+                    yarp::os::Bottle calibration_data = *(rf2.find("taxel2Repr").asList());
                     for (int i = 0; i < calibration_data.size(); i++){
                             taxel2Repr.push_back(calibration_data.get(i).asInt());
                     }
+                    handR.initRepresentativeTaxels(taxel2Repr);
                 }
-                rf.setVerbose(false);
-                rf.setDefaultContext("skinGui");            //overridden by --context parameter
-                rf.setDefaultConfigFile(filename2); //overridden by --from parameter
-                rf.configure(0,NULL);   
-                rf.setVerbose(true);
-                if (rf.check("SENSORS")){
+
+                rf1.setVerbose(false);
+                rf1.setDefaultContext("skinGui");            //overridden by --context parameter
+                rf1.setDefaultConfigFile(filename1); //overridden by --from parameter
+                rf1.configure(0,NULL);   
+                rf1.setVerbose(true);
+
+                if (rf1.check("SENSORS")){
                     check+=1;
                     std:: cout<< "\n Sensors data"<<std::endl;
-                    yarp::os::Bottle &ini_data = rf.findGroup("SENSORS");
+                    yarp::os::Bottle &ini_data = rf1.findGroup("SENSORS");
 
                     for (int i = 1; i < (ini_data.size()); i++){   
 
@@ -770,30 +1037,102 @@ class loadMap {
                         int    mirror=sensorConfig.get(6).asInt();
                         int    layoutNum=sensorConfig.get(7).asInt();
 
-                        hand.get_data(id,x,y,orientation,gain,mirror,layoutNum);
+                        handR.get_data(id,x,y,orientation,gain,mirror,layoutNum);
                     }
                 }
                 if(check==2){
                     yInfo("Building taxel map from file");
-                    for (auto it =hand.repr2TaxelList.begin();it!=hand.repr2TaxelList.end();it++){
+                    for (auto it =handR.repr2TaxelList.begin();it!=handR.repr2TaxelList.end();it++){
                         for (auto it2 =  it->second.begin(); it2 !=it->second.end(); it2++){
-                            pos.insert(std::pair<int,std::tuple<int, int>>(*it2,hand.makeMap(*it2)));
+                            pos.insert(std::pair<int,std::tuple<double, double>>(*it2,handR.makeMap(*it2)));
                         }
                     }
-                    xoffset=hand.xoffset;
-                    yoffset=hand.yoffset;
-                    scaling =hand.scaling;
+                    xoffset=handR.xoffset;
+                    yoffset=handR.yoffset;
+                    scaling =handR.scaling;
+                    radius = handR.radius;
+                    noise = handR.noise;
+                    max_value = handR.max_value;
                 }
                 else {   
                     yWarning("Unable to build the taxel map from file");
                     pos = default_pos;
                 } 
-
-                
-
             }
-        };
 
+            if(bodypart == "leftHand"){
+
+                Left_hand handL = Left_hand(-5);
+
+
+                filename1 = "skinGui/left_hand_V2_1.ini";
+                filename2 = "positions/left_hand_V2_1.txt";
+
+                rf2.setVerbose(false);
+                rf2.setDefaultContext("skinGui");            //overridden by --context parameter
+                rf2.setDefaultConfigFile(filename2); //overridden by --from parameter
+                rf2.configure(0,NULL);   
+                rf2.setVerbose(true);
+
+                if (rf2.check("taxel2Repr")){
+                    check+=1;
+                    std :: cout << "Calibration data";
+                    yarp::os::Bottle calibration_data = *(rf2.find("taxel2Repr").asList());
+                    for (int i = 0; i < calibration_data.size(); i++){
+                            taxel2Repr.push_back(calibration_data.get(i).asInt());
+                    }
+                    handL.initRepresentativeTaxels(taxel2Repr);
+                }
+
+                rf1.setVerbose(false);
+                rf1.setDefaultContext("skinGui");            //overridden by --context parameter
+                rf1.setDefaultConfigFile(filename1); //overridden by --from parameter
+                rf1.configure(0,NULL);   
+                rf1.setVerbose(true);
+
+                if (rf1.check("SENSORS")){
+                    check+=1;
+                    std:: cout<< "\n Sensors data"<<std::endl;
+                    yarp::os::Bottle &ini_data = rf1.findGroup("SENSORS");
+
+                    for (int i = 1; i < (ini_data.size()); i++){   
+
+                        yarp::os::Bottle sensorConfig(ini_data.get(i).toString());
+
+                        //std::string type(sensorConfig.get(0).asString()); useless since forearm has always same type and hand has a precise numbering for palm and fingers.
+                        
+                        int id=sensorConfig.get(1).asInt();
+                        double x=sensorConfig.get(2).asDouble();
+                        double y=sensorConfig.get(3).asDouble();
+                        double orientation=sensorConfig.get(4).asDouble();
+                        double gain=sensorConfig.get(5).asDouble();
+                        int    mirror=sensorConfig.get(6).asInt();
+                        int    layoutNum=sensorConfig.get(7).asInt();
+
+                        handL.get_data(id,x,y,orientation,gain,mirror,layoutNum);
+                    }
+                }
+                if(check==2){
+                    yInfo("Building taxel map from file");
+                    for (auto it =handL.repr2TaxelList.begin();it!=handL.repr2TaxelList.end();it++){
+                        for (auto it2 =  it->second.begin(); it2 !=it->second.end(); it2++){
+                            pos.insert(std::pair<int,std::tuple<double, double>>(*it2,handL.makeMap(*it2)));
+                        }
+                    }
+                    xoffset=handL.xoffset;
+                    yoffset=handL.yoffset;
+                    scaling =handL.scaling;
+                    radius = handL.radius;
+                    noise = handL.noise;
+                    max_value = handL.max_value;
+                }
+                else {   
+                    yWarning("Unable to build the taxel map from file");
+                    pos = default_pos;
+                } 
+            }
+
+        };
 
 };
 
@@ -810,15 +1149,20 @@ class isoDrawSkin : public isoDraw{
 
     loadMap tmap;
 
+    int radius;
+
     public:
     
     void initialise(){
 
 
-        Xlimit = 700;
+        Xlimit = 800;
         Ylimit = 800;
         
         isoDraw :: initialise();
+        tmap.initialise("leftHand");
+
+        radius = tmap.radius-1;
 
     };
     
@@ -836,28 +1180,35 @@ class skinDraw : public vDraw {
 private:
 
     loadMap tmap;
-
-    
     cv::Mat baseimage;
+
+    int radius;
 
 public:
     
     void initialise(){
 
-        Xlimit = 700;
+        Xlimit = 800;
         Ylimit = 800;
 
         baseimage = cv::Mat(cv::Size(Xlimit, Ylimit), CV_8UC3);
         baseimage.setTo(255);
+        tmap.initialise("leftHand");
+        radius = tmap.radius;
 
         int x;
         int y;
+
+        yInfo("scaling = %d", tmap.scaling );
+        yInfo("xoffset = %d", tmap.xoffset );
+        yInfo("yoffset =%d", tmap.yoffset );
+
         for (auto it = tmap.pos.begin(); it != tmap.pos.end(); it++)
         {
             x = tmap.xoffset + tmap.scaling* std :: get<0>(it->second);
-            y =  Ylimit - (tmap.yoffset +tmap.scaling* std :: get<1>(it->second));
+            y =  tmap.yoffset +tmap.scaling* std :: get<1>(it->second);
             cv::Point centr_all(x, y);
-            cv::circle(baseimage, centr_all, 10, black,1, CV_AA);
+            cv::circle(baseimage, centr_all, radius, black,1, CV_AA);
         }
 
         };
@@ -882,15 +1233,22 @@ private:
 
     loadMap tmap;
     cv::Mat baseimage;
+    int radius,noise,max_value;
 
 public:
   void initialise(){
 
-        Xlimit = 700;
+        Xlimit = 800;
         Ylimit = 800;
 
         baseimage = cv::Mat(cv::Size(Xlimit, Ylimit), CV_8UC3);
         baseimage.setTo(255);
+
+        tmap.initialise("leftHand");
+
+        radius = tmap.radius;
+        noise = tmap.noise;
+        max_value=tmap.max_value;
 
         int x;
         int y;
@@ -899,9 +1257,9 @@ public:
         for (auto it = tmap.pos.begin(); it != tmap.pos.end(); it++)
         {
             x = tmap.xoffset + tmap.scaling* std :: get<0>(it->second);
-            y =  Ylimit - (tmap.yoffset +tmap.scaling* std :: get<1>(it->second));
+            y =  tmap.yoffset +tmap.scaling* std :: get<1>(it->second);
             cv::Point centr_all(x, y);
-            cv::circle(baseimage, centr_all, 10, black,1, CV_AA);
+            cv::circle(baseimage, centr_all, radius, black,1, CV_AA);
         }
     };
 

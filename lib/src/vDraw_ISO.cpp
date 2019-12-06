@@ -265,7 +265,7 @@ void isoDrawSkin::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     isoimage.setTo(255);
 
     //if() return;
-    if(eSet.empty()) return;
+    //if(eSet.empty()) return;
 
     //ev::vQueue::const_reverse_iterator qi;
 
@@ -286,7 +286,7 @@ void isoDrawSkin::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         int index = aep->taxel;
         int px = tmap.xoffset + tmap.scaling* std :: get<0>(tmap.pos[index]);
-        int py =  Ylimit-(tmap.yoffset + tmap.scaling* std :: get<1>(tmap.pos[index]));
+        int py =  tmap.yoffset + tmap.scaling* std :: get<1>(tmap.pos[index]);
         if(flip) {
             px = Xlimit - 1 - px;
             py = Ylimit - 1 - py;
@@ -303,11 +303,11 @@ void isoDrawSkin::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if(!aep->polarity) {
             //isoimage.at<cv::Vec3b>(py, px) = light_violet;
             cv::Point center(px,py);
-            cv::circle(isoimage, center, 6, light_aqua, CV_FILLED,CV_AA);
+            cv::circle(isoimage, center, radius, light_aqua, CV_FILLED,CV_AA);
         } else {
             //  isoimage.at<cv::Vec3b>(py, px) = light_aqua;
             cv::Point center(px,py);
-            cv::circle(isoimage, center, 6, light_violet,CV_FILLED,CV_AA);
+            cv::circle(isoimage, center, radius, light_violet,CV_FILLED,CV_AA);
         }
     }
 
