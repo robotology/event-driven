@@ -144,8 +144,8 @@ def cropTime(inDict, **kwargs):
     # TODO: handle list case
     if 'ts' in inDict:
         ts = inDict['ts']
-        startTime = kwargs.get('startTime', ts[0])
-        stopTime = kwargs.get('stopTime', ts[-1])
+        startTime = kwargs.get('startTime', kwargs.get('minTime', kwargs.get('beginTime', ts[0])))
+        stopTime = kwargs.get('stopTime', kwargs.get('maxTime', kwargs.get('endTime', ts[-1])))
         numElements = len(ts)
         startIdx = np.searchsorted(ts, startTime)
         stopIdx = np.searchsorted(ts, stopTime)
