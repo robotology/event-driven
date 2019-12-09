@@ -19,19 +19,19 @@ plotCorrelogram receives "inDict", which is a container for (2D) polarity events
     y
     pol
 Autocorrelation
-A correlogram is created for a has a row for each address-event represented, where the x dim 
-represents time. Color represents polarity (blue vs red for 1 vs 0)
-By default, all addresses will be plotted as a row, 
-but this will usually be impractical. So the kwargs
+A correlogram is created for the chosen range of pixels.
+Choose the pixels by setting the kwargs:
     xMin
     xMax
     yMin
     yMax
-are used to constrain the space represented
-and tMin and tMax are used to constrain time. 
-The axes are aligned so that the coordinate points to the middle of the first
-row represented by that mark. 
-
+By default, all pixels are included. 
+By default, all pixels are autocrrelated individually, and then the results are 
+combined, so the end result is a mean over all pixels.
+TODO: Could do an autocrrelation for all spikes for the range together.
+TODO: Could write a cross-correlation function.
+minTime and maxTime are used to constrain time. 
+By default, polarities are combined; separate them with splitByPol=true
 """
 
 #%% Plot tsPix (single pixel timestamps)
@@ -41,7 +41,9 @@ import matplotlib.lines as lines
 import numpy as np
 from tqdm import tqdm
 
-def plotAutoCorrelation():
+# local imports
+
+def plotAutoCorrelation(inDict, **kwargs):
     # Boilerplate for descending container hierarchy
     if isinstance(inDict, list):
         for inDictInst in inDict:
@@ -61,39 +63,37 @@ def plotAutoCorrelation():
             else:
                 print('Channel ' + channelName + ' skipped because it contains no polarity data')
         return
+    # use other library functions to do spatiotemporal cropping
+    inDict = cropSpace(inDict, **kwargs)
+    inDict = cropTime(inDict, zeroTime=False, **kwargs)
+    if kwargs.get(splitByPol, False):
+        splitDict = splitByPolarity(inDict)
+        fig, axes = plt.subplots(2, 1)
+        kwargs['axes'] = axes[0]
+        plotAutoCorrelation(splitDict[0], **kwargs)
+        kwargs['axes'] = axes[0]
+        plotAutoCorrelation(splitDict[1], **kwargs)
+        return
+    axes = kwargs.get('axes')
+    if axes is None:
+        fig, axes = plt.subplots()
+        kwargs['axes'] = axes
     # Break out data arrays for cleaner code
     x = inDict['x']
     y = inDict['y']
     ts = inDict['ts']
     pol = inDict['pol']
-    minX = kwargs.get('minX', np.min(x))
-    maxX = kwargs.get('maxX', np.max(x))
-    minY = kwargs.get('minY', np.min(y))
-    maxY = kwargs.get('maxY', np.max(y))
-    minTime = kwargs.get('minTime', np.min(ts))
-    maxTime = kwargs.get('maxTime', np.max(ts))
-    numX = maxX - minX + 1
-    #numY = maxY - minY + 1
-    timeRange = maxTime - minTime
-    selected = np.where((x >= minX) & (x <= maxX) &
-                    (y >= minY) & (y <= maxY) &
-                    (ts >= minTime) & (ts <= maxTime))[0]
+    numBins = kwargs.get('numBins', 50)
+    minOffset = kwargs.get('minOffset', 0.00001) # 10 us
+    maxOffset = kwargs.get('maxOffset', 0.1) # 100 ms
+    boundaries = np.logspace(minOffset, maxOffset, numBins)
+    # Cropping has already happened; now iterate through defacto spatial range
+    for currX in range(min(x), max(x)+1): 
+        for currY in range(min(y), max(y)+1): 
+    histPos = np.zeros()
 
-    axes = kwargs.get('axes')
-    if axes is None:
-        fig, axes = plt.subplots()
-        kwargs['axes'] = axes
 
-    for idx in tqdm(selected):
-        xPos = ts[idx]
-        yPos = x[idx] + y[idx]*numX
-        if pol[idx]:
-            line = lines.Line2D([xPos, xPos], [yPos - 0.5, yPos + 0.5], 
-                                color='blue', lw=2, axes=axes)
-        else:
-            line = lines.Line2D([xPos, xPos], [yPos - 0.5, yPos + 0.5], 
-                                color='red', lw=2, axes=axes)
-        axes.add_line(line)
+    axes.add_line(line)
     axes.set_xlim(minTime-timeRange*0.01, maxTime+timeRange*0.01)
     axes.set_ylim(minX + minY*numX - 1, maxX + maxY*numX + 1)
     formatString = '0'+ str(int(np.log10(999))+1) + 'd'

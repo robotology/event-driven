@@ -109,9 +109,9 @@ imported = importIntelRealsense(filePathOrName=filePathOrName)
 
 #%% Cropping a dataset to a desired time range
 
-from timestamps import cropDataByTimeRange 
+from split import cropTime
 
-cropDataByTimeRange(imported, minTs=35, maxTs=38)     
+cropped = cropTime(imported, minTime=35, maxTime=38)     
 
 #%% VISUALISATION FUNCTIONS
 

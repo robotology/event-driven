@@ -40,6 +40,8 @@ import matplotlib.lines as lines
 import numpy as np
 from tqdm import tqdm
 
+# TODO: This code is very inefficient for large numbers of events
+# better to iterate once for each pixel
 def plotSpikeogram(inDict, **kwargs):
     # Boilerplate for descending container hierarchy
     if isinstance(inDict, list):
@@ -69,15 +71,14 @@ def plotSpikeogram(inDict, **kwargs):
     maxX = kwargs.get('maxX', np.max(x))
     minY = kwargs.get('minY', np.min(y))
     maxY = kwargs.get('maxY', np.max(y))
-    minTime = kwargs.get('minTime', np.min(ts))
-    maxTime = kwargs.get('maxTime', np.max(ts))
+    minTime = kwargs.get('minTime', kwargs.get('startTime', kwargs.get('beginTime', np.min(ts))))
+    maxTime = kwargs.get('maxTime', kwargs.get('stopTime', kwargs.get('endTime', np.max(ts))))
     numX = maxX - minX + 1
     #numY = maxY - minY + 1
     timeRange = maxTime - minTime
     selected = np.where((x >= minX) & (x <= maxX) &
                     (y >= minY) & (y <= maxY) &
                     (ts >= minTime) & (ts <= maxTime))[0]
-
     axes = kwargs.get('axes')
     if axes is None:
         fig, axes = plt.subplots()
