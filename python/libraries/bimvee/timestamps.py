@@ -129,29 +129,8 @@ def cropSelectedFields(dataTypeDict, fieldList, selectedBool):
         dataTypeDict[fieldName] = dataTypeDict[fieldName][selectedBool]
 
 '''
-This function takes minTs(default=0) and maxTs (default last timestamp)
-and applies these to the ALREADY OFFSET ts, throwing away any data outside the range. 
-It then rezeros the data.
+cropDataByTimeRange was here - replaced by cropTime in split.py
 '''
-def cropDataByTimeRange(importedDicts, **kwargs):
-    minTs = kwargs.get('minTs', 0)
-    maxTs = kwargs.get('maxTs') # TODO: handle default
-    if not isinstance(importedDicts, list):
-        importedDicts = [importedDicts]
-    for importedDict in importedDicts:
-        for channelName in importedDict['data']:
-            for dataType in importedDict['data'][channelName]:
-                fieldList = getFieldListForDataType(dataType)
-                dataTypeDict = importedDict['data'][channelName][dataType]
-                selectedBool = ((dataTypeDict['ts'] >= minTs) & 
-                                (dataTypeDict['ts'] <= maxTs))
-                if not np.any(selectedBool):
-                    print('import ', importedDict['filePathOrName'], '; channel ', channelName, '; dataType ', dataType, ': all data removed by crop.'  )
-                cropSelectedFields(importedDict['data'][channelName][dataType], fieldList, selectedBool)
-                if kwargs.get('zeroTimestamps', True):
-                    zeroTimestampsForADataType(dataTypeDict, tsOffset=-minTs)
-    if kwargs.get('zeroTimestamps', True) and minTs != 0:
-        rezeroTimestampsForImportedDicts(importedDicts)
             
 #%% LEGACY CODE - timestamps for different data types present in aedat
 # There are exceptions around the timestamps for frame data to consider 

@@ -278,9 +278,9 @@ def interpretMsgsAsFrame(msgs):
             tsAll = np.append(tsAll, np.zeros((sizeOfArray), dtype=np.float64))
             sizeOfArray *= 2            
         data = msg['data']
-        #seq = unpack('L', data[0:4])[0]
-        timeS = unpack('L', data[4:8])[0]
-        timeNs = unpack('L', data[8:12])[0]
+        #seq = unpack('=L', data[0:4])[0]
+        timeS = unpack('=L', data[4:8])[0]
+        timeNs = unpack('=L', data[8:12])[0]
         tsAll[numEvents] = np.float64(timeS)+np.float64(timeNs)*0.000000001
         frame_id, ptr = unpackRosString(data, 12)
         height, ptr = unpackRosUint32(data, ptr)

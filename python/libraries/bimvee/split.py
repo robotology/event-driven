@@ -141,33 +141,8 @@ If the container contains an info field, then the start and stopTime params
 will be added.
 '''
 def cropTime(inDict, **kwargs):
-    # TODO: handle list case
-    if 'ts' in inDict:
-        ts = inDict['ts']
-        startTime = kwargs.get('startTime', kwargs.get('minTime', kwargs.get('beginTime', ts[0])))
-        stopTime = kwargs.get('stopTime', kwargs.get('maxTime', kwargs.get('endTime', ts[-1])))
-        numElements = len(ts)
-        startIdx = np.searchsorted(ts, startTime)
-        stopIdx = np.searchsorted(ts, stopTime)
-        tsNew = ts[startIdx:stopIdx] - startTime
-        outDict = {'ts': tsNew}
-        for fieldName in inDict.keys():
-            if fieldName != 'ts':
-                field = inDict[fieldName]
-                try:
-                    lenField = len(field)
-                except TypeError:
-                    lenField = 0
-                if lenField == numElements:
-#                    if isinstance(outDict[fieldName], list):
-#                        outDict[fieldName] = field[]
-#                    else:
-                    outDict[fieldName] = field[startIdx:stopIdx]
-                else:
-                    outDict[fieldName] = field.copy() # This might fail for certain data types
-        tsOffsetOriginal = inDict.get('tsOffset', 0)
-        outDict['tsOffset'] = tsOffsetOriginal - startTime
-        return outDict
+    if isinstance(inDict, list):
+        return [cropTime(inDictInst, **kwargs) for inDictInst in inDict]
     elif 'info' in inDict:
         outDict = {'info': inDict['info'].copy(),
                    'data': {}}
@@ -177,7 +152,77 @@ def cropTime(inDict, **kwargs):
                 outDict['data'][channelName][dataTypeName] = cropTime(inDict['data'][channelName][dataTypeName], **kwargs)                
         rezeroTimestampsForImportedDicts(outDict)
         return outDict
+    elif 'ts' in inDict:
+        ts = inDict['ts']
+        startTime = kwargs.get('startTime', kwargs.get('minTime', kwargs.get('beginTime', ts[0])))
+        stopTime = kwargs.get('stopTime', kwargs.get('maxTime', kwargs.get('endTime', ts[-1])))
+        if startTime == ts[0] and stopTime == ts[-1]:
+            # No cropping to do - pass out the dict unmodified
+            return inDict
+        startIdx = np.searchsorted(ts, startTime)
+        stopIdx = np.searchsorted(ts, stopTime)
+        tsNew = ts[startIdx:stopIdx] - startTime
+        outDict = {'ts': tsNew}
+        for fieldName in inDict.keys():
+            if fieldName != 'ts':
+                field = inDict[fieldName]
+                try:
+                    outDict[fieldName] = field[startIdx:stopIdx]
+                except IndexError:
+                    outDict[fieldName] = field.copy() # This might fail for certain data types
+        if kwargs.get('zeroTime', True):
+            tsOffsetOriginal = inDict.get('tsOffset', 0)
+            outDict['tsOffset'] = tsOffsetOriginal - startTime
+        return outDict
     else:
         # We assume that this is a datatype which doesn't contain ts, 
         # so we pass it out unmodified
         return inDict
+
+def cropSpace(inDict, **kwargs):
+    if isinstance(inDict, list):
+        return [cropSpace(inDictInst, **kwargs) for inDictInst in inDict]
+    elif 'info' in inDict:
+        outDict = {'info': inDict['info'].copy(),
+                   'data': {}}
+        for channelName in inDict['data'].keys():
+            outDict['data'][channelName] = {}
+            for dataTypeName in inDict['data'][channelName].keys():
+                outDict['data'][channelName][dataTypeName] = cropSpace(inDict['data'][channelName][dataTypeName], **kwargs)
+        # TODO: consider rezeroing space        
+        return outDict
+    elif 'x' in inDict and 'y' in inDict:
+        x = inDict['x']
+        y = inDict['y']
+        minX = kwargs.get('minX', np.min(x))
+        maxX = kwargs.get('maxX', np.max(x))
+        minY = kwargs.get('minY', np.min(y))
+        maxY = kwargs.get('maxY', np.max(y))
+        if (minX == np.min(x) and 
+            maxX == np.max(x) and 
+            minY == np.min(y) and 
+            maxY == np.max(y)):
+            # No cropping to do - pass out the dict unmodified
+            return inDict
+        selectedBool = x >= minX and x <= maxX and y >= minY and y <= maxY
+        for fieldName in inDict.keys():
+            field = inDict[fieldName]
+            try:
+                outDict[fieldName] = field[selectedBool]
+            except IndexError:
+                outDict[fieldName] = field.copy() # This might fail for certain data types
+        return outDict
+    else:
+        # We assume that this is a datatype which doesn't contain x/y
+        # so we pass it out unmodified
+        return inDict
+
+# synonyms
+def cropSpatial(inDict, **kwargs):
+    return cropSpace(inDict, **kwargs)
+    
+# synonyms
+def cropTemporal(inDict, **kwargs):
+    return cropTime(inDict, **kwargs)
+    
+    
