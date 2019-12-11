@@ -50,7 +50,7 @@ def plotSpikeogram(inDict, **kwargs):
         return
     if 'info' in inDict: # Top level container
         fileName = inDict['info'].get('filePathOrName', '')
-        print('plotDvs was called for file ' + fileName)
+        print('plotSpikeogram was called for file ' + fileName)
         if not inDict['data']:
             print('The import contains no data.')
             return
@@ -63,6 +63,7 @@ def plotSpikeogram(inDict, **kwargs):
                 print('Channel ' + channelName + ' skipped because it contains no polarity data')
         return
     # Break out data arrays for cleaner code
+    print('plotSpikeogram working: ' + kwargs['title'])
     x = inDict['x']
     y = inDict['y']
     ts = inDict['ts']
@@ -74,7 +75,7 @@ def plotSpikeogram(inDict, **kwargs):
     minTime = kwargs.get('minTime', kwargs.get('startTime', kwargs.get('beginTime', np.min(ts))))
     maxTime = kwargs.get('maxTime', kwargs.get('stopTime', kwargs.get('endTime', np.max(ts))))
     numX = maxX - minX + 1
-    #numY = maxY - minY + 1
+    numY = maxY - minY + 1
     timeRange = maxTime - minTime
     selected = np.where((x >= minX) & (x <= maxX) &
                     (y >= minY) & (y <= maxY) &
@@ -97,7 +98,8 @@ def plotSpikeogram(inDict, **kwargs):
     axes.set_xlim(minTime-timeRange*0.01, maxTime+timeRange*0.01)
     axes.set_ylim(minX + minY*numX - 1, maxX + maxY*numX + 1)
     formatString = '0'+ str(int(np.log10(999))+1) + 'd'
-    theRange = range(minX+minY*numX, maxX+maxY*numX)
+    numRows = numX * numY
+    theRange = range(minX+minY*numX, maxX+maxY*numX, int(numRows/10)) # Let's have max 10 labels
     labels = ['x' + format(np.mod(x,numX), formatString) + ',' +
               'y' + format(int(x/numX), formatString)
               for x in theRange]

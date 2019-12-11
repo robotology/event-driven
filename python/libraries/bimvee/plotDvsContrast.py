@@ -205,8 +205,8 @@ def plotDvsContrast(inDict, **kwargs):
             centreEventIds = range(int(eventsPerStep/2), numEvents, eventsPerStep)
             firstEventIds = [idx - numEventsToSelectEachWay for idx in centreEventIds]
             lastEventIds = [idx + numEventsToSelectEachWay for idx in centreEventIds]
-    firstEventIds = np.clip(firstEventIds, minEventIdx, maxEventIdx)
-    lastEventIds = np.clip(lastEventIds, minEventIdx, maxEventIdx)
+    firstEventIds = np.clip(firstEventIds, minEventIdx, maxEventIdx-1)
+    lastEventIds = np.clip(lastEventIds, minEventIdx, maxEventIdx-1)
     firstTimes = ts[firstEventIds]
     lastTimes = ts[lastEventIds]
     timeCentres = (firstTimes+lastTimes)/2

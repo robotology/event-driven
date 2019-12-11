@@ -53,7 +53,7 @@ inspected = importRpgDvsRos(filePathOrName=filePathOrName)
 # http://rpg.ifi.uzh.ch/davis_data.html
 from importRpgDvsRos import importRpgDvsRos
     
-filePathAndName = os.path.join(prefix, 'data/rpg/shapes_rotation.bag')
+filePathOrName = os.path.join(prefix, 'data/rpg/shapes_rotation.bag')
 
 template = {
     'ch0': {
@@ -65,7 +65,7 @@ template = {
         }
     }
 
-imported = importRpgDvsRos(filePathAndName=filePathOrName, template=template)
+imported = importRpgDvsRos(filePathOrName=filePathOrName, template=template)
 
 #%% import Penn MVSEC
 
