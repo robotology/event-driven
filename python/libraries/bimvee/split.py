@@ -154,6 +154,8 @@ def cropTime(inDict, **kwargs):
         return outDict
     elif 'ts' in inDict:
         ts = inDict['ts']
+        if not np.any(ts): # the dataset is empty
+            return inDict
         startTime = kwargs.get('startTime', kwargs.get('minTime', kwargs.get('beginTime', ts[0])))
         stopTime = kwargs.get('stopTime', kwargs.get('maxTime', kwargs.get('endTime', ts[-1])))
         if startTime == ts[0] and stopTime == ts[-1]:
@@ -194,6 +196,8 @@ def cropSpace(inDict, **kwargs):
     elif 'x' in inDict and 'y' in inDict:
         x = inDict['x']
         y = inDict['y']
+        if len(x) == 0: # no data to crop
+            return inDict
         minX = kwargs.get('minX', np.min(x))
         maxX = kwargs.get('maxX', np.max(x))
         minY = kwargs.get('minY', np.min(y))
@@ -204,7 +208,10 @@ def cropSpace(inDict, **kwargs):
             maxY == np.max(y)):
             # No cropping to do - pass out the dict unmodified
             return inDict
-        selectedBool = x >= minX and x <= maxX and y >= minY and y <= maxY
+        selectedBool = np.logical_and(x >= minX, \
+                                      np.logical_and(x <= maxX, \
+                                              np.logical_and(y >= minY, y <= maxY)))
+        outDict = {}
         for fieldName in inDict.keys():
             field = inDict[fieldName]
             try:
