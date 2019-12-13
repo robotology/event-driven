@@ -40,7 +40,6 @@ Parameters which can be used:
 import numpy as np
 import matplotlib.pyplot as plt
 from math import log10, floor
-from plotDvsLastTs import plotDvsLastTs
 
 def roundToSf(x, sig=3):
     try:
@@ -64,6 +63,8 @@ def idsEventsInTimeRange(events, **kwargs):
     endIdx = np.searchsorted(events['ts'], endTime)
     return range(startIdx, endIdx)
 
+# TODO: standardise use of parameters in following two functions
+# This ignores polarity
 def getEventImage(events, **kwargs):
     ids = kwargs.get('ids', idsEventsInTimeRange(events, **kwargs))
     # dims might be in the events dict, but allow override from kwargs
@@ -78,43 +79,46 @@ def getEventImage(events, **kwargs):
         eventImage = np.clip(eventImage, 0, kwargs.get('contrast'))
     return eventImage
 
-'''
-TODO: apply the low-level functions above into the plot functions below
-'''
-def plotDvsContrastSingle(inDict, **kwargs):
+def getPolarisedEventImage(events, **kwargs):
     # Unpack data for clarity
-    pol = inDict['pol']
-    x = inDict['x']
-    y = inDict['y']
+    pol = events['pol']
+    x = events['x']
+    y = events['y']
     # Accumulate x and y separately for pos and neg pol, then subtract one from the other.
     xPos = x[pol]
     yPos = y[pol]
-    maxX = kwargs.get('maxX', inDict['x'].max())
-    maxY = kwargs.get('maxY', inDict['y'].max())
+    maxX = kwargs.get('maxX', x.max())
+    maxY = kwargs.get('maxY', y.max())
     frameFromEventsPos = np.histogram2d(yPos, xPos, bins=[maxY, maxX], range=[[0, maxY-1], [0, maxX-1]])[0]
     xNeg = x[~pol]
     yNeg = y[~pol]
     frameFromEventsNeg = np.histogram2d(yNeg, xNeg, bins=[maxY, maxX], range=[[0, maxY-1], [0, maxX-1]])[0]
     frameFromEvents = frameFromEventsPos - frameFromEventsNeg
-    if kwargs.get('transpose', False):
-        frameFromEvents = np.transpose(frameFromEvents)
     # The 'contrast' for display of events, as used in jAER.
     contrast = kwargs.get('contrast', 3)
     # Clip the values according to the contrast
     frameFromEvents = np.clip(frameFromEvents, -contrast, contrast)
-    #frameFromEvents = frameFromEvents + contrast
+    return frameFromEvents
+
+'''
+TODO: apply the low-level functions above into the plot functions below
+'''
+def plotDvsContrastSingle(inDict, **kwargs):
+    frameFromEvents = getPolarisedEventImage(inDict, **kwargs)
+    if kwargs.get('transpose', False):
+        frameFromEvents = np.transpose(frameFromEvents)
+    if kwargs.get('flipVertical', False):
+        frameFromEvents = np.flip(frameFromEvents, axis=0)
+    if kwargs.get('flipHorizontal', False):
+        frameFromEvents = np.flip(frameFromEvents, axis=1)
+    contrast = kwargs.get('contrast', 3)    
     cmap = kwargs.get('cmap', kwargs.get('colormap', 'seismic_r'))
-    
     axes = kwargs.get('axes')
     if axes is None:
         fig, axes = plt.subplots()
     image = axes.imshow(frameFromEvents, origin='lower', cmap=cmap, 
                         vmin=-contrast, vmax=contrast)
     axes.set_aspect('equal', adjustable='box')
-    if kwargs.get('flipVertical', False):
-        axes.invert_yaxis()
-    if kwargs.get('flipHorizontal', False):
-        axes.invert_xaxis()
     title = kwargs.get('title')
     if title is not None:
         axes.set_title(title)
@@ -126,13 +130,14 @@ def plotDvsContrastSingle(inDict, **kwargs):
     return image
 
 def plotDvsContrast(inDict, **kwargs):
+    # Boilerplate for descending higher level containers
     if isinstance(inDict, list):
         for inDictInst in inDict:
             plotDvsContrast(inDictInst, **kwargs)
         return
     if 'info' in inDict: # Top level container
         fileName = inDict['info'].get('filePathOrName', '')
-        print('plotDvs was called for file ' + fileName)
+        print('plotDvsContrast was called for file ' + fileName)
         if not inDict['data']:
             print('The import contains no data.')
             return
@@ -144,6 +149,7 @@ def plotDvsContrast(inDict, **kwargs):
             else:
                 print('Channel ' + channelName + ' skipped because it contains no polarity data')
         return
+    
     # The proportion of an array-full of events which is shown on a plot
     proportionOfPixels = kwargs.get('proportionOfPixels', 0.1)
     # useAllData overrides the above - the windows used for the images together include all the data 
@@ -163,6 +169,10 @@ def plotDvsContrast(inDict, **kwargs):
     maxX = kwargs.get('maxX', inDict['x'].max())
     minY = kwargs.get('minY', inDict['y'].min())
     maxY = kwargs.get('maxY', inDict['y'].max())
+    kwargs['minX'] = minX
+    kwargs['maxX'] = maxX
+    kwargs['minY'] = minY
+    kwargs['maxY'] = maxY
     
     numPixelsInArray = (maxY + 1 - minY) * (maxX + 1 - minX)
     numEventsToSelectEachWay = int(round(numPixelsInArray * proportionOfPixels / 2.0))

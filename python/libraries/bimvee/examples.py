@@ -111,7 +111,7 @@ imported = importIntelRealsense(filePathOrName=filePathOrName)
 
 from split import cropTime
 
-cropped = cropTime(imported, minTime=35, maxTime=38)     
+cropped = cropTime(imported, minTime=35, maxTime=38.5)     
 
 #%% VISUALISATION FUNCTIONS
 
