@@ -73,8 +73,8 @@ def plotFrame(inDict, **kwargs):
     numPlotsX = int(np.round(np.sqrt(numPlots / 3 * 4)))
     numPlotsY = int(np.ceil(numPlots / numPlotsX))
     
-    minTime = kwargs.get('minTime', ts.min())
-    maxTime = kwargs.get('maxTime', ts.max())
+    minTime = kwargs.get('startTime', kwargs.get('minTime', kwargs.get('beginTime', ts[0])))
+    maxTime = kwargs.get('stopTime', kwargs.get('maxTime', kwargs.get('endTime', ts[-1])))
 
     if distributeBy == 'time':
         totalTime = maxTime - minTime
@@ -92,21 +92,14 @@ def plotFrame(inDict, **kwargs):
 
         # Find eventIndex nearest to timePoint
         frameIdx = np.searchsorted(ts, timePoint)
-        ax.imshow(frames[frameIdx], cmap='gray')
-        '''
-        % Ignore colour for now ...    
-        if exist('transpose', 'var') && transpose
-            imagesc(input.data.frame.samples{frameIndex}')
-        else
-            imagesc(input.data.frame.samples{frameIndex})
-        end
-        colormap('gray')
-        axis equal tight
-        if exist('flipVertical', 'var') && flipVertical
-            set(gca, 'YDir', 'reverse')
-        if exist('flipHorizontal', 'var') && flipHorizontal
-            set(gca, 'XDir', 'reverse')
-        '''
+        frame = frames[frameIdx]
+        ax.imshow(frame, cmap='gray')
+        if kwargs.get('transpose', False):
+            frame = np.transpose(frame)
+        if kwargs.get('flipVertical', False):
+            frame = np.flip(frame, axis=0)
+        if kwargs.get('flipHorizontal', False):
+            frame = np.flip(frame, axis=1)
         ax.set_title('Time: ' + str(roundToSf(timePoint)) + ' s; frame number: ' + str(frameIdx))
 
 #%%
