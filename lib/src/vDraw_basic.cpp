@@ -506,9 +506,9 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     double notAlpha = 1.0 - alpha;
     int r = 2; // radius
     int d = r*2+1; // diameter
-    CvScalar c1 = CV_RGB(255, 0, 0);
-    CvScalar c2 = CV_RGB(60, 0, 255);
-    CvScalar c;
+    cv::Scalar c1 = CV_RGB(255, 0, 0);
+    cv::Scalar c2 = CV_RGB(60, 0, 255);
+    cv::Scalar c;
 
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
