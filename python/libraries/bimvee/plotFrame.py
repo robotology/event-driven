@@ -85,6 +85,8 @@ def plotFrame(inDict, **kwargs):
         timePoints = ts(int(np.ceil(np.arange(framesPerStep * 0.5, numFrames, framesPerStep))))
 
     fig, axes = plt.subplots(numPlotsY, numPlotsX)
+    fig.suptitle(kwargs.get('title', ''))
+    
     axes = axes.flatten().tolist()
     for ax, timePoint in zip(axes, timePoints):
 
@@ -107,6 +109,21 @@ def plotFrame(inDict, **kwargs):
         '''
         ax.set_title('Time: ' + str(roundToSf(timePoint)) + ' s; frame number: ' + str(frameIdx))
 
-def framesToGif():
-    
-    
+#%%
+'''
+    Optional extra - not including it by default because I don't want this 
+    extra dependency, but this is a quick way to see frame data as a video
+'''
+
+'''       
+from imageio import mimwrite
+def framesToGif(framesDict, **kwargs):
+    ts = framesDict['ts']
+    frames = framesDict['frames']
+    outputFilePathAndName = kwargs.get('outputFilePathAndName', 'framesAsMovie.mp4')
+    frameRate = len(ts) / (ts[-1] - ts[0])
+    framesExpanded = [np.expand_dims(f, 0) for f in frames]
+    framesAllArray = np.concatenate(framesExpanded, 0)
+    mimwrite(outputFilePathAndName, framesAllArray , fps = int(frameRate))
+'''
+

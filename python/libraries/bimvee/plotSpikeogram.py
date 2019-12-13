@@ -40,8 +40,30 @@ import matplotlib.lines as lines
 import numpy as np
 from tqdm import tqdm
 
+# TODO: This code is very inefficient for large numbers of events
+# better to iterate once for each pixel
 def plotSpikeogram(inDict, **kwargs):
+    # Boilerplate for descending container hierarchy
+    if isinstance(inDict, list):
+        for inDictInst in inDict:
+            plotSpikeogram(inDictInst, **kwargs)
+        return
+    if 'info' in inDict: # Top level container
+        fileName = inDict['info'].get('filePathOrName', '')
+        print('plotSpikeogram was called for file ' + fileName)
+        if not inDict['data']:
+            print('The import contains no data.')
+            return
+        for channelName in inDict['data']:
+            channelData = inDict['data'][channelName]
+            if 'dvs' in channelData and len(channelData['dvs']['ts']) > 0:
+                kwargs['title'] = ' '.join([fileName, str(channelName)])
+                plotSpikeogram(channelData['dvs'], **kwargs)
+            else:
+                print('Channel ' + channelName + ' skipped because it contains no polarity data')
+        return
     # Break out data arrays for cleaner code
+    print('plotSpikeogram working: ' + kwargs['title'])
     x = inDict['x']
     y = inDict['y']
     ts = inDict['ts']
@@ -50,15 +72,14 @@ def plotSpikeogram(inDict, **kwargs):
     maxX = kwargs.get('maxX', np.max(x))
     minY = kwargs.get('minY', np.min(y))
     maxY = kwargs.get('maxY', np.max(y))
-    minTime = kwargs.get('minTime', np.min(ts))
-    maxTime = kwargs.get('maxTime', np.max(ts))
+    minTime = kwargs.get('minTime', kwargs.get('startTime', kwargs.get('beginTime', np.min(ts))))
+    maxTime = kwargs.get('maxTime', kwargs.get('stopTime', kwargs.get('endTime', np.max(ts))))
     numX = maxX - minX + 1
-    #numY = maxY - minY + 1
+    numY = maxY - minY + 1
     timeRange = maxTime - minTime
     selected = np.where((x >= minX) & (x <= maxX) &
                     (y >= minY) & (y <= maxY) &
                     (ts >= minTime) & (ts <= maxTime))[0]
-
     axes = kwargs.get('axes')
     if axes is None:
         fig, axes = plt.subplots()
@@ -77,7 +98,8 @@ def plotSpikeogram(inDict, **kwargs):
     axes.set_xlim(minTime-timeRange*0.01, maxTime+timeRange*0.01)
     axes.set_ylim(minX + minY*numX - 1, maxX + maxY*numX + 1)
     formatString = '0'+ str(int(np.log10(999))+1) + 'd'
-    theRange = range(minX+minY*numX, maxX+maxY*numX)
+    numRows = numX * numY
+    theRange = range(minX+minY*numX, maxX+maxY*numX, int(numRows/10)) # Let's have max 10 labels
     labels = ['x' + format(np.mod(x,numX), formatString) + ',' +
               'y' + format(int(x/numX), formatString)
               for x in theRange]

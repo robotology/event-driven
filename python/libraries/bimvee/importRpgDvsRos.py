@@ -74,6 +74,7 @@ Use this to inspect a new .bag file before defining the import template.
 #%%
 
 from struct import unpack
+from struct import error as structError
 from tqdm import tqdm
 import numpy as np
 from timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts, unwrapTimestamps
@@ -92,7 +93,7 @@ def unpackHeader(headerLen, headerBytes):
     fields = {}
     ptr = 0
     while ptr < headerLen:
-        fieldLen = unpack('l', headerBytes[ptr:ptr+4])[0]
+        fieldLen = unpack('=l', headerBytes[ptr:ptr+4])[0]
         ptr += 4
         #print(fieldLen)
         field = headerBytes[ptr:ptr+fieldLen]
@@ -104,9 +105,9 @@ def unpackHeader(headerLen, headerBytes):
         fields[fieldName] = fieldValue
     return fields
 
-def readFile(filePathAndName):
-    print('Attempting to import ' + filePathAndName + ' as a rosbag 2.0 file.')
-    with open(filePathAndName, 'rb') as file:
+def readFile(filePathOrName):
+    print('Attempting to import ' + filePathOrName + ' as a rosbag 2.0 file.')
+    with open(filePathOrName, 'rb') as file:
         # File format string
         fileFormatString = file.readline().decode("utf-8")
         print('ROSBAG file format: ' + fileFormatString)
@@ -118,18 +119,20 @@ def readFile(filePathAndName):
         while not eof:
             # Read a record header
             try:
-                headerLen = unpack('l', file.read(4))[0]
-            except:
-                eof = True
-                continue
+                headerLen = unpack('=l', file.read(4))[0]
+            except structError:
+                if len(file.read(1)) == 0: # Distinguish EOF from other struct errors 
+                   # a struct error could also occur if the data is downloaded by one os and read by another.
+                   eof = True
+                   continue
             # unpack the header into fields 
             headerBytes = file.read(headerLen)
             fields = unpackHeader(headerLen, headerBytes)
             # Read the record data
-            dataLen = unpack('l', file.read(4))[0]
+            dataLen = unpack('=l', file.read(4))[0]
             data = file.read(dataLen)
             # The op code tells us what to do with the record
-            op = unpack('b', fields['op'])[0]
+            op = unpack('=b', fields['op'])[0]
             fields['op'] = op
             if op == 2:
                 # It's a message
@@ -139,14 +142,14 @@ def readFile(filePathAndName):
                 pass
             elif op == 3:
                 # It's a bag header - use this to do progress bar for the read
-                chunkCount = unpack('l', fields['chunk_count'])[0]
+                chunkCount = unpack('=l', fields['chunk_count'])[0]
                 pbar = tqdm(total=chunkCount, position=0, leave=True)
             elif op == 4:
                 # It's an index - this is used to index the previous chunk
-                conn = unpack('l', fields['conn'])[0]
-                count = unpack('l', fields['count'])[0]
+                conn = unpack('=l', fields['conn'])[0]
+                count = unpack('=l', fields['count'])[0]
                 for idx in range(count):
-                    time, offset = unpack('ql', data[idx*12:idx*12+12])
+                    time, offset = unpack('=ql', data[idx*12:idx*12+12])
                     chunks[-1]['ids'].append((conn, time, offset))
             elif op == 5:
                 # It's a chunk
@@ -162,16 +165,16 @@ def readFile(filePathAndName):
                 # interpret data as a string containing the connection header
                 connFields = unpackHeader(dataLen, data)
                 connFields.update(fields) # to do: consider the correct handling of topic, which may be present in both
-                connFields['conn'] = unpack('l', connFields['conn'])[0]
+                connFields['conn'] = unpack('=l', connFields['conn'])[0]
                 connFields['topic'] = connFields['topic'].decode("utf-8")
                 conns.append(connFields)
     return conns, chunks
 
 def unpackRosUint32(data, ptr):
-    return unpack('L', data[ptr:ptr+4])[0], ptr+4
+    return unpack('=L', data[ptr:ptr+4])[0], ptr+4
 
 def unpackRosString(data, ptr):
-    stringLen = unpack('L', data[ptr:ptr+4])[0]
+    stringLen = unpack('=L', data[ptr:ptr+4])[0]
     ptr += 4
     outStr = data[ptr:ptr+stringLen].decode('utf-8')
     ptr += stringLen
@@ -185,24 +188,24 @@ def breakChunksIntoMsgs(chunks):
     for chunk in tqdm(chunks, position=0, leave=True):
         for idx in chunk['ids']:
             ptr = idx[2]
-            headerLen = unpack('l', chunk['data'][ptr:ptr+4])[0]
+            headerLen = unpack('=l', chunk['data'][ptr:ptr+4])[0]
             ptr += 4
             # unpack the header into fields 
             headerBytes = chunk['data'][ptr:ptr+headerLen]
             ptr += headerLen
             fields = unpackHeader(headerLen, headerBytes)
             # Read the record data
-            dataLen = unpack('l', chunk['data'][ptr:ptr+4])[0]
+            dataLen = unpack('=l', chunk['data'][ptr:ptr+4])[0]
             ptr += 4
             fields['data'] = chunk['data'][ptr:ptr+dataLen]
-            fields['conn'] = unpack('l', fields['conn'])[0]
+            fields['conn'] = unpack('=l', fields['conn'])[0]
             msgs.append(fields)
     return msgs
 
 def importRosbag(**kwargs):
-    filePathAndName = kwargs.get('filePathOrName', kwargs.get('filePathAndName'))
-    print('Importing file: ', filePathAndName) 
-    conns, chunks = readFile(filePathAndName)
+    filePathOrName = kwargs.get('filePathOrName')
+    print('Importing file: ', filePathOrName) 
+    conns, chunks = readFile(filePathOrName)
     msgs = breakChunksIntoMsgs(chunks)
     # Restructure conns as a dictionary keyed by conn number
     connDict = {}
@@ -226,12 +229,12 @@ def interpretMsgsAsDvs(msgs):
     polAll = np.zeros((sizeOfArray), dtype=np.bool)
     for msg in tqdm(msgs, position=0, leave=True):
         data = msg['data']
-        #seq = unpack('L', data[0:4])[0]
-        #timeS = unpack('L', data[4:8])[0]
-        #timeNS = unpack('L', data[8:12])[0]
+        #seq = unpack('=L', data[0:4])[0]
+        #timeS = unpack('=L', data[4:8])[0]
+        #timeNS = unpack('=L', data[8:12])[0]
         frame_id, ptr = unpackRosString(data, 12)
-        ptr += 4 #height = unpack('L', data[ptr:ptr+4])[0]
-        ptr += 4 #width = unpack('L', data[ptr:ptr+4])[0]
+        ptr += 4 #height = unpack('=L', data[ptr:ptr+4])[0]
+        ptr += 4 #width = unpack('=L', data[ptr:ptr+4])[0]
         numEventsInMsg, ptr = unpackRosUint32(data, ptr)
         while sizeOfArray < numEvents + numEventsInMsg:
             tsAll = np.append(tsAll, np.zeros((sizeOfArray), dtype=np.float64))
@@ -241,7 +244,7 @@ def interpretMsgsAsDvs(msgs):
             sizeOfArray *= 2
         for idx in range(numEventsInMsg):
             idxAll = idx + numEvents
-            x, y, ts, tns, pol = unpack('HHLL?', data[ptr + idx*13 : ptr + (idx + 1)*13])
+            x, y, ts, tns, pol = unpack('=HHLL?', data[ptr + idx*13 : ptr + (idx + 1)*13])
             tsFloat = np.float64(ts)+np.float64(tns)*0.000000001 # It's possible that this will kilL the precision
             xAll[idxAll] = x
             yAll[idxAll] = y
@@ -275,22 +278,22 @@ def interpretMsgsAsFrame(msgs):
             tsAll = np.append(tsAll, np.zeros((sizeOfArray), dtype=np.float64))
             sizeOfArray *= 2            
         data = msg['data']
-        #seq = unpack('L', data[0:4])[0]
-        timeS = unpack('L', data[4:8])[0]
-        timeNs = unpack('L', data[8:12])[0]
+        #seq = unpack('=L', data[0:4])[0]
+        timeS = unpack('=L', data[4:8])[0]
+        timeNs = unpack('=L', data[8:12])[0]
         tsAll[numEvents] = np.float64(timeS)+np.float64(timeNs)*0.000000001
         frame_id, ptr = unpackRosString(data, 12)
         height, ptr = unpackRosUint32(data, ptr)
         width, ptr = unpackRosUint32(data, ptr)
         fmtString, ptr = unpackRosString(data, ptr)
-        isBigendian = unpack('B', data[ptr:ptr+1])[0]
+        isBigendian = unpack('=B', data[ptr:ptr+1])[0]
         if isBigendian:
             print('data is bigendian, but it doesn''t matter')            
         ptr += 1
-        ptr += 4 #step = unpack('L', data[ptr:ptr+4])[0]
+        ptr += 4 #step = unpack('=L', data[ptr:ptr+4])[0]
         # I don't know why, but there is an ip address in the next 4 bytes
         ptr += 4
-        if fmtString == 'mono8':
+        if fmtString in ['mono8', '8UC1']:
             frameData = np.frombuffer(data[ptr:ptr+height*width],np.uint8)
         elif fmtString == '32FC1':
             frameData = np.frombuffer(data[ptr:ptr+height*width*4],np.float32)
@@ -307,13 +310,15 @@ def interpretMsgsAsFrame(msgs):
         'frames': framesAll}
     return outDict
 
-def interpretMsgsAsPose6q(msgs):
+def interpretMsgsAsPose6q(msgs, **kwargs):
     '''
     ros message is defined here:
         http://docs.ros.org/api/geometry_msgs/html/msg/PoseStamped.html
     the result is a ts plus a 7-column np array of np.float64,
     where the cols are x, y, z, q-x, q-y, q-z, q-w (i.e. quaternion orientation)
     '''
+    if kwargs.get('poseAsTransform', False):
+        return interpretMsgsAsPose6qTransform(msgs)
     #if 'Stamped' not in kwargs.get('messageType', 'Stamped'):
     #    return interpretMsgsAsPose6qAlt(msgs, **kwargs)
     numEvents = 0
@@ -326,9 +331,9 @@ def interpretMsgsAsPose6q(msgs):
             poseAll = np.concatenate((poseAll, np.zeros((sizeOfArray, 7), dtype=np.float64)))
             sizeOfArray *= 2
         data = msg['data']
-        #seq = unpack('L', data[0:4])[0]
-        timeS = unpack('L', data[4:8])[0]
-        timeNs = unpack('L', data[8:12])[0]
+        #seq = unpack('=L', data[0:4])[0]
+        timeS = unpack('=L', data[4:8])[0]
+        timeNs = unpack('=L', data[8:12])[0]
         tsAll[numEvents] = np.float64(timeS)+np.float64(timeNs)*0.000000001 
         frame_id, ptr = unpackRosString(data, 12)
         poseAll[numEvents, :] = np.frombuffer(data[ptr:ptr+56], dtype=np.float64)
@@ -341,10 +346,10 @@ def interpretMsgsAsPose6q(msgs):
         'pose': poseAll}
     return outDict
 
-def interpretMsgsAsPose6qAlt(msgs):
+def interpretMsgsAsPose6qTransform(msgs):
     '''
-    I don't have a good name for this yet, but whereas rpg used PoseStamped
-    message type, realsense use Transform:
+    Hmm - it's a bit hack how this is stuck in here at the moment, 
+    but whereas rpg used PoseStamped message type, realsense use Transform:
     ros message is defined here:
         http://docs.ros.org/api/geometry_msgs/html/msg/Transform.html
     the result is a 7-column np array of np.float64,
@@ -361,16 +366,16 @@ def interpretMsgsAsPose6qAlt(msgs):
             tsAll = np.append(tsAll, np.zeros((sizeOfArray), dtype=np.float64))
             poseAll = np.concatenate((poseAll, np.zeros((sizeOfArray, 7), dtype=np.float64)))
             sizeOfArray *= 2
-        tsAll[numEvents] = unpack('<Q', msg['time'])[0]
+        tsAll[numEvents] = unpack('=Q', msg['time'])[0]
         poseAll[numEvents, :] = np.frombuffer(msg['data'], dtype=np.float64)
         numEvents += 1
     # Crop arrays to number of events
     tsAll = tsAll[:numEvents]
     poseAll = poseAll[:numEvents]
-    unwrapTimestamps(tsAll, wrapTime = 2**62)
-    tsAll = tsAll / (6*10**18) # probably specific to realsense ...
+    tsUnwrapped = unwrapTimestamps(tsAll) # here we could pass in wrapTime=2**62, but actually it handles this internally
+    tsUnwrapped = tsUnwrapped / (6*10**18) # probably specific to realsense ...
     outDict = {
-        'ts': tsAll,
+        'ts': tsUnwrapped,
         'pose': poseAll}
     return outDict
 
@@ -403,9 +408,9 @@ def interpretMsgsAsImu(msgs):
             magAll = np.concatenate((magAll, np.zeros((sizeOfArray, 3), dtype=np.float64)))
             sizeOfArray *= 2
         data = msg['data']
-        #seq = unpack('L', data[0:4])[0]
-        timeS = unpack('L', data[4:8])[0]
-        timeNs = unpack('L', data[8:12])[0]
+        #seq = unpack('=L', data[0:4])[0]
+        timeS = unpack('=L', data[4:8])[0]
+        timeNs = unpack('=L', data[8:12])[0]
         tsAll[numEvents] = np.float64(timeS)+np.float64(timeNs)*0.000000001 
         frame_id, ptr = unpackRosString(data, 12)
         rotQAll[numEvents, :] = np.frombuffer(data[ptr:ptr+32], np.float64)
@@ -456,11 +461,11 @@ def interpretMsgsAsCam(msgs):
     '''
     outDict = {}
     data = msgs[0]['data'] # There is one calibration msg per frame. Just use the first one
-    #timeS = unpack('L', data[4:8])[0]
-    #timeNs = unpack('L', data[8:12])[0]
-    #seq = unpack('L', data[0:4])[0]
-    #timeS = unpack('L', data[4:8])[0]
-    #timeNs = unpack('L', data[8:12])[0]
+    #timeS = unpack('=L', data[4:8])[0]
+    #timeNs = unpack('=L', data[8:12])[0]
+    #seq = unpack('=L', data[0:4])[0]
+    #timeS = unpack('=L', data[4:8])[0]
+    #timeNs = unpack('=L', data[8:12])[0]
     frame_id, ptr = unpackRosString(data, 12)
     outDict['height'], ptr = unpackRosUint32(data, ptr)
     outDict['width'], ptr = unpackRosUint32(data, ptr)
@@ -468,6 +473,15 @@ def interpretMsgsAsCam(msgs):
     if outDict['distortionModel'] == 'plumb_bob':
         ptr +=4 # There's an IP address in there, not sure why
         outDict['D'] = np.frombuffer(data[ptr:ptr+40], dtype=np.float64)
+        ptr += 40
+        outDict['K'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
+        ptr += 72
+        outDict['R'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
+        ptr += 72
+        outDict['P'] = np.frombuffer(data[ptr:ptr+96], dtype=np.float64).reshape(3, 4)
+    elif outDict['distortionModel'] == 'Kannala Brandt4':
+        ptr +=4 # There's an IP address in there, not sure why
+        outDict['D'] = np.frombuffer(data[ptr:ptr+32], dtype=np.float64)
         ptr += 40
         outDict['K'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
         ptr += 72
@@ -497,7 +511,7 @@ def importRpgDvsRos(**kwargs):
     template = kwargs.get('template', {})
     # The template becomes the data branch of the importedDict
     outDict = {
-        'info': {'filePathOrName': kwargs.get('filePathOrName', kwargs.get('filePathAndName'))},
+        'info': kwargs,
         'data': {}
             }            
     for channelKey in template:
@@ -513,7 +527,7 @@ def importRpgDvsRos(**kwargs):
                 # Interpret these messages as EventArray
                 outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsDvs(msgs)
             elif dataType == 'pose6q':
-                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsPose6q(msgs)
+                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsPose6q(msgs, **kwargs)
             elif dataType == 'frame':
                 outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsFrame(msgs)
             elif dataType == 'cam':

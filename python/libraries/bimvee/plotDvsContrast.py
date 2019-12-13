@@ -28,8 +28,8 @@ a certain ratio of a full array is reached.
 Parameters which can be used:
  - numPlots
  - distributeBy
- - minTime
- - maxTime
+ - minTime, startTime
+ - maxTime, endTime, stopTime
  - proportionOfPixels
  - contrast
  - flipVertical
@@ -54,8 +54,8 @@ nomenclature:
     ids = indices
 '''
 def idsEventsInTimeRange(events, **kwargs):
-    startTime = kwargs.get('startTime', events['ts'][0])
-    endTime = kwargs.get('endTime', events['ts'][-1])
+    startTime = kwargs.get('startTime', kwargs.get('minTime', kwargs.get('beginTime', events['ts'][0])))
+    endTime = kwargs.get('stopTime', kwargs.get('maxTime', kwargs.get('endTime', events['ts'][-1])))
     # The following returns logical indices
     #return (events['ts'] >= startTime) & (events['ts'] < endTime)
     # Alternatively, search for the start and end indices, then return a range
@@ -130,7 +130,7 @@ def plotDvsContrast(inDict, **kwargs):
         for inDictInst in inDict:
             plotDvsContrast(inDictInst, **kwargs)
         return
-    if 'info' in inDict:
+    if 'info' in inDict: # Top level container
         fileName = inDict['info'].get('filePathOrName', '')
         print('plotDvs was called for file ' + fileName)
         if not inDict['data']:
@@ -173,8 +173,8 @@ def plotDvsContrast(inDict, **kwargs):
     #unpack ts for brevity
     ts = inDict['ts']
     
-    minTime = kwargs.get('minTime', ts.min())
-    maxTime = kwargs.get('maxTime', ts.max())
+    minTime = kwargs.get('minTime', kwargs.get('startTime', kwargs.get('beginTime', ts.min())))
+    maxTime = kwargs.get('maxTime', kwargs.get('stopTime', kwargs.get('endTime', ts.max())))
     minEventIdx = np.searchsorted(ts, minTime)
     maxEventIdx = np.searchsorted(ts, maxTime)
     numEvents = maxEventIdx-minEventIdx
@@ -191,9 +191,7 @@ def plotDvsContrast(inDict, **kwargs):
             firstEventIds = firstEventIds[:-1]
         else:
             timeCentres = np.arange(minTime + timeStep * 0.5, maxTime, timeStep)
-            centreEventIds = [ 
-                np.where(ts >= timeCentre)[0][0]
-                for timeCentre in timeCentres ]
+            centreEventIds = np.searchsorted(ts, timeCentres)
             firstEventIds = [idx - numEventsToSelectEachWay for idx in centreEventIds]
             lastEventIds = [idx + numEventsToSelectEachWay for idx in centreEventIds]
     else: # distribute by event number
@@ -207,11 +205,11 @@ def plotDvsContrast(inDict, **kwargs):
             centreEventIds = range(int(eventsPerStep/2), numEvents, eventsPerStep)
             firstEventIds = [idx - numEventsToSelectEachWay for idx in centreEventIds]
             lastEventIds = [idx + numEventsToSelectEachWay for idx in centreEventIds]
-    firstEventIds = np.clip(firstEventIds, 0, numEvents - 1)
-    lastEventIds = np.clip(lastEventIds, 0, numEvents)
+    firstEventIds = np.clip(firstEventIds, minEventIdx, maxEventIdx-1)
+    lastEventIds = np.clip(lastEventIds, minEventIdx, maxEventIdx-1)
     firstTimes = ts[firstEventIds]
     lastTimes = ts[lastEventIds]
-    timeCentres = firstTimes+lastTimes/2
+    timeCentres = (firstTimes+lastTimes)/2
     titles = [
         str(roundToSf(firstTime)) + ' - ' + str(roundToSf(lastTime)) + ' s'
         for firstTime, lastTime in zip(firstTimes, lastTimes) ]
@@ -234,35 +232,3 @@ def plotDvsContrast(inDict, **kwargs):
         image = plotDvsContrastSingle(inDict=dvsDataDict, axes=axes, **kwargs)
     fig.colorbar(image)
     return timeCentres
-
-'''
-Takes an importedDict or a list of them
-For each channel in each, which contains polarity data , call PlotPolarity
-'''
-
-def plotDvsContrastForImportedDicts(inDicts, **kwargs):
-    if not isinstance(inDicts, list):
-        inDicts = [inDicts]
-    for inDict in inDicts:
-        fileName = inDict['info'].get('filePathOrName', '')
-        print('plotDvs was called for file ' + fileName)
-        if not inDict['data']:
-            print('The import contains no data.')
-            return
-        for channelName in inDict['data']:
-            channelData = inDict['data'][channelName]
-            if 'dvs' in channelData and len(channelData['dvs']['ts']) > 0:
-                kwargs['title'] = ' '.join([fileName, str(channelName)])
-                plotDvsContrast(channelData['dvs'], **kwargs)
-            else:
-                print('Channel ' + channelName + ' skipped because it contains no polarity data')
-
-''' generalised plot function for a container at multiple levels '''
-def plotDvs(inDicts, **kwargs):
-    plotType = kwargs.get('plotType', 'contrast')
-    if plotType == 'lastTs':
-        plotDvsLastTs(inDicts, **kwargs)
-        # TODO: branch off other plot types here
-    else:
-        plotDvsContrast(inDicts, **kwargs)
-                    
