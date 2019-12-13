@@ -2,6 +2,7 @@
 """
 Copyright (C) 2019 Event-driven Perception for Robotics
 Authors: Sim Bamford
+         Aiko Dinale
 Code contributions from: 
         marco monforte
 This program is free software: you can redistribute it and/or modify it under 
@@ -44,7 +45,7 @@ have probably, but not definitely, been split into left and right.
 """
 # TODO: get initial ts from yarp info.log 
 # TODO: support LAE import
-# TODO: support SkinEvent, SkinSample, GaussianAE, AudioAE import
+# TODO: support IMU, Skin etc import
 
 #%%
 
@@ -56,10 +57,10 @@ import struct
 
 # local imports
 
-from split import splitByLabelled
 from timestamps import unwrapTimestamps, zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
 
 pattern = re.compile('(\d+) (\d+\.\d+) ([A-Z]+) \((.*)\)')
+
 
 def decodeEvents24Bit(data):
     '''
@@ -78,7 +79,6 @@ def decodeEvents24Bit(data):
     '''    
     isNotDvsEvent = np.bool_(data[:, 1] & 0xFF800000)
     if np.any(isNotDvsEvent):
-        dvsOut = None
         dataSample = data[isNotDvsEvent, :]
         #ts = np.float64(dataSample[:, 0] & ~(0x1 << 31)) * 0.00000008 # convert ts to seconds
         ts = np.uint32(dataSample[:, 0])
@@ -106,13 +106,14 @@ def decodeEvents24Bit(data):
             }
     else:
         samplesOut = None
+    if np.any(~isNotDvsEvent):
         dataDvs = data[~isNotDvsEvent, :]
         # convert ts to seconds
         #ts = np.float64(dataDvs[:, 0] & ~(0x1 << 31)) * 0.00000008 # convert ts to seconds
         ts = np.uint32(dataDvs[:, 0])
         if np.isscalar(ts):
             ts = np.ones((1), dtype=np.uint32) * ts    
-        pol  = np.bool_(dataDvs[:, 1] & 0x01)    
+        pol  = ~np.bool_(dataDvs[:, 1] & 0x01) # We want True=ON=brighter, False=OFF=darker, so we negate    
         dataDvs[:, 1] >>= 1
         x = np.uint16(dataDvs[:, 1] & 0x1FF)    
         dataDvs[:, 1] >>= 11
@@ -138,6 +139,23 @@ def getOrInsertDefault(inDict, arg, default):
     if value == default:
         inDict[arg] = default
     return value
+
+def flowFromBitsToFloat(flowBits):
+    '''
+    Convert FLOW events from bits to float
+    '''
+    flowFloat = np.ndarray(len(flowBits))
+    for i, bit in enumerate(flowBits):
+        test = bitsToFloat(bit)
+        flowFloat[i] = test
+    return flowFloat
+
+def bitsToFloat(b):
+    '''
+    Convert a number in bits to float
+    '''
+    s = struct.pack('>I', b)
+    return struct.unpack('>f', s)[0]
 
 def samplesToImu(inDict, **kwargs):
     '''
@@ -219,132 +237,13 @@ def samplesToImu(inDict, **kwargs):
             }
     return outDict
 
-def flowFromBitsToFloat(flowBits):
-    '''
-    Convert FLOW events from bits to float
-    '''
-    flowFloat = np.ndarray(len(flowBits))
-    for i, bit in enumerate(flowBits):
-        test = bitsToFloat(bit)
-        flowFloat[i] = test
-    return flowFloat
-
-def bitsToFloat(b):
-    '''
-    Convert a number in bits to float
-    '''
-    s = struct.pack('>I', b)
-    return struct.unpack('>f', s)[0]
-
-def importIitYarpHavingFoundFile(**kwargs):
-    numEvents = 0
-    numSamples = 0
-    # dvs data
-    sizeOfArrayDvs = 1024
-    tsDvs = np.zeros((sizeOfArrayDvs), dtype=np.uint32)
-    chDvs = np.zeros((sizeOfArrayDvs), dtype=np.uint8)
-    xDvs = np.zeros((sizeOfArrayDvs), dtype=np.uint16)
-    yDvs = np.zeros((sizeOfArrayDvs), dtype=np.uint16)
-    polDvs = np.zeros((sizeOfArrayDvs), dtype=np.bool)
-    lblDvs = np.zeros((sizeOfArrayDvs), dtype=np.int64) - 1 #Tag for not labelled
-    vxDvs = np.zeros((sizeOfArrayDvs), dtype=np.uint32)
-    vyDvs = np.zeros((sizeOfArrayDvs), dtype=np.uint32)
-    # sample data
-    sizeOfArraySample = 1024
-    tsSample = np.zeros((sizeOfArraySample), dtype=np.uint32)
-    chSample = np.zeros((sizeOfArraySample), dtype=np.uint8)
-    vSample = np.zeros((sizeOfArraySample), dtype=np.uint16)
-    sSample = np.zeros((sizeOfArraySample), dtype=np.uint8)
-    with open(kwargs['filePathAndName'], 'r') as inFile:
-        content = inFile.read()
-        found = pattern.findall(content)
-        for elem in tqdm(found):
-            # The following values would be useful for indexing the input file:
-            #bottlenumber = np.uint32(elem[0])
-            #timestamp = np.float64(elem[1])
-            bottleType = elem[2]
-            if bottleType in ['AE', 'LAE', 'IMUS', 'FLOW']:
-                try:
-                    events = np.array(elem[3].split(' '), dtype=np.uint32)
-                    if bottleType == 'LAE':
-                        numEventsInBatch = int(len(events) / 3)
-                        events = events.reshape(numEventsInBatch, 3)
-                        lblBatch = events[:, 2]
-                    if bottleType == 'FLOW':
-                        numEventsInBatch = int(len(events) / 4)
-                        events = events.reshape(numEventsInBatch, 4)
-                        vxBatch = events[:, 2]
-                        vyBatch = events[:, 3]
-                    else: # 'AE' and 'IMUS'
-                        numEventsInBatch = int(len(events) / 2)
-                        events = events.reshape(numEventsInBatch, 2)
-                    dvs, samples = decodeEvents24Bit(events[:, :2])
-                    if dvs:
-                        tsBatch, chBatch, xBatch, yBatch, polBatch = dvs
-                        numEventsInBatch = len(tsBatch)
-                        while sizeOfArrayDvs < numEvents + numEventsInBatch:
-                            tsDvs = np.append(tsDvs, np.zeros((sizeOfArrayDvs), dtype=np.uint32))
-                            chDvs = np.append(chDvs, np.zeros((sizeOfArrayDvs), dtype=np.uint8))
-                            xDvs = np.append(xDvs, np.zeros((sizeOfArrayDvs), dtype=np.uint16))
-                            yDvs = np.append(yDvs, np.zeros((sizeOfArrayDvs), dtype=np.uint16))
-                            polDvs = np.append(polDvs, np.zeros((sizeOfArrayDvs), dtype=np.bool))
-                            lblDvs = np.append(lblDvs, np.zeros((sizeOfArrayDvs), dtype=np.int64) - 1)
-                            vxDvs = np.append(vxDvs, np.zeros((sizeOfArrayDvs), dtype=np.uint32))
-                            vyDvs = np.append(vyDvs, np.zeros((sizeOfArrayDvs), dtype=np.uint32))
-                            sizeOfArrayDvs *= 2
-                        tsDvs[numEvents:numEvents + numEventsInBatch] = tsBatch
-                        chDvs[numEvents:numEvents + numEventsInBatch] = chBatch
-                        xDvs[numEvents:numEvents + numEventsInBatch] = xBatch
-                        yDvs[numEvents:numEvents + numEventsInBatch] = yBatch
-                        polDvs[numEvents:numEvents + numEventsInBatch] = polBatch
-                        if bottleType == 'LAE':
-                            lblDvs[numEvents:numEvents + numEventsInBatch] = lblBatch
-                        if bottleType == 'FLOW':
-                            vxDvs[numEvents:numEvents + numEventsInBatch] = vxBatch
-                            vyDvs[numEvents:numEvents + numEventsInBatch] = vyBatch
-                        numEvents += numEventsInBatch        
-                    if samples:
-                        tsBatch, chBatch, sBatch, vBatch = samples
-                        numSamplesInBatch = len(tsBatch)
-                        while sizeOfArraySample < numSamples + numSamplesInBatch:
-                            tsSample = np.append(tsSample, np.zeros((sizeOfArraySample), dtype=np.uint32))
-                            chSample = np.append(chSample, np.zeros((sizeOfArraySample), dtype=np.uint8))
-                            sSample = np.append(sSample, np.zeros((sizeOfArraySample), dtype=np.uint16))
-                            vSample = np.append(vSample, np.zeros((sizeOfArraySample), dtype=np.uint16))
-                            sizeOfArraySample *= 2
-                        tsSample[numSamples:numSamples + numSamplesInBatch] = tsBatch
-                        chSample[numSamples:numSamples + numSamplesInBatch] = chBatch
-                        sSample[numSamples:numSamples + numSamplesInBatch] = sBatch
-                        vSample[numSamples:numSamples + numSamplesInBatch] = vBatch
-                        if bottleType == 'LAE':
-                            raise Exception('Samples in labelled event bottles ...')
-                        if bottleType == 'FLOW':
-                            raise Exception('Samples in flow event bottles ...')
-                        numSamples += numSamplesInBatch
-                except ValueError: # sometimes finding malformed packets at the end of files - ignoring
-                    continue
-    # Crop arrays to number of events
-    tsDvs = tsDvs[:numEvents]
-    chDvs = chDvs[:numEvents]
-    xDvs = xDvs[:numEvents]
-    yDvs = yDvs[:numEvents]
-    polDvs = polDvs[:numEvents]
-    lblDvs = lblDvs[:numEvents]
-    vxDvs = vxDvs[:numEvents]
-    vyDvs = vyDvs[:numEvents]
-    # Crop arrays to number of samples
-    tsSample = tsSample[:numSamples]
-    chSample = chSample[:numSamples]
-    sSample = sSample[:numSamples]
-    vSample = vSample[:numSamples]
-
 def importIitYarpBinHavingFoundFile(**kwargs):
-    with open(kwargs['filePathAndName'], 'rb') as inFile:
+    with open(kwargs['filePathOrName'], 'rb') as inFile:
         events = inFile.read()
     events = np.frombuffer(events, np.uint32)
     events = events.reshape((-1, 2))
     dvs, samples = decodeEvents24Bit(events)
-    return importPostProcessing(dvs, samples, dvslbl=None, flow=None, **kwargs)
+    return importPostProcessing(dvs, samples, dvsLbl=None, flow=None, **kwargs)
 
 # Sample is an intermediate data type - later it gets converted to IMU etc
 def createDataTypeSample():
@@ -368,7 +267,7 @@ def createDataTypeDvs():
         'numEvents': 0 
         }
                     
-def createDataTypeDvslbl():
+def createDataTypeDvsLbl():
     dvs = createDataTypeDvs()
     sizeOfArray = len(dvs['ts'])
     dvs['lbl'] = np.zeros((sizeOfArray), dtype=np.int64)
@@ -377,8 +276,8 @@ def createDataTypeDvslbl():
 def createDataTypeDvsFlow():
     dvs = createDataTypeDvs()
     sizeOfArray = len(dvs['ts'])
-    dvs['vx'] = np.zeros((sizeOfArray), dtype=np.float64)
-    dvs['vy'] = np.zeros((sizeOfArray), dtype=np.float64)
+    dvs['vx'] = np.zeros((sizeOfArray), dtype=np.uint32) # These end up as floats, but they start as ints and are converted in batch later
+    dvs['vy'] = np.zeros((sizeOfArray), dtype=np.uint32) # These end up as floats, but they start as ints and are converted in batch later
     return dvs
                 
 def appendBatch(mainDict, batch):
@@ -422,7 +321,7 @@ carry out common post-processing steps:
     split by channel
     unwrap timestamps
 '''
-def importPostProcessing(dvs, samples, dvslbl=None, flow=None, **kwargs):
+def importPostProcessing(dvs, samples, dvsLbl=None, dvsFlow=None, **kwargs):
     '''
     Split by channel: The iit yarp format assumes that the channel bit 
     corresponds to 'left' and 'right' sensors, so it's handled explicitly here
@@ -430,47 +329,22 @@ def importPostProcessing(dvs, samples, dvslbl=None, flow=None, **kwargs):
     channels = {}
     for ch in [0, 1]:
         chDict = {}
-        selectedEvents = chDvs == ch
-        if np.any(selectedEvents):
-            if bottleType == 'AE':
-                chDict['ae'] = {
-                            'ts': tsDvs[selectedEvents],
-                            'x': xDvs[selectedEvents],
-                            'y': yDvs[selectedEvents],
-                            'pol': polDvs[selectedEvents],}
-            if bottleType == 'LAE':
-                chDict['lae'] = {
-                            'ts': tsDvs[selectedEvents],
-                            'x': xDvs[selectedEvents],
-                            'y': yDvs[selectedEvents],
-                            'pol': polDvs[selectedEvents],
-                            'lbl': lblDvs[selectedEvents],}
-            if bottleType == 'FLOW':
-                chDict['flow'] = {
-                            'ts': tsDvs[selectedEvents],
-                            'x': xDvs[selectedEvents],
-                            'y': yDvs[selectedEvents],
-                            'pol': polDvs[selectedEvents],
-                            'vx' : flowFromBitsToFloat(vxDvs[selectedEvents]),
-                            'vy' : flowFromBitsToFloat(vyDvs[selectedEvents]),}
-        selectedSamples = chSample == ch
-        if np.any(selectedSamples):
-            chDictSamples = {
-                    'ts': tsSample[selectedSamples],
-                    's': sSample[selectedSamples],
-                    'v': vSample[selectedSamples],}
-            # If there are labelled data, it will be split out to a separate datatype
-            chDict['imu'] = samplesToImu(chDictSamples, **kwargs)
         dvsCh = selectByChannel(dvs, ch)
         if dvsCh:
             chDict['dvs'] = dvsCh
-        if dvslbl:
-            dvslblCh = selectByChannel(dvslbl, ch)
-            if dvslblCh:
-                chDict['dvslbl'] = dvslblCh
+        if dvsLbl:
+            dvsLblCh = selectByChannel(dvsLbl, ch)
+            if dvsLblCh:
+                chDict['dvslbl'] = dvsLblCh
         samplesCh = selectByChannel(samples, ch)
         if samplesCh:
             chDict['imu'] = samplesToImu(samplesCh, **kwargs)
+        if dvsFlow:
+            dvsFlowCh = selectByChannel(dvsFlow, ch)
+            if dvsFlowCh:
+                chDict['flow'] = dvsFlowCh
+                chDict['flow']['vx'] = flowFromBitsToFloat(chDict['flow']['vx'])
+                chDict['flow']['vy'] = flowFromBitsToFloat(chDict['flow']['vy'])
         if any(chDict):
             for dataType in chDict:
                 chDict[dataType]['ts'] = unwrapTimestamps(chDict[dataType]['ts'], **kwargs) * 0.00000008 # Convert to seconds
@@ -491,10 +365,10 @@ def importPostProcessing(dvs, samples, dvslbl=None, flow=None, **kwargs):
 def importIitYarpHavingFoundFile(**kwargs):
     # Create dicts for each possible datatype
     dvs = createDataTypeDvs()
-    dvslbl = createDataTypeDvslbl()
-    flow = createDataTypeDvsFlow()
+    dvsLbl = createDataTypeDvsLbl()
+    dvsFlow = createDataTypeDvsFlow()
     samples = createDataTypeSample() # Sample is an intermediate datatype - later it gets converted to IMU etc
-    with open(kwargs['filePathAndName'], 'r') as inFile:
+    with open(kwargs['filePathOrName'], 'r') as inFile:
         content = inFile.read()
     found = pattern.findall(content)
     for elem in tqdm(found):
@@ -502,29 +376,38 @@ def importIitYarpHavingFoundFile(**kwargs):
         #bottlenumber = np.uint32(elem[0])
         #timestamp = np.float64(elem[1])
         bottleType = elem[2]
-        if bottleType in ['AE', 'LAE', 'IMUS']:
-            try:
-                events = np.array(elem[3].split(' '), dtype=np.uint32)
-                if bottleType == 'LAE':
-                    numEventsInBatch = int(len(events) / 3)
-                    events = events.reshape(numEventsInBatch, 3)
-                    # TODO: finish handling this case
-                    dvsBatch, samplesBatch = decodeEvents24Bit(events[:, :2])
-                    dvsBatch['lbl'] = events[:, 2]          
-                    appendBatch(dvslbl, dvsBatch)
-                else:
-                    numEventsInBatch = int(len(events) / 2)
-                    events = events.reshape(numEventsInBatch, 2)
-                    dvsBatch, samplesBatch = decodeEvents24Bit(events[:, :2])
-                    appendBatch(dvs, dvsBatch)
-                appendBatch(samples, samplesBatch)
-            except ValueError: # sometimes finding malformed packets at the end of files - ignoring
-                continue
+        if bottleType not in ['AE', 'IMUS', 'LAE', 'FLOW']:
+            continue
+        try:
+            events = np.array(elem[3].split(' '), dtype=np.uint32)
+            if bottleType == 'LAE':
+                numEventsInBatch = int(len(events) / 3)
+                events = events.reshape(numEventsInBatch, 3)
+                # TODO: finish handling this case
+                dvsBatch, samplesBatch = decodeEvents24Bit(events[:, :2])
+                dvsBatch['lbl'] = events[:, 2]          
+                appendBatch(dvsLbl, dvsBatch)
+            elif bottleType == 'FLOW':
+                numEventsInBatch = int(len(events) / 4)
+                events = events.reshape(numEventsInBatch, 4)
+                dvsBatch, samplesBatch = decodeEvents24Bit(events[:, :2])
+                dvsBatch['vx'] = events[:, 2]
+                dvsBatch['vy'] = events[:, 3]                
+                appendBatch(dvsFlow, dvsBatch)
+            else: # bottleType in ['AE', 'IMUS']
+                numEventsInBatch = int(len(events) / 2)
+                events = events.reshape(numEventsInBatch, 2)
+                dvsBatch, samplesBatch = decodeEvents24Bit(events[:, :2])
+                appendBatch(dvs, dvsBatch)
+            appendBatch(samples, samplesBatch)
+        except ValueError: # sometimes finding malformed packets at the end of files - ignoring
+            continue
     # Crop arrays to number of events
     cropArraysToNumEvents(dvs)
-    cropArraysToNumEvents(dvslbl)
+    cropArraysToNumEvents(dvsLbl)
     cropArraysToNumEvents(samples)
-    return importPostProcessing(dvs, samples, dvslbl=dvslbl, flow=flow, **kwargs)
+    cropArraysToNumEvents(dvsFlow)
+    return importPostProcessing(dvs, samples, dvsLbl=dvsLbl, dvsFlow=dvsFlow, **kwargs)
 
 def importIitYarpRecursive(**kwargs):
     '''
@@ -543,16 +426,14 @@ def importIitYarpRecursive(**kwargs):
     files = sorted(os.listdir(path))
     importedDicts = []
     for file in files:
-        filePathAndName = os.path.join(path, file) 
-        if os.path.isdir(filePathAndName):
-            kwargs['filePathOrName'] = filePathAndName
+        filePathOrName = os.path.join(path, file) 
+        kwargs['filePathOrName'] = filePathOrName
+        if os.path.isdir(filePathOrName):
             importedDicts = importedDicts + importIitYarpRecursive(**kwargs)
-        if file == 'binaryevents.log': # TODO: Placeholder - how shall we denote that this is a binary file?
-            kwargs['filePathOrName'] = filePathAndName
-            importedDicts.append(importIitYarpBinHavingFoundFile(filePathAndName = filePathAndName, **kwargs))                      
+        if file == 'binaryevents.log':
+            importedDicts.append(importIitYarpBinHavingFoundFile(**kwargs))                      
         if file == 'data.log':
-            kwargs['filePathOrName'] = filePathAndName
-            importedDicts.append(importIitYarpHavingFoundFile(filePathAndName = filePathAndName, **kwargs))          
+            importedDicts.append(importIitYarpHavingFoundFile(**kwargs))          
     if len(importedDicts) == 0:
         raise FileNotFoundError('"data.log" file not found')
     return importedDicts
@@ -568,7 +449,7 @@ def importIitYarp(**kwargs):
     return importedDicts
     
 #%% LEGACY CODE
-# Import functions from marco monforte, fro reference
+# Import functions from marco monforte, for reference
 '''
    def decode_skinEvents(self, data):
         # Events are encoded as 32 bits with polarity(p), taxel(t), cross_base(c),
@@ -596,88 +477,6 @@ def importIitYarp(**kwargs):
         skin = data[:, 1] & 0x01
 
         return np.vstack([timestamps, polarity, taxel, cross_base, body_part, side, type, skin]).T.astype(np.float)
-
-    def decode_events_bit(self, str_rep):
-        # Events are encoded as 32 bits with x,y,channel(c) and polarity(p) as shown below
-        # 0000 0000 tcrr yyyy yyyy rrxx xxxx xxxp
-
-        k = list(map(int, str_rep.split()))
-        data = np.array(k, dtype=np.uint32)
-        # if data[-1] == 0 or len(data) % 2 != 0:
-        #     data = np.delete(data, -1)
-        data = data.reshape((-1, len(data)))
-
-        timestamps = data[:, 0] & ~(0x1 << 31)
-
-        polarity = data[:, 1] & 0x01
-
-        data[:, 1] >>= 1
-        x = data[:, 1] & 0x1FF
-
-        data[:, 1] >>= 11
-        y = data[:, 1] & 0xFF
-
-        data[:, 1] >>= 10
-        channel = data[:, 1] & 0x01
-        return np.vstack([timestamps, channel, x, y, polarity]).T.astype(np.float)
-
-
-    def load_AE_from_yarp(self, AE_file_path):
-        pattern = re.compile('(\d*) (\d*.\d*) AE \((.*)\)')
-        AE_to_save = []
-        with open(os.path.join(AE_file_path, 'data.log')) as boxFile:
-            content = boxFile.read()
-            found = pattern.findall(content)
-            for b in tqdm(found):
-                b_num = b[0]
-                b_ts = b[1]
-                ev = np.array(b[2].split(' '), dtype=np.uint32)
-                ev = ev.reshape(int(len(ev)/2), 2)
-                timestamps, channel, x, y, polarity = self.decode_events_24bit(ev)[0]
-                AE_to_save.append(np.array([timestamps, channel, x, y, polarity]))       # SELECT WHAT TO SAVE
-        AE_to_save = np.array(AE_to_save)
-        AE_to_save[:, 0] = (AE_to_save[:, 0] - AE_to_save[0, 0]) * 80e-9  # 80ns to normalize w.r.t. the clock
-        np.savetxt(os.path.join(AE_file_path, 'decoded_events.txt'), AE_to_save, delimiter=',', fmt=['%f', '%d', '%d', '%d', '%d'])     # SPECIFY THE FORMAT OF THE DATA
-
-
-    def load_GAE_from_yarp(self, GAE_file_path):
-        pattern = re.compile('(\d*) (\d*.\d*) GAE \((\d*) (\d*) \d{1} (\d*) (\d*) (\d*)\)')
-        GAE_to_save = []
-        with open(os.path.join(GAE_file_path, 'data.log')) as boxFile:
-            content = boxFile.read()
-            found = pattern.findall(content)
-            for b in found:
-                b_num = b[0]
-                b_ts = b[1]
-                v_ts = b[2]
-                v = b[3]
-                radius = np.float32(struct.unpack("<f", struct.pack("<I", np.int(
-                    b[4]))))  # converts the integer to binary and then to float32
-                # tw = struct.unpack("<f", struct.pack("<i", np.int(b[5])))
-                # circle = struct.unpack("<f", struct.pack("<i", np.int(b[6])))
-                ts, ch, x, y, p = self.decode_events(' '.join([v_ts, v]))[0]  # TODO ONLY WORKS FOR ONE EVENT PER BOTTLE
-                GAE_to_save.append(np.array([ts, x, y, radius, p]))
-        GAE_to_save = np.array(GAE_to_save)
-        GAE_to_save[:, 0] = (GAE_to_save[:, 0] - GAE_to_save[0, 0]) * 80e-9  # 80ns to normalize w.r.t. the clock
-        np.savetxt(os.path.join(GAE_file_path, "decoded_events.txt"), GAE_to_save, delimiter=',', fmt=['%f', '%d', '%d', '%d', '%d'])
-
-
-    def load_SkinEvents_from_yarp(self, AE_file_path):
-        pattern = re.compile('(\d*) (\d*.\d*) AE \((.*)\)')
-        AE_to_save = []
-        with open(os.path.join(AE_file_path, 'data.log')) as boxFile:
-            content = boxFile.read()
-            found = pattern.findall(content)
-            for b in tqdm(found):
-                b_num = b[0]
-                b_ts = b[1]
-                ev = np.array(b[2].split(' '), dtype=np.uint32)
-                ev = ev.reshape(int(len(ev)/2), 2)
-                ts, pol, tax, cross_b, body_part, side, type, skin = self.decode_skinEvents(ev)[0]
-                AE_to_save.append(np.array([ts, pol, tax, cross_b, body_part, side, type, skin]))       # SELECT WHAT TO SAVE
-        AE_to_save = np.array(AE_to_save)
-        AE_to_save[:, 0] = (AE_to_save[:, 0] - AE_to_save[0, 0]) * 80e-9  # 80ns to normalize w.r.t. the clock
-        np.savetxt(os.path.join(AE_file_path, 'decoded_events.txt'), AE_to_save, delimiter=',', fmt=['%f', '%d', '%d', '%d', '%d', '%d', '%d', '%d'])     # SPECIFY THE FORMAT OF THE DATA
 '''
 
     
