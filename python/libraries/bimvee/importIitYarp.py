@@ -158,7 +158,7 @@ def bitsToFloat(b):
 
 def samplesToImu(inDict, **kwargs):
     '''
-    Input is a dict containing ts, s, and v.
+    Input is a dict containing ts, sensor, and value.
     Assume these are IMU samples, and compile them (up to) 10 at a time.
     Output is ts, acc, angV, temp and mag
     'Sensor' is defined as:
@@ -172,8 +172,8 @@ def samplesToImu(inDict, **kwargs):
     7: Mag X
     8: Mag Y
     9: Mag Z       
-    For the IMU on STEFI, which is this one:
-    ICM-20648, gyro full scale is +/-2000 degrees per second,
+    For the IMU on STEFI, (which is this one ICM-20648):
+    gyro full scale is +/-2000 degrees per second,
     accelerometer full scale is +/-2 g.   
     temp - 333.87 - but does it zero at 0K or at room temperature? (+21deg)
     mag - no idea - this model doesn't have an internal mag        
@@ -197,32 +197,32 @@ def samplesToImu(inDict, **kwargs):
     temp = np.zeros((numImu, 1), dtype=np.int16)
     mag = np.zeros((numImu, 3), dtype=np.int16)
     imuPtr = -1
-    sPrev = 100
-    for ts, s, v in zip(tsAll, sensorAll, valueAll):
-        if s <= sPrev:
+    sensorPrev = 100
+    for ts, sensor, value in zip(tsAll, sensorAll, valueAll):
+        if sensor <= sensorPrev:
             imuPtr += 1
             tsOut[imuPtr] = ts # Just take the first ts for a group of samples
-        sPrev = s
-        if s == 0:
-            acc[imuPtr, 0] = v
-        elif s== 1:
-            acc[imuPtr, 1] = v
-        elif s== 2:
-            acc[imuPtr, 2] = v
-        elif s== 3:
-            angV[imuPtr, 0] = v
-        elif s== 4:
-            angV[imuPtr, 1] = v
-        elif s== 5:
-            angV[imuPtr, 2] = v
-        elif s== 6:
-            temp[imuPtr, 0] = v
-        elif s== 7:
-            mag[imuPtr, 0] = v
-        elif s== 8:
-            mag[imuPtr, 1] = v
-        elif s== 9:
-            mag[imuPtr, 2] = v
+        sensorPrev = sensor
+        if sensor == 0:
+            acc[imuPtr, 0] = value
+        elif sensor == 1:
+            acc[imuPtr, 1] = value
+        elif sensor == 2:
+            acc[imuPtr, 2] = value
+        elif sensor == 3:
+            angV[imuPtr, 0] = value
+        elif sensor == 4:
+            angV[imuPtr, 1] = value
+        elif sensor == 5:
+            angV[imuPtr, 2] = value
+        elif sensor == 6:
+            temp[imuPtr, 0] = value
+        elif sensor == 7:
+            mag[imuPtr, 0] = value
+        elif sensor == 8:
+            mag[imuPtr, 1] = value
+        elif sensor== 9:
+            mag[imuPtr, 2] = value
     acc = acc.astype(np.float64) / accConversionFactor
     angV = angV.astype(np.float64) / angVConversionFactor
     temp = temp.astype(np.float64) / tempConversionFactor - tempConversionOffset
@@ -337,7 +337,10 @@ def importPostProcessing(dvs, samples, dvsLbl=None, dvsFlow=None, **kwargs):
                 chDict['dvslbl'] = dvsLblCh
         samplesCh = selectByChannel(samples, ch)
         if samplesCh:
-            chDict['imu'] = samplesToImu(samplesCh, **kwargs)
+            if kwargs.get('convertSamplesToImu', True):
+                chDict['imu'] = samplesToImu(samplesCh, **kwargs)
+            else:
+                chDict['sample'] = samplesCh
         if dvsFlow:
             dvsFlowCh = selectByChannel(dvsFlow, ch)
             if dvsFlowCh:
