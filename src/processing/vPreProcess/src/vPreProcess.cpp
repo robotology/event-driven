@@ -336,7 +336,7 @@ void vPreProcess::run()
 
                 //salt and pepper filter (only to TD events)
                 if(apply_filter && !v.type) {
-                    if(v.polarity) {
+                    if(v.channel) {
                         if(!filter_right.check(v.x, v.y, v.polarity, v.stamp)) {
                             v_dropped++;
                             continue;
