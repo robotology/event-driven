@@ -129,6 +129,22 @@ def cropSelectedFields(dataTypeDict, fieldList, selectedBool):
         dataTypeDict[fieldName] = dataTypeDict[fieldName][selectedBool]
 
 '''
+Accepts a container at any level of the container hierarchy and finds the highest timestamp contained
+'''
+def getLastTimestamp(inDict):
+    lastTs = 0
+    if isinstance(inDict, list):
+        for inDictElement in inDict:
+            lastTs = max(lastTs, getLastTimestamp(inDictElement))
+    elif isinstance(inDict, dict):
+        if 'ts' in inDict:
+            return inDict['ts'][-1]
+        else: # It's a dictionary - go through it's elements
+            for keyName in inDict.keys():
+                lastTs = max(lastTs, getLastTimestamp(inDict[keyName]))
+    return lastTs
+
+'''
 cropDataByTimeRange was here - replaced by cropTime in split.py
 '''
             

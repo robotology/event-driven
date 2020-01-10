@@ -42,6 +42,8 @@ The former may combine samples and events in the same bottles and never contains
 explicit IMU / LAE / FLOW events. samples such as IMU are contained within AE type bottles.
 The latter usually has distinct bottles for each datatype, and channels
 have probably, but not definitely, been split into left and right. 
+TODO: import frames - yarp has 2 ways of encoding - as bottles or,
+recommended, by saving e.g. pngs to a folder - support the latter
 """
 # TODO: get initial ts from yarp info.log 
 # TODO: support LAE import
@@ -171,12 +173,12 @@ def samplesToImu(inDict, **kwargs):
     6: Temperature
     7: Mag X
     8: Mag Y
-    9: Mag Z       
+    9: Mag Z
     For the IMU on STEFI, (which is this one ICM-20648):
     gyro full scale is +/-2000 degrees per second,
-    accelerometer full scale is +/-2 g.   
+    accelerometer full scale is +/-2 g.
     temp - 333.87 - but does it zero at 0K or at room temperature? (+21deg)
-    mag - no idea - this model doesn't have an internal mag        
+    mag - no idea - this model doesn't have an internal mag
     '''
     accConversionFactor = kwargs.get('accConversionFactor', 32768 / 2 / 9.80665)
     angVConversionFactor = kwargs.get('angVConversionFactor', 32768 / 2000 * 180 / np.pi)
