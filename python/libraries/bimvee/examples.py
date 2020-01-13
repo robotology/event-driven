@@ -131,7 +131,7 @@ infoTsForImportedDicts(imported)
 
 from plot import plot
 
-plot(imported, zeroT=True)
+plot(imported, zeroT=True, polarised=True)
 
 #%% More specific example of taking particular datatypes from an import and 
 # visualising them
@@ -164,6 +164,7 @@ if depthMaps:
 from plotDvsContrast import plotDvs
 
 plotDvs(imported, numPlots=6, distributeBy='events')
+
 
 #%% EXPORT FUNCTIONS
 

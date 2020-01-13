@@ -63,61 +63,69 @@ def idsEventsInTimeRange(events, **kwargs):
     endIdx = np.searchsorted(events['ts'], endTime)
     return range(startIdx, endIdx)
 
-# TODO: standardise use of parameters in following two functions
-# This ignores polarity
-def getEventImage(events, **kwargs):
+def getEventsInTimeRange(events, **kwargs):
     ids = kwargs.get('ids', idsEventsInTimeRange(events, **kwargs))
+    return {
+        'y': events['y'][ids],
+        'x': events['x'][ids],
+        'pol': events['pol'][ids]
+        }
+
+def getEventImage(events, **kwargs):
     # dims might be in the events dict, but allow override from kwargs
-    dimX = kwargs.get('dimX', events.get('dimX', np.max(events['x'])+1))
-    dimY = kwargs.get('dimY', events.get('dimY', np.max(events['y'])+1))
-    eventImage = np.histogram2d(events['y'][ids], 
-                                 events['x'][ids], 
-                                 bins=[dimY, dimX],
-                                 range=[[0, dimY-1], [0, dimX-1]]
-                                 )[0]
-    if kwargs.get('contrast') is not None:
-        eventImage = np.clip(eventImage, 0, kwargs.get('contrast'))
+    try:
+        dimX = kwargs.get('dimX', events.get('dimX', np.max(events['x'])+1))
+        dimY = kwargs.get('dimY', events.get('dimY', np.max(events['y'])+1))
+    except ValueError: # no defined dims and events arrays are empty
+        dimX = 1
+        dimY = 1
+    if kwargs.get('polarised', (kwargs.get('polarized'), True)):
+        eventImagePos = np.histogram2d(events['y'][events['pol']], 
+                                     events['x'][events['pol']], 
+                                     bins=[dimY, dimX],
+                                     range=[[0, dimY-1], [0, dimX-1]]
+                                     )[0]
+        eventImageNeg = np.histogram2d(events['y'][~events['pol']], 
+                                     events['x'][~events['pol']],
+                                     bins=[dimY, dimX],
+                                     range=[[0, dimY-1], [0, dimX-1]]
+                                     )[0]
+        eventImage = eventImagePos - eventImageNeg
+    else:
+        eventImage = np.histogram2d(events['y'], 
+                                     events['x'], 
+                                     bins=[dimY, dimX],
+                                     range=[[0, dimY-1], [0, dimX-1]]
+                                     )[0]
+    # Clip the values according to the contrast
+    contrast = kwargs.get('contrast', 3)
+    eventImage = np.clip(eventImage, -contrast, contrast)
     return eventImage
 
-def getPolarisedEventImage(events, **kwargs):
-    # Unpack data for clarity
-    pol = events['pol']
-    x = events['x']
-    y = events['y']
-    # Accumulate x and y separately for pos and neg pol, then subtract one from the other.
-    xPos = x[pol]
-    yPos = y[pol]
-    maxX = kwargs.get('maxX', x.max())
-    maxY = kwargs.get('maxY', y.max())
-    frameFromEventsPos = np.histogram2d(yPos, xPos, bins=[maxY, maxX], range=[[0, maxY-1], [0, maxX-1]])[0]
-    xNeg = x[~pol]
-    yNeg = y[~pol]
-    frameFromEventsNeg = np.histogram2d(yNeg, xNeg, bins=[maxY, maxX], range=[[0, maxY-1], [0, maxX-1]])[0]
-    frameFromEvents = frameFromEventsPos - frameFromEventsNeg
-    # The 'contrast' for display of events, as used in jAER.
-    contrast = kwargs.get('contrast', 3)
-    # Clip the values according to the contrast
-    frameFromEvents = np.clip(frameFromEvents, -contrast, contrast)
-    return frameFromEvents
+def getEventImageForTimeRange(events, **kwargs):
+    events = getEventsInTimeRange(events, **kwargs)
+    return getEventImage(events, **kwargs)
 
-'''
-TODO: apply the low-level functions above into the plot functions below
-'''
 def plotDvsContrastSingle(inDict, **kwargs):
-    frameFromEvents = getPolarisedEventImage(inDict, **kwargs)
+    frameFromEvents = getEventImage(inDict, **kwargs)
     if kwargs.get('transpose', False):
         frameFromEvents = np.transpose(frameFromEvents)
     if kwargs.get('flipVertical', False):
         frameFromEvents = np.flip(frameFromEvents, axis=0)
     if kwargs.get('flipHorizontal', False):
         frameFromEvents = np.flip(frameFromEvents, axis=1)
-    contrast = kwargs.get('contrast', 3)    
-    cmap = kwargs.get('cmap', kwargs.get('colormap', 'seismic_r'))
+    contrast = kwargs.get('contrast', 3)
     axes = kwargs.get('axes')
     if axes is None:
         fig, axes = plt.subplots()
-    image = axes.imshow(frameFromEvents, origin='lower', cmap=cmap, 
-                        vmin=-contrast, vmax=contrast)
+    if kwargs.get('polarised', (kwargs.get('polarized'), False)):
+        cmap = kwargs.get('cmap', kwargs.get('colormap', 'seismic_r'))
+        image = axes.imshow(frameFromEvents, origin='lower', cmap=cmap, 
+                            vmin=-contrast, vmax=contrast)
+    else:
+        cmap = kwargs.get('cmap', kwargs.get('colormap', 'gray'))
+        image = axes.imshow(frameFromEvents, origin='lower', cmap=cmap, 
+                            vmin=0, vmax=contrast)        
     axes.set_aspect('equal', adjustable='box')
     title = kwargs.get('title')
     if title is not None:

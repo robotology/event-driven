@@ -21,32 +21,6 @@ from mpl_toolkits import mplot3d
 
 
 def main():
-    filePathOrName = '/home/suman/projects/EDPR_vicon_tests/dumpVicon/boardStEFI001/data.log'
-    viconDataDict, bodyids = importVicon(filePathOrName)
-    print('The parsed body IDs are: ', bodyids)
-
-    # StEFI body trajectory
-    fig = plt.figure(1)
-    ax = plt.axes(projection='3d')
-    include = ['StEFI']
-    exclude = ['Marker']
-    ax = plot_trajectories(ax, viconDataDict, bodyids, include, exclude)
-
-    # StEFI labeled markers trajectory
-    fig = plt.figure(2)
-    ax = plt.axes(projection='3d')
-    include = ['StEFI', 'Marker']
-    exclude = []
-    ax = plot_trajectories(ax, viconDataDict, bodyids, include, exclude)
-
-    # Unlabeled markers trajectory
-    fig = plt.figure(3)
-    ax = plt.axes(projection='3d')
-    include = ['UnlMarker']
-    exclude = []
-    ax = plot_trajectories(ax, viconDataDict, bodyids, include, exclude)
-
-    plt.show()
 
 
 """
