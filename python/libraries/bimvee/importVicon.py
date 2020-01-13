@@ -61,4 +61,4 @@ def importVicon(filePathOrName):
         outDict['data'][id]['pose']['ts'] = np.array(outDict['data'][id]['pose']['ts'], dtype=np.float64)
         outDict['data'][id]['pose']['pose7d'] = np.array(outDict['data'][id]['pose']['pose7d'], dtype=np.float64)
 
-    return outDict
+    return outDict, bodyids
