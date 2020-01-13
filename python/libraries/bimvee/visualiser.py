@@ -30,12 +30,6 @@ Nothing stops the calling function from applying a color mask to an output in lu
 
 import numpy as np
 
-# Optional dependency, for advanced visualisation ...
-try:
-    from mayavi import mlab
-except ModuleNotFoundError:
-    pass # catch it later
-
 # Local imports
 from plotDvsContrast import getEventImage
 
@@ -57,6 +51,12 @@ class Visualiser():
 
 class VisualiserDvs(Visualiser):
 
+    def __init__(self, data):
+        self.set_data(data)
+
+    def set_data(self, data):
+        self.__data = data
+        
     # TODO: There can be methods which better choose the best frame, or which create a visualisation which
     # respects the time_window parameter 
     def get_frame(self, time, time_window, **kwargs):
@@ -72,20 +72,30 @@ class VisualiserDvs(Visualiser):
         return image
 
     def get_dims(self):
-        data = self.__data
-        x = data['dimX'] if 'dimX' in data else np.max(self.data['x']) + 1
-        y = data['dimY'] if 'dimY' in data else np.max(self.data['y']) + 1
+        try:
+            data = self.__data
+        except AttributeError: # data hasn't been set yet
+            return 1, 1
+        x = data['dimX'] if 'dimX' in data else np.max(data['x']) + 1
+        y = data['dimY'] if 'dimY' in data else np.max(data['y']) + 1
         return x, y
 
     
 class VisualiserFrame(Visualiser):
+
+    def __init__(self, data):
+        self.set_data(data)
+
+    def set_data(self, data):
+        self.__data = data
+        
 
     # TODO: There can be methods which better choose the best frame, or which create a visualisation which
     # respects the time_window parameter 
     def get_frame(self, time, time_window, **kwargs):
         data = self.__data
         frameIdx = np.searchsorted(data['ts'], time)
-        image = self.data['frames'][frameIdx]
+        image = data['frames'][frameIdx]
         # Allow for arbitrary post-production on image with a callback
         # TODO: as this is boilerplate, it could be pushed into pie syntax ...
         if kwargs.get('callback', None) is not None:
@@ -93,8 +103,11 @@ class VisualiserFrame(Visualiser):
             image = kwargs['callback'](**kwargs)
         return image
     
-    def get_dims(self):        
-        data = self.__data
+    def get_dims(self):
+        try:
+            data = self.__data
+        except AttributeError: # data hasn't been set yet
+            return 1, 1
         x = data['dimX'] if 'dimX' in data else data['frames'][0].shape[1]
         y = data['dimY'] if 'dimY' in data else data['frames'][0].shape[0]
         return x, y
@@ -117,6 +130,7 @@ def quat2RotM(quat, M=None):
     M[2, 1] = 2*y*z + 2*x*w
     M[2, 2] = 1 - 2*x**2 - 2*y**2
     M[3, 3] = 1
+    return M
 
 def rotateUnitVectors(rotM):
     xVec = np.expand_dims(np.array([1, 0, 0, 1]), axis=1)
@@ -134,6 +148,31 @@ def project3dTo2d(X, Y, Z, smallestRenderDim):
     projY = projY.astype(int)
     return projX, projY
 
+# https://stackoverflow.com/questions/50387606/python-draw-line-between-two-coordinates-in-a-matrix
+def draw_line(mat, x0, y0, x1, y1):
+    if not (0 <= x0 < mat.shape[0] and 0 <= x1 < mat.shape[0] and
+            0 <= y0 < mat.shape[1] and 0 <= y1 < mat.shape[1]):
+        raise ValueError('Invalid coordinates.')
+    if (x0, y0) == (x1, y1):
+        mat[x0, y0] = 2
+        return
+    # Swap axes if Y slope is smaller than X slope
+    transpose = abs(x1 - x0) < abs(y1 - y0)
+    if transpose:
+        mat = mat.T
+        x0, y0, x1, y1 = y0, x0, y1, x1
+    # Swap line direction to go left-to-right if necessary
+    if x0 > x1:
+        x0, y0, x1, y1 = x1, y1, x0, y0
+    # Write line ends
+    mat[x0, y0] = 2
+    mat[x1, y1] = 2
+    # Compute intermediate coordinates using line equation
+    x = np.arange(x0 + 1, x1)
+    y = np.round(((y1 - y0) / (x1 - x0)) * (x - x0) + y0).astype(x.dtype)
+    # Write intermediate coordinates
+    mat[x, y] = 255
+    
 class VisualiserPose6q(Visualiser):
 
     renderX = 300
@@ -179,11 +218,23 @@ class VisualiserPose6q(Visualiser):
     def get_frame(self, time, time_window, **kwargs):
         data = self.__data
         poseIdx = np.searchsorted(data['ts'], time)
-        image = np.zeros((self.renderX, self.renderY), dtype = np.uint8)
-        image[self.projX[poseIdx], self.projY[poseIdx]] = 255
-        image[self.projX_X[poseIdx], self.projY_X[poseIdx]] = 255
-        image[self.projX_Y[poseIdx], self.projY_Y[poseIdx]] = 255
-        image[self.projX_Z[poseIdx], self.projY_Z[poseIdx]] = 255
+        image = np.zeros((self.renderX, self.renderY, 3), dtype = np.uint8)
+#        image[self.projX[poseIdx], self.projY[poseIdx]] = 255
+#        image[self.projX_X[poseIdx], self.projY_X[poseIdx]] = 255
+#        image[self.projX_Y[poseIdx], self.projY_Y[poseIdx]] = 255
+#        image[self.projX_Z[poseIdx], self.projY_Z[poseIdx]] = 255
+        X = self.projX[poseIdx]
+        Y = self.projY[poseIdx]
+        X_X = self.projX_X[poseIdx]
+        Y_X = self.projY_X[poseIdx]
+        X_Y = self.projX_Y[poseIdx]
+        Y_Y = self.projY_Y[poseIdx]
+        X_Z = self.projX_Z[poseIdx]
+        Y_Z = self.projY_Z[poseIdx]
+        draw_line(image[:, :, 0], X, Y, X_X, Y_X)
+        draw_line(image[:, :, 1], X, Y, X_Y, Y_Y)
+        draw_line(image[:, :, 2], X, Y, X_Z, Y_Z)
+
         # Allow for arbitrary post-production on image with a callback
         # TODO: as this is boilerplate, it could be pushed into pie syntax ...
         if kwargs.get('callback', None) is not None:
@@ -194,3 +245,5 @@ class VisualiserPose6q(Visualiser):
     def get_dims(self):        
         return self.renderX, self.renderY
 
+    def get_colorfmt(self):
+        return 'rgb'
