@@ -19,7 +19,7 @@ IIT YARP .log - ATIS Gen1 - 24 bit (incl. IMU, SKIN?)
 rpg_dvs_ros - DVS/DAVIS .bag
 Penn MvSEC (by using the above rosbag import)
 Intel realsense 265 (by using the above rosbag import)
-Vicon - c3d
+Vicon - as dumped by yarpDumper; maybe also c3d?
 INI jAER / cAER .aedat (v1/2/3) DVS / DAVIS / Cochlea 
 (there is legacy code for this from "aedattools" repo)
 Samsung (SEC) Gen3 VGA .bin
@@ -91,3 +91,28 @@ Export functions:
 exportIitYarp - exports to IIT's EDPR YARP format. Alongside data.log and 
 info.log files, it exports an xml which specifies to yarpmanager how to 
 visualise the resulting data. 
+
+Dependencies:
+
+This library is intended to require minimal dependencies.
+Notably, rosbag import is achieved without needing a ros installation.
+Beyond the python standard library, the main dependencies are:
+
+- numpy
+
+For the 'plot' family of visualisation functions:
+
+- matplotlib
+- mpl_toolkits (only for certain 3d visualisations)
+
+The "visualiser", however, generates graphics as numpy arrays 
+without reference to matplotlib, for rendering by an external application.
+
+plotDvsLastTs uses rankdata from scipy; however if it's not installed, 
+it defaults to a local definition; scipy is therefore an optional dependency.
+
+import and export functions give progress bars using:
+
+- tqdm
+
+If this is not installed, a local tqdm module allows the library to function regardless. 
