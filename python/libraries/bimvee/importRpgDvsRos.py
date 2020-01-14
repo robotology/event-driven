@@ -77,7 +77,7 @@ from struct import unpack
 from struct import error as structError
 from tqdm import tqdm
 import numpy as np
-from timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts, unwrapTimestamps
+from libraries.bimvee.timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts, unwrapTimestamps
 import string
 
 def getOrInsertDefault(inDict, arg, default):
