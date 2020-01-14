@@ -59,27 +59,27 @@ from plotViconTrajectory import plot_trajectories
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 
-bodyIds = viconDataDict['info']['bodyIds'] 
+uniqueIds = viconDataDict['info']['uniqueIds'] 
 
 # StEFI body trajectory
 fig = plt.figure(1)
 ax = plt.axes(projection='3d')
 include = ['StEFI']
 exclude = ['Marker']
-plot_trajectories(viconDataDict, bodyIds, include, exclude, ax=ax)
+plot_trajectories(viconDataDict, uniqueIds, include, exclude, ax=ax)
 
 # StEFI labeled markers trajectory
 fig = plt.figure(2)
 ax = plt.axes(projection='3d')
 include = ['StEFI', 'Marker']
 exclude = []
-plot_trajectories(viconDataDict, bodyIds, include, exclude, ax=ax)
+plot_trajectories(viconDataDict, uniqueIds, include, exclude, ax=ax)
 
 # Unlabeled markers trajectory
 fig = plt.figure(3)
 ax = plt.axes(projection='3d')
 include = ['UnlMarker']
 exclude = []
-plot_trajectories(viconDataDict, bodyIds, include, exclude, ax=ax)
+plot_trajectories(viconDataDict, uniqueIds, include, exclude, ax=ax)
 
 plt.show()

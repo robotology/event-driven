@@ -19,7 +19,7 @@ and True then the format is:
     outDict = {
         'info': {
             'filePathOrName': <filepath>
-            'bodyIds': np.array of strings, one for each unique bodyId 
+            'uniqueIds': np.array of strings, one for each unique bodyId 
             }, 
         'data': { 
             <bodyID>: {
@@ -36,7 +36,7 @@ Otherwise:
                 'pose6q': {
                     'ts' : <1D array of timestamps>,
                     'pose' : <2D array where each row has 7d pose of a body at a time instant>,
-                    'bodyId' : <2D array where each row has the bodyId of the corresponding marker>,
+                    'bodyId' : <1D array where each row has the bodyId of the corresponding marker>,
                     'uniqueIds' : <1D array of strings, one for each unique marker>} } } }
     
 A bodyID is the name assigned by vicon to a marker (labeled / unlableled) or rigid body
@@ -51,12 +51,12 @@ then the data in the vicon channel is broken into two datatypes:
                 'pose6q': {
                     'ts' : <1D array of timestamps>,
                     'pose' : <2D array where each row has 7d pose of a body at a time instant>,
-                    'bodyId' : <2D array where each row has the bodyId of the corresponding marker>,
+                    'bodyId' : <1D array where each row has the bodyId of the corresponding marker>,
                     'uniqueIds' : <1D array of strings, one for each unique marker>} 
                 'point3': {
                     'ts' : <1D array of timestamps>,
                     'point' : <2D array where each row has 3d position of a body at a time instant>,
-                    'bodyId' : <2D array where each row has the bodyId of the corresponding marker>,
+                    'bodyId' : <1D array where each row has the bodyId of the corresponding marker>,
                     'uniqueIds' : <1D array of strings, one for each unique marker>} } ...
 """
 
@@ -79,7 +79,7 @@ def importVicon(filePathOrName, **kwargs):
     outDict = {'info': {'filePathOrName': filePathOrName}, 'data': {}}
     separateBodiesAsChannels = kwargs.get('separateBodiesAsChannels', False)
     if separateBodiesAsChannels:
-        bodyIds = []
+        uniqueIds = []
     else: 
         poseDict = {'ts': [], 'pose': [], 'bodyId': []}
     with open(filePathOrName, 'r') as file:
@@ -100,7 +100,7 @@ def importVicon(filePathOrName, **kwargs):
                         poseDict = outDict['data'][bodyId]['pose6q']
                     except KeyError:
                         print('KeyError exception.. Creating new key', bodyId)
-                        bodyIds.append(bodyId)
+                        uniqueIds.append(bodyId)
                         outDict['data'][bodyId] = {'pose6q': {'ts': [], 'pose': []}}
                         poseDict = outDict['data'][bodyId]['pose6q']
                 poseDict['ts'].append(ts)
@@ -111,10 +111,10 @@ def importVicon(filePathOrName, **kwargs):
 
     # converting lists of strings to numpy arrays of float64
     if separateBodiesAsChannels:
-        for id in bodyIds:
+        for id in uniqueIds:
             outDict['data'][id]['pose6q']['ts'] = np.array(outDict['data'][id]['pose6q']['ts'], dtype=np.float64)
             outDict['data'][id]['pose6q']['pose'] = np.array(outDict['data'][id]['pose6q']['pose'], dtype=np.float64)
-        outDict['info']['bodyIds'] = bodyIds
+        outDict['info']['uniqueIds'] = uniqueIds
     else:
         poseDict['ts'] = np.array(poseDict['ts'], dtype=np.float64)
         poseDict['pose'] = np.array(poseDict['pose'], dtype=np.float64)
