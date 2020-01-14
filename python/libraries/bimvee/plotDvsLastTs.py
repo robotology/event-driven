@@ -34,8 +34,28 @@ Parameters which can be used:
 import numpy as np
 import matplotlib.pyplot as plt
 from math import log10, floor
-from scipy.stats import rankdata
 import matplotlib.colors as colors
+
+# Optional import of rankdata method from scipy
+try: 
+    from scipy.stats import rankdata
+except ModuleNotFoundError:
+    # Stripped down version of implementation from scipy
+    def rankdata(a, method='average'):
+        arr = np.ravel(np.asarray(a))
+        algo = 'mergesort' if method == 'ordinal' else 'quicksort'
+        sorter = np.argsort(arr, kind=algo)
+        inv = np.empty(sorter.size, dtype=np.intp)
+        inv[sorter] = np.arange(sorter.size, dtype=np.intp)
+        if method == 'ordinal':
+            return inv + 1
+        arr = arr[sorter]
+        obs = np.r_[True, arr[1:] != arr[:-1]]
+        dense = obs.cumsum()[inv]
+        # cumulative counts of each unique value
+        count = np.r_[np.nonzero(obs)[0], len(obs)]
+        # average method
+        return .5 * (count[dense] + count[dense - 1] + 1)
 
 def roundToSf(x, sig=3): # https://stackoverflow.com/questions/3410976/how-to-round-a-number-to-significant-figures-in-python
     try:
@@ -105,6 +125,25 @@ def plotDvsLastTsSingle(inDict, **kwargs):
     return image
 
 def plotDvsLastTs(inDict, **kwargs):
+    # Boilerplate for descending higher level containers
+    if isinstance(inDict, list):
+        for inDictInst in inDict:
+            plotDvsLastTs(inDictInst, **kwargs)
+        return
+    if 'info' in inDict: # Top level container
+        fileName = inDict['info'].get('filePathOrName', '')
+        print('plotDvsContrast was called for file ' + fileName)
+        if not inDict['data']:
+            print('The import contains no data.')
+            return
+        for channelName in inDict['data']:
+            channelData = inDict['data'][channelName]
+            if 'dvs' in channelData and len(channelData['dvs']['ts']) > 0:
+                kwargs['title'] = ' '.join([fileName, str(channelName)])
+                plotDvsLastTs(channelData['dvs'], **kwargs)
+            else:
+                print('Channel ' + channelName + ' skipped because it contains no polarity data')
+        return
     times = kwargs.get('time', kwargs.get('maxTime', np.max(inDict['ts'])))
     if np.isscalar(times):
         times = [times]

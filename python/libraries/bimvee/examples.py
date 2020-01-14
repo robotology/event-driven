@@ -24,7 +24,8 @@ if os.name == 'nt':
 else:
     prefix = '/home/sbamford/'    
     
-sys.path.append(os.path.join(prefix, 'repos/Sim/bimvee')) # A path to this library
+sys.path.append(os.path.join(prefix, 'repos/event-driven-python-dev/python/libraries/bimvee')) # A path to this library
+#sys.path.insert(0, os.path.join(prefix, 'repos/event-driven-python-dev/python/libraries/bimvee')) # A path to this library
 
 #%% IMPORT FUNCTIONS
 
