@@ -32,7 +32,7 @@ import numpy as np
 from geometry import quat2RotM, rotateUnitVectors, project3dTo2d, slerp, draw_line
 
 # Local imports
-from plotDvsContrast import getEventImageForTimeRange
+from libraries.bimvee.plotDvsContrast import getEventImageForTimeRange
 
 
 class Visualiser():
