@@ -2,6 +2,7 @@
 """
 Copyright (C) 2019 Event-driven Perception for Robotics
 Author: Suman Ghosh
+        Simeon Bamford
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later version.
@@ -15,13 +16,8 @@ Library for plotting vicon data parsed using importVicon.py
 
 """
 
-from importVicon import importVicon
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
-
-
-def main():
-
 
 """
 Plot the 3D trajectory of a body or marker for the entire duration of recording
@@ -32,20 +28,20 @@ To select which bodies to plot using bodyID:
  - pass a list of strings that should be absent from the bodyID of choice, through the parameter exclude
 """
 
-
-def plot_trajectories(ax, viconDataDict, bodyids, include, exclude):
-    ax = plt.axes(projection='3d')
-    for name in bodyids:
+def plot_trajectories(viconDataDict, bodyIds, include, exclude, **kwargs):
+    ax = kwargs.get('ax', plt.axes(projection='3d'))
+    kwargs['ax'] = ax
+    for name in bodyIds:
         select_body = all([(inc in name) for inc in include]) and all([not (exc in name) for exc in exclude])
         if select_body:  # modify this line to plot whichever markers you want
-            marker_pose = viconDataDict['data'][name]['pose']['pose7d']
+            marker_pose = viconDataDict['data'][name]['pose6q']['pose']
             ax.scatter3D(marker_pose[:, 0], marker_pose[:, 1], marker_pose[:, 2], label=name)
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')
     ax.set_zlabel('Z Label')
     ax.legend()
-    return ax
+    callback = kwargs.get('callback')
+    if callback is not None:
+        callback(**kwargs)
+    #return ax # ax is also available to the calling function inside **kwargs
 
-
-if __name__ == '__main__':
-    main()

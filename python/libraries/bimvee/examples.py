@@ -166,6 +166,12 @@ from plotDvsContrast import plotDvs
 
 plotDvs(imported, numPlots=6, distributeBy='events')
 
+#%% This function for visualising dvs surface-of-active-events-(SAE)-like
+# visualisation is not included in standard plot function.
+
+from plotDvsLastTs import plotDvsLastTs
+
+plotDvsLastTs(imported)
 
 #%% EXPORT FUNCTIONS
 
