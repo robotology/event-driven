@@ -62,6 +62,16 @@ then the data in the vicon channel is broken into two datatypes:
 
 import re
 import numpy as np
+from timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
+
+def getOrInsertDefault(inDict, arg, default):
+    # get an arg from a dict.
+    # If the the dict doesn't contain the arg, return the default, 
+    # and also insert the default into the dict
+    value = inDict.get(arg, default)
+    if value == default:
+        inDict[arg] = default
+    return value
 
 def importVicon(filePathOrName, **kwargs):
     pattern = re.compile('(\d+) (\d+\.\d+) \((.*)\)')
@@ -129,6 +139,8 @@ def importVicon(filePathOrName, **kwargs):
             outDict['data']['vicon'] = {
                 'pose6q': poseDict,
                 'point3': pointDict}
+        if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
+            zeroTimestampsForAChannel(outDict['data']['vicon']) # TODO: Zeroing in the separated channel case
     return outDict
 
 
