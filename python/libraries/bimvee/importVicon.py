@@ -14,24 +14,64 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 Input:
 vicon data log recorded through yarp
 
-Output:
-outDict = { 'info' : <filepath>, 'data' : { <bodyID> : { 'ts' : <1D array of timestamps>,
-            'pose7d' : <2D array where each row represents 7d pose of a body at a time instant> } } }
-
+There are two output formats. If 'parameter' separateBodiesAsChannels is present 
+and True then the format is:
+    outDict = {
+        'info': {
+            'filePathOrName': <filepath>
+            'bodyIds': np.array of strings, one for each unique bodyId 
+            }, 
+        'data': { 
+            <bodyID>: {
+                'pose6q': {
+                    'ts' : <1D array of timestamps>,
+                    'pose' : <2D array where each row has 7d pose of a body at a time instant>} } } }
+Otherwise:
+    outDict = {
+        'info': {
+            'filePathOrName': <filepath>
+            }, 
+        'data': {
+            'vicon': {
+                'pose6q': {
+                    'ts' : <1D array of timestamps>,
+                    'pose' : <2D array where each row has 7d pose of a body at a time instant>,
+                    'bodyId' : <2D array where each row has the bodyId of the corresponding marker>,
+                    'uniqueIds' : <1D array of strings, one for each unique marker>} } } }
+    
 A bodyID is the name assigned by vicon to a marker (labeled / unlableled) or rigid body
 The 7d pose is in the form [x, y, z, r_x, r_y, r_z, r_w] with the orientation as a quaternion
+The datatype is called 'pose6q', referring to the 6dof with rotation in quaternion form.
 
+Additionally, if separateBodiesAsChannels is not present or false, 
+and the separateMarkersAndSegments parameter is present and True,
+then the data in the vicon channel is broken into two datatypes:
+        ...
+            'vicon': {
+                'pose6q': {
+                    'ts' : <1D array of timestamps>,
+                    'pose' : <2D array where each row has 7d pose of a body at a time instant>,
+                    'bodyId' : <2D array where each row has the bodyId of the corresponding marker>,
+                    'uniqueIds' : <1D array of strings, one for each unique marker>} 
+                'point3': {
+                    'ts' : <1D array of timestamps>,
+                    'point' : <2D array where each row has 3d position of a body at a time instant>,
+                    'bodyId' : <2D array where each row has the bodyId of the corresponding marker>,
+                    'uniqueIds' : <1D array of strings, one for each unique marker>} } ...
 """
 
 import re
 import numpy as np
 
-def importVicon(filePathOrName):
+def importVicon(filePathOrName, **kwargs):
     pattern = re.compile('(\d+) (\d+\.\d+) \((.*)\)')
     # yarpBottleTimes = []
-    outDict = {'info': filePathOrName, 'data': {}}
-    bodyids = []
-
+    outDict = {'info': {'filePathOrName': filePathOrName}, 'data': {}}
+    separateBodiesAsChannels = kwargs.get('separateBodiesAsChannels', False)
+    if separateBodiesAsChannels:
+        bodyIds = []
+    else: 
+        poseDict = {'ts': [], 'pose': [], 'bodyId': []}
     with open(filePathOrName, 'r') as file:
         print('Found file to read')
         line = file.readline()
@@ -42,23 +82,54 @@ def importVicon(filePathOrName):
             bodies = viconData.split(') (')
             for body in bodies:
                 elements = body.split(" ")
-                bodyID = elements[1].strip('\"')
+                bodyId = elements[1].strip('\"')
                 ts = elements[2]
                 pose = elements[3:]
-                try:
-                    poseDict = outDict['data'][bodyID]['pose']
-                except KeyError:
-                    print('KeyError exception.. Creating new key', bodyID)
-                    bodyids.append(bodyID)
-                    outDict['data'][bodyID] = {'pose': {'ts': [], 'pose7d': []}}
-                    poseDict = outDict['data'][bodyID]['pose']
+                if separateBodiesAsChannels:
+                    try:
+                        poseDict = outDict['data'][bodyId]['pose6q']
+                    except KeyError:
+                        print('KeyError exception.. Creating new key', bodyId)
+                        bodyIds.append(bodyId)
+                        outDict['data'][bodyId] = {'pose6q': {'ts': [], 'pose': []}}
+                        poseDict = outDict['data'][bodyId]['pose6q']
                 poseDict['ts'].append(ts)
-                poseDict['pose7d'].append(pose)
+                poseDict['pose'].append(pose)
+                if not separateBodiesAsChannels:
+                    poseDict['bodyId'].append(bodyId)
             line = file.readline()
 
     # converting lists of strings to numpy arrays of float64
-    for id in bodyids:
-        outDict['data'][id]['pose']['ts'] = np.array(outDict['data'][id]['pose']['ts'], dtype=np.float64)
-        outDict['data'][id]['pose']['pose7d'] = np.array(outDict['data'][id]['pose']['pose7d'], dtype=np.float64)
+    if separateBodiesAsChannels:
+        for id in bodyIds:
+            outDict['data'][id]['pose6q']['ts'] = np.array(outDict['data'][id]['pose6q']['ts'], dtype=np.float64)
+            outDict['data'][id]['pose6q']['pose'] = np.array(outDict['data'][id]['pose6q']['pose'], dtype=np.float64)
+        outDict['info']['bodyIds'] = bodyIds
+    else:
+        poseDict['ts'] = np.array(poseDict['ts'], dtype=np.float64)
+        poseDict['pose'] = np.array(poseDict['pose'], dtype=np.float64)
+        poseDict['bodyId'] = np.array(poseDict['bodyId'])
+        poseDict['uniqueIds'] = np.unique(poseDict['bodyId'])
+        outDict['data']['vicon'] = {'pose6q': poseDict}
+        if kwargs.get('separateMarkersFromSegments', False):
+            isMarker = np.apply_along_axis(lambda x : 'Marker' in x[0], 1, poseDict['bodyId'][..., np.newaxis])
+            uniqueIdIsMarker = np.apply_along_axis(lambda x : 'Marker' in x[0], 1, poseDict['uniqueIds'][..., np.newaxis])
+            pointDict = {
+                'ts': poseDict['ts'][isMarker],
+                'point': poseDict['pose'][isMarker, :3],
+                'bodyId': poseDict['bodyId'][isMarker],
+                'uniqueIds': poseDict['uniqueIds'][uniqueIdIsMarker],
+                }
+            poseDict = {
+                'ts': poseDict['ts'][~isMarker],
+                'pose': poseDict['pose'][~isMarker],
+                'bodyId': poseDict['bodyId'][~isMarker],
+                'uniqueIds': poseDict['uniqueIds'][~uniqueIdIsMarker],
+                }
+            outDict['data']['vicon'] = {
+                'pose6q': poseDict,
+                'point3': pointDict}
+    return outDict
 
-    return outDict, bodyids
+
+
