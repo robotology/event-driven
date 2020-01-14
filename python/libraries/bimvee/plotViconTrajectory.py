@@ -29,8 +29,10 @@ To select which bodies to plot using bodyID:
 """
 
 def plot_trajectories(viconDataDict, bodyIds, include, exclude, **kwargs):
-    ax = kwargs.get('ax', plt.axes(projection='3d'))
-    kwargs['ax'] = ax
+    ax = kwargs.get('ax')
+    if ax is None:
+        ax = plt.axes(projection='3d')
+        kwargs['ax'] = ax
     for name in bodyIds:
         select_body = all([(inc in name) for inc in include]) and all([not (exc in name) for exc in exclude])
         if select_body:  # modify this line to plot whichever markers you want
