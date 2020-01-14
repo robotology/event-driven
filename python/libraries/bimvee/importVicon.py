@@ -114,6 +114,10 @@ def importVicon(filePathOrName, **kwargs):
         for id in uniqueIds:
             outDict['data'][id]['pose6q']['ts'] = np.array(outDict['data'][id]['pose6q']['ts'], dtype=np.float64)
             outDict['data'][id]['pose6q']['pose'] = np.array(outDict['data'][id]['pose6q']['pose'], dtype=np.float64)
+            if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
+                zeroTimestampsForAChannel(outDict['data'][id])
+        if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
+            rezeroTimestampsForImportedDicts(outDict)
         outDict['info']['uniqueIds'] = uniqueIds
     else:
         poseDict['ts'] = np.array(poseDict['ts'], dtype=np.float64)
