@@ -137,3 +137,35 @@ dvs = imported['data']['davis']['dvs']
 frame = imported['data']['davis']['frame']
 
 visualizerApp.root.data_controller.data_dict.data_dict = imported
+
+
+
+#%% Demonstration of pose interpolation
+
+# http://rpg.ifi.uzh.ch/davis_data.html
+from importRpgDvsRos import importRpgDvsRos
+    
+filePathOrName = os.path.join(prefix, 'data/rpg/shapes_rotation.bag')
+
+template = {
+    'davis': {
+        'frame': '/dvs/image_raw',
+        },
+    'extra': {
+        'pose6q': '/optitrack/davis'
+        }
+    }
+
+imported = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
+
+pose = imported['data']['extra']['pose6q']
+frame = imported['data']['davis']['frame']
+
+
+keepIds = [0, 4000, 8000, 11882]
+
+pose['ts'] = pose['ts'][keepIds]
+pose['pose'] = pose['pose'][keepIds, :]
+
+visualizerApp.root.data_controller.data_dict.data_dict = imported
+

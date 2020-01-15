@@ -69,7 +69,7 @@ def slerp(q1, q2, time_relative):
         dot = -dot
     if dot > DOT_THRESHOLD:
         result = q1 + time_relative * (q2 - q1)
-        return (result.T / np.linalg.norm(result, axis=1)).T
+        return (result.T / np.linalg.norm(result)).T
     theta_0 = np.arccos(dot)
     sin_theta_0 = np.sin(theta_0)
     theta = theta_0 * time_relative
@@ -77,6 +77,38 @@ def slerp(q1, q2, time_relative):
     s0 = np.cos(theta) - dot * sin_theta / sin_theta_0
     s1 = sin_theta / sin_theta_0
     return (s0 * q1) + (s1 * q2)
+
+''' 
+expects pose dict in the form: {'ts': 1d np.array of np.float64 timestamps,
+                                    'pose': 2d array of poses, 
+                                        where zeroth dim is samples, 
+                                        and first dim is 7: x, y, z, rx, ry, rz, rw 
+                                        (i.e. 6dof with rotation as quaternion)}
+
+'''
+def pose6qInterp(poseDict, time):
+    ts = poseDict['ts']
+    allPoses = poseDict['pose']
+    idxPre = np.searchsorted(ts, time, side='right') - 1
+    timePre = ts[idxPre]
+    if timePre == time:
+        # In this edge-case of desired time == timestamp, there is no need 
+        # to interpolate 
+        return allPoses[idxPre, :]
+    if idxPre < 0:
+        return allPoses[0, :]
+    if idxPre >= len(poseDict['ts']):
+        return allPoses[-1, :]
+    poseOut =  np.zeros((7), dtype=np.float64)
+    timePost = ts[idxPre + 1]
+    qPre = allPoses[idxPre, 3:7]
+    qPost = allPoses[idxPre + 1, 3:7]
+    timeRel = (time - timePre) / (timePost - timePre)
+    poseOut[3:7] = slerp(qPre, qPost, timeRel)
+    locPre = allPoses[idxPre, 0:3] 
+    locPost = allPoses[idxPre + 1, 0:3]
+    poseOut[0:3] = locPre * (1-timeRel) + locPost * timeRel
+    return poseOut
 
 # adapted from https://stackoverflow.com/questions/50387606/python-draw-line-between-two-coordinates-in-a-matrix
 def draw_line(mat, x0, y0, x1, y1):
