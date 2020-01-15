@@ -40,8 +40,13 @@ import numpy as np
 import math
 
 # Local imports
-from plotDvsContrast import getEventImageForTimeRange
-from geometry import quat2RotM, rotateUnitVectors, project3dTo2d, slerp, draw_line
+try:
+    from plotDvsContrast import getEventImageForTimeRange
+    from geometry import quat2RotM, rotateUnitVectors, project3dTo2d, slerp, draw_line
+except ImportError:
+    # This format allows for a certain configuration of the ntupleviz visualiser, maybe?
+    from libraries.bimvee.plotDvsContrast import getEventImageForTimeRange
+    from libraries.bimvee.geometry import quat2RotM, rotateUnitVectors, project3dTo2d, slerp, draw_line
 
 # A function intended to find the nearest timestamp
 # adapted from https://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
