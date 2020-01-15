@@ -161,11 +161,14 @@ imported = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
 pose = imported['data']['extra']['pose6q']
 frame = imported['data']['davis']['frame']
 
-
+# Take out all except a few poses
 keepIds = [0, 4000, 8000, 11882]
 
-pose['ts'] = pose['ts'][keepIds]
-pose['pose'] = pose['pose'][keepIds, :]
+imported['data']['modified'] = {
+    'pose6q': {
+        'ts': pose['ts'][keepIds],
+        'pose': pose['pose'][keepIds, :]
+            }} 
 
 visualizerApp.root.data_controller.data_dict.data_dict = imported
 

@@ -80,11 +80,11 @@ def slerp(q1, q2, time_relative):
 
 ''' 
 expects pose dict in the form: {'ts': 1d np.array of np.float64 timestamps,
-                                    'pose': 2d array of poses, 
+                                    'pose': 2d array np.float64 of poses, 
                                         where zeroth dim is samples, 
                                         and first dim is 7: x, y, z, rx, ry, rz, rw 
                                         (i.e. 6dof with rotation as quaternion)}
-
+returns np.array 1d x 7 np.float64, which is interpolated pose
 '''
 def pose6qInterp(poseDict, time):
     ts = poseDict['ts']
