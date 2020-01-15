@@ -77,8 +77,13 @@ from struct import unpack
 from struct import error as structError
 from tqdm import tqdm
 import numpy as np
-from libraries.bimvee.timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts, unwrapTimestamps
 import string
+
+# Local imports
+try:
+    from timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts, unwrapTimestamps
+except ModuleNotFoundError:    
+    from libraries.bimvee.timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts, unwrapTimestamps
 
 def getOrInsertDefault(inDict, arg, default):
     # get an arg from a dict.
