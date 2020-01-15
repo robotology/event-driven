@@ -106,7 +106,7 @@
             max: 16
             step: 1
         ConfigLabel:
-            text: 'Temp. window:\n{0:d}ms'.format(int(tw_slider.value*1000))
+            text: 'Temporal\nwindow:\n{0:d}ms'.format(int(tw_slider.value*1000))
         ConfigSlider:
             id: tw_slider
             step: 0.001
@@ -115,7 +115,7 @@
             value: 0.03
         Button:
             id: play_button
-            text: 'PLAY/PAUSE'
+            text: 'PLAY/\nPAUSE'
             on_press: time_slider.play_pause()
         Button:
             id: stop_button

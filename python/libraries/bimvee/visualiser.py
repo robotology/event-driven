@@ -21,7 +21,15 @@ There is a generic Visualiser class - it contains a dataType dict.
 This is subclassed for each supported dataType (e.g. dvs, frame, pose etc)
 Each subclass should implement basic methods: get_dims, get_frame, get_colorfmt
 Implementing set_data allows the visualiser to do some preparation for visualisation
-when it receives new data
+when it receives new data.
+
+In general get_frame takes two args: time, and time_window.
+In general one could think about representing data in an interpolated way or not.
+For example, with poses, imu etc, one could interpolate between samples, 
+or one could simply choose the sample which is nearest in time.
+Likewise for frames. 
+The time_window parameter says how much data to take around the sample point for event-type data.
+It might be possible to develop visualisations for other types of data that make use of the concept of a time window. 
 
 colorfmt is a choice between luminance and rgb. 
 If luminance, then the frame returned should have dim 2 = 3.
@@ -29,11 +37,20 @@ Nothing stops the calling function from applying a color mask to an output in lu
 """
 
 import numpy as np
-from geometry import quat2RotM, rotateUnitVectors, project3dTo2d, slerp, draw_line
+import math
 
 # Local imports
-from libraries.bimvee.plotDvsContrast import getEventImageForTimeRange
+from plotDvsContrast import getEventImageForTimeRange
+from geometry import quat2RotM, rotateUnitVectors, project3dTo2d, slerp, draw_line
 
+# A function intended to find the nearest timestamp
+# adapted from https://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
+def find_nearest(array, value):
+    idx = np.searchsorted(array, value) # side="left" param is the default
+    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx-1]) < math.fabs(value - array[idx])):
+        return idx-1
+    else:
+        return idx
 
 class Visualiser():
     
@@ -95,8 +112,8 @@ class VisualiserFrame(Visualiser):
     # respects the time_window parameter 
     def get_frame(self, time, time_window, **kwargs):
         data = self.__data
-        frameIdx = np.searchsorted(data['ts'], time)
-        if time < data['ts'][0] or time > data['ts'][-1]:
+        frameIdx = find_nearest(data['ts'], time)
+        if time < data['ts'][0] - time_window / 2 or time > data['ts'][-1] + time_window / 2:
             # Gone off the end of the frame data
             image = np.ones(self.get_dims(), dtype=np.uint8) * 128 # TODO: Hardcoded midway (grey) value
         else:
@@ -169,12 +186,16 @@ class VisualiserPose6q(Visualiser):
     
     def get_frame(self, time, time_window, **kwargs):
         data = self.__data
-        poseIdx = np.searchsorted(data['ts'], time)
         image = np.zeros((self.renderX, self.renderY, 3), dtype = np.uint8)
         if kwargs.get('interpolate', False):
             # If interpolation is desired we reject the precalculated projections
-            pass
-        else:
+            idxPre = np.searchsorted(data['ts'], time, side='right')
+            idxPost = idxPre + 1
+            if idxPre > 0 and idxPost < len['ts']: # With this line we exclude edge cases
+                idxPre = poseIdx
+                
+        else: # No interpolation, so just choose the sample which is nearest in time
+            poseIdx = np.searchsorted(data['ts'], time)
             X = self.projX[poseIdx]
             Y = self.projY[poseIdx]
             X_X = self.projX_X[poseIdx]

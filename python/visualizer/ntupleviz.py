@@ -18,21 +18,25 @@ importAe, and allow synchronised playback for each of the contained channels and
 """
 # standard imports 
 import matplotlib.pyplot as plt
-from skimage.transform import resize
+#from skimage.transform import resize
+from scipy.misc import imresize
 import numpy as np
-import tkinter as tk
 
-# Set screen size
-from kivy.config import Config
-root = tk.Tk()
-screen_width = root.winfo_screenwidth()
-screen_height = root.winfo_screenheight()
-Config.set('graphics', 'position', 'custom')
-Config.set('graphics', 'left', screen_width)
-Config.set('graphics', 'top',  screen_height)
-Config.set('graphics', 'width',  screen_width)
-Config.set('graphics', 'height',  screen_height)
-Config.set('graphics', 'fullscreen', 1)
+# Optional import of tkinter allows setting of app size wrt screen size
+try:
+    import tkinter as tk
+    from kivy.config import Config
+    root = tk.Tk()
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    Config.set('graphics', 'position', 'custom')
+    Config.set('graphics', 'left', int(screen_width/8))
+    Config.set('graphics', 'top',  int(screen_width/8))
+    Config.set('graphics', 'width',  int(screen_width/4*3))
+    Config.set('graphics', 'height',  int(screen_height/4*3))
+    #Config.set('graphics', 'fullscreen', 1)
+except ModuleNotFoundError:
+    pass
 
 # kivy imports
 from kivy.app import App
@@ -103,8 +107,8 @@ class Viewer(Image):
         if self.need_init:
             self.on_dsm(None, None)
         if self.texture is not None:
-            self.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
-            # self.texture.blit_buffer(resize(data, (self.texture.height, self.texture.width)).tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt) #TODO
+            #self.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
+            self.texture.blit_buffer(imresize(data, (self.texture.height, self.texture.width)).tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt) #TODO
 
     def get_frame(self, time_value, time_window):
         if self.dsm is None:
