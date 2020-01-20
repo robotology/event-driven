@@ -84,7 +84,7 @@ imported = importIitYarp(filePathOrName=filePathOrName, tsBits=30)
 
 dvs = imported['data']['right']['dvs']
 
-visualizerApp.root.data_controller.data_dict.data_dict = imported
+visualizerApp.root.data_controller.data_dict = imported
 
 #%% Simulated DAVIS data
 
@@ -111,7 +111,7 @@ dvs = imported['data']['davis']['dvs']
 frame = imported['data']['davis']['frame']
 depthmap = imported['data']['extra']['frame']
 
-visualizerApp.root.data_controller.data_dict.data_dict = imported
+visualizerApp.root.data_controller.data_dict = imported
 
 #%% Real DAVIS data
 
@@ -171,4 +171,3 @@ imported['data']['modified'] = {
             }} 
 
 visualizerApp.root.data_controller.data_dict.data_dict = imported
-

@@ -11,20 +11,16 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with 
 this program. If not, see <https://www.gnu.org/licenses/>.
 
-THis fallback module allows tqdm import to be optional; if tqdm is not installed 
-then this module gets picked up in its place offering the minimal functions 
-which allow calls to tqdm within the rest of the library to not fail.
+Intended as part of bimvee (Batch Import, Manipulation, Visualisation and Export of Events etc)
+
+Using hickle to add hierarchical lists and dicts to hdf5 automatically
+https://github.com/telegraphic/hickle
+In fact, thess are just thin wrappers around hickle.dump/load, 
+to offer a similar export function to other export calls.
+pack/unpackWorkspaceVars are facilities that allows extra random data WIP 
+to get bundled together. All files are included in both the import and export script for convenience. 
+TODO: This script to import and pass through functions from exportHdf5
 """
+#%%
 
-def tqdm(*args, **kwargs):
-    print('You are using the local tqdm')
-    if len(args) == 1:
-        return args[0]
-    else:
-        return Pbar()
-
-
-class Pbar():
-    
-    def update(*args):
-        return None
+from exportHdf5 import *

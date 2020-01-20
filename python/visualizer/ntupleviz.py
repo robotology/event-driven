@@ -18,8 +18,6 @@ importAe, and allow synchronised playback for each of the contained channels and
 """
 # standard imports 
 import matplotlib.pyplot as plt
-#from skimage.transform import resize
-from scipy.misc import imresize
 import numpy as np
 
 # Optional import of tkinter allows setting of app size wrt screen size
@@ -44,18 +42,23 @@ from kivy.uix.slider import Slider
 from kivy.uix.image import Image
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.graphics.texture import Texture
 from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.properties import StringProperty, NumericProperty, ListProperty, BooleanProperty
-from kivy.properties import DictProperty
+from kivy.properties import DictProperty, ReferenceListProperty
 from kivy.metrics import dp
 
 # local imports (from bimvee)
-from libraries.bimvee.visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
-from libraries.bimvee.timestamps import getLastTimestamp
-
+try:
+    from visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
+    from timestamps import getLastTimestamp
+except ModuleNotFoundError:
+    from libraries.bimvee.visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
+    
+    
 class ErrorPopup(Popup):
     label_text = StringProperty(None)
 
@@ -78,6 +81,7 @@ class Viewer(Image):
     need_init = BooleanProperty(True)
     dsm = ObjectProperty(None, allownone=True)
     colorfmt = 'luminance'
+    allow_stretch = BooleanProperty(True)
     
     def on_dsm(self, instance, value):
         if self.dsm is not None:
@@ -98,7 +102,7 @@ class Viewer(Image):
         Clock.schedule_once(self.init, 0)
         
     def init(self, dt):
-        self.data = np.zeros((100, 240))
+        self.data = np.zeros((1, 1), dtype=np.uint8)
 
     def on_data(self, instance, value): 
         self.update_data(self.data)
@@ -107,8 +111,7 @@ class Viewer(Image):
         if self.need_init:
             self.on_dsm(None, None)
         if self.texture is not None:
-            #self.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
-            self.texture.blit_buffer(imresize(data, (self.texture.height, self.texture.width)).tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt) #TODO
+            self.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
 
     def get_frame(self, time_value, time_window):
         if self.dsm is None:
@@ -122,7 +125,7 @@ class Viewer(Image):
         else:
             return self.dsm.get_frame(time, time_window, children=self.children)
    
-class DataController(BoxLayout):
+class DataController(GridLayout):
     ending_time = NumericProperty(.0)
     file_path_or_name = StringProperty('')
     data_dict = DictProperty({}) # A bimvee-style container of channels
@@ -134,6 +137,15 @@ class DataController(BoxLayout):
         for child in self.children:
             child.get_frame(self.time_value, self.time_window)
        
+    def add_viewer_and_resize(self, visualiser):
+        new_viewer = Viewer()
+        new_viewer.dsm = visualiser
+        self.add_widget(new_viewer)
+        print(len(self.children))
+        print(int(np.ceil(np.sqrt(len(self.children)))))
+        print()
+        self.cols = int(np.ceil(np.sqrt(len(self.children))))
+
     def add_viewer_for_each_channel_and_data_type(self, in_dict):
         if isinstance(in_dict, list):
             for in_dict_element in in_dict:
@@ -142,19 +154,23 @@ class DataController(BoxLayout):
             for key_name in in_dict.keys():
                 if isinstance(in_dict[key_name], dict):
                     if 'ts' in in_dict[key_name]:
-                        newViewer = Viewer()
-                        self.add_widget(newViewer)
+                        print('Creating a new viewer, of type: ' + key_name)
                         if key_name == 'dvs':
-                            newViewer.dsm = VisualiserDvs(in_dict[key_name])
+                            self.add_viewer_and_resize(VisualiserDvs(in_dict[key_name]))
                         elif key_name == 'frame':
-                            newViewer.dsm = VisualiserFrame(in_dict[key_name])
+                            self.add_viewer_and_resize(VisualiserFrame(in_dict[key_name]))
                         elif key_name == 'pose6q':
-                            newViewer.dsm = VisualiserPose6q(in_dict[key_name])
+                            self.add_viewer_and_resize(VisualiserPose6q(in_dict[key_name]))
+                        else:
+                            print('datatype not supported: ' + key_name)
                     else: # recurse through the sub-dict
                         self.add_viewer_for_each_channel_and_data_type(in_dict[key_name])
     
     def on_data_dict(self, instance, value):
         self.ending_time = float(getLastTimestamp(self.data_dict)) # timer is watching this
+        while len(self.children) > 0:
+            self.remove_widget(self.children[0])
+            print('Removed an old viewer; num remaining viewers: ' + str(len(self.children)))
         self.add_viewer_for_each_channel_and_data_type(self.data_dict)
 
     def dismiss_popup(self):

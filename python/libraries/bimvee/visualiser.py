@@ -91,6 +91,12 @@ class VisualiserDvs(Visualiser):
         kwargs['dimX'] = data['dimX']
         kwargs['dimY'] = data['dimY']
         image = getEventImageForTimeRange(data, **kwargs)
+        # Post processing to get image into uint8 with correct scale
+        contrast = kwargs.get('contrast', 3)
+        if kwargs.get('polarised', (kwargs.get('polarized'), True)):
+            image = ((image + contrast) / contrast / 2 * 255).astype(np.uint8)
+        else:
+            image = (image / contrast * 255).astype(np.uint8)
         # Allow for arbitrary post-production on image with a callback
         # TODO: as this is boilerplate, it could be pushed into pie syntax ...
         if kwargs.get('callback', None) is not None:
@@ -123,17 +129,41 @@ class VisualiserFrame(Visualiser):
 
     def set_data(self, data):
         self.__data = data
+        print('XXX')
+        print(data['frames'][0].dtype == np.uint8)
+        print(np.min(data['frames'][0]))
+        print(np.max(data['frames'][0]))
+       
+        if data['frames'][0].dtype != np.uint8:
+            data['frames'] = [(frame*255).astype(np.uint8) for frame in data['frames']] #TODO: assuming that it starts scaled in 0-1 - could have more general approach?
+    def get_colorfmt(self):
+        if len(self.__data['frames'][0].shape) == 3:
+            return 'rgb'
+        else:
+            return 'luminance'
         
+    def get_default_image(self):
+        return np.ones(self.get_dims(), dtype=np.uint8) * 128 # TODO: Hardcoded midway (grey) value
 
     # TODO: There can be methods which better choose the best frame, or which create a visualisation which
     # respects the time_window parameter 
     def get_frame(self, time, time_window, **kwargs):
         data = self.__data
-        frameIdx = find_nearest(data['ts'], time)
-        if time < data['ts'][0] - time_window / 2 or time > data['ts'][-1] + time_window / 2:
+        if 'tsEnd' in data:
+            # Optional mode in which frames are only displayed 
+            # between corresponding ts and tsEnd
+            frameIdx = np.searchsorted(data['ts'], time, side='right') - 1
+            if frameIdx < 0:
+                image = self.get_default_image()
+            elif time > data['tsEnd'][frameIdx]:
+                image = self.get_default_image()
+            else:                
+                image = data['frames'][frameIdx]
+        elif time < data['ts'][0] - time_window / 2 or time > data['ts'][-1] + time_window / 2:
             # Gone off the end of the frame data
-            image = np.ones(self.get_dims(), dtype=np.uint8) * 128 # TODO: Hardcoded midway (grey) value
+            image = self.get_default_image()
         else:
+            frameIdx = find_nearest(data['ts'], time)
             image = data['frames'][frameIdx]
         # Allow for arbitrary post-production on image with a callback
         # TODO: as this is boilerplate, it could be pushed into pie syntax ...
@@ -230,7 +260,7 @@ class VisualiserPose6q(Visualiser):
     def get_frame(self, time, time_window, **kwargs):
         data = self.__data
         if data is None:
-            print('YUP that happened')
+            print('Warning: data is not set')
             return np.zeros((1, 1), dtype=np.uint8) # This should not happen
         image = np.zeros((self.renderX, self.renderY, 3), dtype = np.uint8)
         if kwargs.get('interpolate', True):
@@ -251,7 +281,7 @@ class VisualiserPose6q(Visualiser):
                 draw_line(image[:, :, 0], X, Y, X_X, Y_X)
                 draw_line(image[:, :, 1], X, Y, X_Y, Y_Y)
                 draw_line(image[:, :, 2], X, Y, X_Z, Y_Z)
-            elif idxPre < 0 or idxPre >= len(data['ts']):
+            elif idxPre < 0 or idxPre >= len(data['ts'])-1:
                 # In this edge-case of the time at the beginning or end, 
                 # don't show any pose
                 pass
