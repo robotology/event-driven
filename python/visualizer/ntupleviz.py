@@ -111,7 +111,12 @@ class Viewer(Image):
         if self.need_init:
             self.on_dsm(None, None)
         if self.texture is not None:
-            self.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
+            x, y = self.dsm.get_dims()
+            size_required = x * y * (1 + (self.colorfmt == 'rgb') * 2)
+            if not isinstance(data, np.ndarray):
+                data = np.zeros((x, y, 3), dtype=np.uint8)
+            if data.size >= size_required:
+                self.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
 
     def get_frame(self, time_value, time_window):
         if self.dsm is None:
@@ -141,9 +146,6 @@ class DataController(GridLayout):
         new_viewer = Viewer()
         new_viewer.dsm = visualiser
         self.add_widget(new_viewer)
-        print(len(self.children))
-        print(int(np.ceil(np.sqrt(len(self.children)))))
-        print()
         self.cols = int(np.ceil(np.sqrt(len(self.children))))
 
     def add_viewer_for_each_channel_and_data_type(self, in_dict):
