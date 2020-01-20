@@ -129,21 +129,24 @@ class VisualiserFrame(Visualiser):
 
     def set_data(self, data):
         self.__data = data
-        print('XXX')
-        print(data['frames'][0].dtype == np.uint8)
-        print(np.min(data['frames'][0]))
-        print(np.max(data['frames'][0]))
        
         if data['frames'][0].dtype != np.uint8:
             data['frames'] = [(frame*255).astype(np.uint8) for frame in data['frames']] #TODO: assuming that it starts scaled in 0-1 - could have more general approach?
+    
     def get_colorfmt(self):
-        if len(self.__data['frames'][0].shape) == 3:
-            return 'rgb'
-        else:
+        try:
+            if len(self.__data['frames'][0].shape) == 3:
+                return 'rgb'
+            else:
+                return 'luminance'
+        except: # TODO None type error?
             return 'luminance'
-        
+            
     def get_default_image(self):
-        return np.ones(self.get_dims(), dtype=np.uint8) * 128 # TODO: Hardcoded midway (grey) value
+        x, y = self.get_dims()
+        # Return an x,y,3 by default i.e. rgb, for safety, since in the absence of data we may not know how the texture's colorfmt is set
+        return np.ones((x, y, 3), dtype=np.uint8) * 128 # TODO: Hardcoded midway (grey) value
+        
 
     # TODO: There can be methods which better choose the best frame, or which create a visualisation which
     # respects the time_window parameter 
