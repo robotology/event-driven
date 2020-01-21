@@ -212,6 +212,8 @@ class VisualiserPose6q(Visualiser):
         self.centreY = (minY + maxY) / 2
         self.centreZ = (minZ + maxZ) / 2
         self.largestDim = max(maxX-minX, maxY-minY, maxZ-minZ)
+        if self.largestDim == 0:
+            self.largestDim = 1
         # Centre the poses
         poseX = (poseX - self.centreX) / self.largestDim
         poseY = (poseY - self.centreY) / self.largestDim
@@ -284,7 +286,7 @@ class VisualiserPose6q(Visualiser):
                 draw_line(image[:, :, 0], X, Y, X_X, Y_X)
                 draw_line(image[:, :, 1], X, Y, X_Y, Y_Y)
                 draw_line(image[:, :, 2], X, Y, X_Z, Y_Z)
-            elif idxPre < 0 or idxPre >= len(data['ts'])-1:
+            elif idxPre < 0 or (idxPre >= len(data['ts'])-2):
                 # In this edge-case of the time at the beginning or end, 
                 # don't show any pose
                 pass
