@@ -45,7 +45,7 @@ The exact contents varies according to the file type import but in general:
 
 Aim is to support:
 
-YARP .log - ATIS Gen1 - 24 bit (incl. IMU, SKIN?)
+YARP .log - ATIS Gen1 - 24 bit - includes, IMU, Vicon, (also SKIN?)
 rpg_dvs_ros - DVS/DAVIS
 Maybe others? 
 jAER / cAER .aedat (v1/2/3) DVS / DAVIS / Cochlea?

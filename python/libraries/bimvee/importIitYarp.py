@@ -175,17 +175,17 @@ def samplesToImu(inDict, **kwargs):
     7: Mag X
     8: Mag Y
     9: Mag Z
-    For the IMU on STEFI, (which is this one ICM-20648):
+    For the IMU on STEFI, (which is this one ICM-20948):
     gyro full scale is +/-2000 degrees per second,
     accelerometer full scale is +/-2 g.
     temp - 333.87 - but does it zero at 0K or at room temperature? (+21deg)
-    mag - no idea - this model doesn't have an internal mag
+    mag - full scale is +/- 4900 uT
     '''
     accConversionFactor = kwargs.get('accConversionFactor', 32768 / 2 / 9.80665)
     angVConversionFactor = kwargs.get('angVConversionFactor', 32768 / 2000 * 180 / np.pi)
     tempConversionFactor = kwargs.get('tempConversionFactor', 333.87)
     tempConversionOffset = kwargs.get('tempConversionOffset', -273.15 - 21)
-    magConversionFactor = kwargs.get('magConversionFactor', 1)
+    magConversionFactor = kwargs.get('magConversionFactor', 32768 / 4900 * 1000000)
     # Assume that sensor always ramps up, and split when it wraps around
     # Otherwise, iterate through this sample by sample - slowest and most robust method
     # Possible to do this much faster, but only my assuming no gaps in data
@@ -194,7 +194,7 @@ def samplesToImu(inDict, **kwargs):
     valueAll = inDict['value']
     wrapIds = np.where((sensorAll[1:]-sensorAll[:-1])<1)[0]
     numImu = len(wrapIds) + 1
-    tsOut = np.zeros((numImu, 1), dtype=np.uint32)
+    tsOut = np.zeros((numImu), dtype=np.uint32)
     acc = np.zeros((numImu, 3), dtype=np.int16)
     angV = np.zeros((numImu, 3), dtype=np.int16)
     temp = np.zeros((numImu, 1), dtype=np.int16)
@@ -424,6 +424,7 @@ def importIitYarpRecursive(**kwargs):
     kwargs is augmented where necessary and becomes the "info" dict of the output.
     '''
     path = getOrInsertDefault(kwargs, 'filePathOrName', '.')
+    print('importIitYarp trying path: ' + path)
     if not os.path.exists(path):
         raise FileNotFoundError("path not found.")
     if not os.path.isdir(path):
@@ -440,7 +441,7 @@ def importIitYarpRecursive(**kwargs):
         if file == 'data.log':
             importedDicts.append(importIitYarpHavingFoundFile(**kwargs))          
     if len(importedDicts) == 0:
-        raise FileNotFoundError('"data.log" file not found')
+        print('    "data.log" file not found')
     return importedDicts
         
 def importIitYarp(**kwargs):
