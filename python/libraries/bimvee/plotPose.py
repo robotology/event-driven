@@ -16,6 +16,8 @@ plotPose takes 'inDict' - a dictionary containing imported pose data
 (or a higher level container, in which attempts to descend and call itself) 
 as created by importAe, and plots against time the various dimensions of the 
 imu samples contained. 
+
+Also handles point3 type, which contains 3d points
 """
 import matplotlib.pyplot as plt
 
@@ -35,18 +37,26 @@ def plotPose(inDict, **kwargs):
             if 'pose6q' in channelData and len(channelData['pose6q']['ts']) > 0:
                 kwargs['title'] = ' '.join([fileName, str(channelName)])
                 plotPose(channelData['pose6q'], **kwargs)
-            else:
+            if 'point3' in channelData and len(channelData['point3']['ts']) > 0:
+                kwargs['title'] = ' '.join([fileName, str(channelName)])
+                plotPose(channelData['point3'], **kwargs)
+            if 'pose6q' not in channelData and 'point3' not in channelData:
                 print('Channel ' + channelName + ' skipped because it contains no pose data')
         return    
-    
-    if kwargs.get('zeroT', False):
-        inDict['pose'][:, 0] = inDict['pose'][:, 0] - inDict['pose'][0, 0]
-        inDict['pose'][:, 1] = inDict['pose'][:, 1] - inDict['pose'][0, 1]
-        inDict['pose'][:, 2] = inDict['pose'][:, 2] - inDict['pose'][0, 2]
-    fig, allAxes = plt.subplots(2, 1)
-    axesT = allAxes[0]
-    axesT.plot(inDict['ts'], inDict['pose'][:, :3])
-    axesT.legend(['x', 'y', 'z'])
-    axesR = allAxes[1]
-    axesR.plot(inDict['ts'], inDict['pose'][:, 3:])
-    axesR.legend(['r_x', 'r_y', 'r_z', 'r_w'])
+
+    if 'pose' in inDict:
+        if kwargs.get('zeroT', False):
+            inDict['pose'][:, 0] = inDict['pose'][:, 0] - inDict['pose'][0, 0]
+            inDict['pose'][:, 1] = inDict['pose'][:, 1] - inDict['pose'][0, 1]
+            inDict['pose'][:, 2] = inDict['pose'][:, 2] - inDict['pose'][0, 2]
+        fig, allAxes = plt.subplots(2, 1)
+        axesT = allAxes[0]
+        axesT.plot(inDict['ts'], inDict['pose'][:, :3])
+        axesT.legend(['x', 'y', 'z'])
+        axesR = allAxes[1]
+        axesR.plot(inDict['ts'], inDict['pose'][:, 3:])
+        axesR.legend(['r_x', 'r_y', 'r_z', 'r_w'])
+    if 'point' in inDict:
+        fig, axesT = plt.subplots()
+        axesT.plot(inDict['ts'], inDict['point'])
+        axesT.legend(['x', 'y', 'z'])
