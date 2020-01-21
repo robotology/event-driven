@@ -105,8 +105,10 @@ def unwrapTimestamps(ts, **kwargs):
     # array is uint and remove any extra bits before continuing. 
     tsBits = kwargs.get('tsBits')
     if tsBits is not None:
-        ts = ts & (np.uint32(0x1 << tsBits) - 1)
-    ts = ts.astype(np.float64)
+        tsClipped = ts & (np.uint32(0x1 << tsBits) - 1)
+        tsOffset = ts[0] - tsClipped[0]
+        ts = tsClipped + tsOffset
+    ts = ts.astype(np.float64) 
     diff = ts[1:] - ts[:-1] 
     wrapPoints = np.where(diff < 0)[0]
     for wrapPoint in wrapPoints:

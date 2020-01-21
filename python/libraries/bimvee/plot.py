@@ -41,3 +41,5 @@ def plot(inDict, **kwargs):
             plotImu(channel['imu'], **kwargs)
         if 'pose6q' in channel:
             plotPose(channel['pose6q'], **kwargs)
+        if 'point3' in channel:
+            plotPose(channel['point3'], **kwargs)

@@ -73,7 +73,28 @@ def getOrInsertDefault(inDict, arg, default):
         inDict[arg] = default
     return value
 
-def importVicon(filePathOrName, **kwargs):
+# accepts a pose6q datatype dict; returns a channel dict containing pose6q and point3 datatypes
+def separateMarkersFromSegments(poseDict):
+    isMarker = np.apply_along_axis(lambda x : 'Marker' in x[0], 1, poseDict['bodyId'][..., np.newaxis])
+    uniqueIdIsMarker = np.apply_along_axis(lambda x : 'Marker' in x[0], 1, poseDict['uniqueIds'][..., np.newaxis])
+    pointDict = {
+        'ts': poseDict['ts'][isMarker],
+        'point': poseDict['pose'][isMarker, :3],
+        'bodyId': poseDict['bodyId'][isMarker],
+        'uniqueIds': poseDict['uniqueIds'][uniqueIdIsMarker],
+        }
+    poseDict = {
+        'ts': poseDict['ts'][~isMarker],
+        'pose': poseDict['pose'][~isMarker],
+        'bodyId': poseDict['bodyId'][~isMarker],
+        'uniqueIds': poseDict['uniqueIds'][~uniqueIdIsMarker],
+        }
+    return {
+        'pose6q': poseDict,
+        'point3': pointDict}
+
+def importVicon(**kwargs):
+    filePathOrName = kwargs['filePathOrName']
     pattern = re.compile('(\d+) (\d+\.\d+) \((.*)\)')
     # yarpBottleTimes = []
     outDict = {'info': {'filePathOrName': filePathOrName}, 'data': {}}
@@ -124,25 +145,11 @@ def importVicon(filePathOrName, **kwargs):
         poseDict['pose'] = np.array(poseDict['pose'], dtype=np.float64)
         poseDict['bodyId'] = np.array(poseDict['bodyId'])
         poseDict['uniqueIds'] = np.unique(poseDict['bodyId'])
-        outDict['data']['vicon'] = {'pose6q': poseDict}
         if kwargs.get('separateMarkersFromSegments', False):
-            isMarker = np.apply_along_axis(lambda x : 'Marker' in x[0], 1, poseDict['bodyId'][..., np.newaxis])
-            uniqueIdIsMarker = np.apply_along_axis(lambda x : 'Marker' in x[0], 1, poseDict['uniqueIds'][..., np.newaxis])
-            pointDict = {
-                'ts': poseDict['ts'][isMarker],
-                'point': poseDict['pose'][isMarker, :3],
-                'bodyId': poseDict['bodyId'][isMarker],
-                'uniqueIds': poseDict['uniqueIds'][uniqueIdIsMarker],
-                }
-            poseDict = {
-                'ts': poseDict['ts'][~isMarker],
-                'pose': poseDict['pose'][~isMarker],
-                'bodyId': poseDict['bodyId'][~isMarker],
-                'uniqueIds': poseDict['uniqueIds'][~uniqueIdIsMarker],
-                }
-            outDict['data']['vicon'] = {
-                'pose6q': poseDict,
-                'point3': pointDict}
+            outDict['data']['vicon'] = separateMarkersFromSegments(poseDict)
+        else:            
+            outDict['data']['vicon'] = {'pose6q': poseDict}
+            
         if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
             zeroTimestampsForAChannel(outDict['data']['vicon']) # TODO: Zeroing in the separated channel case
     return outDict

@@ -59,9 +59,8 @@ import struct
 
 # local imports
 
+from importVicon import importVicon
 from timestamps import unwrapTimestamps, zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
-
-pattern = re.compile('(\d+) (\d+\.\d+) ([A-Z]+) \((.*)\)')
 
 
 def decodeEvents24Bit(data):
@@ -352,7 +351,8 @@ def importPostProcessing(dvs, samples, dvsLbl=None, dvsFlow=None, **kwargs):
                 chDict['flow']['vy'] = flowFromBitsToFloat(chDict['flow']['vy'])
         if any(chDict):
             for dataType in chDict:
-                chDict[dataType]['ts'] = unwrapTimestamps(chDict[dataType]['ts'], **kwargs) * 0.00000008 # Convert to seconds
+                chDict[dataType]['ts'] =     unwrapTimestamps(chDict[dataType]['ts'], **kwargs) * 0.00000008 # Convert to seconds
+
             if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
                 zeroTimestampsForAChannel(chDict)
             if ch == 0:
@@ -368,13 +368,22 @@ def importPostProcessing(dvs, samples, dvsLbl=None, dvsFlow=None, **kwargs):
     return outDict
 
 def importIitYarpHavingFoundFile(**kwargs):
+    # Read file
+    with open(kwargs['filePathOrName'], 'r') as inFile:
+        content = inFile.read()
+    # Check if format suggests data from vicon dumper
+    patternForVicon = re.compile('(\d+) (\d+\.\d+) \((.*)\)')
+    found = patternForVicon.findall(content)
+    if found:
+        print('Yarp vicon dumper pattern found - passing this file to importVicon function')
+        return importVicon(**kwargs)
+
     # Create dicts for each possible datatype
     dvs = createDataTypeDvs()
     dvsLbl = createDataTypeDvsLbl()
     dvsFlow = createDataTypeDvsFlow()
     samples = createDataTypeSample() # Sample is an intermediate datatype - later it gets converted to IMU etc
-    with open(kwargs['filePathOrName'], 'r') as inFile:
-        content = inFile.read()
+    pattern = re.compile('(\d+) (\d+\.\d+) ([A-Z]+) \((.*)\)')
     found = pattern.findall(content)
     for elem in tqdm(found):
         # The following values would be useful for indexing the input file:
@@ -382,6 +391,7 @@ def importIitYarpHavingFoundFile(**kwargs):
         #timestamp = np.float64(elem[1])
         bottleType = elem[2]
         if bottleType not in ['AE', 'IMUS', 'LAE', 'FLOW']:
+            print(bottleType)
             continue
         try:
             events = np.array(elem[3].split(' '), dtype=np.uint32)
