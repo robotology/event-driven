@@ -1,6 +1,6 @@
 
 #include <yarp/os/all.h>
-#include <event-driven/all.h>
+#include "event-driven/all.h"
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -34,6 +34,7 @@ private:
 
     portNameReporter port_name_reader;
     vReadPort< vector<int32_t> > input_port;
+    vWritePort output_port;
     std::ofstream info_dumper;
     std::ofstream event_dumper;
     int packets_saved;
@@ -61,15 +62,12 @@ public:
         }
         input_port.setReporter(port_name_reader);
 
-        char char_buffer[50];
-        char * cwd = getcwd(char_buffer, 50);
-        if(!cwd) {
-            yError() << "Cannot get default path as the CWD";
+        if(!output_port.open(getName() + "/AE:o")) {
+            yError() << "Could not open output port";
             return false;
         }
-        string default_path(char_buffer);
 
-        string path = rf.check("path", Value(default_path)).asString();
+        string path = rf.check("path", Value(yarp::os::getenv("HOME"))).asString();
         string event_filename = path + "/binaryevents.log";
         string info_filename = path + "/info.log";
 
@@ -130,6 +128,7 @@ public:
         //when the asynchrnous thread is asked to stop, close ports and do
         //other clean up
         input_port.close();
+        output_port.close();
     }
 
     void threadRelease()
@@ -204,6 +203,10 @@ public:
 
             //count our progress
             packets_saved++;
+
+            //feed the data through if needed
+            if(output_port.getOutputCount())
+                output_port.write(*q, yarpstamp);
         }
     }
 };
