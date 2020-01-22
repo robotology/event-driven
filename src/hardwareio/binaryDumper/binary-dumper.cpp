@@ -62,6 +62,7 @@ public:
         }
         input_port.setReporter(port_name_reader);
 
+        output_port.setWriteType(ev::AE::tag);
         if(!output_port.open(getName() + "/AE:o")) {
             yError() << "Could not open output port";
             return false;
