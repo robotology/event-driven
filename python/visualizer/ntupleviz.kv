@@ -10,28 +10,6 @@
     size_hint: .2, .3
     orientation: 'vertical'
 
-<Viewer@Image>:
-    BoxLayout:
-        pos: root.pos
-        size: root.size[0], .1*root.size[1]
-        padding: 10
-
-#<LabeledImage@Image>:
-#    BoxLayout:
-#        id: layout
-#        pos: root.pos
-#        size: root.size[0], .1*root.size[1]
-#        padding: 10
-#        Button:
-#            text: 'Flip x'
-#            on_release: root.flip_x()
-#        Button:
-#            text: 'Flip y'
-#            on_release: root.flip_y()
-#        Button:
-#            text: 'Screenshot'
-#            on_release: root.screenshot(root.parent.load_path)
-
 <LoadDialog>:
     BoxLayout:
         size: root.size
@@ -83,6 +61,78 @@
         Button:
             text: "OK"
             on_press: root.dismiss()
+
+<ViewerDvs@Viewer>
+    image: image
+    polarised: polarised.active
+    contrast: contrast.value
+    flipHoriz: flipHoriz.active
+    flipVert: flipVert.active
+    orientation: 'vertical'
+    Image:
+        id: image
+        allow_stretch: True
+    BoxLayout:
+        size_hint: 1, 0.1
+        orientation: 'horizontal'
+        Label:
+            text: 'flip horiz'
+        CheckBox:
+            id: flipHoriz 
+        Label:
+            text: 'flip vert'
+        CheckBox:
+            id: flipVert 
+    BoxLayout:
+        size_hint: 1, 0.1
+        orientation: 'horizontal'
+        Label:
+            text: 'polarised'
+        CheckBox: 
+            id: polarised
+            active: True
+        Label:
+            text: 'contrast'
+        Slider:
+            id: contrast
+            min: 1
+            max: 20
+            step: 1
+            value: 3
+
+<ViewerFrame@Viewer>
+    image: image
+    flipHoriz: flipHoriz.active
+    flipVert: flipVert.active
+    orientation: 'vertical'
+    Image:
+        id: image
+        allow_stretch: True
+    BoxLayout:
+        size_hint: 1, 0.1
+        orientation: 'horizontal'
+        Label:
+            text: 'flip horiz'
+        CheckBox:
+            id: flipHoriz 
+        Label:
+            text: 'flip vert'
+        CheckBox:
+            id: flipVert 
+
+<ViewerPose6q@Viewer>
+    image: image
+    interpolate: interpolate.active
+    Image:
+        id: image
+        allow_stretch: True
+    BoxLayout:
+        size_hint: 1, 0.1
+        orientation: 'horizontal'
+        Label:
+            text: 'interpolate'
+        CheckBox:
+            id: interpolate 
 
 <RootWidget>
     orientation:'horizontal'

@@ -44,18 +44,12 @@ else:
 
 # Add path to bimvee library
 sys.path.append(os.path.join(prefix, 'repos/event-driven-python-dev/python/libraries/bimvee'))
-# Add path to visulaizer
+# Add path to visualizer
 sys.path.append(os.path.join(prefix, 'repos/event-driven-python-dev/python/visualizer'))
-
-# The load dialog requires this in order to start up properly
-#os.environ['HOME'] =  prefix
 
 import ntupleviz
 
-# Actually, let's enforce being in the right directory
-#os.chdir(os.path.join(prefix, 'repos/dual-stream'))
-
-# Create the dualViz app and start it in a thread
+# Create the ntupleViz app and start it in a thread
 visualizerApp = ntupleviz.Ntupleviz()
 thread = threading.Thread(target=visualizerApp.run)
 thread.daemon = True
@@ -68,23 +62,19 @@ thread.start()
 from importIitYarp import importIitYarp
 
 filePathOrName = os.path.join(prefix, "data/2019_11_11_AikoImu/linear_100/ATIS")
-imported = importIitYarp(filePathOrName=filePathOrName, tsBits=30)
-
-dvs = imported['data']['right']['dvs']
+container = importIitYarp(filePathOrName=filePathOrName, tsBits=30)
 
 # Having loaded a dvs dataDict - poke it into the dsm
-visualizerApp.root.data_controller.data_dict = imported
+visualizerApp.root.data_controller.data_dict = container
 
 #%% Load some different data and push it in
 
 from importIitYarp import importIitYarp
 
 filePathOrName = os.path.join(prefix, "data/2019_11_11_AikoImu/tripod_pitch/ATIS")
-imported = importIitYarp(filePathOrName=filePathOrName, tsBits=30)
+container = importIitYarp(filePathOrName=filePathOrName, tsBits=30)
 
-dvs = imported['data']['right']['dvs']
-
-visualizerApp.root.data_controller.data_dict = imported
+visualizerApp.root.data_controller.data_dict = container
 
 #%% Simulated DAVIS data
 
@@ -104,14 +94,18 @@ template = {
         }
     }
 
-imported = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
+container = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
 
-pose = imported['data']['extra']['pose6q']
-dvs = imported['data']['davis']['dvs']
-frame = imported['data']['davis']['frame']
-depthmap = imported['data']['extra']['frame']
+pose = container['data']['extra']['pose6q']
+dvs = container['data']['davis']['dvs']
+frame = container['data']['davis']['frame']
+depthmap = container['data']['extra']['frame']
 
-visualizerApp.root.data_controller.data_dict = imported
+toKeep = [0, 300, 600, 900, 1200, 1500, 1800, 1999]
+pose['pose'] = pose['pose'][toKeep, :]
+pose['ts'] = pose['ts'][toKeep]
+
+visualizerApp.root.data_controller.data_dict = container
 
 #%% Real DAVIS data
 
