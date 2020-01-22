@@ -44,9 +44,11 @@ from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.popup import Popup
+from kivy.uix.button import Button
+from kivy.uix.checkbox import CheckBox
 from kivy.graphics.texture import Texture
 from kivy.properties import ObjectProperty
-from kivy.uix.popup import Popup
 from kivy.properties import StringProperty, NumericProperty, ListProperty, BooleanProperty
 from kivy.properties import DictProperty, ReferenceListProperty
 from kivy.metrics import dp
@@ -75,30 +77,32 @@ class LoadDialog(FloatLayout):
     cancel = ObjectProperty(None)
     load_path = StringProperty(None)
 
-class Viewer(Image):
+class Viewer(BoxLayout):
     labels = ListProperty()
     data = ObjectProperty(force_dispatch=True)
     need_init = BooleanProperty(True)
     dsm = ObjectProperty(None, allownone=True)
     colorfmt = 'luminance'
-    allow_stretch = BooleanProperty(True)
+    #allow_stretch = BooleanProperty(True)
     
     def on_dsm(self, instance, value):
         if self.dsm is not None:
             self.colorfmt = self.dsm.get_colorfmt()
             x, y = self.dsm.get_dims()
             buf_shape = (dp(x), dp(y))
-            self.texture = Texture.create(size=buf_shape, colorfmt=self.colorfmt)
+            self.image.texture = Texture.create(size=buf_shape, colorfmt=self.colorfmt)
             self.is_x_flipped = False
             self.is_y_flipped = False
             self.need_init = False
             
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
+        #self.image = Image()
+        #self.add_widget(self.image)
         self.cm = plt.get_cmap('tab20')
         self.is_x_flipped = False
         self.is_y_flipped = False
-        self.texture = None
+        self.image.texture = None
         Clock.schedule_once(self.init, 0)
         
     def init(self, dt):
@@ -110,25 +114,75 @@ class Viewer(Image):
     def update_data(self, data):
         if self.need_init:
             self.on_dsm(None, None)
-        if self.texture is not None:
+        if self.image.texture is not None:
             x, y = self.dsm.get_dims()
             size_required = x * y * (1 + (self.colorfmt == 'rgb') * 2)
             if not isinstance(data, np.ndarray):
                 data = np.zeros((x, y, 3), dtype=np.uint8)
             if data.size >= size_required:
-                self.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
+                try:
+                    if self.flipHoriz:
+                        data = np.flip(data, axis = 1)
+                    if self.flipVert:
+                        data = np.flip(data, axis = 0)
+                except AttributeError:
+                    pass # It's not a class that allows flipping
+                self.image.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
 
     def get_frame(self, time_value, time_window):
         if self.dsm is None:
             self.data = plt.imread('graphics/missing.jpg')
         else:
-            self.data = self.dsm.get_frame(time_value, time_window, children=self.children)
+            kwargs = {
+                'polarised': self.polarised,
+                'contrast': self.contrast,
+                    }
+            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
         
-    def get_frame_at_time(self, time, time_window, dualImg):
+    #def get_frame_at_time(self, time, time_window, dualImg):
+    #    if self.dsm is None:
+    #        return plt.imread('graphics/missing.jpg')
+    #    else:
+    #        return self.dsm.get_frame(time, time_window, children=self.children)
+
+class ViewerDvs(Viewer):
+    def __init__(self, **kwargs):
+        super(ViewerDvs, self).__init__(**kwargs)
+
+    def get_frame(self, time_value, time_window):
         if self.dsm is None:
-            return plt.imread('graphics/missing.jpg')
+            self.data = plt.imread('graphics/missing.jpg')
         else:
-            return self.dsm.get_frame(time, time_window, children=self.children)
+            kwargs = {
+                'polarised': self.polarised,
+                'contrast': self.contrast,
+                    }
+            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
+   
+class ViewerFrame(Viewer):
+    def __init__(self, **kwargs):
+        super(ViewerFrame, self).__init__(**kwargs)
+
+    def get_frame(self, time_value, time_window):
+        if self.dsm is None:
+            self.data = plt.imread('graphics/missing.jpg')
+        else:
+            kwargs = {
+                    }
+            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
+   
+class ViewerPose6q(Viewer):
+    def __init__(self, **kwargs):
+        super(ViewerPose6q, self).__init__(**kwargs)
+
+    def get_frame(self, time_value, time_window):
+        if self.dsm is None:
+            self.data = plt.imread('graphics/missing.jpg')
+        else:
+            kwargs = {
+                'interpolate': self.interpolate,
+                    }
+            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
    
 class DataController(GridLayout):
     ending_time = NumericProperty(.0)
@@ -142,10 +196,31 @@ class DataController(GridLayout):
         for child in self.children:
             child.get_frame(self.time_value, self.time_window)
        
-    def add_viewer_and_resize(self, visualiser):
-        new_viewer = Viewer()
+    def add_viewer_and_resize(self, data_type, data_dict):
+        if data_type == 'dvs':
+            new_viewer = ViewerDvs()
+            visualiser = VisualiserDvs(data_dict)
+            #new_viewer.orientation = "vertical"
+            #new_viewer.add_widget(Button(text='flip horiz'))
+            #new_viewer.add_widget(Button(label='flipHorizontal', text='flip horiz'))
+            #new_viewer.add_widget(Button(label='flipVertical', text='flip vert'))
+            #new_viewer.add_widget(Button(label='transpose', text='transpose'))
+            #new_viewer.add_widget(CheckBox(label='polarised', text='polarised'))                        
+        elif data_type == 'frame':
+            new_viewer = ViewerFrame()
+            visualiser = VisualiserFrame(data_dict)
+#            new_viewer.orientation = "vertical"
+#            new_viewer.add_widget(Button(label='flipHorizontal', text='flip horiz'))
+#            new_viewer.add_widget(Button(label='flipVertical', text='flip vert'))
+#            new_viewer.add_widget(Button(label='transpose', text='transpose'))
+        elif data_type == 'pose6q':
+            new_viewer = ViewerPose6q()
+            visualiser = VisualiserPose6q(data_dict)
+#            new_viewer.add_widget(CheckBox(label='interpolate', text='interpolate'))
+#            new_viewer.orientation = "vertical"
         new_viewer.dsm = visualiser
         self.add_widget(new_viewer)
+
         self.cols = int(np.ceil(np.sqrt(len(self.children))))
 
     def add_viewer_for_each_channel_and_data_type(self, in_dict):
@@ -156,13 +231,9 @@ class DataController(GridLayout):
             for key_name in in_dict.keys():
                 if isinstance(in_dict[key_name], dict):
                     if 'ts' in in_dict[key_name]:
-                        print('Creating a new viewer, of type: ' + key_name)
-                        if key_name == 'dvs':
-                            self.add_viewer_and_resize(VisualiserDvs(in_dict[key_name]))
-                        elif key_name == 'frame':
-                            self.add_viewer_and_resize(VisualiserFrame(in_dict[key_name]))
-                        elif key_name == 'pose6q':
-                            self.add_viewer_and_resize(VisualiserPose6q(in_dict[key_name]))
+                        if key_name in ['dvs', 'frame', 'pose6q']:
+                            print('Creating a new viewer, of type: ' + key_name)
+                            self.add_viewer_and_resize(key_name, in_dict[key_name])
                         else:
                             print('datatype not supported: ' + key_name)
                     else: # recurse through the sub-dict

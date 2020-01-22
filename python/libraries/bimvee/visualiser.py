@@ -199,6 +199,7 @@ class VisualiserPose6q(Visualiser):
     def set_data(self, data):
         self.__data = data
         self.smallestRenderDim = min(self.renderX, self.renderY)
+        #self.labels = 
         poseX = data['pose'][:, 0]
         poseY = data['pose'][:, 1]
         poseZ = data['pose'][:, 2]
@@ -214,36 +215,17 @@ class VisualiserPose6q(Visualiser):
         self.largestDim = max(maxX-minX, maxY-minY, maxZ-minZ)
         if self.largestDim == 0:
             self.largestDim = 1
-        # Centre the poses
-        poseX = (poseX - self.centreX) / self.largestDim
-        poseY = (poseY - self.centreY) / self.largestDim
-        poseZ = (poseZ - self.centreZ) / self.largestDim + 2
-        
-        self.projX, self.projY = project3dTo2d(poseX, poseY, poseZ, self.smallestRenderDim)
-        #
-        rotMats = np.apply_along_axis(quat2RotM, axis=1, arr=data['pose'][:, 3:7])    
-        rotatedUnitVectors = np.apply_along_axis(rotateUnitVectors, axis=1, arr=rotMats)    
-        poseX_X = poseX + rotatedUnitVectors[:, 0, 0]
-        poseX_Y = poseX + rotatedUnitVectors[:, 1, 0]
-        poseX_Z = poseX + rotatedUnitVectors[:, 2, 0]
-        poseY_X = poseY + rotatedUnitVectors[:, 0, 1]
-        poseY_Y = poseY + rotatedUnitVectors[:, 1, 1]
-        poseY_Z = poseY + rotatedUnitVectors[:, 2, 1]
-        poseZ_X = poseZ + rotatedUnitVectors[:, 0, 2]
-        poseZ_Y = poseZ + rotatedUnitVectors[:, 1, 2]
-        poseZ_Z = poseZ + rotatedUnitVectors[:, 2, 2]
-        self.projX_X, self.projY_X = project3dTo2d(poseX_X, poseY_X, poseZ_X, self.smallestRenderDim)
-        self.projX_Y, self.projY_Y = project3dTo2d(poseX_Y, poseY_Y, poseZ_Y, self.smallestRenderDim)
-        self.projX_Z, self.projY_Z = project3dTo2d(poseX_Z, poseY_Z, poseZ_Z, self.smallestRenderDim)
 
-    def project_pose(self, poseX, poseY, poseZ, poseQ, image):
+    def project_pose(self, pose, image):
+        if pose is None:
+            return image
         # Centre the pose, unpacking it at the same time
-        poseX = (poseX - self.centreX) / self.largestDim
-        poseY = (poseY - self.centreY) / self.largestDim
-        poseZ = (poseZ - self.centreZ) / self.largestDim + 2        
+        poseX = (pose[0] - self.centreX) / self.largestDim
+        poseY = (pose[1] - self.centreY) / self.largestDim
+        poseZ = (pose[2] - self.centreZ) / self.largestDim + 2        
         # Project the location
         projX, projY = project3dTo2d(poseX, poseY, poseZ, self.smallestRenderDim)
-        rotMats = quat2RotM(poseQ)
+        rotMats = quat2RotM(pose[3:7])
         rotatedUnitVectors = rotateUnitVectors(rotMats)    
         poseX_X = poseX + rotatedUnitVectors[0, 0]
         poseX_Y = poseX + rotatedUnitVectors[1, 0]
@@ -268,29 +250,19 @@ class VisualiserPose6q(Visualiser):
             print('Warning: data is not set')
             return np.zeros((1, 1), dtype=np.uint8) # This should not happen
         image = np.zeros((self.renderX, self.renderY, 3), dtype = np.uint8)
-        if kwargs.get('interpolate', True):
-            # If interpolation is desired we reject the precalculated projections
-            idxPre = np.searchsorted(data['ts'], time, side='right') - 1
-            timePre = data['ts'][idxPre]
-            if timePre == time:
-                # In this edge-case of desired time == timestamp, there is no need 
-                # to interpolate - just use a precalculated projection
-                X = self.projX[idxPre]
-                Y = self.projY[idxPre]
-                X_X = self.projX_X[idxPre]
-                Y_X = self.projY_X[idxPre]
-                X_Y = self.projX_Y[idxPre]
-                Y_Y = self.projY_Y[idxPre]
-                X_Z = self.projX_Z[idxPre]
-                Y_Z = self.projY_Z[idxPre]
-                draw_line(image[:, :, 0], X, Y, X_X, Y_X)
-                draw_line(image[:, :, 1], X, Y, X_Y, Y_Y)
-                draw_line(image[:, :, 2], X, Y, X_Z, Y_Z)
-            elif idxPre < 0 or (idxPre >= len(data['ts'])-2):
-                # In this edge-case of the time at the beginning or end, 
-                # don't show any pose
-                pass
-            else:
+
+        idxPre = np.searchsorted(data['ts'], time, side='right') - 1
+        timePre = data['ts'][idxPre]
+        if timePre == time:
+            # In this edge-case of desired time == timestamp, there is no need 
+            # to interpolate 
+            pose = data['pose'][idxPre, :]
+        elif idxPre < 0 or (idxPre >= len(data['ts'])-1):
+            # In this edge-case of the time at the beginning or end, 
+            # don't show any pose
+            pose = None
+        else:
+            if kwargs.get('interpolate', True):
                 timePost = data['ts'][idxPre + 1]
                 qPre = data['pose'][idxPre, 3:7]
                 qPost = data['pose'][idxPre + 1, 3:7]
@@ -299,21 +271,13 @@ class VisualiserPose6q(Visualiser):
                 locPre = data['pose'][idxPre, 0:3] 
                 locPost = data['pose'][idxPre + 1, 0:3]
                 locInterp = locPre * (1-timeRel) + locPost * timeRel
-                image = self.project_pose(locInterp[0], locInterp[1], locInterp[2], qInterp, image)                
-        else: # No interpolation, so just choose the sample which is nearest in time
-            poseIdx = find_nearest(data['ts'], time)
-            X = self.projX[poseIdx]
-            Y = self.projY[poseIdx]
-            X_X = self.projX_X[poseIdx]
-            Y_X = self.projY_X[poseIdx]
-            X_Y = self.projX_Y[poseIdx]
-            Y_Y = self.projY_Y[poseIdx]
-            X_Z = self.projX_Z[poseIdx]
-            Y_Z = self.projY_Z[poseIdx]
-            draw_line(image[:, :, 0], X, Y, X_X, Y_X)
-            draw_line(image[:, :, 1], X, Y, X_Y, Y_Y)
-            draw_line(image[:, :, 2], X, Y, X_Z, Y_Z)
-
+                pose = np.concatenate((locInterp, qInterp))
+            else: # No interpolation, so just choose the sample which is nearest in time
+                poseIdx = find_nearest(data['ts'], time)
+                pose = data['pose'][poseIdx, :]
+            
+        image = self.project_pose(pose, image)                
+        
         # Allow for arbitrary post-production on image with a callback
         # TODO: as this is boilerplate, it could be pushed into pie syntax ...
         if kwargs.get('callback', None) is not None:
