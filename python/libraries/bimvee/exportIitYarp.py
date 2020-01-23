@@ -149,18 +149,20 @@ def exportIitYarpViewer(importedDict, **kwargs):
                     
         xmlFile.write('</application>\n')
 
-def encodeEvents24Bit(ts, x, y, pol):
+def encodeEvents24Bit(ts, x, y, pol, **kwargs):
     # timestamps(ts) are 32 bit integers counted with an 80 ns clock. 
     # Events are encoded as 32 bits with x,y,channel(ch)(c) and polarity(pol)(p) as shown below
     # 0000 0000 tcrr yyyy yyyy rrxx xxxx xxxp    (r = reserved)
+    # t = 0 to indicate events
     # Ignoring channel though
     ts = ts / 0.00000008
     ts = ts.astype(np.uint32) # Timestamp wrapping occurs here
     ts = np.expand_dims(ts, 1)
     x = x.astype(np.int32)
     y = y.astype(np.int32)
-    pol = pol.astype(np.int32)
-    ae = pol + (x << 1) + (y << 12)
+    pol = (~pol).astype(np.int32)
+    channel = kwargs.get('channel', 0)
+    ae = (channel << 22) + (y << 12) + (x << 1) + pol
     ae = np.expand_dims(ae, 1)
     data = np.concatenate([ts, ae], axis=1)
     data = data.flatten().tolist()
@@ -173,7 +175,8 @@ def exportDvs(dataFile, data, **kwargs):
     eventsAsListOfStrings = encodeEvents24Bit(data['ts'], 
                                               data['x'],
                                               data['y'],
-                                              data['pol'])
+                                              data['pol'],
+                                              **kwargs)
     print('Breaking into bottles by time')
     # Output dvs data bottle by bottle.
     minTimeStepPerBottle = kwargs.get('minTimeStepPerBottle', 2e-3)
@@ -215,7 +218,7 @@ def exportFrame(dataFile, data, **kwargs):
         '''
     dataFile.write(''.join(lineStrs))
 
-def exportPose6(dataFile, data, **kwargs):
+def exportPose6q(dataFile, data, **kwargs):
     # Following Prashanth's lead here:  https://github.com/robotology/whole-body-estimators/blob/b55be34ce0abab46a14b7bb25d39d9ede5d05d0e/devices/baseEstimatorV1/include/baseEstimatorV1.h#L421
     pass
 
@@ -232,7 +235,7 @@ def encodeImu(ts, **kwargs):
     unsigned int sensor:4; - see below ...
     unsigned int _r1:2; - reserved
     unsigned int channel:1; - left vs right
-    unsigned int type:1; - should be 0 to indicate sample (cf event)
+    unsigned int type:1; - should be 1 to indicate sample (cf event)
     unsigned int _r2:8; - reserved
     'Sensor' is defined as: 
     0: Accel X
@@ -278,7 +281,9 @@ def encodeImu(ts, **kwargs):
     values = values.flatten(order='C')
     sensor = np.tile(np.arange(10, dtype=np.uint32), (numSamples, 1))
     sensor = sensor.flatten(order='C')
-    ae = (sensor << 16) + values 
+    channel = kwargs.get('channel', 0)
+    eventType = 1
+    ae = (eventType << 23) + (channel << 22) + (sensor << 16) + values 
     ae = np.expand_dims(ae, 1)
     data = np.concatenate([ts, ae], axis=1)
     data = data.flatten().tolist()
@@ -310,9 +315,63 @@ def exportImu(dataFile, data, **kwargs):
         ptr = nextPtr
         bottleNumber += 1 
     dataFile.write('\n'.join(bottleStrs))
+
+def encodeSample(data, **kwargs):
+    # Samples are encoded like this
+    # An event is a 4-byte ts followed by a 4-byte sample
+    # timestamps(ts) are 32 bit integers counted with an 80 ns clock. 
+    # Events are encoded as 32 bits with value(v), sensor(s), channel(c), and typet) as shown below
+    # rrrr rrrr tcrr ssss vvvv vvvv vvvv vvvv    (r = reserved = 0)
+    # Ignoring channel though
+    
+    #Unpack
+    ts = data['ts']
+    sensor = data['sensor'].astype(np.uint32) # change type to allow shifting up bits
+    value = data['value'].astype(np.uint16) # change to unsigned int to avoid wrapping in the sum below
+    ts = ts / 0.00000008
+    ts = ts.astype(np.uint32) # Timestamp wrapping occurs here
+    ts = np.expand_dims(ts, 1)
+    channel = kwargs.get('channel', 0)
+    eventType = 1
+    ae = (eventType << 23) + (channel << 22) + (sensor << 16) + value
+    ae = np.expand_dims(ae, 1)
+    data = np.concatenate([ts, ae], axis=1)
+    data = data.flatten().tolist()
+    data = list(map(str, data))
+    return data
+      
+
+def exportSample(dataFile, data, **kwargs):
+    # preconvert numpy arrays into bottle-ready data
+    print('Converting event arrays to bottle-ready string format ...')
+    eventsAsListOfStrings = encodeSample(data, **kwargs)
+    print('Breaking into bottles by time')
+    # Output dvs data bottle by bottle.
+    minTimeStepPerBottle = kwargs.get('minTimeStepPerBottle', 2e-3)
+    numEvents = len(data['ts'])
+    ptr = 0
+    bottleNumber = 0
+    pbar = tqdm(total=numEvents, position=0, leave=True)
+    bottleStrs = []
+    while ptr < numEvents:
+        firstTs = data['ts'][ptr]
+        nextPtr = np.searchsorted(data['ts'], firstTs + minTimeStepPerBottle)
+        pbar.update(nextPtr-ptr)
+        # Why 20 in the following? Because there are 10 samples per imu and 2 ints per sample that need to be included. 
+        bottleStrs.append(str(bottleNumber) + ' ' + 
+                       str(firstTs) + ' AE (' +
+                       ' '.join(eventsAsListOfStrings[ptr*2 : nextPtr*2]) + ')')
+        ptr = nextPtr
+        bottleNumber += 1 
+    dataFile.write('\n'.join(bottleStrs))
       
 def exportIitYarp(importedDict, **kwargs):
     exportFilePath = kwargs.get('exportFilePath', './')
+    if isinstance(importedDict, list):
+        for idx, elem in enumerate(importedDict):
+            kwargs['exportFilePath'] = exportFilePath + '/' + str(idx)
+            exportIitYarp(elem, **kwargs)
+        return
     print('exportIitYarp called for data imported from ' + 
           str(importedDict['info']) +
           ' targeting folder ' + exportFilePath)
@@ -324,10 +383,16 @@ def exportIitYarp(importedDict, **kwargs):
     channelNames = importedDict['data'].keys()
     dataTypesToExport = kwargs.get('dataTypes')
     for channelName in channelNames:
+        if channelName in ['1', 'right']:
+            kwargs['channel'] = 1
+        else:
+            kwargs['channel'] = 0
         dataTypes = importedDict['data'][channelName].keys()
         for dataType in dataTypes:
             if dataTypesToExport is None or dataType in dataTypesToExport: # , 'pose6', 'imu'                
-                if dataType not in ['dvs', 'frame', 'imu']: continue # Exclude unknown datatypes
+                if dataType not in ['dvs', 'frame', 'imu', 'sample']: 
+                    print('unknown datatype')
+                    continue # Exclude unknown datatypes
                 channelNameAndDataType = channelName + dataType # This is used as a new channel name
                 channelPath = os.path.join(exportFilePath, str(channelNameAndDataType))
                 try:
@@ -358,8 +423,10 @@ def exportIitYarp(importedDict, **kwargs):
                         exportFrame(dataFile, data, **kwargs)
                     elif dataType == 'imu':
                         exportImu(dataFile, data, **kwargs)
-                    elif dataType == 'pose6':
-                        exportPose6(dataFile, data, **kwargs)
+                    elif dataType == 'pose6q':
+                        exportPose6q(dataFile, data, **kwargs)
+                    elif dataType == 'sample':
+                        exportSample(dataFile, data, **kwargs)
             else:
                 print("datatype: ", dataType, " not handled yet")
     if kwargs.get('viewerApp', True):

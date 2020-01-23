@@ -24,52 +24,43 @@ import numpy as np
 
 from timestamps import rezeroTimestampsForImportedDicts
 
-'''
-2019_11_11 This function currently unused, (importIitYarp handles this internally)
-but leaving it in case it should be useful
-'''
-def splitByChannel(inDict):
-    channelNames = list(inDict['data'].keys())
-    
-    if len(channelNames) > 1:
-        print('SplitByChannel was requested for file import ' + 
-              inDict['info']['pathAndFileName'] + 
-              ' but it seems this has already happened.')
-        return
-    channelName = channelNames[0]
-    channelData = inDict['data'][channelName]
-    dvs = channelData['dvs']
-    if 'ch' not in dvs: 
-        print('SplitByChannel was requested for file import ' + 
-              inDict['info']['pathAndFileName'] + 
-              ' but no channel data was found.')
-        inDict['data'][channelName]
-        return
-    # At this point we are commited to changing the channel data field, so pop it off
-    channelData = inDict['data'].pop(channelName)
-    uniqueChannels = np.unique(dvs['ch'])
-    if len(uniqueChannels) == 1:
-        print('SplitByChannel was requested for file import ' + 
-              inDict['info']['pathAndFileName'] + 
-              ' but there is only one channel defined.')
-        inDict['data'][uniqueChannels[0]] = inDict['data'].pop(channelName) # make sure the channel is named as it was in pol['ch']
-        dvs.pop('ch') # remove the channel data, as it is now redundant 
-        return
-    for ch in uniqueChannels:
-        booleanSelector = dvs['ch'] == ch
-        inDict['data'][ch] = {
-            'dvs': {
-                'ts': dvs['ts'][booleanSelector],
-                'x': dvs['x'][booleanSelector],
-                'y': dvs['y'][booleanSelector],
-                'pol': dvs['pol'][booleanSelector]}}
+def selectByLabel(inDict, labelName, labelValue):
+    selectedEvents = inDict[labelName] == labelValue
+    if not np.any(selectedEvents):
+        return None
+    outDict = {}
+    for fieldName in inDict.keys():
+        if fieldName != labelName:
+            if len(inDict[fieldName]) == len(selectedEvents):
+                outDict[fieldName] = inDict[fieldName][selectedEvents]
+            else:
+                outDict[fieldName] = inDict[fieldName]
+    return outDict
 
+def splitByLabel(inDict, labelName):
+    labels = np.unique(inDict[labelName])
+    outList = []
+    for label in labels:
+        selectedEvents = inDict[labelName] == label
+        outDict = {}
+        for fieldName in inDict.keys():
+            if fieldName != labelName:
+                if len(inDict[fieldName]) == len(selectedEvents):
+                    outDict[fieldName] = inDict[fieldName][selectedEvents]
+                else:
+                    outDict[fieldName] = inDict[fieldName]
+        outList.append(outDict)
+    return outList
+
+''' 
+receives a dict containing (probably) dvs events
+returns a dict containing two dicts, labelled 0 and 1, for the polarities found
+Although redundant, the pol field is maintained within each dict for compatibility
+This is similar to splitByLabel but specialised for dvs;
+it is retained because True and False values make awkward dictionary keys,
+so here they are replaced by strings '0' and '1'
+'''
 def splitByPolarity(inDict):
-    ''' 
-    receives a dict containing (probably) dvs events
-    returns a dict containing two dicts, labelled 0 and 1, for the polarities found
-    Although redundant, the pol field is maintained within each dict for compatibility
-    '''
     outDict = {
         '0': {},
         '1': {} }
@@ -82,56 +73,6 @@ def splitByPolarity(inDict):
             outDict['1'][key] = inDict[key]
     return outDict
     
-def splitDvsByLabel(inDict):
-    uniqueLbls = np.unique(inDict['lbl'])
-    outDict = {}
-    for uniqueLbl in uniqueLbls:
-        outDict[uniqueLbl] = {}
-        selectedBool = inDict['lbl'] == uniqueLbl
-        for field in inDict:
-            if field in ['x', 'y', 'pol', 'ts']:
-                outDict[uniqueLbl][field] = inDict[field][selectedBool]
-            elif field == 'lbl':
-                pass
-            else:
-                outDict[uniqueLbl][field] = inDict[field]
-    return outDict 
-
-def dvsSelectLabels(inDict, labels):
-    selectedBool = np.full_like(inDict['pol'], False)
-    for label in labels:
-        selectedBoolTemp = inDict['lbl'] == label
-        selectedBool = selectedBool | selectedBoolTemp
-    outDict = {}
-    for field in inDict:
-        if field in ['x', 'y', 'pol', 'ts', 'lbl']:
-            outDict[field] = inDict[field][selectedBool]
-        else:
-            outDict[field] = inDict[field]
-    return outDict    
-
-'''
-2019_12_04 Also obsolete - importIitYarp now handles this internally
-'''
-def splitByLabelled(inDict):
-    outDict = {}
-    lblBool = inDict['lbl'] > -1
-    if np.any(lblBool):
-        outDict['dvsLbl'] = {
-            'ts': inDict['ts'][lblBool],
-            'x': inDict['x'][lblBool],
-            'y': inDict['y'][lblBool],
-            'pol': inDict['pol'][lblBool],
-            'lbl': inDict['lbl'][lblBool],
-                }
-    if np.any(~lblBool):
-        outDict['dvs'] = {
-            'ts': inDict['ts'][~lblBool],
-            'x': inDict['x'][~lblBool],
-            'y': inDict['y'][~lblBool],
-            'pol': inDict['pol'][~lblBool],
-                }
-    return outDict
 
 ''' 
 expecting startTime, stopTime or both
