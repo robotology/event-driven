@@ -112,7 +112,20 @@ imported = importIntelRealsense(filePathOrName=filePathOrName)
 
 from split import cropTime
 
-cropped = cropTime(imported, minTime=35, maxTime=38.5)     
+cropped = cropTime(imported, minTime=35, maxTime=38.5)
+
+#%% Splitting a dataset by labels
+
+from split import splitByLabel, selectByLabel
+
+# select your laballed data from an import (alternaitvely label it using some processing)
+labelledData = imported['data']['right']['dvslbl']
+
+splitData = splitByLabel(labelledData, 'lbl') # 'lbl' oin this case is the name of the field that contains the labels
+
+# Alternatively, select a single label
+
+selectedData = selectByLabel(labelledData, 'lbl', 3) # in this case, 3 is the label you want to isolate
 
 #%% VISUALISATION FUNCTIONS
 

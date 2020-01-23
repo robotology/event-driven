@@ -43,10 +43,12 @@ import math
 try:
     from plotDvsContrast import getEventImageForTimeRange
     from geometry import quat2RotM, rotateUnitVectors, project3dTo2d, slerp, draw_line
+    from split import splitByLabel
 except ImportError:
     # This format allows for a certain configuration of the ntupleviz visualiser, maybe?
     from libraries.bimvee.plotDvsContrast import getEventImageForTimeRange
     from libraries.bimvee.geometry import quat2RotM, rotateUnitVectors, project3dTo2d, slerp, draw_line
+    from libraries.bimvee.split import splitByLabel
 
 # A function intended to find the nearest timestamp
 # adapted from https://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
@@ -84,10 +86,10 @@ class VisualiserDvs(Visualiser):
         
     # TODO: There can be methods which better choose the best frame, or which create a visualisation which
     # respects the time_window parameter 
-    def get_frame(self, time, time_window, **kwargs):
+    def get_frame(self, time, timeWindow, **kwargs):
         data = self.__data
-        kwargs['startTime'] = time - time_window/2
-        kwargs['stopTime'] = time + time_window/2
+        kwargs['startTime'] = time - timeWindow/2
+        kwargs['stopTime'] = time + timeWindow/2
         kwargs['dimX'] = data['dimX']
         kwargs['dimY'] = data['dimY']
         image = getEventImageForTimeRange(data, **kwargs)
@@ -124,9 +126,6 @@ class VisualiserDvs(Visualiser):
     
 class VisualiserFrame(Visualiser):
 
-    def __init__(self, data):
-        self.set_data(data)
-
     def set_data(self, data):
         self.__data = data
        
@@ -150,7 +149,7 @@ class VisualiserFrame(Visualiser):
 
     # TODO: There can be methods which better choose the best frame, or which create a visualisation which
     # respects the time_window parameter 
-    def get_frame(self, time, time_window, **kwargs):
+    def get_frame(self, time, timeWindow, **kwargs):
         data = self.__data
         if 'tsEnd' in data:
             # Optional mode in which frames are only displayed 
@@ -162,7 +161,7 @@ class VisualiserFrame(Visualiser):
                 image = self.get_default_image()
             else:                
                 image = data['frames'][frameIdx]
-        elif time < data['ts'][0] - time_window / 2 or time > data['ts'][-1] + time_window / 2:
+        elif time < data['ts'][0] - timeWindow / 2 or time > data['ts'][-1] + timeWindow / 2:
             # Gone off the end of the frame data
             image = self.get_default_image()
         else:
@@ -184,10 +183,16 @@ class VisualiserFrame(Visualiser):
         y = data['dimY'] if 'dimY' in data else data['frames'][0].shape[0]
         return x, y
 
+
 class VisualiserPose6q(Visualiser):
 
-    renderX = 300
+    renderX = 300 # TODO Hardcoded
     renderY = 300
+    labels = None
+
+    def __init__(self, data):
+        self.set_data(data)
+        self.smallestRenderDim = min(self.renderX, self.renderY)
 
     '''
     Offset and scale the pose translations so that they all fit into the volume:
@@ -195,11 +200,14 @@ class VisualiserPose6q(Visualiser):
         y[-0.5:0.5]
         z[1:2]
     ''' 
-                
     def set_data(self, data):
-        self.__data = data
-        self.smallestRenderDim = min(self.renderX, self.renderY)
-        #self.labels = 
+        if 'bodyId' in data:
+            # split pose data by label, for ease of reference during rendering
+            self.__data = splitByLabel(data, 'bodyId')
+            self.labels = np.unique(data['bodyId'])
+        else:
+            self.__data = [data]
+            
         poseX = data['pose'][:, 0]
         poseY = data['pose'][:, 1]
         poseZ = data['pose'][:, 2]
@@ -244,39 +252,44 @@ class VisualiserPose6q(Visualiser):
         draw_line(image[:, :, 2], projX, projY, projX_Z, projY_Z)
         return image
     
-    def get_frame(self, time, time_window, **kwargs):
-        data = self.__data
-        if data is None:
+    def get_frame(self, time, timeWindow, **kwargs):
+        allData = self.__data
+        if allData is None:
             print('Warning: data is not set')
             return np.zeros((1, 1), dtype=np.uint8) # This should not happen
         image = np.zeros((self.renderX, self.renderY, 3), dtype = np.uint8)
-
-        idxPre = np.searchsorted(data['ts'], time, side='right') - 1
-        timePre = data['ts'][idxPre]
-        if timePre == time:
-            # In this edge-case of desired time == timestamp, there is no need 
-            # to interpolate 
-            pose = data['pose'][idxPre, :]
-        elif idxPre < 0 or (idxPre >= len(data['ts'])-1):
-            # In this edge-case of the time at the beginning or end, 
-            # don't show any pose
-            pose = None
-        else:
-            if kwargs.get('interpolate', True):
-                timePost = data['ts'][idxPre + 1]
-                qPre = data['pose'][idxPre, 3:7]
-                qPost = data['pose'][idxPre + 1, 3:7]
-                timeRel = (time - timePre) / (timePost - timePre)
-                qInterp = slerp(qPre, qPost, timeRel)
-                locPre = data['pose'][idxPre, 0:3] 
-                locPost = data['pose'][idxPre + 1, 0:3]
-                locInterp = locPre * (1-timeRel) + locPost * timeRel
-                pose = np.concatenate((locInterp, qInterp))
-            else: # No interpolation, so just choose the sample which is nearest in time
-                poseIdx = find_nearest(data['ts'], time)
-                pose = data['pose'][poseIdx, :]
-            
-        image = self.project_pose(pose, image)                
+        for data in allData:
+            idxPre = np.searchsorted(data['ts'], time, side='right') - 1
+            timePre = data['ts'][idxPre]
+            if timePre == time:
+                # In this edge-case of desired time == timestamp, there is no need 
+                # to interpolate 
+                pose = data['pose'][idxPre, :]
+            elif idxPre < 0 or (idxPre >= len(data['ts'])-1):
+                # In this edge-case of the time at the beginning or end, 
+                # don't show any pose
+                pose = None
+            else:
+                if kwargs.get('interpolate', True):
+                    timePost = data['ts'][idxPre + 1]
+                    qPre = data['pose'][idxPre, 3:7]
+                    qPost = data['pose'][idxPre + 1, 3:7]
+                    timeRel = (time - timePre) / (timePost - timePre)
+                    qInterp = slerp(qPre, qPost, timeRel)
+                    locPre = data['pose'][idxPre, 0:3] 
+                    locPost = data['pose'][idxPre + 1, 0:3]
+                    locInterp = locPre * (1-timeRel) + locPost * timeRel
+                    pose = np.concatenate((locInterp, qInterp))
+                    timeDist = min(time - timePre, timePost - time)
+                    if timeDist > timeWindow / 2:
+                        # Warn the viewer that this interpolation is 
+                        # based on data beyond the timeWindow
+                        image[:30,:30,0] = 255
+                else: # No interpolation, so just choose the sample which is nearest in time
+                    poseIdx = find_nearest(data['ts'], time)
+                    pose = data['pose'][poseIdx, :]
+                
+            image = self.project_pose(pose, image)                
         
         # Allow for arbitrary post-production on image with a callback
         # TODO: as this is boilerplate, it could be pushed into pie syntax ...

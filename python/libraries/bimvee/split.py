@@ -44,11 +44,11 @@ def splitByLabel(inDict, labelName):
         selectedEvents = inDict[labelName] == label
         outDict = {}
         for fieldName in inDict.keys():
-            if fieldName != labelName:
-                if len(inDict[fieldName]) == len(selectedEvents):
-                    outDict[fieldName] = inDict[fieldName][selectedEvents]
-                else:
-                    outDict[fieldName] = inDict[fieldName]
+            try:
+                assert len(inDict[fieldName]) == len(selectedEvents)
+                outDict[fieldName] = inDict[fieldName][selectedEvents]
+            except (TypeError, AssertionError):
+                outDict[fieldName] = inDict[fieldName]
         outList.append(outDict)
     return outList
 
