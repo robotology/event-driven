@@ -238,7 +238,7 @@ def samplesToImu(inDict, **kwargs):
             }
     return outDict
 
-def importIitYarpBinHavingFoundFile(**kwargs):
+def importIitYarpBinaryDataLog(**kwargs):
     with open(kwargs['filePathOrName'], 'rb') as inFile:
         events = inFile.read()
     events = np.frombuffer(events, np.uint32)
@@ -357,7 +357,7 @@ def importPostProcessing(dvs, samples, dvsLbl=None, dvsFlow=None, **kwargs):
     outDict['info']['fileFormat'] = 'iityarp'    
     return outDict
 
-def importIitYarpHavingFoundFile(**kwargs):
+def importIitYarpDataLog(**kwargs):
     # Read file
     with open(kwargs['filePathOrName'], 'r') as inFile:
         content = inFile.read()
@@ -415,6 +415,19 @@ def importIitYarpHavingFoundFile(**kwargs):
     cropArraysToNumEvents(dvsFlow)
     return importPostProcessing(dvs, samples, dvsLbl=dvsLbl, dvsFlow=dvsFlow, **kwargs)
 
+# From the info.log we want the time that the channel connected; we assume this is the first decimal found
+def importIitYarpInfoLog(**kwargs):
+    # Read file
+    filePathOrName = kwargs.get('filePathOrName')
+    print('Examining info.log: ' + filePathOrName)
+    with open(filePathOrName, 'r') as inFile:
+        content = inFile.read()
+    patternForInfoLog = re.compile('(\d+\.\d+)')
+    found = patternForInfoLog.search(content)
+    if found:
+        tsOffset = float(found[0])
+        return tsOffset
+
 def importIitYarpRecursive(**kwargs):
     '''
     This function works in the following way for efficiency when importing 
@@ -432,17 +445,22 @@ def importIitYarpRecursive(**kwargs):
         raise FileNotFoundError("path is not a directory.")
     files = sorted(os.listdir(path))
     importedDicts = []
+    tsOffset = None
     for file in files:
         filePathOrName = os.path.join(path, file) 
         kwargs['filePathOrName'] = filePathOrName
         if os.path.isdir(filePathOrName):
             importedDicts = importedDicts + importIitYarpRecursive(**kwargs)
         if file == 'binaryevents.log':
-            importedDicts.append(importIitYarpBinHavingFoundFile(**kwargs))                      
+            importedDicts.append(importIitYarpBinaryDataLog(**kwargs))
         if file == 'data.log':
-            importedDicts.append(importIitYarpHavingFoundFile(**kwargs))          
+            importedDicts.append(importIitYarpDataLog(**kwargs))
+        if file == 'info.log':
+            tsOffset = importIitYarpInfoLog(**kwargs)
     if len(importedDicts) == 0:
         print('    "data.log" file not found')
+    elif tsOffset is not None:
+        importedDicts[-1]['info']['tsOffsetFromInfo'] = tsOffset
     return importedDicts
         
 def importIitYarp(**kwargs):
