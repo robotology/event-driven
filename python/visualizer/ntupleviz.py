@@ -59,7 +59,7 @@ try:
     from timestamps import getLastTimestamp
 except ModuleNotFoundError:
     from libraries.bimvee.visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
-    
+    from libraries.bimvee.timestamps import getLastTimestamp
     
 class ErrorPopup(Popup):
     label_text = StringProperty(None)
@@ -205,7 +205,7 @@ class DataController(GridLayout):
             #new_viewer.add_widget(Button(label='flipHorizontal', text='flip horiz'))
             #new_viewer.add_widget(Button(label='flipVertical', text='flip vert'))
             #new_viewer.add_widget(Button(label='transpose', text='transpose'))
-            #new_viewer.add_widget(CheckBox(label='polarised', text='polarised'))                        
+            #new_viewer.add_widget(CheckBox(label='polarised', text='polarised'))
         elif data_type == 'frame':
             new_viewer = ViewerFrame()
             visualiser = VisualiserFrame(data_dict)
@@ -272,7 +272,7 @@ class DataController(GridLayout):
         }
 
         self.data_dict = importRpgDvsRos(filePathOrName=selection[0], template=template, )
-
+        self.update_children()
 
 
 #    def dismiss_popup(self):
