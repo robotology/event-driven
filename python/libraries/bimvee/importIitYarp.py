@@ -60,7 +60,7 @@ from tqdm import tqdm
 
 from importVicon import importVicon
 from timestamps import unwrapTimestamps, zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
-
+from split import selectByLabel
 
 def decodeEvents24Bit(data):
     '''
@@ -304,16 +304,6 @@ def cropArraysToNumEvents(inDict):
     for fieldName in inDict.keys():
         inDict[fieldName] = inDict[fieldName][:numEvents]
 
-def selectByChannel(inDict, channelLabel):
-    selectedEvents = inDict['ch'] == channelLabel
-    if not np.any(selectedEvents):
-        return None    
-    outDict = {}
-    for fieldName in inDict:
-        if fieldName != 'ch':
-            outDict[fieldName] = inDict[fieldName][selectedEvents]
-    return outDict
-            
 '''
 Having imported data from the either a datadumper log or a bin file, 
 carry out common post-processing steps: 
@@ -329,28 +319,28 @@ def importPostProcessing(dvs, samples, dvsLbl=None, dvsFlow=None, **kwargs):
     channels = {}
     for ch in [0, 1]:
         chDict = {}
-        dvsCh = selectByChannel(dvs, ch)
+        dvsCh = selectByLabel(dvs, 'ch', ch)
         if dvsCh:
             chDict['dvs'] = dvsCh
         if dvsLbl:
-            dvsLblCh = selectByChannel(dvsLbl, ch)
+            dvsLblCh = selectByLabel(dvsLbl, 'ch', ch)
             if dvsLblCh:
                 chDict['dvslbl'] = dvsLblCh
-        samplesCh = selectByChannel(samples, ch)
+        samplesCh = selectByLabel(samples, 'ch', ch)
         if samplesCh:
             if kwargs.get('convertSamplesToImu', True):
                 chDict['imu'] = samplesToImu(samplesCh, **kwargs)
             else:
                 chDict['sample'] = samplesCh
         if dvsFlow:
-            dvsFlowCh = selectByChannel(dvsFlow, ch)
+            dvsFlowCh = selectByLabel(dvsFlow, 'ch', ch)
             if dvsFlowCh:
                 chDict['flow'] = dvsFlowCh
                 chDict['flow']['vx'] = flowFromBitsToFloat(chDict['flow']['vx'])
                 chDict['flow']['vy'] = flowFromBitsToFloat(chDict['flow']['vy'])
         if any(chDict):
             for dataType in chDict:
-                chDict[dataType]['ts'] =     unwrapTimestamps(chDict[dataType]['ts'], **kwargs) * 0.00000008 # Convert to seconds
+                chDict[dataType]['ts'] = unwrapTimestamps(chDict[dataType]['ts'], **kwargs) * 0.00000008 # Convert to seconds
 
             if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
                 zeroTimestampsForAChannel(chDict)
@@ -383,6 +373,7 @@ def importIitYarpHavingFoundFile(**kwargs):
     dvsFlow = createDataTypeDvsFlow()
     samples = createDataTypeSample() # Sample is an intermediate datatype - later it gets converted to IMU etc
     pattern = re.compile('(\d+) (\d+\.\d+) ([A-Z]+) \((.*)\)')
+    print('Searching file for bottles...')
     found = pattern.findall(content)
     for elem in tqdm(found):
         # The following values would be useful for indexing the input file:
