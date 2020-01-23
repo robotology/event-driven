@@ -1,6 +1,7 @@
 #:import np numpy
 #:import os os
 #:import plt matplotlib.pyplot
+#:import math math
 <ConfigLabel@Label>
     size_hint_x: .8
 <ConfigSwitch@Switch>
@@ -162,13 +163,14 @@
             max: 16
             step: 1
         ConfigLabel:
-            text: 'Temporal\nwindow:\n{0:d}ms'.format(int(tw_slider.value*1000))
+            text: 'Temporal\nwindow:\n{0:.1f}ms'.format(round(tw_slider.log_value*1000, 2-int(math.floor(math.log10(abs(tw_slider.log_value*1000))))-1))
         ConfigSlider:
             id: tw_slider
-            step: 0.001
-            min: 0.001
-            max: 0.5
-            value: 0.03
+            step: 0.01
+            min: -9.210
+            max: -0.693
+            value: -3.507
+            log_value: np.exp(tw_slider.value)
         Button:
             id: play_button
             text: 'PLAY/\nPAUSE'
@@ -210,7 +212,7 @@
             file_path_and_name: ''
             time_value: time_slider.value
             on_time_value: self.update_children()
-            time_window: tw_slider.value
+            time_window: tw_slider.log_value
             on_time_window: self.update_children()
         TimeSlider:
             id: time_slider
@@ -220,7 +222,7 @@
             min: 0.0
             max: data_controller.ending_time
             on_max: value = 0
-            time_window: tw_slider.value
+            time_window: tw_slider.log_value
         Label:
             size_hint: 1, .03
             text: '{0:.3f}/{1:.3f} sec'.format(time_slider.value, time_slider.max)

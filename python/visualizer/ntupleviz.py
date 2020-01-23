@@ -19,6 +19,7 @@ importAe, and allow synchronised playback for each of the contained channels and
 # standard imports 
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 
 # Optional import of tkinter allows setting of app size wrt screen size
 try:
