@@ -359,7 +359,7 @@ def exportSample(dataFile, data, **kwargs):
         pbar.update(nextPtr-ptr)
         # Why 20 in the following? Because there are 10 samples per imu and 2 ints per sample that need to be included. 
         bottleStrs.append(str(bottleNumber) + ' ' + 
-                       str(firstTs) + ' AE (' +
+                       str(firstTs) + ' IMUS (' +
                        ' '.join(eventsAsListOfStrings[ptr*2 : nextPtr*2]) + ')')
         ptr = nextPtr
         bottleNumber += 1 
