@@ -68,6 +68,10 @@
     contrast: contrast.value
     flipHoriz: flipHoriz.active
     flipVert: flipVert.active
+    on_flipHoriz: root.update_data(self.data)
+    on_flipVert: root.update_data(self.data)
+    on_contrast: self.get_frame(self.parent.time_value, self.parent.time_window)
+    on_polarised: self.get_frame(self.parent.time_value, self.parent.time_window)
     orientation: 'vertical'
     Image:
         id: image
@@ -104,6 +108,8 @@
     image: image
     flipHoriz: flipHoriz.active
     flipVert: flipVert.active
+    on_flipHoriz: root.update_data(self.data)
+    on_flipVert: root.update_data(self.data)
     orientation: 'vertical'
     Image:
         id: image
@@ -205,6 +211,7 @@
             time_value: time_slider.value
             on_time_value: self.update_children()
             time_window: tw_slider.value
+            on_time_window: self.update_children()
         TimeSlider:
             id: time_slider
             size_hint: 1, .03
