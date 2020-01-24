@@ -136,6 +136,27 @@ public:
         this->datalength = elementBYTES * q.size();
     }
 
+    template <typename T> void setInternalData(const std::vector<T> &q) {
+
+        if(header2 != T::tag)
+            setHeader(T::tag);
+
+        header3[1] = elementINTS * q.size(); //number of ints
+
+        if((int)internaldata.size() < header3[1]) //increase internal mem if needed
+            internaldata.resize(header3[1]);
+
+        unsigned int pos = 0;
+        for(unsigned int i = 0; i < q.size(); i++)  //decode the data into
+            q[i].encode(internaldata, pos);        //internal memeory
+
+        if(pos != (unsigned int)header3[1])
+            yError() << "vPortInterface: encoding incorrect";
+
+        this->datablock = (const char *)internaldata.data();
+        this->datalength = elementBYTES * q.size();
+    }
+
     void setInternalData(const deque<int32_t> &q) {
 
         header3[1] = q.size();
@@ -321,6 +342,12 @@ public:
     }
 
     template <class T> bool write(const std::deque<T> &q, Stamp &envelope)
+    {
+        internal_storage.setInternalData<T>(q);
+        return _internal_write(envelope);
+    }
+
+    template <class T> bool write(const std::vector<T> &q, Stamp &envelope)
     {
         internal_storage.setInternalData<T>(q);
         return _internal_write(envelope);
