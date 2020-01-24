@@ -96,7 +96,8 @@ def plotDvsLastTsSingle(inDict, **kwargs):
         if np.any(tsArrayFlattened == -1):
             tsOrdinal -= 1 # If there are unset timestamps, they will have rank 0 - push these to -1
         tsArray = tsOrdinal.reshape(tsArray.shape)
-        
+    else:
+        pass: # TODO: cardinal
     axes = kwargs.get('axes')
     if axes is None:
         fig, axes = plt.subplots()

@@ -13,27 +13,13 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 Intended as part of bimvee (Batch Import, Manipulation, Visualisation and Export of Events etc)
 plotEventRate takes 'inDict' - a dict containing an imported ae file, 
-as created by importAe, and creates a series of green/red plots of
-polarity data.
-It creates a completely separate plot for each channel which contains 'pol' data
-Creates an image from events with contrast, by accumulating events up and down 
-to a maximum level at which full color is used. 
-The number of subplots is given by the numPlots parameter.
-'distributeBy' can either be 'time' or 'events', to decide how the points 
-around which data is rendered are chosen.
-The events are then recruited by the time points, spreading out until
-either they are about to overlap with a neighbouring point, or until 
-a certain ratio of a full array is reached. 
+as created by importAe, and creates a series of plots of event rates.
+It creates one plot for each dataType dct contianing a 'ts' field.
 
 Parameters which can be used:
- - numPlots
- - distributeBy
- - minTime
- - maxTime
- - proportionOfPixels
- - contrast
- - flipVertical
- - flipHorizontal
+ - min/maxTime
+ - min/maxX/Y
+ - flipVertical/Horizontal
  - transpose
 '''
 
@@ -57,7 +43,7 @@ def plotEventRate(inDicts, **kwargs):
             startTime = kwargs.get('startTime', kwargs.get('minTime', kwargs.get('firstTime', np.min(ts))))
             endTime = kwargs.get('endTime', kwargs.get('maxTime', kwargs.get('lastTime', np.max(ts))))
             if kwargs.get('perPixel', False):
-# TODO: The following is consistent with other parts of the library, 
+# TODO: The comment here is consistent with other parts of the library, 
 # but assumes that all pixels from 0 upwards are present, check this assumption across the library
 #                dimX = inDict.get('dimX', kwargs.get('dimX', max(inDict['x']) + 1)) 
 #                dimY = inDict.get('dimY', kwargs.get('dimY', max(inDict['y']) + 1))
