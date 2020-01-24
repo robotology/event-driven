@@ -55,6 +55,7 @@ import re
 import numpy as np
 import os
 from tqdm import tqdm
+import struct
 
 # local imports
 
