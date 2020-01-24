@@ -156,12 +156,14 @@
                 pos: self.x + self.width, self.y
                 size: 1, self.height
         ConfigLabel:
-            text: 'Speed:\n1/{}x'.format(speed_slider.value)
+            text: 'Speed:\n1/{}x'.format(speed_slider.div_value)
         ConfigSlider:
             id: speed_slider
             min: 1
-            max: 16
+            max: 64
             step: 1
+            value: 4
+            div_value: speed_slider.value/4
         ConfigLabel:
             text: 'Temporal\nwindow:\n{0:.1f}ms'.format(round(tw_slider.log_value*1000, 2-int(math.floor(math.log10(abs(tw_slider.log_value*1000))))-1))
         ConfigSlider:
@@ -218,7 +220,7 @@
             id: time_slider
             size_hint: 1, .03
             step: 0.001
-            speed: speed_slider.value
+            speed: speed_slider.div_value
             min: 0.0
             max: data_controller.ending_time
             on_max: value = 0

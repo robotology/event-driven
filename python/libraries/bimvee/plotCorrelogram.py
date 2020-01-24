@@ -50,19 +50,139 @@ def defineBoundariesAndDensities(**kwargs):
     numBins = kwargs.get('numBins', 50)
     minOffset = kwargs.get('minOffset', 0.00001) # 10 us
     maxOffset = kwargs.get('maxOffset', 1.0) # 100 ms
-    spacing = kwargs.get('spacing', 'log')
-    if spacing == 'log':
+    logSpacing = kwargs.get('spacing', 'linear') == 'log'
+    mirrored = kwargs.get('mirrored', True)
+    if logSpacing:
         boundaries = np.geomspace(minOffset, maxOffset, numBins+1)
-    else: # Linear; ignore minOffset
-        boundaries = np.linspace(maxOffset/(numBins+1), maxOffset, (numBins+1))
-    boundaries = np.concatenate((-np.flip(boundaries), boundaries))
+        if mirrored:
+            boundaries = np.concatenate((-np.flip(boundaries), boundaries))
+        elif not mirrored:
+            boundaries = np.concatenate((np.zeros((1)), boundaries))        
+    elif (not logSpacing) and mirrored: # Linear; ignore minOffset
+        boundaries = np.linspace(-maxOffset, maxOffset, numBins*2)
+    elif (not logSpacing) and (not mirrored):
+        boundaries = np.linspace(0, maxOffset, (numBins))
     # now there are boundaries mirrored around zero for each bin, including a 
     # central bin, and the extreme boundaries are the edge of the time region
-    # of interest. 
+    # of interest.
     widths = (boundaries[1:] - boundaries[:-1])
     densities = 1 / widths
     centres = (boundaries[1:] + boundaries[:-1]) / 2
     return boundaries, densities, centres, widths
+
+def interSpikeInterval(ts, boundaries, densities, **kwargs):
+    hist = np.zeros((len(densities)), dtype=np.float64)
+    diff = ts[1:] - ts[:-1]
+    for idx, (boundary1, boundary2) in enumerate(zip(boundaries[:-1], boundaries[1:])):
+        hist[idx] = np.sum(np.logical_and(diff >= boundary1, diff <= boundary2))
+    hist = hist * densities
+    sumHist = np.sum(hist) # Avoid dividing by zero in case the hist is empty
+    if sumHist:
+        hist = hist / sumHist
+    return hist
+
+# Plot the timings of the spikes in events2 w.r.t. the spikes in events1
+def plotInterSpikeIntervalSingle(events, **kwargs):    
+    if (len(events['ts']) == 0):
+        return
+    # use other library functions to do spatiotemporal cropping
+    # If this is called from plotInterSpikeInterval then this has already been done, 
+    # But do it here as well so that this function can be independent.
+    events = cropSpace(events, **kwargs)
+    events = cropTime(events, zeroTime=False, **kwargs)
+    kwargs['mirrored'] = False
+    boundaries, densities, centres, widths = defineBoundariesAndDensities(**kwargs)
+    # Spatial cropping has happened; now iterate through defacto spatial range
+    minX = np.min(events['x'])
+    maxX = np.max(events['x'])
+    minY = np.min(events['y'])
+    maxY = np.max(events['y'])
+    hist = np.zeros((len(densities)), dtype=np.float64)
+    for currX in trange(minX, maxX+1, leave=True, position=0):
+        currXLogical = events['x']==currX
+        tsForCurrX = events['ts'][currXLogical]
+        yForCurrX = events['y'][currXLogical]
+        for currY in range(minY, maxY+1):
+            tsXY = tsForCurrX[yForCurrX==currY]
+            if np.any(tsXY): 
+                hist = hist + interSpikeInterval(tsXY, boundaries, densities, **kwargs)
+    # Normalise
+    weightedSum = np.sum(hist / densities)
+    if weightedSum > 0:
+        hist = hist / np.sum(weightedSum)
+    axes = kwargs.get('axes')
+    if axes is None:
+        fig, axes = plt.subplots()
+        kwargs['axes'] = axes
+
+    axes.bar(centres, hist, widths, antialiased=False)
+    #axes.set_ylim(minX + minY*numX - 1, maxX + maxY*numX + 1)
+    #plt.xticks(theRange, labels)
+    title = kwargs.get('title', '')
+    if kwargs.get('minX', False) or  kwargs.get('maxX', False):
+        title = title + ' ' + str(minX) + '<=X<=' + str(maxX)
+    if kwargs.get('minY', False) or  kwargs.get('maxY', False):
+        title = title + ' ' + str(minY) + '<=Y<=' + str(maxY)
+    axes.set_title(title)
+
+    callback = kwargs.get('callback')
+    if callback is not None:
+        callback(**kwargs) 
+        
+def plotInterSpikeInterval(inDict, **kwargs):
+    # Boilerplate for descending container hierarchy
+    if isinstance(inDict, list):
+        for inDictInst in inDict:
+            plotInterSpikeInterval(inDictInst, **kwargs)
+        return
+    if 'info' in inDict: # Top level container
+        fileName = inDict['info'].get('filePathOrName', '')
+        print('plotInterSpikeInterval was called for file ' + fileName)
+        if not inDict['data']:
+            print('The import contains no data.')
+            return
+        for channelName in inDict['data']:
+            channelData = inDict['data'][channelName]
+            if 'dvs' in channelData and len(channelData['dvs']['ts']) > 0:
+                kwargs['title'] = ' '.join([fileName, str(channelName)])
+                plotInterSpikeInterval(channelData['dvs'], **kwargs)
+            else:
+                print('Channel ' + channelName + ' skipped because it contains no polarity data')
+        return
+    print('plotInterSpikeInterval working: ' + kwargs.get('title', 'unnamed'))
+    # use other library functions to do spatiotemporal cropping
+    inDict = cropSpace(inDict, **kwargs)
+    inDict = cropTime(inDict, zeroTime=False, **kwargs)
+    if kwargs.get('splitByPol', False):
+        splitDict = splitByPolarity(inDict)        
+        fig, axes = plt.subplots(1, 3)
+
+        kwargs['axes'] = axes[0]
+        kwargs['title'] = 'on + off'
+        print(kwargs['title'])
+        plotInterSpikeIntervalSingle(inDict, **kwargs)
+
+        kwargs['axes'] = axes[1]
+        kwargs['title'] = 'off'
+        print(kwargs['title'])
+        plotInterSpikeIntervalSingle(splitDict['0'], **kwargs)
+
+        kwargs['axes'] = axes[2]
+        kwargs['title'] = 'on'
+        print(kwargs['title'])
+        plotInterSpikeIntervalSingle(splitDict['1'], **kwargs)
+
+    else:            
+        axes = kwargs.get('axes')
+        if axes is None:
+            fig, axes = plt.subplots()
+            kwargs['axes'] = axes
+        kwargs['title'] = 'auto'
+        plotInterSpikeIntervalSingle(inDict, **kwargs)
+    
+# Alias using common abbreviation
+def plotIsi(inDict, **kwargs):
+    plotInterSpikeInterval(inDict, **kwargs)
 
 def crossCorrelation(ts1, ts2, boundaries, densities, **kwargs):
     hist = np.zeros((len(densities)), dtype=np.float64)
@@ -106,6 +226,7 @@ def plotCrossCorrelation(events1, events2, **kwargs):
     minY = min(np.min(events1['y']), np.min(events2['y']))
     maxY = max(np.max(events1['y']), np.max(events2['y']))
     hist = np.zeros((len(densities)), dtype=np.float64)
+    # TODO: This loop could be much more efficient, following the pattern in plotInterSpikeInterval, above
     for currX in trange(minX, maxX+1, leave=True, position=0): 
         for currY in range(minY, maxY+1):
             ts1 = events1['ts'][np.logical_and(events1['x']==currX, events1['y']==currY)]

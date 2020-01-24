@@ -160,6 +160,26 @@ def rezeroTimestampsForImportedDicts(importedDicts):
                     # This dataType doesn't have a ts; no problem. 
                     pass
 
+'''
+using container as a general term for datatype dicts, channels, fileDicts or any hierarchical list of them...
+recurse through the structure, modifying timestamps and tsOffsets by a fixed amount
+'''
+def offsetTimestampsForAContainer(container, offset):
+    if isinstance(container, list):
+        for elem in container:
+            offsetTimestampsForAContainer(elem, offset)
+        return
+    if isinstance(container, dict):
+        if 'ts' in container:
+            # It's a datatype dict
+            container['ts'] = container['ts'] + offset
+            container['tsOffset'] = container['tsOffset'] + offset
+        else:
+            for field in container:
+                offsetTimestampsForAContainer(field, offset)
+    else:
+        # We have descended too far
+        return
 
 '''
 Takes ts where as int or float and returns it as float64, unwrapping where necessary.

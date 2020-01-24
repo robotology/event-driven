@@ -23,6 +23,12 @@ def tqdm(*args, **kwargs):
     else:
         return Pbar()
 
+def trange(*args, **kwargs):
+    print('You are using the local tqdm')
+    if len(args) == 1:
+        return args[0]
+    else:
+        return Pbar()
 
 class Pbar():
     

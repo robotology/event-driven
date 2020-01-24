@@ -225,7 +225,7 @@ def importRosbag(**kwargs):
         topicDict[connDict[conn]['topic']] = connDict[conn]
     return topicDict
 
-def interpretMsgsAsDvs(msgs):
+def interpretMsgsAsDvs(msgs, **kwargs):
     numEvents = 0
     sizeOfArray = 1024
     tsAll = np.zeros((sizeOfArray), dtype=np.float64)
@@ -233,10 +233,10 @@ def interpretMsgsAsDvs(msgs):
     yAll = np.zeros((sizeOfArray), dtype=np.uint16)
     polAll = np.zeros((sizeOfArray), dtype=np.bool)
     for msg in tqdm(msgs, position=0, leave=True):
+        # TODO: maybe implement kwargs['useRosMsgTimestamps']
         data = msg['data']
         #seq = unpack('=L', data[0:4])[0]
-        #timeS = unpack('=L', data[4:8])[0]
-        #timeNS = unpack('=L', data[8:12])[0]
+        #timeS, timeNs = unpack('=LL', data[4:12])
         frame_id, ptr = unpackRosString(data, 12)
         ptr += 4 #height = unpack('=L', data[ptr:ptr+4])[0]
         ptr += 4 #width = unpack('=L', data[ptr:ptr+4])[0]
@@ -268,7 +268,7 @@ def interpretMsgsAsDvs(msgs):
         'pol': polAll}
     return outDict
 
-def interpretMsgsAsFrame(msgs):
+def interpretMsgsAsFrame(msgs, **kwargs):
     '''
     ros message is defined here:
         http://docs.ros.org/api/sensor_msgs/html/msg/Image.html
@@ -284,8 +284,10 @@ def interpretMsgsAsFrame(msgs):
             sizeOfArray *= 2            
         data = msg['data']
         #seq = unpack('=L', data[0:4])[0]
-        timeS = unpack('=L', data[4:8])[0]
-        timeNs = unpack('=L', data[8:12])[0]
+        if kwargs.get('useRosMsgTimestamps', False):
+            timeS, timeNs = unpack('=LL', msg['time'])
+        else:
+            timeS, timeNs = unpack('=LL', data[4:12])
         tsAll[numEvents] = np.float64(timeS)+np.float64(timeNs)*0.000000001
         frame_id, ptr = unpackRosString(data, 12)
         height, ptr = unpackRosUint32(data, ptr)
@@ -323,7 +325,7 @@ def interpretMsgsAsPose6q(msgs, **kwargs):
     where the cols are x, y, z, q-x, q-y, q-z, q-w (i.e. quaternion orientation)
     '''
     if kwargs.get('poseAsTransform', False):
-        return interpretMsgsAsPose6qTransform(msgs)
+        return interpretMsgsAsPose6qTransform(msgs, **kwargs)
     #if 'Stamped' not in kwargs.get('messageType', 'Stamped'):
     #    return interpretMsgsAsPose6qAlt(msgs, **kwargs)
     numEvents = 0
@@ -335,10 +337,10 @@ def interpretMsgsAsPose6q(msgs, **kwargs):
             tsAll = np.append(tsAll, np.zeros((sizeOfArray), dtype=np.float64))
             poseAll = np.concatenate((poseAll, np.zeros((sizeOfArray, 7), dtype=np.float64)))
             sizeOfArray *= 2
+        # TODO: maybe implement kwargs['useRosMsgTimestamps']
         data = msg['data']
         #seq = unpack('=L', data[0:4])[0]
-        timeS = unpack('=L', data[4:8])[0]
-        timeNs = unpack('=L', data[8:12])[0]
+        timeS, timeNs = unpack('=LL', data[4:12])
         tsAll[numEvents] = np.float64(timeS)+np.float64(timeNs)*0.000000001 
         frame_id, ptr = unpackRosString(data, 12)
         poseAll[numEvents, :] = np.frombuffer(data[ptr:ptr+56], dtype=np.float64)
@@ -351,7 +353,7 @@ def interpretMsgsAsPose6q(msgs, **kwargs):
         'pose': poseAll}
     return outDict
 
-def interpretMsgsAsPose6qTransform(msgs):
+def interpretMsgsAsPose6qTransform(msgs, **kwargs):
     '''
     Hmm - it's a bit hack how this is stuck in here at the moment, 
     but whereas rpg used PoseStamped message type, realsense use Transform:
@@ -371,21 +373,23 @@ def interpretMsgsAsPose6qTransform(msgs):
             tsAll = np.append(tsAll, np.zeros((sizeOfArray), dtype=np.float64))
             poseAll = np.concatenate((poseAll, np.zeros((sizeOfArray, 7), dtype=np.float64)))
             sizeOfArray *= 2
-        tsAll[numEvents] = unpack('=Q', msg['time'])[0]
+        # Note - ignoring kwargs['useRosMsgTimestamps'] as there is no choice
+        timeS, timeNs = unpack('=LL', msg['time'])
+        tsAll[numEvents] = np.float64(timeS)+np.float64(timeNs)*0.000000001
+
         poseAll[numEvents, :] = np.frombuffer(msg['data'], dtype=np.float64)
         numEvents += 1
     # Crop arrays to number of events
     tsAll = tsAll[:numEvents]
     poseAll = poseAll[:numEvents]
     tsUnwrapped = unwrapTimestamps(tsAll) # here we could pass in wrapTime=2**62, but actually it handles this internally
-    tsUnwrapped = tsUnwrapped / (6*10**18) # probably specific to realsense ...
     outDict = {
         'ts': tsUnwrapped,
         'pose': poseAll}
     return outDict
 
 
-def interpretMsgsAsImu(msgs):
+def interpretMsgsAsImu(msgs, **kwargs):
     '''
     ros message is defined here:
         http://docs.ros.org/api/geometry_msgs/html/msg/PoseStamped.html
@@ -412,10 +416,10 @@ def interpretMsgsAsImu(msgs):
             accAll = np.concatenate((accAll, np.zeros((sizeOfArray, 3), dtype=np.float64)))
             magAll = np.concatenate((magAll, np.zeros((sizeOfArray, 3), dtype=np.float64)))
             sizeOfArray *= 2
+        # TODO: maybe implement kwargs['useRosMsgTimestamps']
         data = msg['data']
         #seq = unpack('=L', data[0:4])[0]
-        timeS = unpack('=L', data[4:8])[0]
-        timeNs = unpack('=L', data[8:12])[0]
+        timeS, timeNs = unpack('=LL', data[4:12])[0]
         tsAll[numEvents] = np.float64(timeS)+np.float64(timeNs)*0.000000001 
         frame_id, ptr = unpackRosString(data, 12)
         rotQAll[numEvents, :] = np.frombuffer(data[ptr:ptr+32], np.float64)
@@ -443,7 +447,7 @@ def interpretMsgsAsImu(msgs):
         }
     return outDict
 
-def interpretMsgsAsCam(msgs):
+def interpretMsgsAsCam(msgs, **kwargs):
     '''
     camera info - i.e. results of calibration
     ros message is defined here:
@@ -466,11 +470,8 @@ def interpretMsgsAsCam(msgs):
     '''
     outDict = {}
     data = msgs[0]['data'] # There is one calibration msg per frame. Just use the first one
-    #timeS = unpack('=L', data[4:8])[0]
-    #timeNs = unpack('=L', data[8:12])[0]
     #seq = unpack('=L', data[0:4])[0]
-    #timeS = unpack('=L', data[4:8])[0]
-    #timeNs = unpack('=L', data[8:12])[0]
+    #timeS, timeNs = unpack('=LL', data[4:12])
     frame_id, ptr = unpackRosString(data, 12)
     outDict['height'], ptr = unpackRosUint32(data, ptr)
     outDict['width'], ptr = unpackRosUint32(data, ptr)
@@ -530,15 +531,15 @@ def importRpgDvsRos(**kwargs):
             print('Importing for dataType "' + dataType + '"; there are ' + str(len(msgs)) + ' messages')
             if dataType == 'dvs':
                 # Interpret these messages as EventArray
-                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsDvs(msgs)
+                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsDvs(msgs, **kwargs)
             elif dataType == 'pose6q':
                 outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsPose6q(msgs, **kwargs)
             elif dataType == 'frame':
-                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsFrame(msgs)
+                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsFrame(msgs, **kwargs)
             elif dataType == 'cam':
-                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsCam(msgs)
+                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsCam(msgs, **kwargs)
             elif dataType == 'imu':
-                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsImu(msgs)
+                outDict['data'][channelKeyStripped][dataType] = interpretMsgsAsImu(msgs, **kwargs)
             else:
                 print('dataType "', dataType, '" not recognised.')
         if getOrInsertDefault(kwargs, 'zeroTimestamps', True):

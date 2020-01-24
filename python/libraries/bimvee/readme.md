@@ -64,7 +64,8 @@ timestamps are always converted to seconds;
 (raw formats are, however, e.g. int with unit increments of 80 ns for ATIS, 
 int with unit increments of 1 us for DAVIS, etc) 
 
-Currently (2019_11_13) there's no alignment on how to interpret polarity (i.e. 1 = ON or OFF?)
+To the extent possible, dvs polarity is imported so that 1/True = ON/increase-in-light and
+0/False = OFF/decrease-in-light. Be aware that individual datasets may contain the opposite convention. 
 
 Visualisation functions:
 A set of general functions for common visualisations of imported datasets.
