@@ -1,6 +1,8 @@
-bimvee - Batch Import, Manipulation, Visualisation, and Export Events etc.
+# bimvee - Batch Import, Manipulation, Visualisation, and Export Events etc.
 
-Quickstart: Look at 'examples.py' for examples of how to use the functionality in this library.
+# Quickstart: Look at 'examples.py' for examples of how to use the functionality in this library.
+
+# Introduction
 
 Working with timestamped address-event data from event cameras (dvs), and 
 possibly other neuromorphic sensors (e.g. icub skin, maybe INI silicon cochlea etc), 
@@ -26,7 +28,9 @@ Samsung (SEC) Gen3 VGA .bin
 Celex v5 .bin
 Maybe Prophesee raw?
 
-Import functions:
+# Contents of library
+
+## Import functions:
 
 The aim is to bring the different formats into as common a format as possible.
 Parameters: at least the param "filePathOrName" (otherwise working from current directory)
@@ -67,19 +71,31 @@ int with unit increments of 1 us for DAVIS, etc)
 To the extent possible, dvs polarity is imported so that 1/True = ON/increase-in-light and
 0/False = OFF/decrease-in-light. Be aware that individual datasets may contain the opposite convention. 
 
-Visualisation functions:
+Multiple files imported simultaneously appear in a list of dicts;
+lists and dicts are referred to jointly as containers, 
+and the manipulation, visualistation and export functions which follow 
+tend toward accepting containers with an arbitrarily deep hierarchy.
+
+## Visualisation functions
+
 A set of general functions for common visualisations of imported datasets.
 
 - plotDvsContrast
 - plotDvsLastTs
-- plot Spikeogram
+- plotSpikeogram
 - plotEventRate
 - plotFrame
 - plotImu
 - plotPose
+- plotCorrelogram
 
-info.py includes various functions to give quick text info about the contents 
-of the containers that result from imports. 
+info.py includes various functions to give quick text info about the contents of the containers that result from imports.
+
+visualiser.py introduces classes which accept a datatype dict and serves frames,
+perhaps to an external application, based on the data at various time points
+and in various time windows.
+
+## Manipulation functions
 
 There are some functions for standard manipulations of data:
 
@@ -87,13 +103,13 @@ timestamps.py contains timestamp manipulations
 including jointly zeroing timestamps across multiple files, channels and datatypes. 
 split.py includes various common ways by which datasets need to be split, e.g. splitByPolarity
 
-Export functions:
+## Export functions
 
 exportIitYarp - exports to IIT's EDPR YARP format. Alongside data.log and 
 info.log files, it exports an xml which specifies to yarpmanager how to 
 visualise the resulting data. 
 
-Dependencies:
+# Dependencies:
 
 This library is intended to require minimal dependencies.
 Notably, rosbag import is achieved without needing a ros installation.

@@ -18,8 +18,9 @@ containing fields with numpy arrays:
     x
     y
     pol
-A spikeogram has a row for each address-event represented, where the x dim 
-represents time. Color represents polarity (blue vs red for 1 vs 0)
+A spikeogram has a row for each address represented, where the x dim 
+represents time and vertical lines represent events. 
+Color represents polarity (blue vs red for 1 vs 0)
 By default, all addresses will be plotted as a row, 
 but this will usually be impractical. So the kwargs
     xMin
@@ -27,7 +28,7 @@ but this will usually be impractical. So the kwargs
     yMin
     yMax
 are used to constrain the space represented
-and tMin and tMax are used to constrain time. 
+and minTime and maxTime are used to constrain time. 
 The axes are aligned so that the coordinate points to the middle of the first
 row represented by that mark. 
 

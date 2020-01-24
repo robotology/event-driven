@@ -26,10 +26,9 @@ Choose the pixels by setting the kwargs:
     yMin
     yMax
 By default, all pixels are included. 
-By default, all pixels are autocrrelated individually, and then the results are 
+By default, all pixels are autocorrelated individually, and then the results are 
 combined, so the end result is a mean over all pixels.
-TODO: Could do an autocrrelation for all spikes for the range together.
-TODO: Could write a cross-correlation function.
+TODO: Could do an autocorrelation for all spikes for the range together.
 minTime and maxTime are used to constrain time. 
 By default, polarities are combined; separate them with splitByPol=true
 numBins is interpretted as the number of time bins in each of positive 
@@ -62,9 +61,9 @@ def defineBoundariesAndDensities(**kwargs):
         boundaries = np.linspace(-maxOffset, maxOffset, numBins*2)
     elif (not logSpacing) and (not mirrored):
         boundaries = np.linspace(0, maxOffset, (numBins))
-    # now there are boundaries mirrored around zero for each bin, including a 
-    # central bin, and the extreme boundaries are the edge of the time region
-    # of interest.
+    # now there are boundaries either starting from zero ot mirrored around zero 
+    # for each bin, including a central bin, and the extreme boundaries 
+    # are the edge of the time region of interest.
     widths = (boundaries[1:] - boundaries[:-1])
     densities = 1 / widths
     centres = (boundaries[1:] + boundaries[:-1]) / 2
