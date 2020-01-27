@@ -38,10 +38,10 @@ The aim is to bring the different formats into as common a format as possible.
 Parameters: at least the param "filePathOrName" (otherwise working from current directory)
 Returns a dict containing:
 
-{'info': {<filePathOrName, any other info derivable from file headers>},
-
- 'data': {
- 
+    {'info': {<filePathOrName, any other info derivable from file headers>},
+    
+    'data': {
+     
          channel0: {}
          channel1: {}
          ...
