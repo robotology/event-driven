@@ -1,6 +1,8 @@
 # bimvee - Batch Import, Manipulation, Visualisation, and Export Events etc.
 
-# Quickstart: Look at 'examples.py' for examples of how to use the functionality in this library.
+# Quickstart: 
+
+Look at 'examples.py' for examples of how to use the functionality in this library.
 
 # Introduction
 
