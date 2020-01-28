@@ -59,6 +59,10 @@ try:
     from visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
     from timestamps import getLastTimestamp
 except ModuleNotFoundError:
+    if __package__ is None:
+        import sys
+        from os import path
+        sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
     from libraries.bimvee.visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
     from libraries.bimvee.timestamps import getLastTimestamp
     
