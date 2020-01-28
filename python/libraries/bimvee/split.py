@@ -163,6 +163,7 @@ def cropSpace(inDict, **kwargs):
     else:
         # We assume that this is a datatype which doesn't contain x/y
         # so we pass it out unmodified
+        # TODO: frame datatype could be cropped spatially but doesn't get caught by this method
         return inDict
 
 # synonyms

@@ -19,10 +19,7 @@ In each case, change the file paths as required to point toyour own example data
 #%% Preliminaries - set your paths as necessary
 
 import os, sys # A system-specific prefix, for working between linux and windows
-if os.name == 'nt':
-    prefix = 'C:/'
-else:
-    prefix = '/home/sbamford/'    
+prefix = 'C:/' if os.name == 'nt' else '/home/sbamford/'
     
 sys.path.append(os.path.join(prefix, 'repos/event-driven-python-dev/python/libraries/bimvee')) # A path to this library
 #sys.path.insert(0, os.path.join(prefix, 'repos/event-driven-python-dev/python/libraries/bimvee')) # A path to this library
@@ -114,14 +111,22 @@ from split import cropTime
 
 cropped = cropTime(imported, minTime=35, maxTime=38.5)
 
+#%% Cropping a dataset to a desired spatial range
+# works for dvs and derived data types 2020_01 doesn't yet work for frame datatype
+
+from split import cropSpace
+
+# This example takes all events with x in 9-19 inclusive, and with y in 0-9 inclusive
+cropped = cropSpace(imported, minX=9, maxX=19, maxY= 9)
+
 #%% Splitting a dataset by labels
 
 from split import splitByLabel, selectByLabel
 
-# select your laballed data from an import (alternaitvely label it using some processing)
+# select your labelled data from an import (alternatively label it using some processing)
 labelledData = imported['data']['right']['dvslbl']
 
-splitData = splitByLabel(labelledData, 'lbl') # 'lbl' oin this case is the name of the field that contains the labels
+splitData = splitByLabel(labelledData, 'lbl') # 'lbl' in this case is the name of the field that contains the labels
 
 # Alternatively, select a single label
 

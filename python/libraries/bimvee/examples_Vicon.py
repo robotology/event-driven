@@ -21,10 +21,7 @@ In each case, change the file paths as required to point to your own example dat
 #%% Preliminaries
 
 import os, sys # A system-specific prefix, for working between linux and windows
-if os.name == 'nt':
-    prefix = 'C:/'
-else:
-    prefix = '/home/sbamford/'    
+prefix = 'C:/' if os.name == 'nt' else '/home/sbamford/'
     
 sys.path.append(os.path.join(prefix, 'repos/event-driven-python-dev/python/libraries/bimvee')) # A path to this library
 filePathOrName = os.path.join(prefix, '/data/2019_12_12_vicon/Trial2WithVicon/Vicon/data.log')
