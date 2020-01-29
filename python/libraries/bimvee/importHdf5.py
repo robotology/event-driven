@@ -23,4 +23,8 @@ TODO: This script to import and pass through functions from exportHdf5
 """
 #%%
 
-from exportHdf5 import *
+# local imports
+if __package__ is None or __package__ == '':
+    from exportHdf5 import *
+else:
+    from .exportHdf5 import *

@@ -58,11 +58,15 @@ from tqdm import tqdm
 import struct
 
 # local imports
-
-from importVicon import importVicon
-from timestamps import unwrapTimestamps, zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
-from split import selectByLabel
-
+if __package__ is None or __package__ == '':
+    from importVicon import importVicon
+    from timestamps import unwrapTimestamps, zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
+    from split import selectByLabel
+else:
+    from .importVicon import importVicon
+    from .timestamps import unwrapTimestamps, zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
+    from .split import selectByLabel
+    
 def decodeEvents24Bit(data):
     '''
     timestamps(ts) are 32 bit integers counted with an 80 ns clock - do this conversion later 

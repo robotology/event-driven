@@ -135,3 +135,70 @@ import and export functions give progress bars using:
 - tqdm
 
 If this is not installed, a local tqdm module allows the library to function regardless. 
+
+# Type definitions
+
+bimvee doesn't use classes for datatypes. Consequently, the code doesn't have a central place to refer to for the definition of datatypes. The types are intended to be used loosely, with minimal features which can be extended by adding optional fields. 
+
+There are some datatypes which are simply dicts which act as containers to group information, for example the 'cam' type. However most of the functionality of the library is based around the idea of a datatype dict containing a set of keys where each is a numpy array (or other iterable) where there is a 'ts' key, containing a numpy array of np.float64 timestamps, and then each iterable key should have the same number of elements (in the zeroth dimension) as the ts field. Thus a set of timestamped 'events' or other data type is defined. Other keys may be included which either aren't iterables or don't have the same number of elements in the zeroth dimension. These are therefore not interpreted as contributing dimensions to the set of data points. Concretely the datatypes which have some kind of support are:
+
+- dvs
+- frame
+- sample
+- imu
+- pose6q
+- point3
+- flow
+
+- cam
+
+Definitions of minimal and optional(*) fields follow.
+
+- fieldName   dimensions  datatype(numpy array unless otherwise stated) notes
+
+## dvs:
+
+- ts  n np.float64
+- x   n np.uint16
+- y   n np.uint16
+- pol n np.uint16
+- dimX* 1 int
+- dimY* 1 int
+
+## frame:
+
+- ts    n np.float64
+- frame n list (of np.array of 2 or 3 dimensions np.uint8)
+
+## sample:
+
+...
+
+## imu:
+
+...
+
+## pose6q:
+
+- ts   n   np.float64
+- pose nx7 np.float64 row format is [x, y, z, rw, rx, ry, rz] where r(wxyz) define quaternions
+
+Note: quaternion order follows the convention of e.g. blender but not e.g. ros. 
+
+## point3:
+
+- ts    n   np.float64
+- point nx3 np.float64 row format is [x, y, z]
+
+## flow:
+
+...
+
+## cam:
+
+...
+
+
+
+
+

@@ -40,10 +40,13 @@ and negative directions, not including a central bin.
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import trange
+
 # local imports
-
-from split import cropSpace, cropTime, splitByPolarity
-
+if __package__ is None or __package__ == '':
+    from split import cropSpace, cropTime, splitByPolarity
+else:
+    from .split import cropSpace, cropTime, splitByPolarity
+    
 # TODO: include a linear spacing option
 def defineBoundariesAndDensities(**kwargs):
     numBins = kwargs.get('numBins', 50)

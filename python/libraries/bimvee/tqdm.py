@@ -11,7 +11,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with 
 this program. If not, see <https://www.gnu.org/licenses/>.
 
-THis fallback module allows tqdm import to be optional; if tqdm is not installed 
+This fallback module allows tqdm import to be optional; if tqdm is not installed 
 then this module gets picked up in its place offering the minimal functions 
 which allow calls to tqdm within the rest of the library to not fail.
 """

@@ -22,7 +22,11 @@ splitDvsByLabel TODO: this could be generalised to any data type ...
 #%%
 import numpy as np
 
-from .timestamps import rezeroTimestampsForImportedDicts
+# local imports
+if __package__ is None or __package__ == '':
+    from timestamps import rezeroTimestampsForImportedDicts
+else:
+    from .timestamps import rezeroTimestampsForImportedDicts
 
 def selectByLabel(inDict, labelName, labelValue):
     selectedEvents = inDict[labelName] == labelValue

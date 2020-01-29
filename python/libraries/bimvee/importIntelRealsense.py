@@ -20,7 +20,11 @@ which applies a default template to get the pose data out to ch0 - pose6q.
 
 #%%
 
-from importRpgDvsRos import importRpgDvsRos
+# local imports
+if __package__ is None or __package__ == '':
+    from importRpgDvsRos import importRpgDvsRos
+else:
+    from .importRpgDvsRos import importRpgDvsRos
     
 def importIntelRealsense(**kwargs):
     if kwargs.get('template') is None:

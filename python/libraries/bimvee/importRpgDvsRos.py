@@ -80,10 +80,10 @@ import numpy as np
 import string
 
 # Local imports
-try:
+if __package__ is None or __package__ == '':
     from timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts, unwrapTimestamps
-except ModuleNotFoundError:    
-    from libraries.bimvee.timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts, unwrapTimestamps
+else:
+    from .timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts, unwrapTimestamps
 
 def getOrInsertDefault(inDict, arg, default):
     # get an arg from a dict.
@@ -348,6 +348,8 @@ def interpretMsgsAsPose6q(msgs, **kwargs):
     # Crop arrays to number of events
     tsAll = tsAll[:numEvents]
     poseAll = poseAll[:numEvents]
+    # Switch quaternion form!
+    
     outDict = {
         'ts': tsAll,
         'pose': poseAll}

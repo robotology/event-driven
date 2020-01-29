@@ -62,7 +62,12 @@ then the data in the vicon channel is broken into two datatypes:
 
 import re
 import numpy as np
-from timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
+
+# local imports
+if __package__ is None or __package__ == '':
+    from timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
+else:
+    from .timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
 
 def getOrInsertDefault(inDict, arg, default):
     # get an arg from a dict.

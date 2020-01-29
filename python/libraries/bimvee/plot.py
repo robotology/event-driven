@@ -16,11 +16,19 @@ Takes a dict as imported by importAe, and for each channel,
 tries to run the appropriate general visualisation function
 """
 
-from plotDvsContrast import plotDvsContrast
-from plotEventRate import plotEventRate
-from plotFrame import plotFrame
-from plotPose import plotPose
-from plotImu import plotImu
+# local imports
+if __package__ is None or __package__ == '':
+    from plotDvsContrast import plotDvsContrast
+    from plotEventRate import plotEventRate
+    from plotFrame import plotFrame
+    from plotPose import plotPose
+    from plotImu import plotImu
+else:
+    from .plotDvsContrast import plotDvsContrast
+    from .plotEventRate import plotEventRate
+    from .plotFrame import plotFrame
+    from .plotPose import plotPose
+    from .plotImu import plotImu
 
 def plot(inDict, **kwargs):
     if isinstance(inDict, list):

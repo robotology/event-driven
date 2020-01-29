@@ -33,7 +33,10 @@ Not yet handled:
 /davis/.../pose (geometry_msgs/PoseStamped) - Pose output using Google Cartographer. These poses are globally loop closed, and can be assumed to have minimal drift. Note that these poses were optimized using Cartographer’s 2D mapping, which does not optimize over the height (Z axis). Pitch and roll are still optimized, however.
 """
 
-from importRpgDvsRos import importRpgDvsRos
+if __package__ is None or __package__ == '':
+    from importRpgDvsRos import importRpgDvsRos
+else:
+    from .importRpgDvsRos import importRpgDvsRos
     
 def importPennMvsecDavis(**kwargs):
     if kwargs.get('template') is None:

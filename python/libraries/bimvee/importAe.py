@@ -56,9 +56,15 @@ Celex ...???
 #%%
 
 import os
-from importIitYarp import importIitYarp
-from importRpgDvsRos import importRpgDvsRos
 
+# local imports
+if __package__ is None or __package__ == '':
+    from importIitYarp import importIitYarp
+    from importRpgDvsRos import importRpgDvsRos
+else:
+    from .importIitYarp import importIitYarp
+    from .importRpgDvsRos import importRpgDvsRos
+    
 def getOrInsertDefault(inDict, arg, default):
     # get an arg from a dict.
     # If the the dict doesn't contain the arg, return the default, 
