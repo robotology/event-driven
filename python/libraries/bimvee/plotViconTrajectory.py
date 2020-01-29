@@ -36,7 +36,7 @@ def plot_trajectories(viconDataDict, bodyIds, include, exclude, **kwargs):
     for name in bodyIds:
         select_body = all([(inc in name) for inc in include]) and all([not (exc in name) for exc in exclude])
         if select_body:  # modify this line to plot whichever markers you want
-            marker_pose = viconDataDict['data'][name]['pose6q']['pose']
+            marker_pose = viconDataDict['data'][name]['pose6q']['point']
             ax.scatter3D(marker_pose[:, 0], marker_pose[:, 1], marker_pose[:, 2], label=name)
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')
@@ -44,6 +44,7 @@ def plot_trajectories(viconDataDict, bodyIds, include, exclude, **kwargs):
     ax.legend()
     callback = kwargs.get('callback')
     if callback is not None:
+        kwargs['axes'] = ax # TODO: make this handling consistent across the library
         callback(**kwargs)
     #return ax # ax is also available to the calling function inside **kwargs
 

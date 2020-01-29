@@ -348,11 +348,12 @@ def interpretMsgsAsPose6q(msgs, **kwargs):
     # Crop arrays to number of events
     tsAll = tsAll[:numEvents]
     poseAll = poseAll[:numEvents]
-    # Switch quaternion form!
-    
+    point = poseAll[:, 0:3]
+    rotation = poseAll[:, [6, 3, 4, 5]] # Switch quaternion form from xyzw to wxyz
     outDict = {
         'ts': tsAll,
-        'pose': poseAll}
+        'point': point,
+        'rotation': rotation}
     return outDict
 
 def interpretMsgsAsPose6qTransform(msgs, **kwargs):
@@ -378,16 +379,18 @@ def interpretMsgsAsPose6qTransform(msgs, **kwargs):
         # Note - ignoring kwargs['useRosMsgTimestamps'] as there is no choice
         timeS, timeNs = unpack('=LL', msg['time'])
         tsAll[numEvents] = np.float64(timeS)+np.float64(timeNs)*0.000000001
-
         poseAll[numEvents, :] = np.frombuffer(msg['data'], dtype=np.float64)
         numEvents += 1
     # Crop arrays to number of events
     tsAll = tsAll[:numEvents]
-    poseAll = poseAll[:numEvents]
     tsUnwrapped = unwrapTimestamps(tsAll) # here we could pass in wrapTime=2**62, but actually it handles this internally
+    poseAll = poseAll[:numEvents]
+    point = poseAll[:, 0:3]
+    rotation = poseAll[:, [6, 3, 4, 5]] # Switch quaternion form from xyzw to wxyz
     outDict = {
         'ts': tsUnwrapped,
-        'pose': poseAll}
+        'point': point,
+        'rotation': rotation}
     return outDict
 
 
@@ -421,7 +424,7 @@ def interpretMsgsAsImu(msgs, **kwargs):
         # TODO: maybe implement kwargs['useRosMsgTimestamps']
         data = msg['data']
         #seq = unpack('=L', data[0:4])[0]
-        timeS, timeNs = unpack('=LL', data[4:12])[0]
+        timeS, timeNs = unpack('=LL', data[4:12])
         tsAll[numEvents] = np.float64(timeS)+np.float64(timeNs)*0.000000001 
         frame_id, ptr = unpackRosString(data, 12)
         rotQAll[numEvents, :] = np.frombuffer(data[ptr:ptr+32], np.float64)

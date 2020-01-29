@@ -25,7 +25,8 @@ and True then the format is:
             <bodyID>: {
                 'pose6q': {
                     'ts' : <1D array of timestamps>,
-                    'pose' : <2D array where each row has 7d pose of a body at a time instant>} } } }
+                    'point' : <2D array where each row has 3d position of a body at a time instant>,
+                    'rotation' : <2D array where each row has rotation of a body at a time instant expressed as a quaternion (4d)>} } } }
 Otherwise:
     outDict = {
         'info': {
@@ -35,12 +36,14 @@ Otherwise:
             'vicon': {
                 'pose6q': {
                     'ts' : <1D array of timestamps>,
-                    'pose' : <2D array where each row has 7d pose of a body at a time instant>,
+                    'point' : <2D array where each row has 3d position of a body at a time instant>,
+                    'rotation' : <2D array where each row has rotation of a body at a time instant expressed as a quaternion (4d)>,
                     'bodyId' : <1D array where each row has the bodyId of the corresponding marker>,
                     'uniqueIds' : <1D array of strings, one for each unique marker>} } } }
     
 A bodyID is the name assigned by vicon to a marker (labeled / unlableled) or rigid body
-The 7d pose is in the form [x, y, z, r_x, r_y, r_z, r_w] with the orientation as a quaternion
+The pose consists of a point in the form [x, y, z]
+and a rotation as a quaternion [r_w, r_x, r_y, r_z] (Caution with alternative orderings here)
 The datatype is called 'pose6q', referring to the 6dof with rotation in quaternion form.
 
 Additionally, if separateBodiesAsChannels is not present or false, 
@@ -50,7 +53,8 @@ then the data in the vicon channel is broken into two datatypes:
             'vicon': {
                 'pose6q': {
                     'ts' : <1D array of timestamps>,
-                    'pose' : <2D array where each row has 7d pose of a body at a time instant>,
+                    'point' : <2D array where each row has 3d position of a body at a time instant>,
+                    'rotation' : <2D array where each row has the rotation of a body at a time instant expressed as a quaternion (4d)>,
                     'bodyId' : <1D array where each row has the bodyId of the corresponding marker>,
                     'uniqueIds' : <1D array of strings, one for each unique marker>} 
                 'point3': {
@@ -84,13 +88,14 @@ def separateMarkersFromSegments(poseDict):
     uniqueIdIsMarker = np.apply_along_axis(lambda x : 'Marker' in x[0], 1, poseDict['uniqueIds'][..., np.newaxis])
     pointDict = {
         'ts': poseDict['ts'][isMarker],
-        'point': poseDict['pose'][isMarker, :3],
+        'point': poseDict['point'][isMarker, :],
         'bodyId': poseDict['bodyId'][isMarker],
         'uniqueIds': poseDict['uniqueIds'][uniqueIdIsMarker],
         }
     poseDict = {
         'ts': poseDict['ts'][~isMarker],
-        'pose': poseDict['pose'][~isMarker],
+        'point': poseDict['point'][~isMarker, :],
+        'rotation': poseDict['rotation'][~isMarker, :],
         'bodyId': poseDict['bodyId'][~isMarker],
         'uniqueIds': poseDict['uniqueIds'][~uniqueIdIsMarker],
         }
@@ -107,7 +112,7 @@ def importVicon(**kwargs):
     if separateBodiesAsChannels:
         uniqueIds = []
     else: 
-        poseDict = {'ts': [], 'pose': [], 'bodyId': []}
+        poseDict = {'ts': [], 'point': [], 'rotation': [], 'bodyId': []}
     with open(filePathOrName, 'r') as file:
         print('Found file to read')
         line = file.readline()
@@ -120,17 +125,21 @@ def importVicon(**kwargs):
                 elements = body.split(" ")
                 bodyId = elements[1].strip('\"')
                 ts = elements[2]
-                pose = elements[3:]
+                point = elements[3:6]
+                # Note: quaternion order is [w,x,y,z] - this is defined by yarp 
+                # IFrameTransform component, so ignore vicon documentation
+                rotation = elements[6:] 
                 if separateBodiesAsChannels:
                     try:
                         poseDict = outDict['data'][bodyId]['pose6q']
                     except KeyError:
                         print('KeyError exception.. Creating new key', bodyId)
                         uniqueIds.append(bodyId)
-                        outDict['data'][bodyId] = {'pose6q': {'ts': [], 'pose': []}}
+                        outDict['data'][bodyId] = {'pose6q': {'ts': [], 'point': [], 'rotation': []}}
                         poseDict = outDict['data'][bodyId]['pose6q']
                 poseDict['ts'].append(ts)
-                poseDict['pose'].append(pose)
+                poseDict['point'].append(point)
+                poseDict['rotation'].append(rotation)
                 if not separateBodiesAsChannels:
                     poseDict['bodyId'].append(bodyId)
             line = file.readline()
@@ -139,7 +148,8 @@ def importVicon(**kwargs):
     if separateBodiesAsChannels:
         for id in uniqueIds:
             outDict['data'][id]['pose6q']['ts'] = np.array(outDict['data'][id]['pose6q']['ts'], dtype=np.float64)
-            outDict['data'][id]['pose6q']['pose'] = np.array(outDict['data'][id]['pose6q']['pose'], dtype=np.float64)
+            outDict['data'][id]['pose6q']['point'] = np.array(outDict['data'][id]['pose6q']['point'], dtype=np.float64)
+            outDict['data'][id]['pose6q']['rotation'] = np.array(outDict['data'][id]['pose6q']['rotation'], dtype=np.float64)
             if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
                 zeroTimestampsForAChannel(outDict['data'][id])
         if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
@@ -147,7 +157,8 @@ def importVicon(**kwargs):
         outDict['info']['uniqueIds'] = uniqueIds
     else:
         poseDict['ts'] = np.array(poseDict['ts'], dtype=np.float64)
-        poseDict['pose'] = np.array(poseDict['pose'], dtype=np.float64)
+        poseDict['point'] = np.array(poseDict['point'], dtype=np.float64)
+        poseDict['rotation'] = np.array(poseDict['rotation'], dtype=np.float64)
         poseDict['bodyId'] = np.array(poseDict['bodyId'])
         poseDict['uniqueIds'] = np.unique(poseDict['bodyId'])
         if kwargs.get('separateMarkersFromSegments', False):

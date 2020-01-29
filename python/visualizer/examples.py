@@ -37,10 +37,7 @@ import threading
 #import numpy as np
 
 # Get os-specific path for local libraries (YMMV)
-if os.name == 'nt':
-    prefix = 'C:/'
-else:
-    prefix = '/home/sbamford/'    
+prefix = 'C:/' if os.name == 'nt' else '/home/sbamford/'    
 
 # Add path to bimvee library
 sys.path.append(os.path.join(prefix, 'repos/event-driven-python-dev/python/libraries/bimvee'))
@@ -101,9 +98,15 @@ dvs = container['data']['davis']['dvs']
 frame = container['data']['davis']['frame']
 depthmap = container['data']['extra']['frame']
 
+#%% Experiment with pose interpolation
+
 toKeep = [0, 300, 600, 900, 1200, 1500, 1800, 1999]
-pose['pose'] = pose['pose'][toKeep, :]
-pose['ts'] = pose['ts'][toKeep]
+poseKept = {} 
+poseKept['ts'] = pose['ts'][toKeep]
+poseKept['point'] = pose['point'][toKeep, :]
+poseKept['rotation'] = pose['rotation'][toKeep, :]
+
+container['data']['reduced'] = {'pose6q': poseKept}
 
 visualizerApp.root.data_controller.data_dict = container
 

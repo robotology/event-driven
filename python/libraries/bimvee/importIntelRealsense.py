@@ -37,7 +37,7 @@ def importIntelRealsense(**kwargs):
                     'cam': '/device_0/sensor_0/Fisheye_1/info/camera_info',
                     },
             'right': {
-                    'frame': '/device_0/sensor_0/Fisheye_2/image/data'
+                    'frame': '/device_0/sensor_0/Fisheye_2/image/data',
                     'cam': '/device_0/sensor_0/Fisheye_2/info/camera_info',
                     }
                 }

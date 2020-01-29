@@ -22,15 +22,17 @@ In each case, change the file paths as required to point to your own example dat
 
 import os, sys # A system-specific prefix, for working between linux and windows
 prefix = 'C:/' if os.name == 'nt' else '/home/sbamford/'
-    
+
 sys.path.append(os.path.join(prefix, 'repos/event-driven-python-dev/python/libraries/bimvee')) # A path to this library
-filePathOrName = os.path.join(prefix, '/data/2019_12_12_vicon/Trial2WithVicon/Vicon/data.log')
 
 #%% Import with each body as separate channel
 
 from importVicon import importVicon
 
-viconDataDict = importVicon(filePathOrName, separateBodiesAsChannels=True)
+filePathOrName = os.path.join(prefix, '/data/2019_12_12_vicon/Trial2WithVicon/Vicon/data.log')
+kwargs = {'filePathOrName': filePathOrName,
+          'separateBodiesAsChannels': True}
+viconDataDict = importVicon(**kwargs)
 if 'bodyids' in viconDataDict['info']:
     print('The parsed body IDs are: ', viconDataDict['info']['bodyids'])
 

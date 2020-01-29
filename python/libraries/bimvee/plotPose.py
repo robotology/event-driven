@@ -19,6 +19,7 @@ imu samples contained.
 
 Also handles point3 type, which contains 3d points
 """
+import numpy as np
 import matplotlib.pyplot as plt
 
 def plotPose(inDict, **kwargs):
@@ -44,19 +45,22 @@ def plotPose(inDict, **kwargs):
                 print('Channel ' + channelName + ' skipped because it contains no pose data')
         return    
 
-    if 'pose' in inDict:
-        if kwargs.get('zeroT', False):
-            inDict['pose'][:, 0] = inDict['pose'][:, 0] - inDict['pose'][0, 0]
-            inDict['pose'][:, 1] = inDict['pose'][:, 1] - inDict['pose'][0, 1]
-            inDict['pose'][:, 2] = inDict['pose'][:, 2] - inDict['pose'][0, 2]
+    if 'rotation' in inDict:
         fig, allAxes = plt.subplots(2, 1)
         axesT = allAxes[0]
-        axesT.plot(inDict['ts'], inDict['pose'][:, :3])
-        axesT.legend(['x', 'y', 'z'])
         axesR = allAxes[1]
-        axesR.plot(inDict['ts'], inDict['pose'][:, 3:])
-        axesR.legend(['r_x', 'r_y', 'r_z', 'r_w'])
+        axesR.plot(inDict['ts'], inDict['rotation'])
+        axesR.legend(['r_w', 'r_x', 'r_y', 'r_z'])
     if 'point' in inDict:
-        fig, axesT = plt.subplots()
-        axesT.plot(inDict['ts'], inDict['point'])
+        if not 'axesT' in locals():
+            fig, axesT = plt.subplots()
+        if kwargs.get('zeroT', False):
+            point = np.copy(inDict['point'])
+            firstPoint = inDict['point'][0, :]
+            point = point - firstPoint
+        else:
+            point = inDict['point']    
+        axesT.plot(inDict['ts'], point)
         axesT.legend(['x', 'y', 'z'])
+    # TODO: Callbacks
+    

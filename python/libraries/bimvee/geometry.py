@@ -29,10 +29,10 @@ def quat2RotM(quat, M=None):
         M[:, 3] = 0
         M[3, :] = 0
         M[3, 3] = 1
-    x = quat[0]
-    y = quat[1]
-    z = quat[2]
-    w = quat[3]
+    w = quat[0]
+    x = quat[1]
+    y = quat[2]
+    z = quat[3]
     M[0, 0] = 1 - 2*y**2 - 2*z**2
     M[0, 1] = 2*x*y - 2*z*w
     M[0, 2] = 2*x*z + 2*y*w
@@ -80,37 +80,38 @@ def slerp(q1, q2, time_relative):
 
 ''' 
 expects pose dict in the form: {'ts': 1d np.array of np.float64 timestamps,
-                                    'pose': 2d array np.float64 of poses, 
-                                        where zeroth dim is samples, 
-                                        and first dim is 7: x, y, z, rx, ry, rz, rw 
-                                        (i.e. 6dof with rotation as quaternion)}
-returns np.array 1d x 7 np.float64, which is interpolated pose
+                                'point': 2d array np.float64 of positions [x, y, z], 
+                                'rotation': 2d array np.float64 of quaternions [rw, rx, ry, rz]
+                                (i.e. 6dof with rotation as quaternion)}
+returns (point, rotation) tuple, being np.array 1d x 3 and 4 respectively, np.float64, 
+which is interpolated pose
 '''
 def pose6qInterp(poseDict, time):
     ts = poseDict['ts']
-    allPoses = poseDict['pose']
+    allPoints = poseDict['point']
+    allRotations = poseDict['rotation']
     idxPre = np.searchsorted(ts, time, side='right') - 1
     timePre = ts[idxPre]
     if timePre == time:
         # In this edge-case of desired time == timestamp, there is no need 
         # to interpolate 
-        return allPoses[idxPre, :]
+        return (allPoints[idxPre, :], allRotations[idxPre, :])
     if idxPre < 0:
-        return allPoses[0, :]
+        return (allPoints[0, :], allRotations[0, :])
     if idxPre >= len(poseDict['ts']):
-        return allPoses[-1, :]
-    poseOut =  np.zeros((7), dtype=np.float64)
+        return (allPoints[-1, :], allRotations[-1, :])
     timePost = ts[idxPre + 1]
-    qPre = allPoses[idxPre, 3:7]
-    qPost = allPoses[idxPre + 1, 3:7]
+    qPre = allRotations[idxPre, :]
+    qPost = allRotations[idxPre + 1, :]
     timeRel = (time - timePre) / (timePost - timePre)
-    poseOut[3:7] = slerp(qPre, qPost, timeRel)
-    locPre = allPoses[idxPre, 0:3] 
-    locPost = allPoses[idxPre + 1, 0:3]
-    poseOut[0:3] = locPre * (1-timeRel) + locPost * timeRel
-    return poseOut
+    qOut = slerp(qPre, qPost, timeRel)
+    locPre = allPoints[idxPre, :] 
+    locPost = allPoints[idxPre + 1, :]
+    locOut = locPre * (1-timeRel) + locPost * timeRel
+    return (locOut, qOut)
 
 # adapted from https://stackoverflow.com/questions/50387606/python-draw-line-between-two-coordinates-in-a-matrix
+# TODO: Y is zeroth dimension ...
 def draw_line(mat, x0, y0, x1, y1):
     if not (0 <= x0 < mat.shape[0] and 0 <= x1 < mat.shape[0] and
             0 <= y0 < mat.shape[1] and 0 <= y1 < mat.shape[1]):

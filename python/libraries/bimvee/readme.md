@@ -180,10 +180,11 @@ Definitions of minimal and optional(*) fields follow.
 
 ## pose6q:
 
-- ts   n   np.float64
-- pose nx7 np.float64 row format is [x, y, z, rw, rx, ry, rz] where r(wxyz) define quaternions
+- ts       n   np.float64
+- point    nx3 np.float64 row format is [x, y, z]
+- rotation nx4 np.float64 row format is [rw, rx, ry, rz] where r(wxyz) define a quaternion
 
-Note: quaternion order follows the convention of e.g. blender but not e.g. ros. 
+Note: quaternion order follows the convention of e.g. blender (wxyz) but not e.g. ros. (xyzw)
 
 ## point3:
 
