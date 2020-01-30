@@ -42,12 +42,12 @@ import math
 # Local imports
 if __package__ is None or __package__ == '':
     from plotDvsContrast import getEventImageForTimeRange
-    from geometry import quat2RotM, rotateUnitVectors, project3dTo2d, slerp, draw_line
+    from geometry import quat2RotM, rotateUnitVectors, slerp, draw_line
     from split import splitByLabel
 else:
     # This format allows for a certain configuration of the ntupleviz visualiser, maybe?
     from .plotDvsContrast import getEventImageForTimeRange
-    from .geometry import quat2RotM, rotateUnitVectors, project3dTo2d, slerp, draw_line
+    from .geometry import quat2RotM, rotateUnitVectors, slerp, draw_line
     from .split import splitByLabel
 
 # A function intended to find the nearest timestamp
@@ -201,13 +201,8 @@ class VisualiserPose6q(Visualiser):
         z[1:2]
     '''
     def set_data(self, data):
-        if 'bodyId' in data:
-            # split pose data by label, for ease of reference during rendering
-            self.__data = splitByLabel(data, 'bodyId')
-            self.labels = np.unique(data['bodyId'])
-        else:
-            self.__data = [data]
-            
+        # scale and offset point data so that it remains proportional 
+        # but stays in the range 0-1 for all dimensions
         pointX = data['point'][:, 0]
         pointY = data['point'][:, 1]
         pointZ = data['point'][:, 2]
@@ -217,48 +212,78 @@ class VisualiserPose6q(Visualiser):
         maxY = np.max(pointY)
         minZ = np.min(pointZ)
         maxZ = np.max(pointZ)
-        self.centreX = (minX + maxX) / 2
-        self.centreY = (minY + maxY) / 2
-        self.centreZ = (minZ + maxZ) / 2
-        self.largestDim = max(maxX-minX, maxY-minY, maxZ-minZ)
-        if self.largestDim == 0:
-            self.largestDim = 1
+        centreX = (minX + maxX) / 2
+        centreY = (minY + maxY) / 2
+        centreZ = (minZ + maxZ) / 2
+        largestDim = max(maxX-minX, maxY-minY, maxZ-minZ)
+        if largestDim == 0:
+            largestDim = 1
+
+        pointScaled = np.empty_like(data['point'])
+        pointScaled[:, 0] = pointX - centreX
+        pointScaled[:, 1] = pointY - centreY
+        pointScaled[:, 2] = pointZ - centreZ
+        pointScaled = pointScaled / largestDim + 0.5
+        internalData = {'ts': data['ts'],
+                        'point': pointScaled,
+                        'rotation': data['rotation']}
+        # Having scaled data for all poses, split out the poses for different bodies, if applicable
+        if 'bodyId' in data:
+            # split pose data by label, for ease of reference during rendering
+            internalData['bodyId'] = data['bodyId']
+            self.__data = splitByLabel(internalData, 'bodyId')
+            self.labels = np.unique(data['bodyId'])
+        else:
+            self.__data = [internalData]
+            
+    def project3dTo2d(self, x=0, y=0, z=0, smallestRenderDim=1, perspective=True):
+                 
+        if perspective:
+            # Move z out by 0.5, so that the data is between 0.5 and 1.5 distant in z
+            x = (x - 0.5) / (z + 0.5) + 0.5
+            y = (y - 0.5) / (z + 0.5) + 0.5
+        x *= smallestRenderDim
+        y *= smallestRenderDim
+        x = x.astype(int)
+        y = y.astype(int)
+        return x, y
 
     def project_pose(self, point, rotation, image, **kwargs):
         if point is None:
             return image
-        # Centre the pose, unpacking it at the same time
-        pointX = (point[0] - self.centreX) / self.largestDim
-        pointY = (point[1] - self.centreY) / self.largestDim
-        pointZ = (point[2] - self.centreZ) / self.largestDim + 2        
+        # Unpack
+        pointX = point[0]
+        pointY = point[1]
+        pointZ = point[2]
         # Project the location
         perspective = kwargs.get('perspective', False)
-        projX, projY = project3dTo2d(x=pointX, y=pointY, z=pointZ, 
+        projX, projY = self.project3dTo2d(x=pointX, y=pointY, z=pointZ, 
             smallestRenderDim=self.smallestRenderDim, perspective=perspective)
         if rotation is None:
             # Just put a white dot where the point should be
             image[projY, projX, :] = 255
         else:
             rotMats = quat2RotM(rotation)
-            rotatedUnitVectors = rotateUnitVectors(rotMats, unitLength=0.5)    
-            pointX_X = pointX + rotatedUnitVectors[0, 0]
-            pointX_Y = pointX + rotatedUnitVectors[1, 0]
-            pointX_Z = pointX + rotatedUnitVectors[2, 0]
-            pointY_X = pointY + rotatedUnitVectors[0, 1]
-            pointY_Y = pointY + rotatedUnitVectors[1, 1]
-            pointY_Z = pointY + rotatedUnitVectors[2, 1]
-            pointZ_X = pointZ + rotatedUnitVectors[0, 2]
-            pointZ_Y = pointZ + rotatedUnitVectors[1, 2]
-            pointZ_Z = pointZ + rotatedUnitVectors[2, 2]
-            projX_X, projY_X = project3dTo2d(x=pointX_X, y=pointY_X, z=pointZ_X, 
+            rotatedUnitVectors = rotateUnitVectors(rotMats, unitLength=0.25)
+            # aVectorCoordB means the Bth coordinate of unit vector originally directed towards a
+            xVectorCoordX = pointX + rotatedUnitVectors[0, 0]
+            xVectorCoordY = pointY + rotatedUnitVectors[1, 0]
+            xVectorCoordZ = pointZ + rotatedUnitVectors[2, 0]
+            yVectorCoordX = pointX + rotatedUnitVectors[0, 1]
+            yVectorCoordY = pointY + rotatedUnitVectors[1, 1]
+            yVectorCoordZ = pointZ + rotatedUnitVectors[2, 1]
+            zVectorCoordX = pointX + rotatedUnitVectors[0, 2]
+            zVectorCoordY = pointY + rotatedUnitVectors[1, 2]
+            zVectorCoordZ = pointZ + rotatedUnitVectors[2, 2]
+            xVectorProjX, xVectorProjY = self.project3dTo2d(x=xVectorCoordX, y=xVectorCoordY, z=xVectorCoordZ, 
                 smallestRenderDim=self.smallestRenderDim, perspective=perspective)
-            projX_Y, projY_Y = project3dTo2d(x=pointX_Y, y=pointY_Y, z=pointZ_Y,
+            yVectorProjX, yVectorProjY = self.project3dTo2d(x=yVectorCoordX, y=yVectorCoordY, z=yVectorCoordZ, 
                 smallestRenderDim=self.smallestRenderDim, perspective=perspective)
-            projX_Z, projY_Z = project3dTo2d(x=pointX_Z, y=pointY_Z, z=pointZ_Z,
+            zVectorProjX, zVectorProjY = self.project3dTo2d(x=zVectorCoordX, y=zVectorCoordY, z=zVectorCoordZ, 
                 smallestRenderDim=self.smallestRenderDim, perspective=perspective)
-            draw_line(image[:, :, 0], projX, projY, projX_X, projY_X)
-            draw_line(image[:, :, 1], projX, projY, projX_Y, projY_Y)
-            draw_line(image[:, :, 2], projX, projY, projX_Z, projY_Z)
+            draw_line(image[:, :, 0], projX, projY, xVectorProjX, xVectorProjY)
+            draw_line(image[:, :, 1], projX, projY, yVectorProjX, yVectorProjY)
+            draw_line(image[:, :, 2], projX, projY, zVectorProjX, zVectorProjY)
         return image
     
     def get_frame(self, time, timeWindow, **kwargs):
@@ -303,9 +328,6 @@ class VisualiserPose6q(Visualiser):
                     locPost = data['point'][idxPre + 1, :]
                     point = locPre * (1-timeRel) + locPost * timeRel
                     timeDist = min(time - timePre, timePost - time)
-                    print(timeDist)
-                    print(timeWindow)
-                    print()
                     if timeDist > timeWindow / 2:
                         # Warn the viewer that this interpolation is 
                         # based on data beyond the timeWindow
@@ -314,7 +336,6 @@ class VisualiserPose6q(Visualiser):
                     poseIdx = find_nearest(data['ts'], time)
                     point = data['point'][poseIdx, :]
                     rotation = data['rotation'][poseIdx, :]
-                
             image = self.project_pose(point, rotation, image, **kwargs)                
         
         # Allow for arbitrary post-production on image with a callback

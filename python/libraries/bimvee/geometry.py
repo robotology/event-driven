@@ -51,17 +51,6 @@ def rotateUnitVectors(rotM, unitLength=1.0):
     allVecs = np.concatenate((xVec, yVec, zVec), axis=1)
     return rotM.dot(allVecs)
 
-
-def project3dTo2d(x=0, y=0, z=0, smallestRenderDim=1, perspective=True):
-    if perspective:
-        x = x / z
-        y = y / z
-    x = (x + 1) * smallestRenderDim / 2
-    y = (y + 1) * smallestRenderDim / 2
-    x = x.astype(int)
-    y = y.astype(int)
-    return x, y
-
 # Spherical linear interpolation, adapted from https://en.wikipedia.org/wiki/Slerp
 DOT_THRESHOLD = 0.9995
 def slerp(q1, q2, time_relative):

@@ -91,6 +91,12 @@ template = {
         }
     }
 
+template = {
+    'extra': {
+        'pose6q': '/dvs/pose'
+        }
+    }
+
 container = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
 
 visualizerApp.root.data_controller.data_dict = container
@@ -113,11 +119,13 @@ visualizerApp.root.data_controller.data_dict = container
 from importRpgDvsRos import importRpgDvsRos
     
 filePathOrName = os.path.join(prefix, 'data/rpg/shapes_rotation.bag')
+filePathOrName = os.path.join(prefix, 'data/rpg/dynamic_6dof.bag')
 
 template = {
     'davis': {
         'dvs': '/dvs/events',
         'frame': '/dvs/image_raw',
+        'imu': '/dvs/imu',
         },
     'extra': {
         'pose6q': '/optitrack/davis'
@@ -126,40 +134,76 @@ template = {
 
 container = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
 
-pose = container['data']['extra']['pose6q']
-dvs = container['data']['davis']['dvs']
-frame = container['data']['davis']['frame']
-
 visualizerApp.root.data_controller.data_dict.data_dict = container
 
-#%% Demonstration of pose interpolation
+#%% Constructed rolling poses - X
 
-# http://rpg.ifi.uzh.ch/davis_data.html
-from importRpgDvsRos import importRpgDvsRos
-    
-filePathOrName = os.path.join(prefix, 'data/rpg/shapes_rotation.bag')
+import numpy as np
 
-template = {
-    'davis': {
-        'frame': '/dvs/image_raw',
-        },
-    'extra': {
-        'pose6q': '/optitrack/davis'
-        }
-    }
+ts = np.array([0, 1, 2, 3, 4], dtype=np.float64)
+point = np.zeros((5, 3), dtype=np.float64)
+# from neutral pose, to x = 1 (i.e. roll backwards through 180) 
+# back to neutral, then x to -1 ( i.e. roll forwards head over heels through 180)
+# back to neutral 
+rotation = np.array([[1, 0, 0, 0], 
+                     [0, 1, 0, 0], 
+                     [1, 0, 0, 0], 
+                     [0, -1, 0, 0], 
+                     [1, 0, 0, 0]],
+                    dtype=np.float64)
 
-imported = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
+trialContainer = {'pose6q': {'ts': ts,
+                        'point': point,
+                        'rotation': rotation
+                        }
+            }
 
-pose = imported['data']['extra']['pose6q']
-frame = imported['data']['davis']['frame']
+visualizerApp.root.data_controller.data_dict.data_dict = trialContainer
 
-# Take out all except a few poses
-keepIds = [0, 4000, 8000, 11882]
+#%% Constructed rolling poses - Y
 
-imported['data']['modified'] = {
-    'pose6q': {
-        'ts': pose['ts'][keepIds],
-        'pose': pose['pose'][keepIds, :]
-            }} 
+import numpy as np
 
-visualizerApp.root.data_controller.data_dict.data_dict = imported
+ts = np.array([0, 1, 2, 3, 4], dtype=np.float64)
+point = np.zeros((5, 3), dtype=np.float64)
+# from neutral pose, to y = 1 (i.e. swivel clockwise through 180 as if on an office chair) 
+# back to neutral, then y to -1 ( i.eswivel anticlockwise through 180)
+# back to neutral 
+rotation = np.array([[1, 0, 0, 0], 
+                     [0, 0, 1, 0], 
+                     [1, 0, 0, 0], 
+                     [0, 0, -1, 0], 
+                     [1, 0, 0, 0]],
+                    dtype=np.float64)
+
+trialContainer = {'pose6q': {'ts': ts,
+                        'point': point,
+                        'rotation': rotation
+                        }
+            }
+
+visualizerApp.root.data_controller.data_dict.data_dict = trialContainer
+
+#%% Constructed rolling poses - Z
+
+import numpy as np
+
+ts = np.array([0, 1, 2, 3, 4], dtype=np.float64)
+point = np.zeros((5, 3), dtype=np.float64)
+# from neutral pose, to z = 1 (i.e. roll our head clockwise through 180, whilst still looking forwards) 
+# back to neutral, then z to -1 ( i.e. roll our head anticlockwise through 180, whilst still looking forwards)
+# back to neutral 
+rotation = np.array([[1, 0, 0, 0], 
+                     [0, 0, 0, 1], 
+                     [1, 0, 0, 0], 
+                     [0, 0, 0, -1], 
+                     [1, 0, 0, 0]],
+                    dtype=np.float64)
+
+trialContainer = {'pose6q': {'ts': ts,
+                        'point': point,
+                        'rotation': rotation
+                        }
+            }
+
+visualizerApp.root.data_controller.data_dict.data_dict = trialContainer
