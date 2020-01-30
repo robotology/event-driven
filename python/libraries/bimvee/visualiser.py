@@ -224,7 +224,7 @@ class VisualiserPose6q(Visualiser):
         if self.largestDim == 0:
             self.largestDim = 1
 
-    def project_pose(self, point, rotation, image):
+    def project_pose(self, point, rotation, image, **kwargs):
         if point is None:
             return image
         # Centre the pose, unpacking it at the same time
@@ -232,13 +232,15 @@ class VisualiserPose6q(Visualiser):
         pointY = (point[1] - self.centreY) / self.largestDim
         pointZ = (point[2] - self.centreZ) / self.largestDim + 2        
         # Project the location
-        projX, projY = project3dTo2d(pointX, pointY, pointZ, self.smallestRenderDim)
+        perspective = kwargs.get('perspective', False)
+        projX, projY = project3dTo2d(x=pointX, y=pointY, z=pointZ, 
+            smallestRenderDim=self.smallestRenderDim, perspective=perspective)
         if rotation is None:
-            # Just put a dot where the point should be
+            # Just put a white dot where the point should be
             image[projY, projX, :] = 255
         else:
             rotMats = quat2RotM(rotation)
-            rotatedUnitVectors = rotateUnitVectors(rotMats)    
+            rotatedUnitVectors = rotateUnitVectors(rotMats, unitLength=0.5)    
             pointX_X = pointX + rotatedUnitVectors[0, 0]
             pointX_Y = pointX + rotatedUnitVectors[1, 0]
             pointX_Z = pointX + rotatedUnitVectors[2, 0]
@@ -248,9 +250,12 @@ class VisualiserPose6q(Visualiser):
             pointZ_X = pointZ + rotatedUnitVectors[0, 2]
             pointZ_Y = pointZ + rotatedUnitVectors[1, 2]
             pointZ_Z = pointZ + rotatedUnitVectors[2, 2]
-            projX_X, projY_X = project3dTo2d(pointX_X, pointY_X, pointZ_X, self.smallestRenderDim)
-            projX_Y, projY_Y = project3dTo2d(pointX_Y, pointY_Y, pointZ_Y, self.smallestRenderDim)
-            projX_Z, projY_Z = project3dTo2d(pointX_Z, pointY_Z, pointZ_Z, self.smallestRenderDim)
+            projX_X, projY_X = project3dTo2d(x=pointX_X, y=pointY_X, z=pointZ_X, 
+                smallestRenderDim=self.smallestRenderDim, perspective=perspective)
+            projX_Y, projY_Y = project3dTo2d(x=pointX_Y, y=pointY_Y, z=pointZ_Y,
+                smallestRenderDim=self.smallestRenderDim, perspective=perspective)
+            projX_Z, projY_Z = project3dTo2d(x=pointX_Z, y=pointY_Z, z=pointZ_Z,
+                smallestRenderDim=self.smallestRenderDim, perspective=perspective)
             draw_line(image[:, :, 0], projX, projY, projX_X, projY_X)
             draw_line(image[:, :, 1], projX, projY, projX_Y, projY_Y)
             draw_line(image[:, :, 2], projX, projY, projX_Z, projY_Z)
@@ -261,7 +266,18 @@ class VisualiserPose6q(Visualiser):
         if allData is None:
             print('Warning: data is not set')
             return np.zeros((1, 1), dtype=np.uint8) # This should not happen
-        image = np.zeros((self.renderX, self.renderY, 3), dtype = np.uint8)
+        image = np.zeros((self.renderY, self.renderX, 3), dtype = np.uint8)
+        # Put a grey box around the edge of the image
+        image[0, :, :] = 128
+        image[-1, :, :] = 128
+        image[:, 0, :] = 128
+        image[:, -1, :] = 128
+        # Put a grey crosshair in the centre of the image
+        rY = self.renderY
+        rX = self.renderY
+        chp = 20 # Cross Hair Proportion for following expression
+        image[int(rY/2 - rY/chp): int(rY/2 + rY/chp), int(rX/2), :] = 128        
+        image[int(rY/2), int(rX/2 - rX/chp): int(rX/2 + rX/chp), :] = 128        
         for data in allData:
             # Note, for the following, this follows library function pose6qInterp, but is broken out here, because of slight behavioural differences.
             idxPre = np.searchsorted(data['ts'], time, side='right') - 1
@@ -287,16 +303,19 @@ class VisualiserPose6q(Visualiser):
                     locPost = data['point'][idxPre + 1, :]
                     point = locPre * (1-timeRel) + locPost * timeRel
                     timeDist = min(time - timePre, timePost - time)
+                    print(timeDist)
+                    print(timeWindow)
+                    print()
                     if timeDist > timeWindow / 2:
                         # Warn the viewer that this interpolation is 
                         # based on data beyond the timeWindow
-                        image[:30,:30,0] = 255
+                        image[:30,:30,0] = 255 # TODO: Hardcoded
                 else: # No interpolation, so just choose the sample which is nearest in time
                     poseIdx = find_nearest(data['ts'], time)
                     point = data['point'][poseIdx, :]
                     rotation = data['rotation'][poseIdx, :]
                 
-            image = self.project_pose(point, rotation, image)                
+            image = self.project_pose(point, rotation, image, **kwargs)                
         
         # Allow for arbitrary post-production on image with a callback
         # TODO: as this is boilerplate, it could be pushed into pie syntax ...

@@ -93,10 +93,7 @@ template = {
 
 container = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
 
-pose = container['data']['extra']['pose6q']
-dvs = container['data']['davis']['dvs']
-frame = container['data']['davis']['frame']
-depthmap = container['data']['extra']['frame']
+visualizerApp.root.data_controller.data_dict = container
 
 #%% Experiment with pose interpolation
 

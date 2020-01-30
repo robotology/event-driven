@@ -64,6 +64,8 @@
             on_press: root.dismiss()
 
 <ViewerDvs@Viewer>
+    id: viewer
+    label: 'no data'
     image: image
     polarised: polarised.active
     contrast: contrast.value
@@ -77,8 +79,11 @@
     Image:
         id: image
         allow_stretch: True
+    Label:
+        text: viewer.label
+        size_hint: 1, 0.07
     BoxLayout:
-        size_hint: 1, 0.1
+        size_hint: 1, 0.07
         orientation: 'horizontal'
         Label:
             text: 'flip horiz'
@@ -89,7 +94,7 @@
         CheckBox:
             id: flipVert 
     BoxLayout:
-        size_hint: 1, 0.1
+        size_hint: 1, 0.07
         orientation: 'horizontal'
         Label:
             text: 'polarised'
@@ -106,6 +111,8 @@
             value: 3
 
 <ViewerFrame@Viewer>
+    id: viewer
+    label: 'no data'
     image: image
     flipHoriz: flipHoriz.active
     flipVert: flipVert.active
@@ -115,6 +122,9 @@
     Image:
         id: image
         allow_stretch: True
+    Label:
+        text: viewer.label        
+        size_hint: 1, 0.1
     BoxLayout:
         size_hint: 1, 0.1
         orientation: 'horizontal'
@@ -128,11 +138,21 @@
             id: flipVert 
 
 <ViewerPose6q@Viewer>
+    id: viewer
+    label: 'no data'
     image: image
+    flipHoriz: False
+    flipVert: False
     interpolate: interpolate.active
+    perspective: perspective.active
+    on_interpolate: root.update_data(self.data)
+    on_perspective: root.update_data(self.data)
     Image:
         id: image
         allow_stretch: True
+    Label:
+        size_hint: 1, 0.1
+        text: viewer.label        
     BoxLayout:
         size_hint: 1, 0.1
         orientation: 'horizontal'
@@ -140,6 +160,12 @@
             text: 'interpolate'
         CheckBox:
             id: interpolate 
+            active: True
+        Label:
+            text: 'perspective'
+        CheckBox:
+            id: perspective
+            active: True
 
 <RootWidget>
     orientation:'horizontal'

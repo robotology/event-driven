@@ -92,7 +92,11 @@ importedDavis = importPennMvsecDavis(filePathOrName=filePathOrName)
 filePathOrName = os.path.join(prefix, 'data/mvsec/indoor_flying1_gt.bag')
 importedGt = importPennMvsecGt(filePathOrName=filePathOrName)
 
-imported = [importedDavis, importedGt]
+#imported = [importedDavis, importedGt]
+
+# Rafactor into single container
+container = importedDavis
+container['data'].update(importedGt['data'])
 
 
 #%% Import realsense

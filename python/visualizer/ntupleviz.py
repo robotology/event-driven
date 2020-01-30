@@ -186,6 +186,7 @@ class ViewerPose6q(Viewer):
         else:
             kwargs = {
                 'interpolate': self.interpolate,
+                'perspective': self.perspective,
                     }
             self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
    
@@ -201,48 +202,38 @@ class DataController(GridLayout):
         for child in self.children:
             child.get_frame(self.time_value, self.time_window)
        
-    def add_viewer_and_resize(self, data_type, data_dict):
+    def add_viewer_and_resize(self, data_type, data_dict, label=''):
         if data_type == 'dvs':
             new_viewer = ViewerDvs()
             visualiser = VisualiserDvs(data_dict)
-            #new_viewer.orientation = "vertical"
-            #new_viewer.add_widget(Button(text='flip horiz'))
-            #new_viewer.add_widget(Button(label='flipHorizontal', text='flip horiz'))
-            #new_viewer.add_widget(Button(label='flipVertical', text='flip vert'))
-            #new_viewer.add_widget(Button(label='transpose', text='transpose'))
-            #new_viewer.add_widget(CheckBox(label='polarised', text='polarised'))
         elif data_type == 'frame':
             new_viewer = ViewerFrame()
             visualiser = VisualiserFrame(data_dict)
-#            new_viewer.orientation = "vertical"
-#            new_viewer.add_widget(Button(label='flipHorizontal', text='flip horiz'))
-#            new_viewer.add_widget(Button(label='flipVertical', text='flip vert'))
-#            new_viewer.add_widget(Button(label='transpose', text='transpose'))
         elif data_type == 'pose6q':
             new_viewer = ViewerPose6q()
             visualiser = VisualiserPose6q(data_dict)
-#            new_viewer.add_widget(CheckBox(label='interpolate', text='interpolate'))
-#            new_viewer.orientation = "vertical"
+            label = 'red=x green=y, blue=z ' + label
+        new_viewer.label = label
         new_viewer.dsm = visualiser
         self.add_widget(new_viewer)
 
         self.cols = int(np.ceil(np.sqrt(len(self.children))))
 
-    def add_viewer_for_each_channel_and_data_type(self, in_dict):
+    def add_viewer_for_each_channel_and_data_type(self, in_dict, label=''):
         if isinstance(in_dict, list):
-            for in_dict_element in in_dict:
-                self.add_viewer_for_each_channel_and_data_type(in_dict_element)
+            for num, in_dict_element in enumerate(in_dict):
+                self.add_viewer_for_each_channel_and_data_type(in_dict_element, label=label+':'+str(num))
         elif isinstance(in_dict, dict):
             for key_name in in_dict.keys():
                 if isinstance(in_dict[key_name], dict):
                     if 'ts' in in_dict[key_name]:
                         if key_name in ['dvs', 'frame', 'pose6q']:
                             print('Creating a new viewer, of type: ' + key_name)
-                            self.add_viewer_and_resize(key_name, in_dict[key_name])
+                            self.add_viewer_and_resize(key_name, in_dict[key_name], label=label+':'+str(key_name))
                         else:
                             print('datatype not supported: ' + key_name)
                     else: # recurse through the sub-dict
-                        self.add_viewer_for_each_channel_and_data_type(in_dict[key_name])
+                        self.add_viewer_for_each_channel_and_data_type(in_dict[key_name], label=label+':'+str(key_name))
     
     def on_data_dict(self, instance, value):
         self.ending_time = float(getLastTimestamp(self.data_dict)) # timer is watching this

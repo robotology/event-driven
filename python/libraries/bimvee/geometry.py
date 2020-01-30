@@ -44,21 +44,23 @@ def quat2RotM(quat, M=None):
     M[2, 2] = 1 - 2*x**2 - 2*y**2
     return M
 
-def rotateUnitVectors(rotM):
-    xVec = np.expand_dims(np.array([1, 0, 0, 1]), axis=1)
-    yVec = np.expand_dims(np.array([0, 1, 0, 1]), axis=1)
-    zVec = np.expand_dims(np.array([0, 0, 1, 1]), axis=1)
+def rotateUnitVectors(rotM, unitLength=1.0):
+    xVec = np.expand_dims(np.array([unitLength, 0, 0, 1]), axis=1)
+    yVec = np.expand_dims(np.array([0, unitLength, 0, 1]), axis=1)
+    zVec = np.expand_dims(np.array([0, 0, unitLength, 1]), axis=1)
     allVecs = np.concatenate((xVec, yVec, zVec), axis=1)
     return rotM.dot(allVecs)
 
-def project3dTo2d(X, Y, Z, smallestRenderDim):
-    projX = X / Z
-    projY = Y / Z
-    projX = (projX + 1) * smallestRenderDim / 2
-    projY = (projY + 1) * smallestRenderDim / 2
-    projX = projX.astype(int)
-    projY = projY.astype(int)
-    return projX, projY
+
+def project3dTo2d(x=0, y=0, z=0, smallestRenderDim=1, perspective=True):
+    if perspective:
+        x = x / z
+        y = y / z
+    x = (x + 1) * smallestRenderDim / 2
+    y = (y + 1) * smallestRenderDim / 2
+    x = x.astype(int)
+    y = y.astype(int)
+    return x, y
 
 # Spherical linear interpolation, adapted from https://en.wikipedia.org/wiki/Slerp
 DOT_THRESHOLD = 0.9995
@@ -113,12 +115,12 @@ def pose6qInterp(poseDict, time):
 # adapted from https://stackoverflow.com/questions/50387606/python-draw-line-between-two-coordinates-in-a-matrix
 # TODO: Y is zeroth dimension ...
 def draw_line(mat, x0, y0, x1, y1):
-    if not (0 <= x0 < mat.shape[0] and 0 <= x1 < mat.shape[0] and
-            0 <= y0 < mat.shape[1] and 0 <= y1 < mat.shape[1]):
-        print('Invalid coordinates.')
-        return
+    #if not (0 <= y0 < mat.shape[0] and 0 <= y1 < mat.shape[0] and
+    #        0 <= x0 < mat.shape[1] and 0 <= x1 < mat.shape[1]):
+    #    print('Invalid coordinates.')
+    #    return
     if (x0, y0) == (x1, y1):
-        mat[x0, y0] = 2
+        mat[x0, y0] = 255
         return
     # Swap axes if Y slope is smaller than X slope
     transpose = abs(x1 - x0) < abs(y1 - y0)
@@ -132,4 +134,7 @@ def draw_line(mat, x0, y0, x1, y1):
     x = np.arange(x0, x1 + 1)
     y = np.round(((y1 - y0) / (x1 - x0)) * (x - x0) + y0).astype(x.dtype)
     # Write intermediate coordinates
-    mat[x, y] = 255
+    toKeep = np.logical_and(x >= 0, 
+                            np.logical_and(x<mat.shape[1], 
+                                           np.logical_and(y >= 0, y<mat.shape[0])))
+    mat[y[toKeep], x[toKeep]] = 255
