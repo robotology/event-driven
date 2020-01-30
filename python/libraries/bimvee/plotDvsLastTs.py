@@ -97,7 +97,7 @@ def plotDvsLastTsSingle(inDict, **kwargs):
             tsOrdinal -= 1 # If there are unset timestamps, they will have rank 0 - push these to -1
         tsArray = tsOrdinal.reshape(tsArray.shape)
     else:
-        pass: # TODO: cardinal
+        pass # TODO: cardinal
     axes = kwargs.get('axes')
     if axes is None:
         fig, axes = plt.subplots()
@@ -108,7 +108,7 @@ def plotDvsLastTsSingle(inDict, **kwargs):
         tsArray = np.transpose(tsArray)
     cmap = plt.get_cmap(kwargs.get('cmap', 'jet'))
     cmap.set_under(color='white')
-    image = axes.imshow(tsArray, origin='lower', cmap=cmap, norm=colors.Normalize(vmin=0, vmax=np.max(tsArray)))
+    image = axes.imshow(tsArray, cmap=cmap, norm=colors.Normalize(vmin=0, vmax=np.max(tsArray)))
     axes.set_aspect('equal', adjustable='box')
     if kwargs.get('flipVertical', False):
         axes.invert_yaxis()

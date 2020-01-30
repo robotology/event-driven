@@ -120,11 +120,11 @@ def plotDvsContrastSingle(inDict, **kwargs):
         fig, axes = plt.subplots()
     if kwargs.get('polarised', (kwargs.get('polarized'), False)):
         cmap = kwargs.get('cmap', kwargs.get('colormap', 'seismic_r'))
-        image = axes.imshow(frameFromEvents, origin='lower', cmap=cmap, 
+        image = axes.imshow(frameFromEvents, cmap=cmap, 
                             vmin=-contrast, vmax=contrast)
     else:
         cmap = kwargs.get('cmap', kwargs.get('colormap', 'gray'))
-        image = axes.imshow(frameFromEvents, origin='lower', cmap=cmap, 
+        image = axes.imshow(frameFromEvents, cmap=cmap, 
                             vmin=0, vmax=contrast)        
     axes.set_aspect('equal', adjustable='box')
     title = kwargs.get('title')

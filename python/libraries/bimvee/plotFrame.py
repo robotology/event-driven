@@ -93,13 +93,13 @@ def plotFrame(inDict, **kwargs):
         # Find eventIndex nearest to timePoint
         frameIdx = np.searchsorted(ts, timePoint)
         frame = frames[frameIdx]
-        ax.imshow(frame, cmap='gray')
         if kwargs.get('transpose', False):
             frame = np.transpose(frame)
         if kwargs.get('flipVertical', False):
             frame = np.flip(frame, axis=0)
         if kwargs.get('flipHorizontal', False):
             frame = np.flip(frame, axis=1)
+        ax.imshow(frame, cmap='gray')
         ax.set_title('Time: ' + str(roundToSf(timePoint)) + ' s; frame number: ' + str(frameIdx))
 
 #%%

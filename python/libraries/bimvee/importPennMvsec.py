@@ -41,12 +41,12 @@ else:
 def importPennMvsecDavis(**kwargs):
     if kwargs.get('template') is None:
         kwargs['template'] = {
-            'left': {
+            'davisLeft': {
                 'dvs': '/davis/left/events',
                 'frame': '/davis/left/image_raw',
                 'imu': '/davis/left/imu',
                 'cam': '/davis/left/camera_info',
-            }, 'right': {
+            }, 'davisRight': {
                 'dvs': '/davis/right/events',
                 'frame': '/davis/right/image_raw',
                 'imu': '/davis/right/imu',
@@ -63,9 +63,9 @@ def importPennMvsecGt(**kwargs): # Ground truth
                 'pose6q': '/davis/left/odometry',
             }, 'poseGlobal': {
                 'pose6q': '/davis/left/pose',
-            }, 'left': {
+            }, 'depthLeft': {
                 'frame': '/davis/left/depth_image_raw',
-            }, 'right': {
+            }, 'depthRight': {
                 'frame': '/davis/right/depth_image_raw',
                 }
             }

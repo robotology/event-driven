@@ -160,8 +160,8 @@ Definitions of minimal and optional(*) fields follow.
 
 - ts  n np.float64
 - x   n np.uint16
-- y   n np.uint16
-- pol n np.uint16
+- y   n np.uint16 As the sensor outputs it; plot functions assume that y increases in downward direction, following https://arxiv.org/pdf/1610.08336.pdf
+- pol n np.uint16 To the extent possible, 1 means increase in light, 0 means decrease. 
 - dimX* 1 int
 - dimY* 1 int
 
@@ -172,13 +172,25 @@ Definitions of minimal and optional(*) fields follow.
 
 ## sample:
 
-...
+- ts     n np.float64
+- sensor n np.uint8
+- value  n np.int16
 
 ## imu:
 
-...
+- ts  n    np.float64
+- acc  nx3 np.float64 accelerometer readings [x,y,z] in m/s
+- angV nx3 np.float64 angV readings [yaw, pitch roll?] in rad/s
+- mag  nx3 np.float64 magnetometer readings [x, y, z] in tesla
+- temp n   np.float64
 
-## pose6q:
+## point3:
+
+- ts    n   np.float64
+- point nx3 np.float64 row format is [x, y, z]
+
+
+## pose6q (effectively extends point3):
 
 - ts       n   np.float64
 - point    nx3 np.float64 row format is [x, y, z]
@@ -186,18 +198,23 @@ Definitions of minimal and optional(*) fields follow.
 
 Note: quaternion order follows the convention of e.g. blender (wxyz) but not e.g. ros. (xyzw)
 
-## point3:
-
-- ts    n   np.float64
-- point nx3 np.float64 row format is [x, y, z]
-
 ## flow:
 
 ...
 
+
 ## cam:
 
-...
+Following ros msg camera info, the fields this might contain include:
+
+- height           1   int
+- width            1   int
+- distortion_model     string 
+- D                5   np.float64 distortion params
+- K                3x3 np.float64 Intrinsic camera matrix
+- R                3x4 np.float64 Rectification matrix
+- P                4x4 np.float64 projection matrix
+
 
 
 

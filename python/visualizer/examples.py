@@ -127,15 +127,13 @@ template = {
         }
     }
 
-imported = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
+container = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
 
-pose = imported['data']['extra']['pose6q']
-dvs = imported['data']['davis']['dvs']
-frame = imported['data']['davis']['frame']
+pose = container['data']['extra']['pose6q']
+dvs = container['data']['davis']['dvs']
+frame = container['data']['davis']['frame']
 
-visualizerApp.root.data_controller.data_dict.data_dict = imported
-
-
+visualizerApp.root.data_controller.data_dict.data_dict = container
 
 #%% Demonstration of pose interpolation
 

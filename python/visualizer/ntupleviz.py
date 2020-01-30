@@ -128,7 +128,7 @@ class Viewer(BoxLayout):
                 try:
                     if self.flipHoriz:
                         data = np.flip(data, axis = 1)
-                    if self.flipVert:
+                    if not self.flipVert: # Not, because by default, y should increase downwards, following https://arxiv.org/pdf/1610.08336.pdf
                         data = np.flip(data, axis = 0)
                 except AttributeError:
                     pass # It's not a class that allows flipping
