@@ -256,20 +256,16 @@ class DataController(GridLayout):
 
     def load(self, path, selection):
         self.dismiss_popup()
-        from libraries.bimvee.importRpgDvsRos import importRpgDvsRos
+        from libraries.bimvee.importAe import importAe
+        from os.path import join
 
-        template = {
-            'davis': {
-                'dvs': '/dvs/events',
-                'frame': '/dvs/image_raw',
-            },
-            'extra': {
-                'frame': '/dvs/depthmap',
-                'pose6q': '/dvs/pose'
-            }
-        }
+        if selection:
+            filePathOrName=join(path, selection[0])
+        else:
+            filePathOrName=path
 
-        self.data_dict = importRpgDvsRos(filePathOrName=selection[0], template=template, )
+        self.data_dict = importAe(filePathOrName=filePathOrName)
+
         self.update_children()
 
 

@@ -3,6 +3,7 @@
 Copyright (C) 2019 Event-driven Perception for Robotics
 Authors: Sim Bamford
          Aiko Dinale
+         Massimiliano Iacono
 Code contributions from: 
         marco monforte
 This program is free software: you can redistribute it and/or modify it under 
@@ -66,11 +67,13 @@ else:
     from .importVicon import importVicon
     from .timestamps import unwrapTimestamps, zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
     from .split import selectByLabel
-    
-def decodeEvents24Bit(data):
+
+def decodeEvents(data):
     '''
     timestamps(ts) are 32 bit integers counted with an 80 ns clock - do this conversion later 
-    Events are encoded as 32 bits with x,y,channel(ch)(c) and polarity(pol)(p) as shown below
+    Events are encoded as 32 bits with x,y,channel(ch)(c) and polarity(pol)(p)
+    in two possible configuration as shown below:
+    0000 0000 000c 00yy yyyy yyxx xxxx xxxp (this codec is now deprecated but useful to load old datasets)
     0000 0000 tcrr yyyy yyyy rrxx xxxx xxxp
     We could pick out the following event types as follows:
     data[:, 1] >>= 1
@@ -83,6 +86,33 @@ def decodeEvents24Bit(data):
     audio  = np.uint8(data[:, 1] & 0x01)
     '''    
     isNotDvsEvent = np.bool_(data[:, 1] & 0xFF800000)
+
+    # If any non zero value shows up in bits 18-19 then we are sure that the new 24 bit codec is being used
+    if not hasattr(decodeEvents, "is24bitCodec"):
+        decodeEvents.is24bitCodec = np.bool_(data[:, 1] & 0x00C00000).any()
+    else:
+        if not np.bool_(data[:, 1] & 0x00C00000).any() == decodeEvents.is24bitCodec:
+            # Same codec must be valid across entire dataset
+            raise ValueError("Data codec not consistent or data check not valid")
+
+    if not decodeEvents.is24bitCodec:
+        ts = data[:, 0]
+        pol  = ~np.bool_(data[:, 1] & 0x01) # We want True=ON=brighter, False=OFF=darker, so we negate
+        data[:, 1] >>= 1
+        x = np.uint16(data[:, 1] & 0x1FF)
+        data[:, 1] >>= 9
+        y = np.uint16(data[:, 1] & 0xFF)
+        data[:, 1] >>= 10
+        ch = np.uint8(data[:, 1] & 0x01)
+        dvsOut = {
+            'ts': ts,
+            'ch': ch,
+            'x': x,
+            'y': y,
+            'pol': pol
+        }
+        return dvsOut, None
+
     if np.any(isNotDvsEvent):
         dataSample = data[isNotDvsEvent, :]
         #ts = np.float64(dataSample[:, 0] & ~(0x1 << 31)) * 0.00000008 # convert ts to seconds
@@ -247,7 +277,7 @@ def importIitYarpBinaryDataLog(**kwargs):
         events = inFile.read()
     events = np.frombuffer(events, np.uint32)
     events = events.reshape((-1, 2))
-    dvs, samples = decodeEvents24Bit(events)
+    dvs, samples = decodeEvents(events)
     return importPostProcessing(dvs, samples, dvsLbl=None, flow=None, **kwargs)
 
 # Sample is an intermediate data type - later it gets converted to IMU etc
@@ -394,24 +424,25 @@ def importIitYarpDataLog(**kwargs):
                 numEventsInBatch = int(len(events) / 3)
                 events = events.reshape(numEventsInBatch, 3)
                 # TODO: finish handling this case
-                dvsBatch, samplesBatch = decodeEvents24Bit(events[:, :2])
+                dvsBatch, samplesBatch = decodeEvents(events[:, :2])
                 dvsBatch['lbl'] = events[:, 2]          
                 appendBatch(dvsLbl, dvsBatch)
             elif bottleType == 'FLOW':
                 numEventsInBatch = int(len(events) / 4)
                 events = events.reshape(numEventsInBatch, 4)
-                dvsBatch, samplesBatch = decodeEvents24Bit(events[:, :2])
+                dvsBatch, samplesBatch = decodeEvents(events[:, :2])
                 dvsBatch['vx'] = events[:, 2]
                 dvsBatch['vy'] = events[:, 3]                
                 appendBatch(dvsFlow, dvsBatch)
             else: # bottleType in ['AE', 'IMUS']
                 numEventsInBatch = int(len(events) / 2)
                 events = events.reshape(numEventsInBatch, 2)
-                dvsBatch, samplesBatch = decodeEvents24Bit(events[:, :2])
+                dvsBatch, samplesBatch = decodeEvents(events[:, :2])
                 appendBatch(dvs, dvsBatch)
             appendBatch(samples, samplesBatch)
         except ValueError: # sometimes finding malformed packets at the end of files - ignoring
             continue
+    delattr(decodeEvents, "is24bitCodec")
     # Crop arrays to number of events
     cropArraysToNumEvents(dvs)
     cropArraysToNumEvents(dvsLbl)

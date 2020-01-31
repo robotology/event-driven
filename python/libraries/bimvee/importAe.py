@@ -104,7 +104,19 @@ def importAe(**kwargs):
     if fileFormat in ['iityarp', 'yarp', 'iit', 'log', 'yarplog']: 
         importedData = importIitYarp(**kwargs)
     elif fileFormat in ['rpgdvsros', 'rosbag', 'rpg', 'ros', 'bag', 'rpgdvs']:
-        importedData = importRpgDvsRos(kwargs)
+        # TODO find a better way to define the template
+        kwargs['template'] = {
+            'davis': {
+                'dvs': '/dvs/events',
+                'frame': '/dvs/image_raw',
+            },
+            'extra': {
+                'frame': '/dvs/depthmap',
+                'pose6q': '/dvs/pose'
+            }
+        }
+
+        importedData = importRpgDvsRos(**kwargs)
     #elif fileFormat in ['iniaedat', 'aedat', 'dat', 'jaer', 'caer', 'ini', 'inivation', 'inilabs']:        
     #    importedData = importIniAedat(kwargs)
     #elif fileFormat in ['secdvs', 'bin', 'samsung', 'sec', 'gen3']:
