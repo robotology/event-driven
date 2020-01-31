@@ -167,13 +167,15 @@
             id: perspective
             active: True
 
+<ControlButton@ButtonBehavior+Image>
+
 <RootWidget>
     orientation:'horizontal'
     data_controller: data_controller
-    GridLayout:
-        cols: 2
-        id: config
-        size_hint: .1, 1
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: .15, 1
+        spacing: 20
         padding: 10
         canvas:
             Color:
@@ -181,51 +183,82 @@
             Rectangle:
                 pos: self.x + self.width, self.y
                 size: 1, self.height
-        ConfigLabel:
-            text: 'Speed:\n1/{}x'.format(speed_slider.div_value)
-        ConfigSlider:
-            id: speed_slider
-            min: 1
-            max: 64
-            step: 1
-            value: 4
-            div_value: speed_slider.value/4
-        ConfigLabel:
-            text: 'Temporal\nwindow:\n{0:.1f}ms'.format(round(tw_slider.log_value*1000, 2-int(math.floor(math.log10(abs(tw_slider.log_value*1000))))-1))
-        ConfigSlider:
-            id: tw_slider
-            step: 0.01
-            min: -9.210
-            max: -0.693
-            value: -3.507
-            log_value: np.exp(tw_slider.value)
+        Image:
+            id: logo
+            source: 'graphics/IIT-EDR-logo-t1.png'
+            size_hint_y: .2
+        GridLayout:
+            cols: 2
+            id: config
+            ConfigLabel:
+                text: 'Speed:\n1/{}x'.format(speed_slider.div_value)
+            ConfigSlider:
+                disabled: not hasattr(data_controller.data_dict, 'data')
+                id: speed_slider
+                min: 1
+                max: 64
+                step: 1
+                value: 4
+                div_value: speed_slider.value/4
+            ConfigLabel:
+                text: 'Temporal\nwindow:\n{0:.1f}ms'.format(round(tw_slider.log_value*1000, 2-int(math.floor(math.log10(abs(tw_slider.log_value*1000))))-1))
+            ConfigSlider:
+                disabled: not hasattr(data_controller.data_dict, 'data')
+                id: tw_slider
+                step: 0.01
+                min: -9.210
+                max: -0.693
+                value: -3.507
+                log_value: np.exp(tw_slider.value)
+        GridLayout:
+            cols: 2
+            id: controls
+            size_hint_y: .35
+            spacing: 5
+            ControlButton:
+                disabled: not hasattr(data_controller.data_dict, 'data')
+                id: play_button
+                text: 'PLAY/\nPAUSE'
+                source: 'graphics/play_pause_off.png' if self.disabled else 'graphics/play_pause.png'
+                on_press:  self.source='graphics/play_pause_off.png'; time_slider.play_pause()
+                on_release:  self.source='graphics/play_pause.png';
+            ControlButton:
+                disabled: not hasattr(data_controller.data_dict, 'data')
+                id: stop_button
+                source: 'graphics/stop_off.png' if self.disabled else 'graphics/stop.png'
+                text: 'STOP'
+                on_press: self.source='graphics/stop_off.png'; time_slider.stop()
+                on_release:  self.source='graphics/stop.png';
+            ControlButton:
+                disabled: not hasattr(data_controller.data_dict, 'data')
+                id: slide_backward_button
+                source: 'graphics/slide_back_off.png' if self.disabled else 'graphics/slide_back.png'
+                text: '< SLIDE'
+                on_press: self.source='graphics/slide_back_off.png'; time_slider.play_backward()
+                on_release: self.source='graphics/slide_back.png'; time_slider.pause()
+            ControlButton:
+                disabled: not hasattr(data_controller.data_dict, 'data')
+                id: slide_forward_button
+                source: 'graphics/slide_off.png' if self.disabled else 'graphics/slide.png'
+                text: 'SLIDE >'
+                on_press: self.source='graphics/slide_off.png'; time_slider.play_forward()
+                on_release: self.source='graphics/slide.png'; time_slider.pause()
+            ControlButton:
+                disabled: not hasattr(data_controller.data_dict, 'data')
+                id: step_backward_button
+                source: 'graphics/step_back_off.png' if self.disabled else 'graphics/step_back.png'
+                text: '< STEP'
+                on_press: self.source='graphics/step_back_off.png'; time_slider.step_backward()
+                on_release:  self.source='graphics/step_back.png';
+            ControlButton:
+                disabled: not hasattr(data_controller.data_dict, 'data')
+                id: step_forward_button
+                source: 'graphics/step_off.png' if self.disabled else 'graphics/step.png'
+                text: 'STEP >'
+                on_press: self.source='graphics/step_off.png'; time_slider.step_forward()
+                on_release:  self.source='graphics/step.png';
         Button:
-            id: play_button
-            text: 'PLAY/\nPAUSE'
-            on_press: time_slider.play_pause()
-        Button:
-            id: stop_button
-            text: 'STOP'
-            on_press: time_slider.stop()
-        Button:
-            id: play_button
-            text: '< SLIDE'
-            on_press: time_slider.play_backward()
-            on_release: time_slider.pause()
-        Button:
-            id: play_button
-            text: 'SLIDE >'
-            on_press: time_slider.play_forward()
-            on_release: time_slider.pause()
-        Button:
-            id: play_button
-            text: '< STEP'
-            on_press: time_slider.step_backward()
-        Button:
-            id: play_button
-            text: 'STEP >'
-            on_press: time_slider.step_forward()
-        Button:
+            size_hint_y : .15
             text: 'Load'
             on_release: data_controller.show_load()
 
@@ -243,6 +276,7 @@
             time_window: tw_slider.log_value
             on_time_window: self.update_children()
         TimeSlider:
+            disabled: not hasattr(data_controller.data_dict, 'data')
             id: time_slider
             size_hint: 1, .03
             step: 0.001
