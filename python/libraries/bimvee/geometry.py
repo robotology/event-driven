@@ -102,14 +102,10 @@ def pose6qInterp(poseDict, time):
     return (locOut, qOut)
 
 # adapted from https://stackoverflow.com/questions/50387606/python-draw-line-between-two-coordinates-in-a-matrix
-# TODO: Y is zeroth dimension ...
 def draw_line(mat, x0, y0, x1, y1):
-    #if not (0 <= y0 < mat.shape[0] and 0 <= y1 < mat.shape[0] and
-    #        0 <= x0 < mat.shape[1] and 0 <= x1 < mat.shape[1]):
-    #    print('Invalid coordinates.')
-    #    return
     if (x0, y0) == (x1, y1):
-        mat[x0, y0] = 255
+        if x0 >= 0 and x0 < mat.shape[1] and y0 >= 0 and y0 < mat.shape[0]:
+            mat[x0, y0] = 255
         return
     # Swap axes if Y slope is smaller than X slope
     transpose = abs(x1 - x0) < abs(y1 - y0)
