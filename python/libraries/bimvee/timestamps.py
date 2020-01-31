@@ -131,7 +131,7 @@ def rezeroTimestampsForImportedDicts(importedDicts):
     for importedDict in importedDicts:
         rezeroTimestampsForAnImportedDict(importedDict)
         tsOffsetFromData = max(tsOffsetFromData, importedDict['info']['tsOffsetFromData'])
-        if 'tsOffsetFromInfo' in importedDict['info']:
+        if importedDict['info'].get('tsOffsetFromInfo', 0) != 0: # 0 is a placeholder used by the exporter - if it's zero, we assume it is not a real value that we care about.
             tsOffsetFromInfo = min(tsOffsetFromInfo, importedDict['info']['tsOffsetFromInfo'])
         else:
             allHaveInfoTsOffset = False
