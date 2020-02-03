@@ -20,7 +20,7 @@ importAe, and allow synchronised playback for each of the contained channels and
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-import os
+import sys, os
 os.environ['KIVY_NO_ARGS'] = 'T'
 
 # Optional import of tkinter allows setting of app size wrt screen size
@@ -60,11 +60,11 @@ from kivy.metrics import dp
 try:
     from visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
     from timestamps import getLastTimestamp
+    # To get the graphics, set this as the current working directory
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
 except ModuleNotFoundError:
     if __package__ is None:
-        import sys
-        from os import path
-        sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from libraries.bimvee.visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
     from libraries.bimvee.timestamps import getLastTimestamp
     
@@ -199,7 +199,7 @@ class DataController(GridLayout):
     
     def __init__(self, **kwargs):
         super(DataController, self).__init__(**kwargs)
-    
+
     def update_children(self):
         for child in self.children:
             child.get_frame(self.time_value, self.time_window)

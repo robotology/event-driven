@@ -139,7 +139,7 @@ def rezeroTimestampsForImportedDicts(importedDicts):
         return
     # Now we have the extreme tsOffsets, iterate through all, reapplying 
     for importedDict in importedDicts:
-        if allHaveInfoTsOffset:
+        if allHaveInfoTsOffset and len(importedDicts) > 1:
             if tsOffsetFromInfo == importedDict['info']['tsOffsetFromInfo']:
                 # The reason for this if clause is to catch a floating point 
                 # precision error due to mixing very big and very small timestamps. 
