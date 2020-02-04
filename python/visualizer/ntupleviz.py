@@ -19,7 +19,6 @@ importAe, and allow synchronised playback for each of the contained channels and
 # standard imports 
 import matplotlib.pyplot as plt
 import numpy as np
-import math
 import sys, os
 os.environ['KIVY_NO_ARGS'] = 'T'
 
