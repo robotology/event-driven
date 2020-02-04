@@ -24,3 +24,5 @@ build-pc104/
 .idea/
 documentation/images/*
 matlab/alogrithms/LK_Template_Tracking_version3a/
+*.pyc
+
