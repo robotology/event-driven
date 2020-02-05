@@ -78,7 +78,7 @@ visualizerApp.root.data_controller.data_dict = container
 # http://rpg.ifi.uzh.ch/davis_data.html
 from importRpgDvsRos import importRpgDvsRos
     
-filePathOrName = os.path.join(prefix, 'data/rpg/simulation_3planes.bag')
+filePathOrName = os.path.join(prefix, 'data/rpg/simulation_3walls.bag')
 
 template = {
     'davis': {
@@ -91,18 +91,13 @@ template = {
         }
     }
 
-template = {
-    'extra': {
-        'pose6q': '/dvs/pose'
-        }
-    }
-
 container = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
 
 visualizerApp.root.data_controller.data_dict = container
 
 #%% Experiment with pose interpolation
 
+pose = container['data']['extra']['pose6q']
 toKeep = [0, 300, 600, 900, 1200, 1500, 1800, 1999]
 poseKept = {} 
 poseKept['ts'] = pose['ts'][toKeep]
@@ -118,8 +113,7 @@ visualizerApp.root.data_controller.data_dict = container
 # http://rpg.ifi.uzh.ch/davis_data.html
 from importRpgDvsRos import importRpgDvsRos
     
-filePathOrName = os.path.join(prefix, 'data/rpg/shapes_rotation.bag')
-filePathOrName = os.path.join(prefix, 'data/rpg/dynamic_6dof.bag')
+filePathOrName = os.path.join(prefix, 'data/rpg/shapes_translation.bag')
 
 template = {
     'davis': {
