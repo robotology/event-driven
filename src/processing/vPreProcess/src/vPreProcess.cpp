@@ -100,6 +100,8 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
             rf.check("precheck", Value(true)).asBool();
     split_stereo = rf.check("split_stereo") &&
             rf.check("split_stereo", Value(true)).asBool();
+    split_polarities = rf.check("split_polarities") &&
+                       rf.check("split_polarities", Value(false)).asBool();
     combined_stereo = rf.check("combined_stereo") &&
             rf.check("combined_stereo", Value(true)).asBool();
     use_local_stamp = rf.check("local_stamp") &&
@@ -121,6 +123,8 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
         yInfo() << "Applying camera undistortion";
     if(split_stereo)
         yInfo() << "Splitting into left/right streams";
+    if(split_polarities)
+        yInfo() << "Splitting into positive/negative streams";
     if(combined_stereo)
         yInfo() << "Producing combined stereo output";
 
@@ -169,18 +173,36 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
 bool vPreProcess::threadInit()
 {
     if(split_stereo) {
-        if(!outPortCamLeft.open(getName() + "/left:o"))
-            return false;
-        if(!outPortCamRight.open(getName() + "/right:o"))
-            return false;
+        if(split_polarities){
+            if(!outPortCamLeft_pos.open(getName() + "/left_pos:o"))
+                return false;
+            if(!outPortCamRight_pos.open(getName() + "/right_pos:o"))
+                return false;
+            if(!outPortCamLeft_neg.open(getName() + "/left_neg:o"))
+                return false;
+            if(!outPortCamRight_neg.open(getName() + "/right_neg:o"))
+                return false;
+        } else {
+            if (!outPortCamLeft.open(getName() + "/left:o"))
+                return false;
+            if (!outPortCamRight.open(getName() + "/right:o"))
+                return false;
+        }
         if(!out_port_aps_left.open(getName() + "/aps_left:o"))
             return false;
         if(!out_port_aps_right.open(getName() + "/aps_right:o"))
             return false;
     }
     if(combined_stereo) {
-        if(!outPortCamStereo.open(getName() + "/AE:o"))
-            return false;
+        if (split_polarities) {
+            if (!outPortCamStereo_pos.open(getName() + "/AE_pos:o"))
+                return false;
+            if (!outPortCamStereo_neg.open(getName() + "/AE_neg:o"))
+                return false;
+        } else {
+            if (!outPortCamStereo.open(getName() + "/AE:o"))
+                return false;
+        }
         if(!out_port_aps_stereo.open(getName() + "/APS:o"))
             return false;
     }
@@ -273,6 +295,8 @@ void vPreProcess::run()
 
         double pyt = zynq_stamp.getTime();
 
+        std::deque<AE> qleft_pos, qright_pos, qstereo_pos;
+        std::deque<AE> qleft_neg, qright_neg, qstereo_neg;
         std::deque<AE> qleft, qright, qstereo;
         std::deque<int32_t> qskin;
         std::deque<int32_t> qskinsamples;
@@ -364,15 +388,30 @@ void vPreProcess::run()
                         if(v.type)
                             qright_aps.push_back(v);
                         else
-                            qright.push_back(v);
+                            if (split_polarities){
+                                if (v.polarity){
+                                    qright_pos.push_back(v);
+                                } else {
+                                    qright_neg.push_back(v);
+                                }
+                            } else {
+                                qright.push_back(v);
+                            }
                     }
                     else
                     {
                         if(v.type)
                             qleft_aps.push_back(v);
                         else
+                        if (split_polarities){
+                            if (v.polarity){
+                                qleft_pos.push_back(v);
+                            } else {
+                                qleft_neg.push_back(v);
+                            }
+                        } else {
                             qleft.push_back(v);
-                    }
+                        }                    }
                 }
                 if(combined_stereo)
                 {
@@ -382,7 +421,7 @@ void vPreProcess::run()
                         qstereo.push_back(v);
                 }
             }
-            
+
         }
 
         if(qskinsamples.size()) { //if we have skin samples
@@ -424,6 +463,18 @@ void vPreProcess::run()
         }
         if(qright.size()) {
             outPortCamRight.write(qright, zynq_stamp);
+        }
+        if(qleft_pos.size()) {
+            outPortCamLeft_pos.write(qleft_pos, zynq_stamp);
+        }
+        if(qleft_neg.size()) {
+            outPortCamLeft_neg.write(qleft_neg, zynq_stamp);
+        }
+        if(qright_pos.size()) {
+            outPortCamRight_pos.write(qright_pos, zynq_stamp);
+        }
+        if(qright_neg.size()) {
+            outPortCamRight_neg.write(qright_neg, zynq_stamp);
         }
         if(qstereo.size()) {
             outPortCamStereo.write(qstereo, zynq_stamp);

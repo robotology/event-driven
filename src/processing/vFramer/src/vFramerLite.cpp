@@ -47,6 +47,8 @@ vDraw * createDrawer(std::string tag)
 
     if(tag == addressDraw::drawtype)
         return new addressDraw();
+    if(tag == binaryDraw::drawtype)
+        return new binaryDraw();
     if(tag == grayDraw::drawtype)
         return new grayDraw();
     if(tag == blackDraw::drawtype)

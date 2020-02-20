@@ -38,13 +38,25 @@ private:
 
     ev::vReadPort < vector<int32_t> > inPort;
     ev::vWritePort outPortCamLeft;
+    ev::vWritePort outPortCamLeft_pos;
+    ev::vWritePort outPortCamLeft_neg;
     ev::vWritePort outPortCamRight;
+    ev::vWritePort outPortCamRight_pos;
+    ev::vWritePort outPortCamRight_neg;
     ev::vWritePort outPortCamStereo;
+    ev::vWritePort outPortCamStereo_pos;
+    ev::vWritePort outPortCamStereo_neg;
     ev::vWritePort outPortSkin;
     ev::vWritePort outPortSkinSamples;
     ev::vWritePort out_port_aps_left;
+    ev::vWritePort out_port_aps_left_pos;
+    ev::vWritePort out_port_aps_left_neg;
     ev::vWritePort out_port_aps_right;
+    ev::vWritePort out_port_aps_right_pos;
+    ev::vWritePort out_port_aps_right_neg;
     ev::vWritePort out_port_aps_stereo;
+    ev::vWritePort out_port_aps_stereo_pos;
+    ev::vWritePort out_port_aps_stereo_neg;
     ev::vWritePort out_port_imu_samples;
     ev::vWritePort out_port_audio;
 
@@ -71,6 +83,7 @@ private:
 
     //output
     bool split_stereo;
+    bool split_polarities;
     bool combined_stereo;
     bool use_local_stamp;
 
