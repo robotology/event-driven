@@ -298,7 +298,7 @@ void binaryDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             x = Xlimit - 1 - x;
         }
 
-            image.at<uint8_t>(y, x) = 0;
+            image.at<uchar>(y, x) = 0;
     }
     /*
     cv::Mat kernel = (cv::Mat_<float>(3,3) <<
@@ -314,7 +314,12 @@ void binaryDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     */
 }
 
-
+void binaryDraw::resetImage(cv::Mat &image)
+{
+    if(image.empty())
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC1);
+    image.setTo(255);
+}
 // STEREO OVERLAY DRAW //
 // =================== //
 

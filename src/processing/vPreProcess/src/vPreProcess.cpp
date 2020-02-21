@@ -101,7 +101,7 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
     split_stereo = rf.check("split_stereo") &&
             rf.check("split_stereo", Value(true)).asBool();
     split_polarities = rf.check("split_polarities") &&
-                       rf.check("split_polarities", Value(false)).asBool();
+                       rf.check("split_polarities", Value(true)).asBool();
     combined_stereo = rf.check("combined_stereo") &&
             rf.check("combined_stereo", Value(true)).asBool();
     use_local_stamp = rf.check("local_stamp") &&
@@ -418,7 +418,15 @@ void vPreProcess::run()
                     if(v.type)
                         qstereo_aps.push_back(v);
                     else
-                        qstereo.push_back(v);
+                        if (split_polarities) {
+                            if (v.polarity){
+                                qstereo_pos.push_back(v);
+                            } else {
+                                qstereo_neg.push_back(v);
+                            }
+                        } else {
+                            qstereo.push_back(v);
+                        }
                 }
             }
 
@@ -478,6 +486,12 @@ void vPreProcess::run()
         }
         if(qstereo.size()) {
             outPortCamStereo.write(qstereo, zynq_stamp);
+        }
+        if(qstereo_pos.size()) {
+            outPortCamStereo_pos.write(qstereo_pos, zynq_stamp);
+        }
+        if(qstereo_neg.size()) {
+            outPortCamStereo_neg.write(qstereo_neg, zynq_stamp);
         }
         if(qskin.size()) {
             outPortSkin.write(qskin, zynq_stamp);

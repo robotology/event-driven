@@ -147,7 +147,7 @@ bool channelInstance::addDrawer(string drawer_name, unsigned int width,
 
 bool channelInstance::threadInit()
 {
-    return image_port.open(channel_name + "/image:o");
+    return true;
 }
 
 bool channelInstance::updateQs()
@@ -225,10 +225,24 @@ void channelInstance::run()
         (*drawer_i)->draw(canvas, event_qs[(*drawer_i)->getEventType()], -1);
     }
 
-    image_port.prepare().copy(yarp::cv::fromCvMat<PixelBgr>(canvas));
-    ts.update();
-    image_port.setEnvelope(ts);
-    image_port.write();
+    //TODO Output image ports will only open after first run. Find way to open ports in threadInit instead.
+    if (canvas.type() == CV_8UC3) {
+        if (image_port.isClosed()) {
+            image_port.open(channel_name + "/image:o");
+        }
+        image_port.prepare().copy(yarp::cv::fromCvMat<PixelBgr>(canvas));
+        ts.update();
+        image_port.setEnvelope(ts);
+        image_port.write();
+    } else if (canvas.type() == CV_8UC1) {
+        if (image_port_mono.isClosed()) {
+            image_port_mono.open(channel_name + "/image:o");
+        }
+        image_port_mono.prepare().copy(yarp::cv::fromCvMat<PixelMono>(canvas));
+        ts.update();
+        image_port_mono.setEnvelope(ts);
+        image_port_mono.write();
+    }
 
 }
 

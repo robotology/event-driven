@@ -36,6 +36,7 @@ using namespace ev;
 using namespace yarp::os;
 using yarp::sig::ImageOf;
 using yarp::sig::PixelBgr;
+using yarp::sig::PixelMono;
 using std::vector;
 using std::deque;
 using std::string;
@@ -54,6 +55,7 @@ private:
     map<string, vQueue> event_qs;
     vector<vDraw *> drawers;
     BufferedPort< ImageOf<PixelBgr> > image_port;
+    BufferedPort< ImageOf<PixelMono> > image_port_mono;
     vIPT unwarp;
     bool calib_configured;
 
@@ -162,7 +164,7 @@ public:
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
     virtual std::string getDrawType();
     virtual std::string getEventType();
-
+    virtual void resetImage(cv::Mat &image);
 };
 
 class circleDraw : public vDraw {
