@@ -214,6 +214,8 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         }
     }
 
+    if (image.type() == CV_8UC1)
+        cv::cvtColor(image, image, CV_GRAY2RGB);
     if(!image.empty()) {
         for(int y = 0; y < image.rows; y++) {
             for(int x = 0; x < image.cols; x++) {

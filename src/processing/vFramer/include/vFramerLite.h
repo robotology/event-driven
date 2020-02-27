@@ -37,6 +37,7 @@ using namespace yarp::os;
 using yarp::sig::ImageOf;
 using yarp::sig::PixelBgr;
 using yarp::sig::PixelMono;
+using yarp::sig::FlexImage;
 using std::vector;
 using std::deque;
 using std::string;
@@ -54,8 +55,7 @@ private:
     map<string, vReadPort<vQueue> > read_ports;
     map<string, vQueue> event_qs;
     vector<vDraw *> drawers;
-    BufferedPort< ImageOf<PixelBgr> > image_port;
-    BufferedPort< ImageOf<PixelMono> > image_port_mono;
+    BufferedPort< FlexImage > image_port;
     vIPT unwarp;
     bool calib_configured;
 
