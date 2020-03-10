@@ -46,6 +46,8 @@ from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.textinput import TextInput
+from kivy.uix.spinner import Spinner
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.uix.checkbox import CheckBox
@@ -82,6 +84,45 @@ class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
     load_path = StringProperty(None)
+
+class DictEditor(GridLayout):
+    dict = DictProperty(None)
+
+    def on_dict(self, instance, value):
+        for n, topic in enumerate(sorted(value)):
+            check_box = CheckBox()
+            self.add_widget(check_box)
+            self.add_widget(TextInput(text=str(n)))
+            spinner = Spinner(values=['dvs', 'frame', 'pose6q', 'cam', 'imu'])
+            if 'events' in topic:
+                spinner.text = 'dvs'
+                check_box.active = True
+            elif 'image' in topic or 'depthmap' in topic:
+                spinner.text = 'frame'
+                check_box.active = True
+            elif 'pose' in topic:
+                spinner.text = 'pose6q'
+                check_box.active = True
+
+            self.add_widget(spinner)
+            self.add_widget(TextInput(text=topic))
+
+    def get_dict(self):
+        from collections import defaultdict
+        out_dict = defaultdict(dict)
+        for dict_row in np.array(self.children[::-1]).reshape((-1, self.cols))[1:]:
+            if not dict_row[0].active:
+                continue
+            ch = dict_row[1].text
+            type = dict_row[2].text
+            data = dict_row[3].text
+            out_dict[ch][type] = data
+        return out_dict
+
+class TemplateDialog(FloatLayout):
+    template = DictProperty(None)
+    cancel = ObjectProperty(None)
+    load = ObjectProperty(None)
 
 class Viewer(BoxLayout):
     labels = ListProperty()
@@ -193,7 +234,7 @@ class ViewerPose6q(Viewer):
    
 class DataController(GridLayout):
     ending_time = NumericProperty(.0)
-    file_path_or_name = StringProperty('')
+    filePathOrName = StringProperty('')
     data_dict = DictProperty({}) # A bimvee-style container of channels
     
     def __init__(self, **kwargs):
@@ -244,26 +285,44 @@ class DataController(GridLayout):
         self.add_viewer_for_each_channel_and_data_type(self.data_dict)
 
     def dismiss_popup(self):
-        self._popup.dismiss()
+        if hasattr(self, '_popup'):
+            self._popup.dismiss()
+
+    def show_template_dialog(self, topics):
+        self.dismiss_popup()
+        content = TemplateDialog(template=topics,
+                                 cancel=self.dismiss_popup,
+                                 load=self.load)
+        self._popup = Popup(title="Define template", content=content,
+                            size_hint=(0.9, 0.9))
+        self._popup.open()
 
     def show_load(self):
+        self.dismiss_popup()
         content = LoadDialog(load=self.load,
                              cancel=self.dismiss_popup)
         self._popup = Popup(title="Load file", content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
 
-    def load(self, path, selection):
+    def load(self, path, selection, template=None):
         self.dismiss_popup()
         from libraries.bimvee.importAe import importAe
         from os.path import join
 
-        if selection:
-            filePathOrName=join(path, selection[0])
-        else:
-            filePathOrName=path
+        # If both path and selection are None than it will try to reload previously given path
+        if path is not None or selection is not None:
+            if selection:
+                self.filePathOrName=join(path, selection[0])
+            else:
+                self.filePathOrName=path
 
-        self.data_dict = importAe(filePathOrName=filePathOrName)
+        try:
+            self.data_dict = importAe(filePathOrName=self.filePathOrName, template=template)
+        except ValueError:
+            from libraries.bimvee.importRpgDvsRos import importRosbag
+            topics = importRosbag(filePathOrName=self.filePathOrName)
+            self.show_template_dialog(topics)
 
         self.update_children()
 

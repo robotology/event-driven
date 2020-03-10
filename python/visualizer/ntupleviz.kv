@@ -11,6 +11,41 @@
     size_hint: .2, .3
     orientation: 'vertical'
 
+<DictEditor@GridLayout>
+    cols: 4
+    padding: 10
+    spacing: 10
+    row_default_height: 50
+    row_force_default: True
+    Label:
+        text: "Selection"
+    Label:
+        text: "Channels"
+    Label:
+        text: "Type"
+    Label:
+        text: "Topic"
+
+
+<TemplateDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        DictEditor:
+            dict: root.template
+            id: dict_editor
+        BoxLayout:
+            size_hint_y: .2
+            padding: 10
+            spacing: 10
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+            Button:
+                text: "OK"
+                on_release: root.load(None, None, dict_editor.get_dict())
+
 <LoadDialog>:
     BoxLayout:
         size: root.size
@@ -22,9 +57,11 @@
             path: "~" #root.load_path
         Label:
             text: filechooser.path
+            size_hint_y: .05
         BoxLayout:
-            size_hint_y: None
-            height: 30
+            size_hint_y: .2
+            padding: 10
+            spacing: 10
             Button:
                 text: "Cancel"
                 on_release: root.cancel()
@@ -290,4 +327,4 @@
             text: '{0:.3f}/{1:.3f} sec'.format(time_slider.value, time_slider.max)
         Label:
             size_hint: 1, .03
-            text: data_controller.file_path_and_name
+            text: data_controller.filePathOrName
