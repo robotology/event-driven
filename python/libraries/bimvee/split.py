@@ -117,6 +117,8 @@ def cropTime(inDict, **kwargs):
                     outDict[fieldName] = field[startIdx:stopIdx]
                 except IndexError:
                     outDict[fieldName] = field.copy() # This might fail for certain data types
+                except TypeError:
+                    outDict[fieldName] = field # This might fail for certain data types
         if kwargs.get('zeroTime', True):
             tsOffsetOriginal = inDict.get('tsOffset', 0)
             outDict['tsOffset'] = tsOffsetOriginal - startTime

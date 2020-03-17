@@ -190,7 +190,7 @@ def exportDvs(dataFile, data, **kwargs):
         nextPtr = np.searchsorted(data['ts'], firstTs + minTimeStepPerBottle)
         pbar.update(nextPtr-ptr)
         bottleStrs.append(str(bottleNumber) + ' ' + 
-                       str(firstTs) + ' AE (' +
+                       '{0:.6f}'.format(firstTs) + ' AE (' +
                        ' '.join(eventsAsListOfStrings[ptr*2 : nextPtr*2]) + ')')
         ptr = nextPtr
         bottleNumber += 1 
@@ -310,7 +310,7 @@ def exportImu(dataFile, data, **kwargs):
         pbar.update(nextPtr-ptr)
         # Why 20 in the following? Because there are 10 samples per imu and 2 ints per sample that need to be included. 
         bottleStrs.append(str(bottleNumber) + ' ' + 
-                       str(firstTs) + ' IMUS (' +
+                       '{0:.6f}'.format(firstTs) + ' IMUS (' +
                        ' '.join(eventsAsListOfStrings[ptr*20 : nextPtr*20]) + ')')
         ptr = nextPtr
         bottleNumber += 1 
@@ -359,7 +359,7 @@ def exportSample(dataFile, data, **kwargs):
         pbar.update(nextPtr-ptr)
         # Why 20 in the following? Because there are 10 samples per imu and 2 ints per sample that need to be included. 
         bottleStrs.append(str(bottleNumber) + ' ' + 
-                       str(firstTs) + ' IMUS (' +
+                       '{0:.6f}'.format(firstTs) + ' IMUS (' +
                        ' '.join(eventsAsListOfStrings[ptr*2 : nextPtr*2]) + ')')
         ptr = nextPtr
         bottleNumber += 1 

@@ -24,11 +24,15 @@ to get bundled together. All files are included in both the import and export sc
 #%%
 
 import hickle
+import os
 
 def exportHdf5(data, exportFilePathAndName='./temp.hdf5'):
     if exportFilePathAndName[-5:] != '.hdf5':
         exportFilePathAndName = exportFilePathAndName + '.hdf5'
     print('exportHdf5 called, targeting file path and name' + exportFilePathAndName)
+    absPath = os.path.dirname(os.path.abspath(exportFilePathAndName))
+    if not os.path.exists(absPath):
+        os.mkdir(absPath)
     hickle.dump(data, exportFilePathAndName)
     
 def importHdf5(filePathOrName='./temp.hdf5'):

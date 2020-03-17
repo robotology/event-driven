@@ -244,7 +244,7 @@ def plotDvsContrast(inDict, **kwargs):
             'x': inDict['x'][firstEventIdx:lastEventIdx],
             'y': inDict['y'][firstEventIdx:lastEventIdx],
             'pol': inDict['pol'][firstEventIdx:lastEventIdx],
-            'ts': inDict['pol'][firstEventIdx:lastEventIdx]
+            'ts': inDict['ts'][firstEventIdx:lastEventIdx]
                 }
         kwargs['title'] = title
         image = plotDvsContrastSingle(inDict=dvsDataDict, axes=axes, **kwargs)
