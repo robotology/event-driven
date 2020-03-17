@@ -47,7 +47,6 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.textinput import TextInput
-from kivy.uix.spinner import Spinner
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.uix.checkbox import CheckBox
@@ -85,10 +84,14 @@ class LoadDialog(FloatLayout):
     cancel = ObjectProperty(None)
     load_path = StringProperty(None)
 
+
 class DictEditor(GridLayout):
     dict = DictProperty(None)
 
     def on_dict(self, instance, value):
+        # 2020_03_10 Sim: Why only import Spinner here? at the top of the file 
+        # it was causing a crash when starting in a thread - no idea why
+        from kivy.uix.spinner import Spinner
         for n, topic in enumerate(sorted(value)):
             check_box = CheckBox()
             self.add_widget(check_box)
@@ -284,7 +287,7 @@ class DataController(GridLayout):
             print('Removed an old viewer; num remaining viewers: ' + str(len(self.children)))
         self.add_viewer_for_each_channel_and_data_type(self.data_dict)
 
-    def dismiss_popup(self):
+    def dismiss_popup(self): 
         if hasattr(self, '_popup'):
             self._popup.dismiss()
 
@@ -296,6 +299,7 @@ class DataController(GridLayout):
         self._popup = Popup(title="Define template", content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
+                
 
     def show_load(self):
         self.dismiss_popup()
@@ -307,7 +311,11 @@ class DataController(GridLayout):
 
     def load(self, path, selection, template=None):
         self.dismiss_popup()
-        from libraries.bimvee.importAe import importAe
+        try:
+            from importAe import importAe
+        except ModuleNotFoundError:
+            from libraries.bimvee.importAe import importAe
+
         from os.path import join
 
         # If both path and selection are None than it will try to reload previously given path
@@ -320,12 +328,14 @@ class DataController(GridLayout):
         try:
             self.data_dict = importAe(filePathOrName=self.filePathOrName, template=template)
         except ValueError:
-            from libraries.bimvee.importRpgDvsRos import importRosbag
+            try:
+                from importRpgDvsRos import importRosbag
+            except ModuleNotFoundError:
+                from libraries.bimvee.importRpgDvsRos import importRosbag
             topics = importRosbag(filePathOrName=self.filePathOrName)
             self.show_template_dialog(topics)
 
         self.update_children()
-
 
 #    def dismiss_popup(self):
 #        if self._popup is not None:

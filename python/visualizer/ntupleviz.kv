@@ -32,9 +32,13 @@
         size: root.size
         pos: root.pos
         orientation: "vertical"
-        DictEditor:
-            dict: root.template
-            id: dict_editor
+        ScrollView:
+            do_scroll_y: True
+            DictEditor:
+                height: self.minimum_height
+                size_hint_y: None
+                dict: root.template
+                id: dict_editor
         BoxLayout:
             size_hint_y: .2
             padding: 10

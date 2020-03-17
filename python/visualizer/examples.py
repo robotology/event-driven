@@ -62,7 +62,7 @@ filePathOrName = os.path.join(prefix, "data/2019_11_11_AikoImu/linear_100/ATIS")
 container = importIitYarp(filePathOrName=filePathOrName, tsBits=30)
 
 # Having loaded a dvs dataDict - poke it into the dsm
-visualizerApp.root.data_controller.data_dict = container
+visualizerApp.root.data_controller.data_dict = imported
 
 #%% Load some different data and push it in
 
