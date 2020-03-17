@@ -284,11 +284,11 @@ void binaryDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
 
         int dt = vTime - (*qi)->stamp;
-        if(dt < 0) dt += ev::vtsHelper::max_stamp;
-        if((unsigned int)dt > display_window) break;
+        if (dt < 0) dt += ev::vtsHelper::max_stamp;
+        if ((unsigned int) dt > display_window) break;
 
         auto aep = is_event<AddressEvent>(*qi);
-        if(!aep) continue;
+        if (!aep) continue;
 
         int y = aep->y;
         int x = aep->x;
@@ -298,20 +298,8 @@ void binaryDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             x = Xlimit - 1 - x;
         }
 
-            image.at<uchar>(y, x) = 0;
+        image.at<uchar>(y, x) = 0;
     }
-    /*
-    cv::Mat kernel = (cv::Mat_<float>(3,3) <<
-        1,  1, 1,
-        1, -8, 1,
-        1,  1, 1);
-
-    imgLaplacian = Mat::zeros(img.size());
-    filter2D(img, imgLaplacian, kernel);
-
-    cv::GaussianBlur(image, temp, cv::Size(3,3), 3);
-    cv::addWeighted(temp, 1.5, image, -0.5, 0, image);
-    */
 }
 
 void binaryDraw::resetImage(cv::Mat &image)

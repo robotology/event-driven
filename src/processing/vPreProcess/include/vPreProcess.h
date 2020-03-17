@@ -49,14 +49,8 @@ private:
     ev::vWritePort outPortSkin;
     ev::vWritePort outPortSkinSamples;
     ev::vWritePort out_port_aps_left;
-    ev::vWritePort out_port_aps_left_pos;
-    ev::vWritePort out_port_aps_left_neg;
     ev::vWritePort out_port_aps_right;
-    ev::vWritePort out_port_aps_right_pos;
-    ev::vWritePort out_port_aps_right_neg;
     ev::vWritePort out_port_aps_stereo;
-    ev::vWritePort out_port_aps_stereo_pos;
-    ev::vWritePort out_port_aps_stereo_neg;
     ev::vWritePort out_port_imu_samples;
     ev::vWritePort out_port_audio;
 
