@@ -27,6 +27,9 @@ sudo apt install [TODO]
 ```
 ### Note 2:
 The newest YARP requires CMake>3.5, which is not installable via `apt` on the Debian 8.10 (jessie) distribution we have installed on the zynq. To upgrade CMake you need to install it via backports (reference: https://backports.debian.org/Instructions).
+
+:warning: these instructions are out of date (see this [solution](https://unix.stackexchange.com/questions/508724/failed-to-fetch-jessie-backports-repository))
+
 To do so:
 - add to `/etc/apt/sources.list` the line below:
     ```bash
@@ -64,7 +67,7 @@ sudo vim /etc/rc.local
 ```
 Add lines:
 ```bash
-insmod /home/icub/iit-hpucore-dma.ko rx_pn=1024 rx_ps=8096 rx_to=5000
+insmod /home/icub/iit-hpucore-dma.ko rx_pn=1024 rx_ps=8192 rx_to=5000
 ```
 ## Misc
 

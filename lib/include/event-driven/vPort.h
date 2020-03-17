@@ -44,7 +44,6 @@ protected:
     //data
     const char * datablock;
     unsigned int datalength; //<- set the number of bytes here
-    vector<int32_t> internaldata;
     string event_type;
     unsigned int ints_to_read; //<- in integers
 
@@ -53,6 +52,8 @@ protected:
     unsigned int elementBYTES;
 
 public:
+
+    vector<int32_t> internaldata;
 
     /// \brief instantiate the correct headers for a Bottle
     vPortableInterface() {
@@ -115,6 +116,27 @@ public:
     /// \brief send an entire vQueue. The queue is encoded and allocated
     /// into a single contiguous memory space. Faster than a standard vBottle.
     template <typename T> void setInternalData(const std::deque<T> &q) {
+
+        if(header2 != T::tag)
+            setHeader(T::tag);
+
+        header3[1] = elementINTS * q.size(); //number of ints
+
+        if((int)internaldata.size() < header3[1]) //increase internal mem if needed
+            internaldata.resize(header3[1]);
+
+        unsigned int pos = 0;
+        for(unsigned int i = 0; i < q.size(); i++)  //decode the data into
+            q[i].encode(internaldata, pos);        //internal memeory
+
+        if(pos != (unsigned int)header3[1])
+            yError() << "vPortInterface: encoding incorrect";
+
+        this->datablock = (const char *)internaldata.data();
+        this->datalength = elementBYTES * q.size();
+    }
+
+    template <typename T> void setInternalData(const std::vector<T> &q) {
 
         if(header2 != T::tag)
             setHeader(T::tag);
@@ -202,6 +224,14 @@ public:
             return false;
         }
 
+        if(ints_to_read % event_size) {
+            yError() << "Data corruption: incompatible data size."
+                     << ints_to_read << "32 bit ints, but needed a multiple of"
+                     << event_size;
+            return false;
+        }
+
+
         event<> v = createEvent(event_type);
         if(v == nullptr) {
             yError() << "Cannot create new event of type:" << event_type;
@@ -225,8 +255,16 @@ public:
             return false;
         }
 
+        auto event_size = packetSize(event_type);
+        if(ints_to_read % event_size) {
+            yError() << "Data corruption: incompatible data size."
+                     << ints_to_read << "32 bit ints, but needed a multiple of"
+                     << event_size;
+            return false;
+        }
+
         const int32_t *data = internaldata.data();
-        read_q.resize(ints_to_read / packetSize(event_type));
+        read_q.resize(ints_to_read / event_size);
         for(unsigned int i = 0; i < read_q.size(); i++) {
             read_q[i].decode(data);
         }
@@ -309,6 +347,12 @@ public:
         return _internal_write(envelope);
     }
 
+    template <class T> bool write(const std::vector<T> &q, Stamp &envelope)
+    {
+        internal_storage.setInternalData<T>(q);
+        return _internal_write(envelope);
+    }
+
 };
 
 template <class T> class vReadPort : public Thread
@@ -319,9 +363,12 @@ protected:
     vPortableInterface internal_storage;
     Port port;
 
+    T *working_queue;
     deque< T* > qq;
     deque<Stamp> sq;
-    T *working_queue;
+    deque<int> t_q;
+    deque<int> n_q;
+
 
     Mutex m;
     Mutex read_mutex;
@@ -332,6 +379,7 @@ protected:
     unsigned int delay_nv;
     long unsigned int delay_t;
     double event_rate;
+    int p_time;
 
 
 public:
@@ -345,6 +393,7 @@ public:
         event_rate = 0;
         unprocdqs = 0;
         working_queue = nullptr;
+        p_time = 0;
 
         setPriority(99, SCHED_FIFO);
 
@@ -365,7 +414,6 @@ public:
 
     bool open(std::string name)
     {
-        //port.setTimeout(1.0);
         if(!port.open(name)) {
             yError() << "Could not open vGenReadPort input port: " << name;
             return false;
@@ -429,13 +477,13 @@ public:
 
             unprocdqs++;
 
-            int q_events = countEvents<T>(*next_queue);
-            int q_time = countTime<T>(*next_queue);
+            n_q.push_back(countEvents<T>(*next_queue));
+            t_q.push_back(countTime<T>(*next_queue, p_time));
 
-            delay_nv += q_events;
-            delay_t += q_time;
-            if(q_time)
-                event_rate = q_events / (double)q_time;
+            delay_nv += n_q.back();
+            delay_t += t_q.back();
+            if(t_q.back())
+                event_rate = n_q.back() / (double)(t_q.back());
 
             m.unlock();
 
@@ -445,14 +493,17 @@ public:
 
     }
 
-    /// \brief ask for a pointer to the next vQueue. Blocks if no data is ready.
-    const T* read(yarp::os::Stamp &yarpstamp)
+    /// \brief ask for a pointer to the next vQueue.
+    /// if wait is true Blocks if no data is ready.
+    const T* read(yarp::os::Stamp &yarpstamp, bool wait = true)
     {
         if(working_queue) {
             m.lock();
 
-            delay_nv -= countEvents<T>(*qq.front());
-            delay_t -= countTime<T>(*qq.front());
+            delay_nv -= n_q.front();
+            n_q.pop_front();
+            delay_t  -= t_q.front();
+            t_q.pop_front();
 
             delete qq.front();
             qq.pop_front();
@@ -460,16 +511,29 @@ public:
             m.unlock();
         }
 
-        dataavailable.wait();
+        if(wait) {
+            dataavailable.wait();
 
-        if(qq.size()) {
-            yarpstamp = sq.front();
-            working_queue = qq.front();
-            m.lock();
-            unprocdqs--;
-            m.unlock();
-        }  else {
-            working_queue =  0;
+            if(qq.size()) {
+                yarpstamp = sq.front();
+                working_queue = qq.front();
+                m.lock();
+                unprocdqs--;
+                m.unlock();
+            }  else {
+                working_queue =  0;
+            }
+
+        } else {
+            if(dataavailable.check() && qq.size()) {
+                yarpstamp = sq.front();
+                working_queue = qq.front();
+                m.lock();
+                unprocdqs--;
+                m.unlock();
+            } else {
+                working_queue = 0;
+            }
         }
 
         return working_queue;
@@ -521,6 +585,12 @@ public:
                " time(s): " << queryDelayT() << " rate: " << queryRate();
         return oss.str();
     }
+
+    void setReporter(PortReport &reporter)
+    {
+        port.setReporter(reporter);
+    }
+
 
 };
 

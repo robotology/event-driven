@@ -138,16 +138,7 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
         int y = ofp->y;
         float vx = ofp->vx;
         float vy = ofp->vy;
-
-        if(flip) {
-            x = Xlimit - 1 - x;
-            y = Ylimit - 1 - y;
-            double temp; //i'm not sure this is correct for flipping velocity
-            temp = vx;  //shouldn't it just be vx = -vx and vy = -vy? (arren.)
-            vx = vy;
-            vy = temp;
-        }
-
+		
         vx_mean += vx;
         vy_mean += vy;
 
@@ -159,19 +150,19 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
         double angle = atan2(vy, vx);
 
         //Scale the arrow by a factor of three
-        p_end.x = (int) (p_start.x + hypotenuse * sin(angle));
-        p_end.y = (int) (p_start.y + hypotenuse * cos(angle));
+        p_end.x = (int) (p_start.x + hypotenuse * cos(angle));
+        p_end.y = (int) (p_start.y + hypotenuse * sin(angle));
 
         //Draw the main line of the arrow
         cv::line(image, p_start, p_end, line_color, line_thickness, 4);
 
         //Draw the tips of the arrow
-        p_start.x = (int) (p_end.x - 5*sin(angle + M_PI/4));
-        p_start.y = (int) (p_end.y - 5*cos(angle + M_PI/4));
+        p_start.x = (int) (p_end.x - 5*cos(angle + M_PI/4));
+        p_start.y = (int) (p_end.y - 5*sin(angle + M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_thickness, 4);
 
-        p_start.x = (int) (p_end.x - 5*sin(angle - M_PI/4));
-        p_start.y = (int) (p_end.y - 5*cos(angle - M_PI/4));
+        p_start.x = (int) (p_end.x - 5*cos(angle - M_PI/4));
+        p_start.y = (int) (p_end.y - 5*sin(angle - M_PI/4));
         cv::line(image, p_start, p_end, line_color, line_thickness, 4);
 
     }
@@ -183,19 +174,19 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
     p_start.y = Ylimit/2;
     double h = 15;
     double theta = atan2(vy_mean, vx_mean);
-    p_end.x = (int) (p_start.x + h * sin(theta));
-    p_end.y = (int) (p_start.y + h * cos(theta));
+    p_end.x = (int) (p_start.x + h * cos(theta));
+    p_end.y = (int) (p_start.y + h * sin(theta));
 
     cv::Scalar line_color2 = CV_RGB(0,255,0);
     cv::line(image, p_start, p_end, line_color2, 3, 4);
 
     //Draw the tips of the arrow
-    p_start.x = (int) (p_end.x - 5*sin(theta + M_PI/4));
-    p_start.y = (int) (p_end.y - 5*cos(theta + M_PI/4));
+    p_start.x = (int) (p_end.x - 5*cos(theta + M_PI/4));
+    p_start.y = (int) (p_end.y - 5*sin(theta + M_PI/4));
     cv::line(image, p_start, p_end, line_color2, 3, 4);
 
-    p_start.x = (int) (p_end.x - 5*sin(theta - M_PI/4));
-    p_start.y = (int) (p_end.y - 5*cos(theta - M_PI/4));
+    p_start.x = (int) (p_end.x - 5*cos(theta - M_PI/4));
+    p_start.y = (int) (p_end.y - 5*sin(theta - M_PI/4));
     cv::line(image, p_start, p_end, line_color2, 3, 4);
 
 }
@@ -582,9 +573,9 @@ void interestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     double notAlpha = 1.0 - alpha;
     int r = 2; // radius
     int d = r*2+1; // diameter
-    CvScalar c1 = CV_RGB(255, 0, 0);
-    CvScalar c2 = CV_RGB(60, 0, 255);
-    CvScalar c;
+    cv::Scalar c1 = CV_RGB(255, 0, 0);
+    cv::Scalar c2 = CV_RGB(60, 0, 255);
+    cv::Scalar c;
 
     ev::vQueue::const_reverse_iterator qi;
     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
