@@ -67,7 +67,8 @@ class Visualiser():
         self.set_data(data)
 
     def set_data(self, data):
-        self.__data = data
+        self.__data = {}
+        self.__data.update(data)
         
     def get_frame(self, time, timeWindow, **kwargs):
         return np.zeros((1, 1), dtype=np.uint8)
@@ -82,7 +83,8 @@ class VisualiserDvs(Visualiser):
         self.set_data(data)
 
     def set_data(self, data):
-        self.__data = data
+        self.__data = {}
+        self.__data.update(data)
         
     # TODO: There can be methods which better choose the best frame, or which create a visualisation which
     # respects the time_window parameter 
@@ -127,10 +129,14 @@ class VisualiserDvs(Visualiser):
 class VisualiserFrame(Visualiser):
 
     def set_data(self, data):
-        self.__data = data
+        self.__data = {}
+        self.__data.update(data)
        
-        if data['frames'][0].dtype != np.uint8:
-            data['frames'] = [(frame*255).astype(np.uint8) for frame in data['frames']] #TODO: assuming that it starts scaled in 0-1 - could have more general approach?
+        if self.__data['frames'][0].dtype != np.uint8:
+            # Convert to uint8, converting to fullscale accross the whole dataset
+            minValue = min([frame.min() for frame in self.__data['frames']])
+            maxValue = max([frame.max() for frame in self.__data['frames']])
+            self.__data['frames'] = [((frame-minValue)/(maxValue-minValue)*255).astype(np.uint8) for frame in data['frames']] #TODO: assuming that it starts scaled in 0-1 - could have more general approach?
     
     def get_colorfmt(self):
         try:
