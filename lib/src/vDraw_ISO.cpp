@@ -299,7 +299,7 @@ void isoDrawSkin::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if(px < 0 || px >= imagewidth || py < 0 || py >= imageheight) {
             continue;
         }
-        
+
         if(!aep->polarity) {
             //isoimage.at<cv::Vec3b>(py, px) = light_violet;
             cv::Point center(px,py);
@@ -417,4 +417,4 @@ void isoInterestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     image = isoimage - baseimage;
 
 }
-
+}
