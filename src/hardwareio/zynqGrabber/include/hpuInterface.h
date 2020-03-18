@@ -25,11 +25,6 @@
 #include <string>
 #include <vector>
 
-using namespace yarp::os;
-using namespace ev;
-using std::string;
-using std::vector;
-
 /******************************************************************************/
 //device2yarp
 /******************************************************************************/
@@ -40,8 +35,8 @@ private:
     //data buffer thread
     int fd;
     std::vector<unsigned char> data;
-    yarp::os::Port output_port;
-    Stamp yarp_stamp;
+    yarp::os::BufferedPort<ev::vPortableInterface> output_port;
+    yarp::os::Stamp yarp_stamp;
 
     //parameters
     unsigned int max_dma_pool_size;
@@ -67,8 +62,8 @@ protected:
 
     int fd;
     bool valid;
-    BufferedPort<Bottle> input_port;
-    vector<int> data_copy;
+    yarp::os::BufferedPort<Bottle> input_port;
+    std::vector<int> data_copy;
 
     unsigned int total_events;
 

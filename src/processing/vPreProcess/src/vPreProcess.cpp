@@ -156,7 +156,7 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
 
     if(undistort) {
 
-        if(calibrator.configure("camera", "stefi_calib.ini", 1))
+        if(calibrator.configure("camera", "atis_calib.ini", 1))
             calibrator.showMapProjections(3.0);
         else
             yWarning() << "Could not correctly configure the cameras";
@@ -336,7 +336,7 @@ void vPreProcess::run()
 
                 //salt and pepper filter (only to TD events)
                 if(apply_filter && !v.type) {
-                    if(v.polarity) {
+                    if(v.channel) {
                         if(!filter_right.check(v.x, v.y, v.polarity, v.stamp)) {
                             v_dropped++;
                             continue;
@@ -391,13 +391,9 @@ void vPreProcess::run()
                 if(received_half_sample) { // but we have it from last bottle
                     qskinsamples.push_front(salvage_sample[1]);
                     qskinsamples.push_front(salvage_sample[0]);
-                    yWarning() << "missing address but we have it from the previous packet";
                 } else { // otherwise we are misaligned due to missing data
                     qskinsamples.pop_front();
                     qskinsamples.pop_front();
-                    yWarning() << "missing address AND WE DROPPED IT";
-                    //yWarning() << qskinsamples.size() << qskinsamples[0] << qskinsamples[1] << qskinsamples.back();
-                    return;
                 }
             }
             received_half_sample = false; //either case the half sample is no longer valid
@@ -405,7 +401,6 @@ void vPreProcess::run()
             //check if we now have a cut event
             int samples_overrun = qskinsamples.size() % packetSize(SkinSample::tag);
             if(samples_overrun == 2) {
-                yWarning() << "missing value - saving address for next packet";
                 salvage_sample[1] = qskinsamples.back();
                 qskinsamples.pop_back();
                 salvage_sample[0] = qskinsamples.back();

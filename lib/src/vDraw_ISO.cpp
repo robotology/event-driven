@@ -361,8 +361,8 @@ void isoInterestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     int skip = 1 + eSet.size() / 50000;
 
     int r = 1;
-    CvScalar c1 = CV_RGB(255, 0, 0);
-    CvScalar c2 = CV_RGB(0, 255, 255);
+    cv::Scalar c1 = CV_RGB(255, 0, 0);
+    cv::Scalar c2 = CV_RGB(0, 255, 255);
 
     //ev::vQueue::const_iterator qi;
     //for(qi = eSet.begin(); qi != eSet.end(); qi += skip) {
@@ -418,4 +418,3 @@ void isoInterestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 }
 
-} //namespace ev::
