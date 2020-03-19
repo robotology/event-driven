@@ -70,8 +70,8 @@ def splitByPolarity(inDict):
         '1': {} }
     for key in inDict:
         if type(inDict[key]) == np.ndarray:
-            outDict['0'][key] = inDict[key][inDict['pol'] == 0]
-            outDict['1'][key] = inDict[key][inDict['pol'] == 1]
+            outDict['0'][key] = inDict[key][inDict['pol'] == False]
+            outDict['1'][key] = inDict[key][inDict['pol'] == True]
         else:
             outDict['0'][key] = inDict[key]
             outDict['1'][key] = inDict[key]
