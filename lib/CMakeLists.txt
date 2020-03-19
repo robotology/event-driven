@@ -32,7 +32,8 @@ set(folder_source
 if(OpenCV_FOUND)
     list(APPEND folder_source src/vIPT.cpp
                               src/vDraw_basic.cpp
-                              src/vDraw_ISO.cpp)
+                              src/vDraw_ISO.cpp
+                              src/vDraw_skin.cpp)
 endif()
 
 if(VLIB_DEPRECATED)
@@ -52,7 +53,8 @@ set(folder_header
 
 if(OpenCV_FOUND)
     list(APPEND folder_header include/event-driven/vIPT.h
-                              include/event-driven/vDraw.h)
+                              include/event-driven/vDraw.h
+                              include/event-driven/vDrawSkin.h)
 endif()
 
 if(VLIB_DEPRECATED)

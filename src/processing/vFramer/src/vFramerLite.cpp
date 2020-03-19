@@ -19,6 +19,7 @@
 #include "vFramerLite.h"
 #include <sstream>
 #include <yarp/cv/Cv.h>
+#include "event-driven/vDrawSkin.h"
 
 using namespace ev;
 

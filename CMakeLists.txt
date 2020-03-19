@@ -63,6 +63,7 @@ option(ADD_DOCS_TO_IDE "Add apps/documentation to IDE" OFF)
 find_package(OpenCV)
 set_package_properties(OpenCV PROPERTIES TYPE OPTIONAL)
 
+
 if(OpenCV_FOUND)
     set(OpenCV_dep OpenCV)
     find_package(YARP COMPONENTS OS sig math dev cv REQUIRED)
@@ -71,6 +72,7 @@ else()
     find_package(YARP COMPONENTS OS sig math dev REQUIRED)
 endif()
 yarp_configure_external_installation(event-driven)
+
 
 
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES)
