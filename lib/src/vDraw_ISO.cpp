@@ -237,9 +237,6 @@ void isoDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 }
 
-
-
-
 // ISO (LAE) //
 // ========= //
 
@@ -323,4 +320,5 @@ void isoInterestDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     image = isoimage - baseimage;
 
 }
-}
+
+} //namespace ev::

@@ -213,7 +213,7 @@ std::string imuDraw::getEventType()
 
 void imuDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
-    auto radius = 2;
+    auto radius = 20;
     auto axes = cv::Size(radius, radius);
     auto centre = cv::Point(Xlimit/2, Ylimit/2);
     auto lin_scaler = std::min(Xlimit, Ylimit) * 0.5 / IMUevent::_max_value;
