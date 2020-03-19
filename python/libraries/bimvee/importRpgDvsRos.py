@@ -36,7 +36,7 @@ Return nested dicts of the form:
     data
         0
             dvs
-                "pol": numpy array of uint8 in [0, 1]
+                "pol": numpy array of bool
                 "x": numpy array of uint16
                 "y": numpy array of uint16
                 "ts": numpy array of float - seconds (basic format is int with unit increments of 80 ns) 
