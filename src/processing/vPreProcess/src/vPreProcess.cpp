@@ -160,7 +160,7 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
 
     if(undistort) {
 
-        if(calibrator.configure("camera", "stefi_calib.ini", 1))
+        if(calibrator.configure("camera", "atis_calib.ini", 1))
             calibrator.showMapProjections(3.0);
         else
             yWarning() << "Could not correctly configure the cameras";
@@ -429,7 +429,6 @@ void vPreProcess::run()
                         }
                 }
             }
-
         }
 
         if(qskinsamples.size()) { //if we have skin samples

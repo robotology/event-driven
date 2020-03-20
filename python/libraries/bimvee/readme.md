@@ -61,7 +61,7 @@ Data types may include:
 
 dvs data type, for example, then contains:
 
-- "pol": numpy array of uint8 in [0, 1]
+- "pol": numpy array of bool
 - "x": numpy array of np.uint16
 - "y": numpy array of np.uint16
 - "ts": numpy array of np.float64 
@@ -161,7 +161,7 @@ Definitions of minimal and optional(*) fields follow.
 - ts  n np.float64
 - x   n np.uint16
 - y   n np.uint16 As the sensor outputs it; plot functions assume that y increases in downward direction, following https://arxiv.org/pdf/1610.08336.pdf
-- pol n np.uint16 To the extent possible, 1 means increase in light, 0 means decrease. 
+- pol n np.bool To the extent possible, True means increase in light, False means decrease. 
 - dimX* 1 int
 - dimY* 1 int
 
