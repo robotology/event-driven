@@ -84,8 +84,8 @@ def getOrInsertDefault(inDict, arg, default):
 
 # accepts a pose6q datatype dict; returns a channel dict containing pose6q and point3 datatypes
 def separateMarkersFromSegments(poseDict):
-    isMarker = np.apply_along_axis(lambda x : 'Marker' in x[0], 1, poseDict['bodyId'][..., np.newaxis])
-    uniqueIdIsMarker = np.apply_along_axis(lambda x : 'Marker' in x[0], 1, poseDict['uniqueIds'][..., np.newaxis])
+    isMarker = np.apply_along_axis(lambda x : 'Marker' in str(x[0]), 1, poseDict['bodyId'][..., np.newaxis])
+    uniqueIdIsMarker = np.apply_along_axis(lambda x : 'Marker' in str(x[0]), 1, poseDict['uniqueIds'][..., np.newaxis])
     pointDict = {
         'ts': poseDict['ts'][isMarker],
         'point': poseDict['point'][isMarker, :],
@@ -141,10 +141,10 @@ def importVicon(**kwargs):
                 poseDict['point'].append(point)
                 poseDict['rotation'].append(rotation)
                 if not separateBodiesAsChannels:
-                    poseDict['bodyId'].append(bodyId)
+                    poseDict['bodyId'].append(bodyId.encode('utf-8'))
             line = file.readline()
 
-    # converting lists of strings to numpy arrays of float64
+    # converting lists of strings to numpy arrays of objects
     if separateBodiesAsChannels:
         for id in uniqueIds:
             outDict['data'][id]['pose6q']['ts'] = np.array(outDict['data'][id]['pose6q']['ts'], dtype=np.float64)

@@ -138,7 +138,7 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
         int y = ofp->y;
         float vx = ofp->vx;
         float vy = ofp->vy;
-		
+
         vx_mean += vx;
         vy_mean += vy;
 
@@ -411,7 +411,48 @@ std::string rasterDraw::getEventType()
     return AddressEvent::tag;
 }
 
-void rasterDraw::initialise()
+void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+
+    for(auto qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        int dt = vTime - (*qi)->stamp;
+        if(dt < 0) dt += ev::vtsHelper::max_stamp;
+
+        auto aep = is_event<AddressEvent>(*qi);
+
+        num_neurons = std::max(num_neurons, aep->_coded_data + 1);
+
+        int y = aep->_coded_data * ((double)Ylimit / num_neurons);
+        int x = dt * time_scaler;
+
+        if(flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
+        image.at<cv::Vec3b>(y, x) = this->black;
+    }
+}
+
+// RASTER DRAW HEAD NETWORK//
+// ======= //
+
+const std::string rasterDrawHN::drawtype = "RASTER-HN";
+
+std::string rasterDrawHN::getDrawType()
+{
+    return rasterDrawHN::drawtype;
+}
+
+std::string rasterDrawHN::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void rasterDrawHN::initialise()
 {
     Xlimit = 1024;
     Ylimit = 1024;
@@ -466,7 +507,7 @@ void rasterDraw::initialise()
 
 }
 
-void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+void rasterDrawHN::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
@@ -670,4 +711,4 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 
 }
 
-} //namespace ev::
+}

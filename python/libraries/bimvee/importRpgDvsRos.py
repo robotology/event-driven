@@ -36,7 +36,7 @@ Return nested dicts of the form:
     data
         0
             dvs
-                "pol": numpy array of uint8 in [0, 1]
+                "pol": numpy array of bool
                 "x": numpy array of uint16
                 "y": numpy array of uint16
                 "ts": numpy array of float - seconds (basic format is int with unit increments of 80 ns) 
@@ -481,15 +481,29 @@ def interpretMsgsAsCam(msgs, **kwargs):
     outDict['height'], ptr = unpackRosUint32(data, ptr)
     outDict['width'], ptr = unpackRosUint32(data, ptr)
     outDict['distortionModel'], ptr = unpackRosString(data, ptr)
+    ptrAfterDistortionModel = ptr
     if outDict['distortionModel'] == 'plumb_bob':
-        ptr +=4 # There's an IP address in there, not sure why
-        outDict['D'] = np.frombuffer(data[ptr:ptr+40], dtype=np.float64)
-        ptr += 40
-        outDict['K'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
-        ptr += 72
-        outDict['R'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
-        ptr += 72
-        outDict['P'] = np.frombuffer(data[ptr:ptr+96], dtype=np.float64).reshape(3, 4)
+        try:
+            ptr +=4 # There's an IP address in there, not sure why
+            outDict['D'] = np.frombuffer(data[ptr:ptr+40], dtype=np.float64)
+            ptr += 40
+            outDict['K'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
+            ptr += 72
+            outDict['R'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
+            ptr += 72
+            outDict['P'] = np.frombuffer(data[ptr:ptr+96], dtype=np.float64).reshape(3, 4)
+        except ValueError:
+            # 2020_02 Sim: When we run ESIM it is not outputting the D matrix, not sure why 
+            # TODO: Either we modify the way we use ESIM, or else, if there's a reason for the absence of D, 
+            # allow for that here in a less hacky way.
+            ptr = ptrAfterDistortionModel + 4 # Allow for IP address
+            outDict['D'] = np.zeros((5), dtype=np.float64)
+            #ptr += 40
+            outDict['K'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
+            ptr += 72
+            outDict['R'] = np.frombuffer(data[ptr:ptr+72], dtype=np.float64).reshape(3, 3)
+            ptr += 72
+            outDict['P'] = np.frombuffer(data[ptr:ptr+96], dtype=np.float64).reshape(3, 4)
     elif outDict['distortionModel'] == 'Kannala Brandt4':
         ptr +=4 # There's an IP address in there, not sure why
         outDict['D'] = np.frombuffer(data[ptr:ptr+32], dtype=np.float64)
@@ -517,6 +531,12 @@ def interpretMsgsAsCam(msgs, **kwargs):
     # Ignore binning and ROI
     return outDict
 
+def utiliseCameraInfoWithinChannel(channelDict):
+    if 'cam' in channelDict and 'height' in channelDict['cam']:
+        if 'dvs' in channelDict and 'dimY' not in channelDict['dvs']:
+            channelDict['dvs']['dimX'] = channelDict['cam']['width']
+            channelDict['dvs']['dimY'] = channelDict['cam']['height']
+            
 def importRpgDvsRos(**kwargs):
     topics = importRosbag(**kwargs)
     template = kwargs.get('template', {})
@@ -562,6 +582,9 @@ def importRpgDvsRos(**kwargs):
         print('The following topics are present in the file but were not imported: ')
         for topic in remainingTopics:
             print(topic)
+    # if cam and dvs exist in the same channel, apply height and width to dimY/X
+    for channelKey in outDict['data'].keys():
+        utiliseCameraInfoWithinChannel(outDict['data'][channelKey])
     return outDict
     '''   
 

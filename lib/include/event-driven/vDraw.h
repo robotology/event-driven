@@ -206,6 +206,31 @@ class rasterDraw : public vDraw {
 protected:
 
     float time_scaler;
+    unsigned int num_neurons;
+
+public:
+
+    virtual void initialise()
+    {
+        Xlimit = 1024;
+        Ylimit = 1024;
+
+        num_neurons = 1;
+        time_scaler = (double) Xlimit / max_window;
+    }
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class rasterDrawHN : public vDraw {
+
+protected:
+
+    float time_scaler;
     int neuron_min;
     int neuron_max;
     std::map<int, int> rmap;
