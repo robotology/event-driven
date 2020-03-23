@@ -19,8 +19,6 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "event-driven/vDraw.h"
-#include <map>
-
 namespace ev {
 
 // AE DRAW //
@@ -138,7 +136,7 @@ void flowDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
         int y = ofp->y;
         float vx = ofp->vx;
         float vy = ofp->vy;
-
+		
         vx_mean += vx;
         vy_mean += vy;
 
@@ -437,112 +435,6 @@ void rasterDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     }
 }
 
-// RASTER DRAW HEAD NETWORK//
-// ======= //
-
-const std::string rasterDrawHN::drawtype = "RASTER-HN";
-
-std::string rasterDrawHN::getDrawType()
-{
-    return rasterDrawHN::drawtype;
-}
-
-std::string rasterDrawHN::getEventType()
-{
-    return AddressEvent::tag;
-}
-
-void rasterDrawHN::initialise()
-{
-    Xlimit = 1024;
-    Ylimit = 1024;
-
-
-    time_scaler = (double) Xlimit / max_window;
-
-    std::vector<int> output_con1 = {61, 62, 63, 64, 65, 66, 67, 68, 69, 70};
-    std::vector<int> output_con2 = {71, 72, 73, 74, 75, 76, 77, 78, 79, 80};
-    std::vector<int> output_con3 = {34, 51, 54, 55, 56, 82, 58, 60, 59, 43};
-    std::vector<int> output_con4 = {44, 81, 46, 47, 48, 49, 50, 83, 52, 53};
-    std::vector<int> output_con5 = {84, 85, 86, 87, 88, 89, 90, 91, 42, 39};
-
-
-    int y = 7;
-
-    lines.push_back(5);
-    texts.push_back("unknown");
-
-    for(auto i : output_con5)
-        rmap[i] = y++;
-    lines.push_back(y + 2);
-    texts.push_back("vision");
-    y+= 5;
-
-    for(auto i : output_con1)
-        rmap[i] = y++;
-    lines.push_back(y + 2);
-    texts.push_back("yaw ring");
-    y+= 5;
-
-    for(auto i : output_con3)
-        rmap[i] = y++;
-    lines.push_back(y + 2);
-    texts.push_back("desired yaw");
-    y+= 5;
-
-    for(auto i : output_con2)
-        rmap[i] = y++;
-    lines.push_back(y + 2);
-    texts.push_back("pitch ring");
-    y+= 5;
-
-    for(auto i : output_con4)
-        rmap[i] = y++;
-    lines.push_back(y + 2);
-    texts.push_back("desired pitch");
-    y+= 3;
-
-    neuron_max = y;
-    neuron_min = 0;
-
-}
-
-void rasterDrawHN::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
-{
-    if(eSet.empty()) return;
-    if(vTime < 0) vTime = eSet.back()->stamp;
-
-    for(auto i  = 0; i < lines.size(); i++) {
-        int y = (lines[i] - neuron_min) * ((double)Ylimit / (1 + neuron_max - neuron_min));
-        cv::line(image, cv::Point(0, y), cv::Point(Xlimit, y), aqua, 3);
-        cv::putText(image, texts[i], cv::Point(0, y), CV_FONT_HERSHEY_SIMPLEX, 1.0, black, 2);
-    }
-
-    for(auto qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
-
-        int dt = vTime - (*qi)->stamp;
-        if(dt < 0) dt += ev::vtsHelper::max_stamp;
-
-        auto aep = is_event<AddressEvent>(*qi);
-
-        int y = rmap[aep->_coded_data];
-
-        neuron_max = std::max(neuron_max, y);
-        neuron_min = std::min(neuron_min, y);
-
-        y = (y - neuron_min) * ((double)Ylimit / (1 + neuron_max - neuron_min));
-        int x = dt * time_scaler;
-
-        if(flip) {
-            y = Ylimit - 1 - y;
-            x = Xlimit - 1 - x;
-        }
-
-        //image.at<cv::Vec3b>(y, x) = this->black;
-        cv::circle(image, cv::Point(x, y), 5, black, CV_FILLED);
-    }
-}
-
 // COCHLEA DRAW //
 // ======= //
 
@@ -711,4 +603,4 @@ void clusterDraw::draw(cv::Mat &image, const vQueue &eSet, int vTime)
 
 }
 
-}
+} //namespace ev::

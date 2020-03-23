@@ -51,7 +51,7 @@ vDraw * createDrawer(std::string tag)
         return new grayDraw();
     if(tag == blackDraw::drawtype)
         return new blackDraw();
-	if(tag == isoDraw::drawtype)
+    if(tag == isoDraw::drawtype)
         return new isoDraw();
     if(tag == interestDraw::drawtype)
         return new interestDraw();
@@ -83,6 +83,8 @@ vDraw * createDrawer(std::string tag)
         return new cochleaDraw();
     if(tag == rasterDraw::drawtype)
         return new rasterDraw();
+    if(tag == rasterDrawHN::drawtype)
+        return new rasterDrawHN();
     return 0;
 
 }
