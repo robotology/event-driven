@@ -61,9 +61,9 @@ public:
     /// \brief ask for the current unwrapped time, without updating the time.
     unsigned long int currentTime() { return last_stamp + ((unsigned long int)max_stamp*n_wraps); }
 
-    static double deltaTicks(const int current_tick, const int prev_tick)
+    static int deltaTicks(const int current_tick, const int prev_tick)
     {
-        double dt = current_tick - prev_tick;
+        int dt = current_tick - prev_tick;
         if(dt < 0) dt += max_stamp;
         return dt;
     }
