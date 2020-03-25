@@ -11,8 +11,9 @@ install:
 before_script:
           - git clone -b v3.2.1 --depth 1 https://github.com/robotology/yarp.git
           - cd yarp && mkdir build && cd build
-          - cmake .. && make 
+          - cmake .. && make -j 2 
           - cd ../..
+          - cd event-driven
           - mkdir build
           - cd build
           - cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH=../../yarp/build
