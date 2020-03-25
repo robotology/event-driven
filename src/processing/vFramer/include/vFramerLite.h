@@ -203,6 +203,27 @@ public:
 
 };
 
+class rasterDrawHN : public vDraw {
+
+protected:
+
+    float time_scaler;
+    int neuron_min;
+    int neuron_max;
+    std::map<int, int> rmap;
+    std::vector<int> lines;
+    std::vector<string> texts;
+
+public:
+
+    virtual void initialise();
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
 
 #endif //vFramer
 
