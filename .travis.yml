@@ -6,7 +6,7 @@ compiler:
 before_install:
           - sudo apt-get update -qq
 install:
-          - sudo apt-get install -qq cmake build-essential libopencv-dev libace-dev
+          - sudo apt-get install -qq cmake build-essential libopencv-dev libace-dev libeigen3-dev
 
 before_script:
           - cd ../.. && pwd && export MYDIR=$PWD
