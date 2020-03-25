@@ -4,15 +4,17 @@ compiler:
           - gcc
 
 before_install:
-          - sudo sh -c 'echo "deb http://www.icub.org/ubuntu xenial contrib/science" > /etc/apt/sources.list.d/icub.list'
-          - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 57A5ACB6110576A6
           - sudo apt-get update -qq
 install:
-          - sudo apt-get install -qq cmake build-essential libopencv-dev yarp
+          - sudo apt-get install -qq cmake build-essential libopencv-dev libace-dev
 
 before_script:
+          - git clone -b v3.2.1 --depth 1 https://github.com/robotology/yarp.git
+          - cd yarp && mkdir build && cd build
+          - cmake .. && make 
+          - cd ../..
           - mkdir build
           - cd build
-          - cmake .. -DCMAKE_BUILD_TYPE=RELEASE
+          - cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH=../../yarp/build
 
 script: make -j 2
