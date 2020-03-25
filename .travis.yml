@@ -9,16 +9,17 @@ install:
           - sudo apt-get install -qq cmake build-essential libopencv-dev libace-dev
 
 before_script:
-          - cd $HOME
+          - cd ../.. && pwd && export MYDIR=pwd
           - git clone -b v3.2.1 --depth 1 https://github.com/robotology/yarp.git
           - cd yarp && mkdir build 
           - cd build
+          - pwd
           - cmake .. 
           - make -j 2 
-          - cd $HOME
+          - cd $MYDIR
           - cd robotology/event-driven
           - mkdir build
           - cd build
-          - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$HOME/yarp/build
+          - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$MYDIR/yarp/build
 
 script: make -j 2
