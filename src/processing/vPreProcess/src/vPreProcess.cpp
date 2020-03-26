@@ -26,8 +26,7 @@
 using namespace ev;
 using namespace yarp::os;
 
-int main(int argc, char * argv[])
-{
+int main(int argc, char *argv[]) {
     /* initialize yarp network */
     yarp::os::Network yarp;
     if(!yarp.checkNetwork(2)) {
@@ -38,9 +37,9 @@ int main(int argc, char * argv[])
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
     rf.setVerbose();
-    rf.setDefaultContext( "event-driven" );
-    rf.setDefaultConfigFile( "vPreProcess.ini" );
-    rf.configure( argc, argv );
+    rf.setDefaultContext("event-driven");
+    rf.setDefaultConfigFile("vPreProcess.ini");
+    rf.configure(argc, argv);
 
     /* create the module */
     vPreProcess module;
@@ -48,8 +47,7 @@ int main(int argc, char * argv[])
     return module.runModule(rf);
 }
 
-vPreProcess::vPreProcess(): name("/vPreProcess")
-{
+vPreProcess::vPreProcess() : name("/vPreProcess") {
     v_total = 0;
     v_dropped = 0;
 
@@ -65,8 +63,7 @@ vPreProcess::vPreProcess(): name("/vPreProcess")
 }
 
 
-vPreProcess::~vPreProcess()
-{
+vPreProcess::~vPreProcess() {
     inPort.close();
     outPortCamLeft.close();
     outPortCamRight.close();
@@ -79,35 +76,34 @@ vPreProcess::~vPreProcess()
     out_port_audio.close();
 }
 
-bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
-{
+bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
     setName((rf.check("name", yarp::os::Value("/vPreProcess")).asString()).c_str());
 
     res.height = rf.check("height", Value(240)).asInt();
     res.width = rf.check("width", Value(304)).asInt();
 
     bool filter_spatial = rf.check("filter_spatial") &&
-            rf.check("filter_spatial", Value(true)).asBool();
+                          rf.check("filter_spatial", Value(true)).asBool();
     bool filter_temporal = rf.check("filter_temporal") &&
-            rf.check("filter_temporal", Value(true)).asBool();
+                           rf.check("filter_temporal", Value(true)).asBool();
     undistort = rf.check("undistort") &&
-            rf.check("undistort", Value(true)).asBool();
+                rf.check("undistort", Value(true)).asBool();
     flipx = rf.check("flipx") &&
             rf.check("flipx", Value(true)).asBool();
     flipy = rf.check("flipy") &&
             rf.check("flipy", Value(true)).asBool();
     precheck = rf.check("precheck") &&
-            rf.check("precheck", Value(true)).asBool();
+               rf.check("precheck", Value(true)).asBool();
     split_stereo = rf.check("split_stereo") &&
-            rf.check("split_stereo", Value(true)).asBool();
+                   rf.check("split_stereo", Value(true)).asBool();
     split_polarities = rf.check("split_polarities") &&
                        rf.check("split_polarities", Value(true)).asBool();
     combined_stereo = rf.check("combined_stereo") &&
-            rf.check("combined_stereo", Value(true)).asBool();
+                      rf.check("combined_stereo", Value(true)).asBool();
     use_local_stamp = rf.check("local_stamp") &&
-            rf.check("local_stamp", Value(true)).asBool();
+                      rf.check("local_stamp", Value(true)).asBool();
 
-    if(!split_stereo) combined_stereo=true;
+    if(!split_stereo) combined_stereo = true;
 
     if(precheck)
         yInfo() << "Performing precheck for event corruption";
@@ -129,33 +125,30 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
         yInfo() << "Producing combined stereo output";
 
     apply_filter = filter_spatial || filter_temporal;
-    if(apply_filter)
-    {
+    if(apply_filter) {
         filter_left.initialise(res.width, res.height);
         filter_right.initialise(res.width, res.height);
     }
-    if(filter_spatial)
-    {
+    if(filter_spatial) {
         filter_left.use_spatial_filter(
-                    rf.check("sf_time",
-                             Value(0.05)).asDouble() * vtsHelper::vtsscaler,
-                    rf.check("sf_size",
-                             Value(1)).asInt());
+                rf.check("sf_time",
+                         Value(0.05)).asDouble() * vtsHelper::vtsscaler,
+                rf.check("sf_size",
+                         Value(1)).asInt());
         filter_right.use_spatial_filter(
-                    rf.check("sf_time",
-                             Value(0.05)).asDouble() * vtsHelper::vtsscaler,
-                    rf.check("sf_size",
-                             Value(1)).asInt());
+                rf.check("sf_time",
+                         Value(0.05)).asDouble() * vtsHelper::vtsscaler,
+                rf.check("sf_size",
+                         Value(1)).asInt());
     }
 
-    if(filter_temporal)
-    {
+    if(filter_temporal) {
         filter_left.use_temporal_filter(
-                    rf.check("tf_time",
-                             Value(0.1)).asDouble() * vtsHelper::vtsscaler);
+                rf.check("tf_time",
+                         Value(0.1)).asDouble() * vtsHelper::vtsscaler);
         filter_right.use_temporal_filter(
-                    rf.check("tf_time",
-                             Value(0.1)).asDouble() * vtsHelper::vtsscaler);
+                rf.check("tf_time",
+                         Value(0.1)).asDouble() * vtsHelper::vtsscaler);
     }
 
     if(undistort) {
@@ -170,10 +163,9 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
 
 }
 
-bool vPreProcess::threadInit()
-{
+bool vPreProcess::threadInit() {
     if(split_stereo) {
-        if(split_polarities){
+        if(split_polarities) {
             if(!outPortCamLeft_pos.open(getName() + "/left_pos:o"))
                 return false;
             if(!outPortCamRight_pos.open(getName() + "/right_pos:o"))
@@ -183,9 +175,9 @@ bool vPreProcess::threadInit()
             if(!outPortCamRight_neg.open(getName() + "/right_neg:o"))
                 return false;
         } else {
-            if (!outPortCamLeft.open(getName() + "/left:o"))
+            if(!outPortCamLeft.open(getName() + "/left:o"))
                 return false;
-            if (!outPortCamRight.open(getName() + "/right:o"))
+            if(!outPortCamRight.open(getName() + "/right:o"))
                 return false;
         }
         if(!out_port_aps_left.open(getName() + "/aps_left:o"))
@@ -194,13 +186,13 @@ bool vPreProcess::threadInit()
             return false;
     }
     if(combined_stereo) {
-        if (split_polarities) {
-            if (!outPortCamStereo_pos.open(getName() + "/AE_pos:o"))
+        if(split_polarities) {
+            if(!outPortCamStereo_pos.open(getName() + "/AE_pos:o"))
                 return false;
-            if (!outPortCamStereo_neg.open(getName() + "/AE_neg:o"))
+            if(!outPortCamStereo_neg.open(getName() + "/AE_neg:o"))
                 return false;
         } else {
-            if (!outPortCamStereo.open(getName() + "/AE:o"))
+            if(!outPortCamStereo.open(getName() + "/AE:o"))
                 return false;
         }
         if(!out_port_aps_stereo.open(getName() + "/APS:o"))
@@ -221,15 +213,13 @@ bool vPreProcess::threadInit()
     return true;
 }
 
-double vPreProcess::getPeriod()
-{
+double vPreProcess::getPeriod() {
     return 2.0;
 }
 
-bool vPreProcess::updateModule()
-{
+bool vPreProcess::updateModule() {
     if(v_total) {
-        auto pc = 100.0 * (double)v_total / (double)(v_total + v_dropped);
+        auto pc = 100.0 * (double) v_total / (double) (v_total + v_dropped);
         auto max_rate =
                 std::accumulate(proc_times.begin(), proc_times.end(), 0.0) /
                 proc_times.size();
@@ -255,20 +245,20 @@ bool vPreProcess::updateModule()
     if(!delays.size())
         return Thread::isRunning();
 
-    auto bounds  = std::minmax_element(delays.begin(), delays.end());
+    auto bounds = std::minmax_element(delays.begin(), delays.end());
     auto min_d = *bounds.first * 1000;
     auto max_d = *bounds.second * 1000;
 
     auto mean_d = 1000 *
-            std::accumulate(delays.begin(), delays.end(), 0.0) / delays.size();
+                  std::accumulate(delays.begin(), delays.end(), 0.0) / delays.size();
     delays.clear();
 
     auto meanr = vtsHelper::vtsscaler *
-            std::accumulate(rates.begin(), rates.end(), 0.0) / rates.size();
+                 std::accumulate(rates.begin(), rates.end(), 0.0) / rates.size();
     rates.clear();
 
     auto meani = 1000 *
-            std::accumulate(intervals.begin(), intervals.end(), 0.0) / intervals.size();
+                 std::accumulate(intervals.begin(), intervals.end(), 0.0) / intervals.size();
     intervals.clear();
 
     //yInfo() << mind << meand << maxd << " : min | mean | max";
@@ -278,8 +268,7 @@ bool vPreProcess::updateModule()
     return Thread::isRunning();
 }
 
-void vPreProcess::run()
-{
+void vPreProcess::run() {
     Stamp zynq_stamp;
     Stamp local_stamp;
 
@@ -291,7 +280,7 @@ void vPreProcess::run()
     bool received_half_sample = false;
     int32_t salvage_sample[2] = {-1, 0};
 
-    while(true) {
+    while (true) {
 
         double pyt = zynq_stamp.getTime();
 
@@ -315,7 +304,7 @@ void vPreProcess::run()
         if(precheck) {
             nm0 = zynq_stamp.getCount();
             if(nm3 && nm0 - nm1 == 1 && nm1 - nm2 > 1 && nm1 - nm3 > 2) {
-                yWarning() << "LOST" << nm1-nm2-1 << "PACKETS ["
+                yWarning() << "LOST" << nm1 - nm2 - 1 << "PACKETS ["
                            << nm4 << nm3 << nm2 << nm1 << nm0 << "]"
                            << q->size() << "packet size";
             }
@@ -328,20 +317,20 @@ void vPreProcess::run()
         //unsigned int events_in_packet = 0;
         const int32_t *qi = q->data();
 
-        while ((size_t)(qi - q->data()) < q->size()) {
+        while ((size_t) (qi - q->data()) < q->size()) {
 
-            if(IS_SKIN(*(qi+1))) { //IS_SKIN
-                if(IS_SAMPLE(*(qi+1))) {
+            if(IS_SKIN(*(qi + 1))) { //IS_SKIN
+                if(IS_SAMPLE(*(qi + 1))) {
                     qskinsamples.push_back(*(qi++)); //TS
                     qskinsamples.push_back(*(qi++)); //VALUE/TAXEL
                 } else {
                     qskin.push_back(*(qi++)); //TS
                     qskin.push_back(*(qi++)); //TAXEL
                 }
-            } else if(IS_IMUSAMPLE(*(qi+1))) { //IS_IMU
+            } else if(IS_IMUSAMPLE(*(qi + 1))) { //IS_IMU
                 qimusamples.push_back(*(qi++)); //TS
                 qimusamples.push_back(*(qi++)); //VALUE
-            } else if(IS_AUDIO(*(qi+1))) {
+            } else if(IS_AUDIO(*(qi + 1))) {
                 qaudio.push_back(*(qi++)); //TS
                 qaudio.push_back(*(qi++)); //EVENT
             } else { // IS_VISION
@@ -381,52 +370,45 @@ void vPreProcess::run()
                     v.x = x;
                     v.y = y;
                 }
-                if(split_stereo)
-                {
-                    if(v.channel)
-                    {
+                if(split_stereo) {
+                    if(v.channel) {
                         if(v.type)
                             qright_aps.push_back(v);
-                        else
-                            if (split_polarities){
-                                if (v.polarity){
-                                    qright_pos.push_back(v);
-                                } else {
-                                    qright_neg.push_back(v);
-                                }
+                        else if(split_polarities) {
+                            if(v.polarity) {
+                                qright_pos.push_back(v);
                             } else {
-                                qright.push_back(v);
+                                qright_neg.push_back(v);
                             }
-                    }
-                    else
-                    {
+                        } else {
+                            qright.push_back(v);
+                        }
+                    } else {
                         if(v.type)
                             qleft_aps.push_back(v);
-                        else
-                        if (split_polarities){
-                            if (v.polarity){
+                        else if(split_polarities) {
+                            if(v.polarity) {
                                 qleft_pos.push_back(v);
                             } else {
                                 qleft_neg.push_back(v);
                             }
                         } else {
                             qleft.push_back(v);
-                        }                    }
+                        }
+                    }
                 }
-                if(combined_stereo)
-                {
+                if(combined_stereo) {
                     if(v.type)
                         qstereo_aps.push_back(v);
-                    else
-                        if (split_polarities) {
-                            if (v.polarity){
-                                qstereo_pos.push_back(v);
-                            } else {
-                                qstereo_neg.push_back(v);
-                            }
+                    else if(split_polarities) {
+                        if(v.polarity) {
+                            qstereo_pos.push_back(v);
                         } else {
-                            qstereo.push_back(v);
+                            qstereo_neg.push_back(v);
                         }
+                    } else {
+                        qstereo.push_back(v);
+                    }
                 }
             }
         }
@@ -517,13 +499,11 @@ void vPreProcess::run()
 }
 
 
-bool vPreProcess::interruptModule()
-{
+bool vPreProcess::interruptModule() {
     return Thread::stop();
 }
 
-void vPreProcess::onStop()
-{
+void vPreProcess::onStop() {
     inPort.close();
     outPortCamLeft.close();
     outPortCamRight.close();
