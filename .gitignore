@@ -4,6 +4,7 @@ CMakeLists.txt.user
 CMakeLists.txt.user.*
 *.autosave
 *.orig
+*.swp
 
 # ignore all temporary files
 *~
@@ -13,13 +14,15 @@ CMakeLists.txt.user.*
 
 #ignore the build directory
 build/
+build-debug/
 build-x86_64/
 build-ubuntu/
-
-#the pc104 build which we only want on the iCub14
+wsl-build/
 build-pc104/
 
 *.autosave
 .idea/
 documentation/images/*
 matlab/alogrithms/LK_Template_Tracking_version3a/
+*.pyc
+

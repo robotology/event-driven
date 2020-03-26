@@ -25,7 +25,7 @@
 
 #define LOW8(x) x&0xFF
 #define HIGH8(x) (x&0xFF00)>>8
-#define FIXED_UINT(x) (unsigned int)(x*65536)
+#define FIXED_UINT(x) (uint32_t)(x*65536)
 #define UNSIGN_BITS(x) *(reinterpret_cast<uint32_t *>(&x))
 //#define UNSIGN_BITS(x) (uint32_t)(*((uint32_t *)(&x)))
 
@@ -67,6 +67,8 @@
 #define AER_LVL                  0x15 // overwrite = 1, ack active low, req active high (ATIS default)
 // --- register VSCTRL_SRC_DST_CTRL_ADDR --- //
 #define TD_APS_CTRL              0x02 // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
+#define TD_CTRL                  0x02
+#define APS_CTRL                 0x08
 #define SRC_CTRL                 0x12
 // --- register VSCTRL_HSSAER_CNFG_ADDR --- //
 #define CH_SAER_EN                    0x07 // enable ch0, ch1, ch2
@@ -122,6 +124,8 @@
 #define SKCTRL_I2C_ACQ_SOFT_RST_ADDR    0x34 // write only
 #define SKCTRL_EG_FILTER_ADDR           0x38 // read only
 #define SKCTRL_STATUS_ADDR              0x3A // read only
+#define SKCTRL_VERSION_MIN              0x3C
+#define SKCTRL_VERSION_MAJ              0x3D
 
 // -- addresses of the registers bits/bytes for the skin -- //
 

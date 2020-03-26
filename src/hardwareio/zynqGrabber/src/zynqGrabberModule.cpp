@@ -22,7 +22,7 @@
  * @brief Implementation of the zynqGrabberModule (see header file).
  */
 
-#include <zynqGrabberModule.h>
+#include "zynqGrabberModule.h"
 #include <fstream>
 #include <ctime>
 #include <string>
@@ -57,6 +57,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     bool verbose = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
     bool biaswrite = rf.check("biaswrite") && rf.check("biaswrite", yarp::os::Value(true)).asBool();
     bool iBias = rf.check("iBias") && rf.check("iBias", yarp::os::Value(true)).asBool();
+    bool useAPS = rf.check("aps") && rf.check("aps", yarp::os::Value(true)).asBool();
     std::string logfile = rf.check("logfile", yarp::os::Value("/home/icub/zynqGrabberlog.txt")).asString();
 
     time_t t = std::time(0);   // get date now
@@ -90,10 +91,15 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             if(lwo) logwriter << "Could not connect to left camera" << std::endl;
             return false;
         }
+        vsctrlMngLeft.turnOnAPS(useAPS);
         if(!vsctrlMngLeft.configure(verbose)) {
             std::cerr << "Could not configure left camera" << std::endl;
             if(lwo) logwriter << "Could not configure left camera" << std::endl;
             return false;
+        }
+        if(!rf.check("visLeftOn", yarp::os::Value(true)).asBool()) {
+            yWarning() << "Left camera configured but initialised TURNED OFF";
+            vsctrlMngLeft.suspend();
         }
         if(lwo) logwriter << "Connected to and configured left camera" << std::endl;
 
@@ -122,10 +128,15 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             if(lwo) logwriter << "Could not connect to Right camera" << std::endl;
             return false;
         }
+        vsctrlMngRight.turnOnAPS(useAPS);
         if(!vsctrlMngRight.configure(verbose)) {
             std::cerr << "Could not configure Right camera" << std::endl;
             if(lwo) logwriter << "Could not configure Right camera" << std::endl;
             return false;
+        }
+        if(!rf.check("visRightOn", yarp::os::Value(true)).asBool()) {
+            yWarning() << "Right camera configured but initialised TURNED OFF";
+            vsctrlMngRight.suspend();
         }
         if(lwo) logwriter << "Connected to and configured Right camera" << std::endl;
 
@@ -205,7 +216,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             if(!hpu.openWritePort(moduleName))
                 return false;
 
-
+        yInfo() << "Starting HPU read/write threads";
         hpu.start();
     }
 
@@ -240,6 +251,8 @@ bool zynqGrabberModule::close() {
 /* Called periodically every getPeriod() seconds */
 bool zynqGrabberModule::updateModule() {
 
+    if(!vsctrlMngRight.activateAPSShutter())
+        yWarning() << "Could not activate APS shutter";
     return !isStopping();
 }
 
@@ -284,22 +297,22 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
         ok = true;
     }
         break;
-//    case COMMAND_VOCAB_SUSPEND:
-//        rec = true;
-//    {
-//        //D2Y.suspend();
-//        std::cout << "Not implemented" << std::endl;
-//        ok = true;
-//    }
-//        break;
-//    case COMMAND_VOCAB_RESUME:
-//        rec = true;
-//    {
-//        //D2Y.resume();
-//        std::cout << "Not implemented" << std::endl;
-//        ok = true;
-//    }
-//        break;
+        //    case COMMAND_VOCAB_SUSPEND:
+        //        rec = true;
+        //    {
+        //        //D2Y.suspend();
+        //        std::cout << "Not implemented" << std::endl;
+        //        ok = true;
+        //    }
+        //        break;
+        //    case COMMAND_VOCAB_RESUME:
+        //        rec = true;
+        //    {
+        //        //D2Y.resume();
+        //        std::cout << "Not implemented" << std::endl;
+        //        ok = true;
+        //    }
+        //        break;
     case COMMAND_VOCAB_GETBIAS:
         rec = true;
     {
@@ -456,28 +469,28 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
     }
         break;
 
-//    case COMMAND_VOCAB_RST:
-//        rec= true;
-//    {   std::string channel = command.get(1).asString();
+        //    case COMMAND_VOCAB_RST:
+        //        rec= true;
+        //    {   std::string channel = command.get(1).asString();
 
-//        if (channel == "left"){
-//            vsctrlMngLeft->chipReset();
-//            ok = true;
+        //        if (channel == "left"){
+        //            vsctrlMngLeft->chipReset();
+        //            ok = true;
 
-//        } else if (channel == "right") {
-//            vsctrlMngRight->chipReset();
-//            ok = true;
-//        } else if (channel == "") { // if channel is not specified power off both
-//            vsctrlMngRight->chipReset();
-//            vsctrlMngLeft->chipReset();
-//            ok = true;
-//        } else {
-//            std::cout << "unrecognised channel" << std::endl;
-//            ok = false;
+        //        } else if (channel == "right") {
+        //            vsctrlMngRight->chipReset();
+        //            ok = true;
+        //        } else if (channel == "") { // if channel is not specified power off both
+        //            vsctrlMngRight->chipReset();
+        //            vsctrlMngLeft->chipReset();
+        //            ok = true;
+        //        } else {
+        //            std::cout << "unrecognised channel" << std::endl;
+        //            ok = false;
 
-//        }
-//    }
-//        break;
+        //        }
+        //    }
+        //        break;
 
     case COMMAND_VOCAB_SETSKIN:
         rec = true;
@@ -492,7 +505,7 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
     }
         break;
 
-}
+    }
     if (!rec)
         ok = RFModule::respond(command,reply);
 

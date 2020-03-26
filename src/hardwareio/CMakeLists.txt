@@ -1,13 +1,15 @@
-cmake_minimum_required(VERSION 2.6)
-
 option(ENABLE_zynqgrabber "Build zynqGrabber" OFF)
 option(ENABLE_chronocamgrabber "Build chronocamGrabber" OFF)
+option(ENABLE_binarydumper "Build binaryDumper" OFF)
 
 if(ENABLE_zynqgrabber)
     add_subdirectory(zynqGrabber)
-endif(ENABLE_zynqgrabber)
+endif()
 
 if(ENABLE_chronocamgrabber)
     add_subdirectory(chronocamGrabber)
-endif(ENABLE_chronocamgrabber)
+endif()
 
+if(ENABLE_binarydumper)
+    add_subdirectory(binaryDumper)
+endif()

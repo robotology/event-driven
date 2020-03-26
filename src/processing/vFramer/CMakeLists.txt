@@ -1,22 +1,26 @@
-cmake_minimum_required(VERSION 2.6)
+project(vFramer)
+set(PROJECT_ALIAS vFramerLite)
 
-set(MODULENAME vFramerLite)
-project(${MODULENAME})
+add_executable(${PROJECT_ALIAS} src/vFramerLite.cpp
+                                src/other_drawers.cpp
+                                include/vFramerLite.h)
 
-file(GLOB source src/vFramerLite.cpp src/vDraw.cpp src/*_drawers.cpp)
-file(GLOB header include/vFramerLite.h include/vDraw.h)
+target_include_directories(${PROJECT_ALIAS} PRIVATE ${PROJECT_SOURCE_DIR}/include
+                                                   ${OpenCV_INCLUDE_DIRS})
 
-include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${OpenCV_INCLUDE_DIRS}
-                    ${EVENTDRIVENLIBS_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_ALIAS} PRIVATE YARP::YARP_OS
+                                               YARP::YARP_init
+                                               YARP::YARP_sig
+                                               YARP::YARP_cv
+                                               ${OpenCV_LIBRARIES}
+                                               ev::${EVENTDRIVEN_LIBRARY})
 
-add_executable(${MODULENAME} ${source} ${header})
+install(TARGETS ${PROJECT_ALIAS} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-target_link_libraries(${MODULENAME} ${YARP_LIBRARIES} ${OpenCV_LIBRARIES} ${EVENTDRIVEN_LIBRARIES})
+yarp_install(FILES ${PROJECT_NAME}.ini
+             DESTINATION ${EVENT-DRIVEN_CONTEXTS_INSTALL_DIR}/${CONTEXT_DIR})
 
-install(TARGETS ${MODULENAME} DESTINATION bin)
-
-yarp_install(FILES vFramer.ini DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${CONTEXT_DIR})
 if(ADD_DOCS_TO_IDE)
-    add_custom_target(${MODULENAME}_docs SOURCES vFramer.ini vFramer.xml)
+  add_custom_target(${PROJECT_NAME}_docs SOURCES ${PROJECT_NAME}.ini ${PROJECT_NAME}.xml)
 endif(ADD_DOCS_TO_IDE)
+

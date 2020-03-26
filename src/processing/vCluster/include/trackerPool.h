@@ -22,7 +22,7 @@
 
 #include "blobTracker.h"
 
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
 #include <vector>
 
 class TrackerPool {

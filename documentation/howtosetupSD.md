@@ -1,133 +1,102 @@
 
+:warning: These instructions are the standard way to set-up the YARP/event-driven environment on an sd-card meant for the zcb or z-turn. If you already have a working sd-card you can simply copy the sd-card. You can find instructions for copying an sd-card at the [bottom](#how-copy-an-entire-sd-card-for-a-new-board).
+
 # How to set-up an SD for a zynq board
+
+:warning: These instructions are only needed if your SD card has a fresh OS install and the `event-driven` library is not yet compiled. These instructions shuold be performed on the ZCB/z-turn and not your own laptop.
 
 ## Set-up icub user
 
-(as root)
-
-> groups icub 
-
-> visudo
-
-* add line: "icub ALL=(ALL:ALL) ALL"
-
-> mkdir /usr/local/src/robot
-
-> chown icub /usr/local/src/robot
+As **root**:
+```bash
+adduser icub
+groups icub
+visudo
+```
+Add line: `icub ALL=(ALL:ALL) ALL`
 
 ## Set up repositories
 
-(as icub)
+As **icub**:
+- Follow the [installation instructions](full_installation.md) putting projects into `~/projects` and installing into `~/install`. You will need to make these folders in the home directory of icub.
 
-> mkdir /usr/local/src/robot/icub-contrib-install
+### Note 1:
+As only basic `YARP` support is needed, not all dependencies are required to be installed, instead install only:
+```bash
+sudo apt install [TODO]
+```
+### Note 2:
+The newest YARP requires CMake>3.5, which is not installable via `apt` on the Debian 8.10 (jessie) distribution we have installed on the zynq. To upgrade CMake you need to install it via backports (reference: https://backports.debian.org/Instructions).
 
-> vim ~/.bashrc
+:warning: these instructions are out of date (see this [solution](https://unix.stackexchange.com/questions/508724/failed-to-fetch-jessie-backports-repository))
 
-add lines:
-
-* export ROBOT_CODE=/usr/local/src/robot
-* export YARP_DIR=$ROBOT_CODE/yarp/build
-* export ICUBcontrib_DIR=$ROBOT_CODE/icub-contrib-install
-* export YARP_DATA_DIRS=$YARP_DIR/share/yarp:$ICUBcontrib_DIR/share/ICUBcontrib
-* export PATH=$YARP_DIR/bin:$ICUBcontrib_DIR/bin:$PATH
-* export ED_ROOT=$ROBOT_CODE/event-driven
-  
-### Set up YARP
-
-#### Important note:
-The newest YARP requires CMake>3.5, which is not installable via apt on the Debian 8.10 (jessie) distribution we have installed on the zynq. To upgrade CMake you need to install it via backports (reference: https://backports.debian.org/Instructions). 
 To do so:
- - add to /etc/apt/sources.list the line below:
-      deb http://ftp.debian.org/debian jessie-backports main 
-- sudo apt update
-- sudo apt -t jessie-backports install cmake
- 
-At this point you should be able to recompile YARP 3.0 and event-driven master branch.
- 
+- add to `/etc/apt/sources.list` the line below:
+    ```bash
+          deb http://ftp.debian.org/debian jessie-backports main
+    ```
+Then:
+```bash
+sudo apt update
+sudo apt -t jessie-backports install cmake
+```
+At this point you should be able to recompile YARP 3.0 and `event-driven` **master** branch.
+
 **We can consider updating the Debian distribution of the zynq boards since the Debian 8.10 is no longer supported by YARP**
 
-> cd /usr/local/src/robot  
+### Note 3:
 
-> git clone https://github.com/robotology/yarp
-
-> cd yarp
-
-> mkdir build
-
-> cd build
-
-> ccmake ../
-
-* set CREATE_GUIS = OFF
-
-> make (not install)
-
-### Set up install directory as $ICUBcontrib_DIR
-> cd /usr/local/src/robot  
-
-> git clone https://github.com/robotology/icub-contrib-common
-
-> cd icub-contrib-common
-
-> mkdir build
-
-> cd build
-
-> ccmake ../
-
-* set CMAKE_INSTALL_PREFIX=$ICUBcontrib_DIR
-
-> make install
-
-
-### Set up event-driven 
-> cd /usr/local/src/robot  
-
-> git clone https://github.com/robotology/event-driven
-
-> cd event-driven
-
-> mkdir build
-
-> cd build
-
-> ccmake ../
-
-* (cmake should have found install directory as $ICUBcontrib_DIR automatically)
-* BUILD_HARDWAREIO = ON
-
-configure and then
-
-* ENABLE_zynqgrabber = ON
-
-> make install
-    
+When installing `event-driven` use the following options for cmake:
+```bash
+cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DBUILD_HARDWAREIO=ON -DENABLE_zynqgrabber=ON
+```
 ## Set up device drivers
 
-(as icub)
-
-> sudo usermod -a -G i2c icub
-
-> sudo vim /lib/udev/rules.d/77-iit-hpu.rules
-
-add lines:
-
-* SUBSYSTEM=="iit-hpu-class", GROUP="i2c"
-
-> sudo vim /etc/rc.local
-
-add lines:
-
-* insmod $PATH_TO_HPU_DRIVER.ko ps=4096
-* $PATH_TO_ZYNQGRABBER --biaswrite > /usr/local/src/robot/zynqGrabber.log
-  
+As **icub**:
+```bash
+sudo usermod -a -G i2c icub
+sudo vim /lib/udev/rules.d/77-iit-hpu.rules
+```
+Add lines:
+```bash
+SUBSYSTEM=="iit-hpu-class", GROUP="i2c"
+```
+Then
+```bash
+sudo vim /etc/rc.local
+```
+Add lines:
+```bash
+insmod /home/icub/iit-hpucore-dma.ko rx_pn=1024 rx_ps=8192 rx_to=5000
+```
 ## Misc
 
-check the device driver meta data
+Check the device driver meta data:
+```bash
+udevadm info -q all -a /dev/iit-hpu0
+```
+Check the device driver parameters:
+```bash
+cat /sys/module/iit_hpucore_dma/parameters/ps
+```
 
-> udevadm info -q all -a /dev/iit-hpu0
+# How copy an entire sd-card for a new board
 
-check the device driver parameters
+## PARTITION THE NEW SD
 
-> cat /sys/module/iit_hpucore_dma/parameters/ps
+* Insert the new SD
+* `sudo gparted` (`sudo apt-get install gparted` if needed)
+* `gparted` GUI should detect the SD
+* Unmount the SD in gparted GUI (you cannot partition a mounted drive)
+* Create new partitions: 1. FAT32 name:BOOT 50MiB 2. EXT4 name:rootfs (max-250) 3. linux-swap name:swap 200MiB
+* Edit -> apply all operations
 
+## COPY THE FILES
+
+* Insert old SD (mount the boot and filesystem partitions)
+* Copy BOOT (old) -> BOOT (new) (use `/tmp` as a temporary location to store files if you cannot mount both SD cards simultaneously)
+* `sudo tar zcvf filesystem.tgz /media/$username/rootfs` (from the old SD - again do this in `/tmp`)
+* `sudo sync` (ensure files are copied by flushing file writing queue)
+* `cd /media/$username/rootfs` (on the new SD)
+* `sudo tar zxvf /tmp/filesystem.tgz --strip-components=3`
+* `sudo sync`

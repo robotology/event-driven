@@ -46,7 +46,7 @@ private:
     int i2cWrite(unsigned char reg, unsigned int data);
 
     //WRAPPERS?
-    bool configureRegisters(); //new initDevice
+    bool setDefaultRegisterValues(); //new initDevice
     bool select_generator(int type, int neural_mask = 0);
     bool config_generator(int type, uint32_t p1, uint32_t p2, uint32_t p3, uint32_t p4);
 
@@ -59,6 +59,7 @@ public:
     //CONNECTION
     bool connect(void);
     bool configure(bool verbose = false);
+    bool calibrate();
     //void disconnect(bool andturnoff = true);
     void disconnect();
 

@@ -1,0 +1,4 @@
+kivy
+matplotlib
+numpy
+tqdm

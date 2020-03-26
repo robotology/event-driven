@@ -25,8 +25,8 @@
 #define __ICUB_VTRACKTOROBOT_H__
 
 #include <yarp/os/all.h>
-#include <iCub/eventdriven/all.h>
-#include <iCub/eventdriven/vBottle.h>
+#include <event-driven/all.h>
+#include <event-driven/vBottle.h>
 #include <yarp/dev/CartesianControl.h>
 #include <yarp/dev/GazeControl.h>
 #include <yarp/dev/PolyDriver.h>

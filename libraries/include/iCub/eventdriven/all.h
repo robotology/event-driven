@@ -1,5 +1,0 @@
-#include "iCub/eventdriven/vtsHelper.h"
-#include "iCub/eventdriven/vCodec.h"
-#include "iCub/eventdriven/vPort.h"
-#include "iCub/eventdriven/vFilters.h"
-#include "iCub/eventdriven/vCollectSend.h"

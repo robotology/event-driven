@@ -26,16 +26,18 @@
 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
-#include <iCub/eventdriven/all.h>
+#include <event-driven/all.h>
+#include <event-driven/vIPT.h>
+#include <event-driven/vDraw.h>
 #include <opencv2/opencv.hpp>
 #include <map>
-
-#include "vDraw.h"
 
 using namespace ev;
 using namespace yarp::os;
 using yarp::sig::ImageOf;
 using yarp::sig::PixelBgr;
+using yarp::sig::PixelMono;
+using yarp::sig::FlexImage;
 using std::vector;
 using std::deque;
 using std::string;
@@ -47,11 +49,15 @@ private:
 
     string channel_name;
     unsigned int limit_time;
-
+    yarp::os::Stamp ts;
+    BufferedPort< ImageOf<PixelBgr> > frame_read_port;
+    cv::Mat current_frame;
     map<string, vReadPort<vQueue> > read_ports;
     map<string, vQueue> event_qs;
     vector<vDraw *> drawers;
-    BufferedPort< ImageOf<PixelBgr> > image_port;
+    BufferedPort< FlexImage > image_port;
+    vIPT unwarp;
+    bool calib_configured;
 
     bool updateQs();
 
@@ -62,11 +68,14 @@ private:
     map<string, deque<unsigned int> > bookmark_n_events;
     map<string, int> prev_vstamp;
 
+    ev::resolution desired_res;
+
 public:
 
     channelInstance(string channel_name);
+    bool addFrameDrawer(unsigned int width, unsigned int height);
     bool addDrawer(string drawer_name, unsigned int width,
-                   unsigned int height, unsigned int window_size, bool flip);
+                   unsigned int height, unsigned int window_size, double isoWindow, bool flip);
 
     bool threadInit();
     void run();
@@ -101,6 +110,131 @@ public:
     //we use the framerate to determine how often we do this
     virtual bool updateModule();
     virtual double getPeriod();
+};
+
+class overlayStereoDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class saeDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class grayDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class blackDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class binaryDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+    virtual void resetImage(cv::Mat &image);
+};
+
+class circleDraw : public vDraw {
+
+protected:
+
+    std::map<int, ev::event<ev::GaussianAE>> persistance;
+    int stagnantCount;
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class blobDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class accDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class isoCircDraw : public isoDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class rasterDrawHN : public vDraw {
+
+protected:
+
+    float time_scaler;
+    int neuron_min;
+    int neuron_max;
+    std::map<int, int> rmap;
+    std::vector<int> lines;
+    std::vector<string> texts;
+
+public:
+
+    virtual void initialise();
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
 };
 
 

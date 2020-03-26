@@ -28,6 +28,11 @@
 #include <iomanip>
 #include <cstring>
 
+using namespace yarp::os;
+using namespace ev;
+using std::string;
+using std::vector;
+
 /******************************************************************************/
 //device2yarp
 /******************************************************************************/
@@ -61,38 +66,42 @@ void  device2yarp::run() {
     if(fd < 0) {
         yError() << "HPU reading device not open";
         return;
-    }
-
-    vPortableInterface external_storage;
-    external_storage.setHeader(AE::tag);
+    }  
 
     unsigned int event_count = 0;
     unsigned int prev_ts = 0;
 
     while(!isStopping()) {
 
+        vPortableInterface& external_storage = output_port.prepare();
+        external_storage.setHeader(AE::tag);
+        external_storage.internaldata.resize(max_packet_size / 4);
+
         int r = max_dma_pool_size;
         unsigned int n_bytes_read = 0;
         while(r >= (int)max_dma_pool_size && n_bytes_read < max_packet_size) {
-            r = read(fd, data.data() + n_bytes_read, max_packet_size - n_bytes_read);
+            r = read(fd, (char *)external_storage.internaldata.data() + n_bytes_read, max_packet_size - n_bytes_read);
             if(r < 0)
                 yInfo() << "[READ ]" << std::strerror(errno);
             else
                 n_bytes_read += r;
         }
 
-        if(n_bytes_read == 0) continue;
-        
+        if(n_bytes_read == 0) {
+            output_port.unprepare();
+            continue;
+        }
+
         unsigned int first_ts = *(unsigned int *)data.data();
         if(prev_ts > first_ts)
             yWarning() << prev_ts << "->" << first_ts;
         prev_ts = first_ts;
-        
 
-        external_storage.setExternalData((const char *)data.data(), n_bytes_read);
+        external_storage.setExternalData((const char *)external_storage.internaldata.data(), n_bytes_read);
+        output_port.waitForWrite();
         yarp_stamp.update();
         output_port.setEnvelope(yarp_stamp);
-        output_port.write(external_storage);
+        output_port.writeStrict();
 
         event_count += n_bytes_read / 8;
 
@@ -102,7 +111,7 @@ void  device2yarp::run() {
 
             yInfo() << "[READ ]"
                     << (int)(event_count/(1000.0*update_period))
-                    << "kV/s";
+                    << "k events/s";
 
             prev_ts += update_period;
             event_count = 0;
@@ -188,10 +197,10 @@ void yarp2device::run()
             }
 
             if(hpu_regs.data & 0x00100000) {
-                yInfo() << "[DUMP ] " << (int)(0.001 * total_events / dt) << " kV/s ("
+                yInfo() << "[DUMP ] " << (int)(0.001 * total_events / dt) << " k events/s ("
                     << input_port.getPendingReads() << " delayed packets)";
             } else {
-                yInfo() << "[WRITE] " << (int)(0.001 * total_events / dt) << " kV/s ("
+                yInfo() << "[WRITE] " << (int)(0.001 * total_events / dt) << " k events/s ("
                     << input_port.getPendingReads() << " delayed packets)";
             }
 
@@ -232,27 +241,34 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
     //READ ID
     unsigned int version = 0;
-    ioctl(fd, HPU_VERSION, &version);
-    char version_word[4];
+    if(ioctl(fd, HPU_VERSION, &version) < 0)
+        { yError() << "Could not read version"; return false; }
+
+    char version_word[5];
     version_word[0] = (char)(version >> 24);
     version_word[1] = (char)(version >> 16);
     version_word[2] = (char)(version >> 8);
     version_word[3] = '-';
+    version_word[4] = '\0';
     yInfo() << "ID and Version " << version_word
             << (int)((version >> 4) & 0xF) << "." << (int)((version >> 0) & 0xF);
 
     //32 bit timestamp
     uint32_t timestampswitch = 1;
-    ioctl(fd, HPU_TS_MODE, &timestampswitch);
+    if(ioctl(fd, HPU_TS_MODE, &timestampswitch) < 0)
+        { yError() << "Could not write timestamp mode"; return false; }
 
     uint32_t dma_latency = 1;
-    ioctl(fd, HPU_AXIS_LATENCY, &dma_latency);
+    if(ioctl(fd, HPU_AXIS_LATENCY, &dma_latency) < 0)
+        { yError() << "Could not write dma latency"; return false; }
 
     uint32_t minimum_packet = 8; //bytes (not events)
-    ioctl(fd, HPU_SET_BLK_RX_THR, &minimum_packet);
+    if(ioctl(fd, HPU_SET_BLK_RX_THR, &minimum_packet) < 0)
+        { yError() << "Could not write BLK_RX_THR"; return false; }
 
     //read the pool size
-    ioctl(fd, HPU_GET_RX_PS, &pool_size);
+    if(ioctl(fd, HPU_GET_RX_PS, &pool_size) < 0)
+        { yError() << "Could not read pool size"; return false; }
     if(pool_size < 0 || pool_size > 32768) {
         yWarning() << "Pool size invalid (" << pool_size << "). Setting to ("
                      "4096)";
@@ -261,46 +277,38 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     }
 
     unsigned int pool_count;
-    ioctl(fd, HPU_GET_RX_PN, &pool_count);
+    if(ioctl(fd, HPU_GET_RX_PN, &pool_count) < 0)
+        { yError() << "Could not read pool count"; return false; }
 
-    if(!spinnaker) {
+    hpu_rx_interface_ioctl_t rx_config;
+    rx_config = {INTERFACE_EYE_R, {{1, 1, 1, 1}, 0, 0, 0}};
+    if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
+        { yError() << "Could not write EYE_R config"; return false; }
 
-        yInfo() << "Configuring Cameras/Skin";
+    rx_config = {INTERFACE_EYE_L, {{1, 1, 1, 1}, 0, 0, 0}};
+    if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
+        { yError() << "Could not write EYE_L config"; return false; }
 
-        hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 0, 0}, ROUTE_FIXED};
-        ioctl(fd, HPU_TX_INTERFACE, &tx_config);
+    rx_config = {INTERFACE_AUX, {{1, 1, 1, 1}, 1, 1, 1}};
+    if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
+        { yError() << "Could not write AUX config"; return false; }
 
-        hpu_rx_interface_ioctl_t rx_config;
-        rx_config = {INTERFACE_EYE_R, {{1, 1, 1, 1}, 0, 0, 0}};
-        ioctl(fd, HPU_RX_INTERFACE, &rx_config);
+    hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 1, 0}, ROUTE_FIXED};
+    if(ioctl(fd, HPU_TX_INTERFACE, &tx_config) < 0)
+        { yError() << "Could not write hpu tx config"; return false; }
 
-        rx_config = {INTERFACE_EYE_L, {{1, 1, 1, 1}, 0, 0, 0}};
-        ioctl(fd, HPU_RX_INTERFACE, &rx_config);
-
-        rx_config = {INTERFACE_AUX, {{1, 1, 1, 1}, 0, 0, 0}};
-        ioctl(fd, HPU_RX_INTERFACE, &rx_config);
-
-    } else {
+    if(spinnaker) {
 
         yInfo() << "Configuring SpiNNaker";
 
         hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 0, 1}, ROUTE_FIXED};
-        ioctl(fd, HPU_TX_INTERFACE, &tx_config);
-
-        hpu_rx_interface_ioctl_t rx_config = {INTERFACE_AUX, {{0, 0, 0, 0}, 0, 0, 1}};
-        ioctl(fd, HPU_RX_INTERFACE, &rx_config);
-
-        //unsigned int ss_protection = 1;
-        //ioctl(fd, HPU_SPINN_KEYS_EN, &ss_protection);
-
-        //unsigned int dump_off = 1;
-        //ioctl(fd, HPU_SPINN_DUMPOFF, &dump_off);
+        if(ioctl(fd, HPU_TX_INTERFACE, &tx_config) < 0)
+            { yError() << "Could not write hpu tx config"; return false; }
 
         spinn_keys_t ss_keys = {0x80000000, 0x40000000};
         ioctl(fd, HPU_SET_SPINN_KEYS, &ss_keys);
 
         spinn_keys_enable_t ss_policy = {0, 0, 1};
-        //spinn_start_stop_policy_t ss_mode = KEY_ENABLE;
         ioctl(fd, HPU_SPINN_KEYS_EN, &ss_policy);
 
         hpu_regs_t hpu_regs;
@@ -308,14 +316,10 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         //SPNN_TX_MASK_REG
         unsigned int tx_mask = 0x00FFFFFF;
         ioctl(fd, HPU_SPINN_TX_MASK, &tx_mask);
-        //hpu_regs = {0x88, 1, 0x00FFFFFF};
-        //ioctl(fd, HPU_GEN_REG, &hpu_regs);
 
         //SPNN_RX_MASK_REG
         unsigned int rx_mask = 0x00FFFFFF;
         ioctl(fd, HPU_SPINN_TX_MASK, &rx_mask);
-        //hpu_regs = {0x8C, 1, 0x00FFFFFF};
-        //ioctl(fd, HPU_GEN_REG, &hpu_regs);
 
         //ENABLE loopback
         spinn_loop_t lbmode = LOOP_NONE;
@@ -339,7 +343,6 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         hpu_regs.rw = 1;
         ioctl(fd, HPU_GEN_REG, &hpu_regs); //write
 
-
         //READ CTRL_REG status
         hpu_regs = {0, 0, 0};
         ioctl(fd, HPU_GEN_REG, &hpu_regs);
@@ -353,17 +356,12 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         std::cout << "Raw Status: ";
         std::cout << "0x" << std::hex << std::setw(8)
                   << std::setfill('0') << hpu_regs.data << std::endl;
-
-
     }
 
     yInfo() << "DMA pool size:" << pool_size;
     yInfo() << "DMA pool count:" << pool_count;
     yInfo() << "DMA latency:" << 1 << "ms";
     yInfo() << "Mimumum driver read:" << 8 << "bytes";
-
-
-
 
     return true;
 }
