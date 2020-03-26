@@ -258,6 +258,56 @@ void blackDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
 
 
+// BINARY DRAW //
+// =========== //
+
+const std::string binaryDraw::drawtype = "BINARY";
+
+std::string binaryDraw::getDrawType()
+{
+    return binaryDraw::drawtype;
+}
+
+std::string binaryDraw::getEventType()
+{
+    return AddressEvent::tag;
+}
+
+void binaryDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
+{
+    image = cv::Scalar(255);
+
+    if(eSet.empty()) return;
+    if(vTime < 0) vTime = eSet.back()->stamp;
+
+    ev::vQueue::const_reverse_iterator qi;
+    for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
+
+        int dt = vTime - (*qi)->stamp;
+        if (dt < 0) dt += ev::vtsHelper::max_stamp;
+        if ((unsigned int) dt > display_window) break;
+
+        auto aep = is_event<AddressEvent>(*qi);
+        if (!aep) continue;
+
+        int y = aep->y;
+        int x = aep->x;
+
+        if (flip) {
+            y = Ylimit - 1 - y;
+            x = Xlimit - 1 - x;
+        }
+
+        image.at<uchar>(y, x) = 0;
+    }
+}
+
+void binaryDraw::resetImage(cv::Mat &image)
+{
+    if(image.empty())
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC1);
+    image.setTo(255);
+}
 // STEREO OVERLAY DRAW //
 // =================== //
 
