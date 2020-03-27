@@ -28,8 +28,8 @@
 
 namespace ev {
 
-class PAD{
-protected :
+class PAD {
+protected:
 
     const double DEG2RAD=M_PI/180.0;
     int nTaxels;
@@ -52,23 +52,23 @@ protected :
     std::map<int, std::vector<double> > data;
 
 public:
-    int xoffset,yoffset;
+    int xoffset{0},yoffset{0};
     int scaling{4};
     int radius{6};
     int noise{2500};
     int max_value{15000};//good for default flat skin patch
 
     std::map<int, std::list<unsigned int> > repr2TaxelList;
-    virtual void initRepresentativeTaxels(std::vector<int> taxelMap){};
-    virtual int* getID(const int index) const {};
-    virtual std::tuple<double,double> makeMap( int ID, int taxelIntriangle) const {};
+    virtual void initRepresentativeTaxels(std::vector<int> taxelMap) = 0;
+    virtual int* getID(const int index) const = 0;
+    virtual std::tuple<double,double> makeMap( int ID) const = 0;
     void get_data(int id,double x,double y, double orientation,double gain, int mirror,int layoutNum){
         data.insert(std::make_pair(id,std::vector<double> {x,y,orientation,gain,double(mirror)}));
     };
 };
 
 
-class Triangle_10pad : public PAD{
+class Triangle_10pad : public PAD {
 
 private:
 
@@ -113,7 +113,7 @@ int* getID(const int index)const {
     };
 
 
- public :
+public:
 
     Triangle_10pad(){
 
