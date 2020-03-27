@@ -75,9 +75,9 @@ private:
 
 int* getID(const int index)const {
 
-        static int result[3];
-        int triangleID,taxelInTriangle;
-        bool success =0;
+        static int result[3] = {0, 0, 0};
+        int triangleID = 0,taxelInTriangle = 0;
+        bool success = 0;
 
 
         for(auto mapit=repr2TaxelList.begin();mapit!=repr2TaxelList.end();mapit++){
@@ -187,7 +187,7 @@ public:
         double cx = info[0];
         double cy = info[1];
         double th = info[2];
-        double gain = info[3];
+        //double gain = info[3];
         int lrMirror = int (info[4]);
 
 
@@ -267,12 +267,12 @@ class Right_hand : public PAD{
                 }
 
             }
-        };
+        }
 
   int* getID(const int index) const{
 
-        static int result[3];
-        int triangleID,taxelInTriangle;
+        static int result[3] = {0, 0, 0};
+        int triangleID = 0,taxelInTriangle = 0;
         bool success =0;
         //std::cout<<"\n HERE"<<index<<std::endl;
 
@@ -329,7 +329,7 @@ std::tuple<double,double> makeMap(int index)const{
         double cx = info[0];
         double cy = info[1];
         double th = info[2];
-        double gain = info[3];
+        //double gain = info[3];
         int lrMirror = int (info[4]);
         const double CST=cos(DEG2RAD*th);
         const double SNT=sin(DEG2RAD*th);
@@ -515,13 +515,13 @@ class Left_hand : public PAD{
                 }
 
             }
-        };
+        }
 
     int* getID(const int index) const{
 
-        static int result[3];
-        int triangleID,taxelInTriangle;
-        bool success =0;
+        static int result[3] = {0, 0, 0};
+        int triangleID = 0,taxelInTriangle = 0;
+        bool success = 0;
         //std::cout<<"\n HERE"<<index<<std::endl;
 
         for(auto mapit=repr2TaxelList.begin();mapit!=repr2TaxelList.end();mapit++){
@@ -578,7 +578,7 @@ class Left_hand : public PAD{
         double cx = info[0];
         double cy = info[1];
         double th = info[2];
-        double gain = info[3];
+        //double gain = info[3];
         int lrMirror = int (info[4]);
         const double CST=cos(DEG2RAD*th);
         const double SNT=sin(DEG2RAD*th);
@@ -774,7 +774,7 @@ class loadMap {
                     check+=1;
                     std :: cout << "Calibration data";
                     yarp::os::Bottle calibration_data = *(rf2.find("taxel2Repr").asList());
-                    for (int i = 0; i < calibration_data.size(); i++){
+                    for (size_t i = 0; i < calibration_data.size(); i++){
                             taxel2Repr.push_back(calibration_data.get(i).asInt());
                     }
                     skin.initRepresentativeTaxels(taxel2Repr);
@@ -791,7 +791,7 @@ class loadMap {
                     std:: cout<< "\n Sensors data"<<std::endl;
                     yarp::os::Bottle &ini_data = rf1.findGroup("SENSORS");
 
-                    for (int i = 1; i < (ini_data.size()); i++){
+                    for (size_t i = 1; i < (ini_data.size()); i++){
 
                         yarp::os::Bottle sensorConfig(ini_data.get(i).toString());
 
@@ -848,7 +848,7 @@ class loadMap {
                     check+=1;
                     std :: cout << "Calibration data";
                     yarp::os::Bottle calibration_data = *(rf2.find("taxel2Repr").asList());
-                    for (int i = 0; i < calibration_data.size(); i++){
+                    for (size_t i = 0; i < calibration_data.size(); i++){
                             taxel2Repr.push_back(calibration_data.get(i).asInt());
                     }
                     handR.initRepresentativeTaxels(taxel2Repr);
@@ -865,7 +865,7 @@ class loadMap {
                     std:: cout<< "\n Sensors data"<<std::endl;
                     yarp::os::Bottle &ini_data = rf1.findGroup("SENSORS");
 
-                    for (int i = 1; i < (ini_data.size()); i++){
+                    for (size_t i = 1; i < (ini_data.size()); i++){
 
                         yarp::os::Bottle sensorConfig(ini_data.get(i).toString());
 
@@ -920,7 +920,7 @@ class loadMap {
                     check+=1;
                     std :: cout << "Calibration data";
                     yarp::os::Bottle calibration_data = *(rf2.find("taxel2Repr").asList());
-                    for (int i = 0; i < calibration_data.size(); i++){
+                    for (size_t i = 0; i < calibration_data.size(); i++){
                             taxel2Repr.push_back(calibration_data.get(i).asInt());
                     }
                     handL.initRepresentativeTaxels(taxel2Repr);
@@ -937,7 +937,7 @@ class loadMap {
                     std:: cout<< "\n Sensors data"<<std::endl;
                     yarp::os::Bottle &ini_data = rf1.findGroup("SENSORS");
 
-                    for (int i = 1; i < (ini_data.size()); i++){
+                    for (size_t i = 1; i < (ini_data.size()); i++){
 
                         yarp::os::Bottle sensorConfig(ini_data.get(i).toString());
 

@@ -270,8 +270,8 @@ std::string isoDrawSkin::getEventType()
 void isoDrawSkin::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
 
-    auto light_violet = (white - (white - violet) * 0.25);
-    auto light_aqua = (white - (white - aqua) * 0.25);
+    //auto light_violet = (white - (white - violet) * 0.25);
+    //auto light_aqua = (white - (white - aqua) * 0.25);
 
     cv::Mat isoimage = baseimage.clone();
     isoimage.setTo(255);
