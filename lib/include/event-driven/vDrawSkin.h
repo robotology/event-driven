@@ -53,9 +53,10 @@ protected :
 
 public:
     int xoffset,yoffset;
-    int scaling =4, radius = 6;
-    int noise = 2500;
-    int max_value = 15000;//good for default flat skin patch
+    int scaling{4};
+    int radius{6};
+    int noise{2500};
+    int max_value{15000};//good for default flat skin patch
 
     std::map<int, std::list<unsigned int> > repr2TaxelList;
     virtual void initRepresentativeTaxels(std::vector<int> taxelMap){};
