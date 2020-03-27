@@ -36,6 +36,8 @@ using namespace ev;
 using namespace yarp::os;
 using yarp::sig::ImageOf;
 using yarp::sig::PixelBgr;
+using yarp::sig::PixelMono;
+using yarp::sig::FlexImage;
 using std::vector;
 using std::deque;
 using std::string;
@@ -53,7 +55,7 @@ private:
     map<string, vReadPort<vQueue> > read_ports;
     map<string, vQueue> event_qs;
     vector<vDraw *> drawers;
-    BufferedPort< ImageOf<PixelBgr> > image_port;
+    BufferedPort< FlexImage > image_port;
     vIPT unwarp;
     bool calib_configured;
 
@@ -154,6 +156,17 @@ public:
 
 };
 
+class binaryDraw : public vDraw {
+
+public:
+
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+    virtual void resetImage(cv::Mat &image);
+};
+
 class circleDraw : public vDraw {
 
 protected:
@@ -196,6 +209,27 @@ class isoCircDraw : public isoDraw {
 
 public:
 
+    static const std::string drawtype;
+    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
+    virtual std::string getDrawType();
+    virtual std::string getEventType();
+
+};
+
+class rasterDrawHN : public vDraw {
+
+protected:
+
+    float time_scaler;
+    int neuron_min;
+    int neuron_max;
+    std::map<int, int> rmap;
+    std::vector<int> lines;
+    std::vector<string> texts;
+
+public:
+
+    virtual void initialise();
     static const std::string drawtype;
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
     virtual std::string getDrawType();

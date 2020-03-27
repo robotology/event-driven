@@ -48,11 +48,13 @@ vDraw * createDrawer(std::string tag)
 
     if(tag == addressDraw::drawtype)
         return new addressDraw();
+    if(tag == binaryDraw::drawtype)
+        return new binaryDraw();
     if(tag == grayDraw::drawtype)
         return new grayDraw();
     if(tag == blackDraw::drawtype)
         return new blackDraw();
-	if(tag == isoDraw::drawtype)
+    if(tag == isoDraw::drawtype)
         return new isoDraw();
     if(tag == interestDraw::drawtype)
         return new interestDraw();
@@ -90,6 +92,8 @@ vDraw * createDrawer(std::string tag)
         return new cochleaDraw();
     if(tag == rasterDraw::drawtype)
         return new rasterDraw();
+    if(tag == rasterDrawHN::drawtype)
+        return new rasterDrawHN();
     return 0;
 
 }
@@ -230,10 +234,14 @@ void channelInstance::run()
         (*drawer_i)->draw(canvas, event_qs[(*drawer_i)->getEventType()], -1);
     }
 
-    image_port.prepare().copy(yarp::cv::fromCvMat<PixelBgr>(canvas));
-    ts.update();
-    image_port.setEnvelope(ts);
-    image_port.write();
+    if (canvas.type() == CV_8UC3) {
+        image_port.prepare().copy(yarp::cv::fromCvMat<PixelBgr>(canvas));
+    } else if (canvas.type() == CV_8UC1) {
+        image_port.prepare().copy(yarp::cv::fromCvMat<PixelMono>(canvas));
+    }
+        ts.update();
+        image_port.setEnvelope(ts);
+        image_port.write();
 
 }
 

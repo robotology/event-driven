@@ -1,0 +1,27 @@
+language: cpp
+
+dist: bionic
+
+compiler:
+          - gcc
+
+before_install:
+          - sudo apt-get update -qq
+install:
+          - sudo apt-get install -qq cmake build-essential libopencv-dev libace-dev libeigen3-dev
+
+before_script:
+          - cd ../.. && pwd && export MYDIR=$PWD
+          - git clone -b v3.2.1 --depth 1 https://github.com/robotology/yarp.git
+          - cd yarp && mkdir build 
+          - cd build
+          - pwd
+          - cmake .. 
+          - make -j 2 
+          - cd $MYDIR
+          - cd robotology/event-driven
+          - mkdir build
+          - cd build
+          - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$MYDIR/yarp/build
+
+script: make -j 2

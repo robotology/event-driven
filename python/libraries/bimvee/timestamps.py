@@ -203,17 +203,6 @@ def unwrapTimestamps(ts, **kwargs):
         ts[wrapPoint+1:] = ts[wrapPoint+1:] + wrapTime
     return ts
 
-# TODO: Is this obsolete?
-def getFieldListForDataType(dataType):
-    if dataType == 'dvs':
-        return ['ts', 'x', 'y', 'pol']
-    elif dataType == 'frame':
-        return ['ts', 'x', 'y', 'pol']
-    elif dataType == 'pose6':
-        return ['x', 'y', 'z', 'roll', 'pitch', 'yaw']
-    else:
-        return []
-    
 def cropSelectedFields(dataTypeDict, fieldList, selectedBool):
     for fieldName in fieldList:
         dataTypeDict[fieldName] = dataTypeDict[fieldName][selectedBool]
