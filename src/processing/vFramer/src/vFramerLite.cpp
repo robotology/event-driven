@@ -19,6 +19,7 @@
 #include "vFramerLite.h"
 #include <sstream>
 #include <yarp/cv/Cv.h>
+#include "event-driven/vDrawSkin.h"
 
 using namespace ev;
 
@@ -69,6 +70,12 @@ vDraw * createDrawer(std::string tag)
         return new skinDraw();
     if(tag == skinsampleDraw::drawtype)
         return new skinsampleDraw();
+    if(tag == isoDrawSkin::drawtype)
+        return new isoDrawSkin();
+    if(tag == taxelsampleDraw::drawtype)
+        return new taxelsampleDraw();
+    if(tag == taxeleventDraw::drawtype)
+        return new taxeleventDraw();
     if(tag == accDraw::drawtype)
         return new accDraw();
     if(tag == isoInterestDraw::drawtype)

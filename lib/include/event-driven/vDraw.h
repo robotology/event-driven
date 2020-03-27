@@ -49,6 +49,7 @@ protected:
     cv::Vec3b lime   {9, 250, 222};
     cv::Vec3b white{255, 255, 255};
     cv::Vec3b black  {0,   0,   0};
+    cv::Vec3b red  {0,   0,   255};
 
 public:
 
@@ -168,28 +169,6 @@ public:
 
 };
 
-class skinDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
-class skinsampleDraw : public vDraw {
-
-public:
-
-    static const std::string drawtype;
-    virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
-    virtual std::string getDrawType();
-    virtual std::string getEventType();
-
-};
-
 class imuDraw : public vDraw {
 
 public:
@@ -285,8 +264,6 @@ public:
     virtual std::string getEventType();
 
 };
-
-
 
 
 } //namespace ev::
