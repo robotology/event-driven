@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Copyright (C) 2020 Event-driven Perception for Robotics
  *   Author: arren.glover@iit.it
  *           luca.gagliardi@iit.it
  *
