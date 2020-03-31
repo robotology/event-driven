@@ -108,7 +108,9 @@ def cropTime(inDict, **kwargs):
             return inDict
         startIdx = np.searchsorted(ts, startTime)
         stopIdx = np.searchsorted(ts, stopTime)
-        tsNew = ts[startIdx:stopIdx] - startTime
+        tsNew = ts[startIdx:stopIdx]
+        if kwargs.get('zeroTime', True):
+            tsNew = tsNew - startTime
         outDict = {'ts': tsNew}
         for fieldName in inDict.keys():
             if fieldName != 'ts':
