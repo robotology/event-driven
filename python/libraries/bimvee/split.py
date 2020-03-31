@@ -109,7 +109,7 @@ def cropTime(inDict, **kwargs):
         startIdx = np.searchsorted(ts, startTime)
         stopIdx = np.searchsorted(ts, stopTime)
         tsNew = ts[startIdx:stopIdx]
-        if kwargs.get('zeroTime', True):
+        if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
             tsNew = tsNew - startTime
         outDict = {'ts': tsNew}
         for fieldName in inDict.keys():
@@ -121,7 +121,7 @@ def cropTime(inDict, **kwargs):
                     outDict[fieldName] = field.copy() # This might fail for certain data types
                 except TypeError:
                     outDict[fieldName] = field # This might fail for certain data types
-        if kwargs.get('zeroTime', True):
+        if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
             tsOffsetOriginal = inDict.get('tsOffset', 0)
             outDict['tsOffset'] = tsOffsetOriginal - startTime
         return outDict

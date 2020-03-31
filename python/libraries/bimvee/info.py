@@ -22,45 +22,62 @@ pp = pprint.PrettyPrinter(indent=12)
 
 def fieldMinMax(dataTypeDict, fieldName):
     if fieldName in dataTypeDict:
-        print('            ', 
-              np.min(dataTypeDict[fieldName]), 
-              ' >= ', fieldName, 
-              ' >= ', np.max(dataTypeDict[fieldName]))
+        field = dataTypeDict[fieldName]
+        if type(field) == np.ndarray:
+            if field.shape[0] > 1:
+                # Handle 2D arrays, e.g. an array containing x, y, z in columns
+                if len(field.shape) > 1:
+                    for dim1Idx in range(field.shape[1]):
+                        print('            ', 
+                              np.min(field[:, dim1Idx]), 
+                              ' >= ', fieldName, ' - col ', dim1Idx,  
+                              ' >= ', np.max(field[:, dim1Idx]))
+                else:
+                    print('            ', 
+                          np.min(field), 
+                          ' >= ', fieldName,
+                          ' >= ', np.max(field))
 
-def infoForImportedDicts(importedDicts, **kwargs):
-    if not isinstance(importedDicts, list):
-        importedDicts = [importedDicts]
-    for importedDict in importedDicts:
-        print(importedDict['info'])
-        for channelName in importedDict['data']:
+def info(containers, **kwargs):
+    if not isinstance(containers, list):
+        containers = [containers]
+    for container in containers:
+        print(container['info'])
+        for channelName in container['data']:
             print('    Channel: ' + channelName)
-            for dataType in importedDict['data'][channelName]:
+            for dataType in container['data'][channelName]:
                 print('        DataType: ' + dataType)
-                dataTypeDict = importedDict['data'][channelName][dataType]
+                dataTypeDict = container['data'][channelName][dataType]
                 if 'ts' in dataTypeDict:
                     print('            Num events: ', len(dataTypeDict['ts']))
                     fieldMinMax(dataTypeDict, 'ts')
+                    if 'tsOffset' in dataTypeDict:
+                        print('            Ts offset: ', dataTypeDict['tsOffset'])
+                    for fieldName in dataTypeDict.keys():
+                        if fieldName not in ['ts', 'tsOffset']:
+                            fieldMinMax(dataTypeDict, dataType)
                 else:
                     pp.pprint(dataTypeDict)
-                if 'tsOffset' in dataTypeDict:
-                    print('            Ts offset: ', dataTypeDict['tsOffset'])
-                for dataType in ['pol', 'x', 'y']:
-                    fieldMinMax(dataTypeDict, dataType)
 
-def infoTsForImportedDicts(importedDicts, **kwargs):
-    if not isinstance(importedDicts, list):
-        importedDicts = [importedDicts]
-    for importedDict in importedDicts:
-        print(importedDict['info'])
-        for channelName in importedDict['data']:
+def infoTs(containers, **kwargs):
+    if not isinstance(containers, list):
+        containers = [containers]
+    for container in containers:
+        print(container['info'])
+        for channelName in container['data']:
             print('    Channel: ' + channelName)
-            for dataType in importedDict['data'][channelName]:
+            for dataType in container['data'][channelName]:
                 print('        DataType: ' + dataType)
-                dataTypeDict = importedDict['data'][channelName][dataType]
+                dataTypeDict = container['data'][channelName][dataType]
                 if 'ts' in dataTypeDict:
                     fieldMinMax(dataTypeDict, 'ts')
                 if 'tsOffset' in dataTypeDict:
                     print('            Ts offset: ', dataTypeDict['tsOffset'])
 
-def info(importedDicts, **kwargs):
-    infoForImportedDicts(importedDicts, **kwargs)
+#%% Legacy function names
+
+def infoForImportedDicts(container, **kwargs):
+    info(container, **kwargs)
+
+def infoTsForImportedDicts(container, **kwargs):
+    infoTs(container, **kwargs)

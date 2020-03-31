@@ -115,7 +115,7 @@ It first calls the above function rezeroTimestampsForAnImportedDict for each fil
 so that timestamps are aligned individually within the dict for each file. 
 The timestamp which was used to achieve this will be in ['info']['tsOffsetFromData'].
 There may additionally be ['info']['tsOffsetFromInfo'] - the info level timestamps.
-If info/level timestamops are available for all files, these are used to rezero
+If info/level timestamps are available for all files, these are used to rezero
 all the data across multiple files.
 If any are absent, then they are ignored, and alignment across multiple files
 is based on data-level timestamps.

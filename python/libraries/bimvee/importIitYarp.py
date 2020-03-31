@@ -377,7 +377,7 @@ def importPostProcessing(dvs, samples, dvsLbl=None, dvsFlow=None, **kwargs):
             for dataType in chDict:
                 chDict[dataType]['ts'] = unwrapTimestamps(chDict[dataType]['ts'], **kwargs) * 0.00000008 # Convert to seconds
 
-            if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
+            if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
                 zeroTimestampsForAChannel(chDict)
             if ch == 0:
                 channels['left'] = chDict
@@ -500,7 +500,7 @@ def importIitYarpRecursive(**kwargs):
         
 def importIitYarp(**kwargs):
     importedDicts = importIitYarpRecursive(**kwargs)
-    if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
+    if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
         # Optional: start the timestamps at zero for the first event
         # This is done collectively for all the concurrent imports
         rezeroTimestampsForImportedDicts(importedDicts)

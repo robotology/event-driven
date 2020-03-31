@@ -32,8 +32,7 @@ import numpy as np
 from tqdm import tqdm 
 from timestamps import unwrapTimestamps, zeroTimestampsForADataType
 
-def importSecDvs(**kwargs):
-    filePathOrName = kwargs['filePathOrName']
+def importSecDvs(filePathOrName, **kwargs):
     print('Attempting to import ' + filePathOrName + ' as secdvs')
     with open(filePathOrName, 'rb') as file:
         data = np.fromfile(file, dtype='>u4')
@@ -165,8 +164,8 @@ def importSecDvs(**kwargs):
                'y': y,
                'pol': pol,
                }
-
-    zeroTimestampsForADataType(dvsDict)
+    if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
+        zeroTimestampsForADataType(dvsDict)
     outDict = {
     'info': {'filePathOrName':filePathOrName,
         'fileFormat': 'secdvs'},
