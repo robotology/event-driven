@@ -14,9 +14,17 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 Intended as part of bimvee (Batch Import, Manipulation, Visualisation and Export of Events etc)
 Contains various functions for splitting data sets:
 
-splitByChannel
-splitByPolarity
-splitDvsByLabel TODO: this could be generalised to any data type ...
+Two general functions in which one chosen field is used to divide a whole dataset
+- selectByLabel
+- splitByLabel
+
+splitByPolarity: divide events according to a boolean "pol" field (intended for dvs events)
+
+Two functions for narrowing down on the data by time or space:
+- cropTime (cropTemporal)
+- cropSpace (cropSpatial)
+cropTime works on ts.
+cropSpace only works on x and y fields and is targetted for dvs - this could be much more general.
 """
 
 #%%
@@ -109,7 +117,7 @@ def cropTime(inDict, **kwargs):
         startIdx = np.searchsorted(ts, startTime)
         stopIdx = np.searchsorted(ts, stopTime)
         tsNew = ts[startIdx:stopIdx]
-        if kwargs.get('zeroTime', True):
+        if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
             tsNew = tsNew - startTime
         outDict = {'ts': tsNew}
         for fieldName in inDict.keys():
@@ -121,7 +129,7 @@ def cropTime(inDict, **kwargs):
                     outDict[fieldName] = field.copy() # This might fail for certain data types
                 except TypeError:
                     outDict[fieldName] = field # This might fail for certain data types
-        if kwargs.get('zeroTime', True):
+        if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
             tsOffsetOriginal = inDict.get('tsOffset', 0)
             outDict['tsOffset'] = tsOffsetOriginal - startTime
         return outDict
