@@ -150,9 +150,9 @@ def importVicon(**kwargs):
             outDict['data'][id]['pose6q']['ts'] = np.array(outDict['data'][id]['pose6q']['ts'], dtype=np.float64)
             outDict['data'][id]['pose6q']['point'] = np.array(outDict['data'][id]['pose6q']['point'], dtype=np.float64)
             outDict['data'][id]['pose6q']['rotation'] = np.array(outDict['data'][id]['pose6q']['rotation'], dtype=np.float64)
-            if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
+            if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
                 zeroTimestampsForAChannel(outDict['data'][id])
-        if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
+        if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
             rezeroTimestampsForImportedDicts(outDict)
         outDict['info']['uniqueIds'] = uniqueIds
     else:
@@ -166,7 +166,7 @@ def importVicon(**kwargs):
         else:            
             outDict['data']['vicon'] = {'pose6q': poseDict}
             
-        if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
+        if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
             zeroTimestampsForAChannel(outDict['data']['vicon']) # TODO: Zeroing in the separated channel case
     return outDict
 
