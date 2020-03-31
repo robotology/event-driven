@@ -56,14 +56,14 @@ from kivy.properties import StringProperty, NumericProperty, ListProperty, Boole
 from kivy.properties import DictProperty, ReferenceListProperty
 from kivy.metrics import dp
 
+# To get the graphics, set this as the current working directory
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # local imports (from bimvee)
 try:
     from visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
     from timestamps import getLastTimestamp
-    # To get the graphics, set this as the current working directory
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
 except ModuleNotFoundError:
-    if __package__ is None:
+    if __package__ is None or __package__ == '':
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from libraries.bimvee.visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
     from libraries.bimvee.timestamps import getLastTimestamp
@@ -329,10 +329,10 @@ class DataController(GridLayout):
             self.data_dict = importAe(filePathOrName=self.filePathOrName, template=template)
         except ValueError:
             try:
-                from importRpgDvsRos import importRosbag
+                from importRosbag import importRosbag
             except ModuleNotFoundError:
-                from libraries.bimvee.importRpgDvsRos import importRosbag
-            topics = importRosbag(filePathOrName=self.filePathOrName)
+                from libraries.bimvee.importRosbagSubmodule.importRosbag import importRosbag
+            topics = importRosbag(filePathOrName=self.filePathOrName, listTopics=True)
             self.show_template_dialog(topics)
 
         self.update_children()
