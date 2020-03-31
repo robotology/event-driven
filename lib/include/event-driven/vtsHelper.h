@@ -78,8 +78,6 @@ public:
         return deltaS(current_tick, prev_tick) * 1000.0;
     }
 
-
-
 };
 
 class benchmark {
