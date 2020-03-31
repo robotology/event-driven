@@ -68,9 +68,14 @@ public:
         return dt;
     }
 
+    static double deltaS(const int current_tick, const int prev_tick)
+    {
+        return deltaTicks(current_tick, prev_tick) * tsscaler;
+    }
+
     static double deltaMS(const int current_tick, const int prev_tick)
     {
-        return deltaTicks(current_tick, prev_tick) * tsscaler * 1000.0;
+        return deltaS(current_tick, prev_tick) * 1000.0;
     }
 
 };
