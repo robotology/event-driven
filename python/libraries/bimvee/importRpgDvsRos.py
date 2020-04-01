@@ -26,7 +26,7 @@ It also supports some standard ros types:
     sensor_msgs/Image
     sensor_msgs/Imu 
     sensor_msgs/PointCloud2
-Furthermore there is suppport for:
+Furthermore there is support for:
     esim_msgs/OpticFlow
 
 It returns nested dicts of the form:
