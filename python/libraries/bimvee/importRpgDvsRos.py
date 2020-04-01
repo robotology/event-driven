@@ -43,7 +43,7 @@ It returns nested dicts of the form:
             imu ...
             etc ...
 
-It optinally reorders the resulting data to support legacy templates (kwarg=template) 
+It optionally reorders the resulting data to support legacy templates (kwarg=template) 
 Here follow 2 example templates:
     
 template = {
