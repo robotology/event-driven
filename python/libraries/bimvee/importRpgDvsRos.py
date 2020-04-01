@@ -86,16 +86,15 @@ else:
 def bimveeTypeForRosbagType(rosbagType):
     rosbagType = rosbagType.replace('/','_')
     if rosbagType == 'dvs_msgs_EventArray': return 'dvs'
-    elif rosbagType == 'esim_msgs_OpticFlow': return 'flowMap'
-    elif rosbagType == 'geometry_msgs_PoseStamped': return 'pose6q'
-    elif rosbagType == 'geometry_msgs_Transform': return 'pose6q'
-    elif rosbagType == 'geometry_msgs_TwistStamped': return 'twist'
-    elif rosbagType == 'sensor_msgs_CameraInfo': return 'cam'
-    elif rosbagType == 'sensor_msgs_Image': return 'frame'
-    elif rosbagType == 'sensor_msgs_Imu': return 'imu'
-    elif rosbagType == 'sensor_msgs_PointCloud2': return 'point3'
-    else: 
-        return None
+    if rosbagType == 'esim_msgs_OpticFlow': return 'flowMap'
+    if rosbagType == 'geometry_msgs_PoseStamped': return 'pose6q'
+    if rosbagType == 'geometry_msgs_Transform': return 'pose6q'
+    if rosbagType == 'geometry_msgs_TwistStamped': return 'twist'
+    if rosbagType == 'sensor_msgs_CameraInfo': return 'cam'
+    if rosbagType == 'sensor_msgs_Image': return 'frame'
+    if rosbagType == 'sensor_msgs_Imu': return 'imu'
+    if rosbagType == 'sensor_msgs_PointCloud2': return 'point3'
+    return None
 
 def importRpgDvsRos(filePathOrName, **kwargs):    
     template = kwargs.get('template')
@@ -120,10 +119,6 @@ def importRpgDvsRos(filePathOrName, **kwargs):
     else:
         # If we get to here then there is a template to parse
         # The template becomes the data branch of the importedDict
-        outDict = {
-            'info': kwargs,
-            'data': {}
-                }            
         for channelKey in template.keys():
             channelKeyStripped = str(channelKey).translate(str.maketrans('', '', string.punctuation))
             outDict['data'][channelKeyStripped] = {}
