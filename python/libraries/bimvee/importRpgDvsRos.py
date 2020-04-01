@@ -14,7 +14,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 Intended as part of bimvee (Batch Import, Manipulation, Visualisation and Export of Events etc)
 importRpgDvsRos uses the importRosbag submodule
-(orignal located at https://github.com/event-driven-robotics/importRosbag)
+(original located at https://github.com/event-driven-robotics/importRosbag)
 to import a rosbag, containing a selected set of ros msg types.
 In particular, this supports the dvs_msgs/EventArray messages defined at:
 http://rpg.ifi.uzh.ch/davis_data.html
