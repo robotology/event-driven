@@ -118,6 +118,7 @@ Notably, rosbag import is achieved without needing a ros installation.
 Beyond the python standard library, the main dependencies are:
 
 - numpy
+- tqdm (for progress bars during import and export functions)
 
 For the 'plot' family of visualisation functions:
 
@@ -129,12 +130,6 @@ without reference to matplotlib, for rendering by an external application.
 
 plotDvsLastTs uses rankdata from scipy; however if it's not installed, 
 it defaults to a local definition; scipy is therefore an optional dependency.
-
-import and export functions give progress bars using:
-
-- tqdm
-
-If this is not installed, a local tqdm module allows the library to function regardless. 
 
 # Type definitions
 

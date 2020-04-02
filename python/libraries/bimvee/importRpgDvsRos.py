@@ -109,7 +109,6 @@ def importRpgDvsRos(filePathOrName, **kwargs):
     outDict['info']['filePathOrName'] = filePathOrName
     if template is None:
         for topicLabel in topics.keys():
-            topicLabel = topicLabel.replace('/', '_')
             rosbagType = topics[topicLabel].pop('rosbagType')
             bimveeType = bimveeTypeForRosbagType(rosbagType)
             if bimveeType is None:
