@@ -356,3 +356,113 @@ class VisualiserPose6q(Visualiser):
 
     def get_colorfmt(self):
         return 'rgb'
+
+class VisualiserPoint3(Visualiser):
+
+    renderX = 300 # TODO Hardcoded
+    renderY = 300
+    labels = None
+
+    def __init__(self, data):
+        self.set_data(data)
+        self.smallestRenderDim = min(self.renderX, self.renderY)
+
+    '''
+    Offset and scale the pose translations so that they all fit into the volume:
+        x [-0.5:0.5]
+        y[-0.5:0.5]
+        z[1:2]
+    '''
+    def set_data(self, data):
+        # scale and offset point data so that it remains proportional 
+        # but stays in the range 0-1 for all dimensions
+        pointX = data['point'][:, 0]
+        pointY = data['point'][:, 1]
+        pointZ = data['point'][:, 2]
+        minX = np.min(pointX)
+        maxX = np.max(pointX)
+        minY = np.min(pointY)
+        maxY = np.max(pointY)
+        minZ = np.min(pointZ)
+        maxZ = np.max(pointZ)
+        centreX = (minX + maxX) / 2
+        centreY = (minY + maxY) / 2
+        centreZ = (minZ + maxZ) / 2
+        largestDim = max(maxX-minX, maxY-minY, maxZ-minZ)
+        if largestDim == 0:
+            largestDim = 1
+
+        pointScaled = np.empty_like(data['point'])
+        pointScaled[:, 0] = pointX - centreX
+        pointScaled[:, 1] = pointY - centreY
+        pointScaled[:, 2] = pointZ - centreZ
+        pointScaled = pointScaled / largestDim + 0.5
+        internalData = {'ts': data['ts'],
+                        'point': pointScaled
+                        }
+        self.__data = internalData
+            
+    def project3dTo2d(self, x=0, y=0, z=0, smallestRenderDim=1, perspective=True):
+                 
+        if perspective:
+            # Move z out by 0.5, so that the data is between 0.5 and 1.5 distant in z
+            x = (x - 0.5) / (z + 0.5) + 0.5
+            y = (y - 0.5) / (z + 0.5) + 0.5
+        x *= smallestRenderDim
+        y *= smallestRenderDim
+        x = x.astype(int)
+        y = y.astype(int)
+        return x, y
+
+    def project_point(self, point, image, **kwargs):
+        if point is None:
+            return image
+        # Unpack
+        pointX = point[0]
+        pointY = point[1]
+        pointZ = point[2]
+        # Project the location
+        perspective = kwargs.get('perspective', False)
+        projX, projY = self.project3dTo2d(x=pointX, y=pointY, z=pointZ, 
+            smallestRenderDim=self.smallestRenderDim, perspective=perspective)
+        try:
+            image[projY, projX, :] = 255
+        except IndexError: # perspective or other projection issues cause out of bounds? ignore
+            pass
+        return image
+    
+    def get_frame(self, time, timeWindow, **kwargs):
+        data = self.__data
+        if data is None:
+            print('Warning: data is not set')
+            return np.zeros((1, 1), dtype=np.uint8) # This should not happen
+        image = np.zeros((self.renderY, self.renderX, 3), dtype = np.uint8)
+        # Put a grey box around the edge of the image
+        image[0, :, :] = 128
+        image[-1, :, :] = 128
+        image[:, 0, :] = 128
+        image[:, -1, :] = 128
+        # Put a grey crosshair in the centre of the image
+        rY = self.renderY
+        rX = self.renderY
+        chp = 20 # Cross Hair Proportion for following expression
+        image[int(rY/2 - rY/chp): int(rY/2 + rY/chp), int(rX/2), :] = 128        
+        image[int(rY/2), int(rX/2 - rX/chp): int(rX/2 + rX/chp), :] = 128        
+        firstIdx = np.searchsorted(data['ts'], time - timeWindow)
+        lastIdx = np.searchsorted(data['ts'], time + timeWindow)
+        points = data['point'][firstIdx:lastIdx, :]
+        for row in points:
+            image = self.project_point(row, image, **kwargs)                
+        
+        # Allow for arbitrary post-production on image with a callback
+        # TODO: as this is boilerplate, it could be pushed into pie syntax ...
+        if kwargs.get('callback', None) is not None:
+            kwargs['image'] = image
+            image = kwargs['callback'](**kwargs)
+        return image
+    
+    def get_dims(self):        
+        return self.renderX, self.renderY
+
+    def get_colorfmt(self):
+        return 'rgb'    
