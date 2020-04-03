@@ -214,8 +214,8 @@
     label: 'no data'
     image: image
     perspective: perspective.active
-    yaw: yaw.value
-    pitch: pitch.value
+    yaw: slider_yaw.value
+    pitch: slider_pitch.value
     on_perspective: root.update_data(self.data)
     on_yaw: self.get_frame(self.parent.time_value, self.parent.time_window)
     on_pitch: self.get_frame(self.parent.time_value, self.parent.time_window)
@@ -230,9 +230,10 @@
             Label:
                 text: 'pitch'
             Slider:
-                id: pitch
-                min: -180
-                max: 180
+                orientation: 'vertical'
+                id: slider_pitch
+                min: -90
+                max: 90
                 step: 1
                 value: 0            
     Label:
@@ -249,9 +250,9 @@
         Label:
             text: 'yaw'
         Slider:
-            id: yaw
-            min: -180
-            max: 180
+            id: slider_yaw
+            min: -90
+            max: 90
             step: 1
             value: 0            
 

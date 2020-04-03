@@ -101,6 +101,18 @@ def pose6qInterp(poseDict, time):
     locOut = locPre * (1-timeRel) + locPost * timeRel
     return (locOut, qOut)
 
+def combineTwoQuaternions(q1, q2):
+    w1 = q1[0]
+    v1 = q1[1:4]
+    w2 = q2[0]
+    v2 = q2[1:4]
+    wOut = w1*w2 - np.dot(v1.T, v2)
+    vOut = w1*v2 + w2*v1 + np.dot(v1, v2)
+    qOut = np.zeros_like(q1)
+    qOut[0] = wOut
+    qOut[1:4] = vOut
+    return qOut
+
 # adapted from https://stackoverflow.com/questions/50387606/python-draw-line-between-two-coordinates-in-a-matrix
 def draw_line(mat, x0, y0, x1, y1):
     if (x0, y0) == (x1, y1):
