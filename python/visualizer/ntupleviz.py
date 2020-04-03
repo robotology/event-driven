@@ -251,6 +251,8 @@ class ViewerPoint3(Viewer):
         else:
             kwargs = {
                 'perspective': self.perspective,
+                'yaw': self.yaw,
+                'pitch': self.pitch,
                     }
             self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
    
