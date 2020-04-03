@@ -36,6 +36,7 @@ if __package__ is None or __package__ == '':
 else:
     from .timestamps import rezeroTimestampsForImportedDicts
 
+# In selectByLabel, the field from which a value is selected already exists in the iDict
 def selectByLabel(inDict, labelName, labelValue):
     selectedEvents = inDict[labelName] == labelValue
     if not np.any(selectedEvents):
@@ -49,6 +50,23 @@ def selectByLabel(inDict, labelName, labelValue):
                 outDict[fieldName] = inDict[fieldName]
     return outDict
 
+# In selectByBool, we pass in a boolean array the same length as ts and the 
+# other iterables, and use this for selection of only those elements which are 
+# true in the boolean array
+def selectByBool(inDict, selectedEvents):
+    if not np.any(selectedEvents):
+        return None
+    outDict = {}
+    for fieldName in inDict.keys():
+        try:
+            assert len(inDict[fieldName]) == len(selectedEvents)
+            outDict[fieldName] = inDict[fieldName][selectedEvents]
+        except (AssertionError, TypeError): # TypeError for case that value has no len(); #AssertionError, in case it does but that len is not the same as the ts len.
+            outDict[fieldName] = inDict[fieldName]
+    return outDict
+
+# Choose a field and split the dict into dicts each of which contain a unique
+# value for that field
 def splitByLabel(inDict, labelName):
     labels = np.unique(inDict[labelName])
     outList = []
@@ -84,7 +102,6 @@ def splitByPolarity(inDict):
             outDict['0'][key] = inDict[key]
             outDict['1'][key] = inDict[key]
     return outDict
-    
 
 ''' 
 expecting startTime, stopTime or both
@@ -138,6 +155,73 @@ def cropTime(inDict, **kwargs):
         # so we pass it out unmodified
         return inDict
 
+# Could apply to any datatype with separate xy arrays; at the time of writing:
+# dvs, flow
+def cropSpaceXYArrays(inDict, **kwargs):
+    if len(inDict['ts']) == 0: # no data to crop
+        return inDict
+    x = inDict['x']
+    y = inDict['y']
+    minX = kwargs.get('minX', np.min(x))
+    maxX = kwargs.get('maxX', np.max(x))
+    minY = kwargs.get('minY', np.min(y))
+    maxY = kwargs.get('maxY', np.max(y))
+    if (minX == np.min(x) and 
+        maxX == np.max(x) and 
+        minY == np.min(y) and 
+        maxY == np.max(y)):
+        # No cropping to do - pass out the dict unmodified
+        return inDict
+    selectedBool = np.logical_and(x >= minX, \
+                                  np.logical_and(x <= maxX, \
+                                          np.logical_and(y >= minY, y <= maxY)))
+    return selectByBool(inDict, selectedBool)
+
+def cropSpacePoint(inDict, **kwargs):
+    if len(inDict['ts']) == 0: # no data to crop
+        return inDict
+    x = inDict['point'][:, 0]
+    y = inDict['point'][:, 1]
+    z = inDict['point'][:, 2]
+    minX = kwargs.get('minX', np.min(x))
+    maxX = kwargs.get('maxX', np.max(x))
+    minY = kwargs.get('minY', np.min(y))
+    maxY = kwargs.get('maxY', np.max(y))
+    minZ = kwargs.get('minZ', np.min(z))
+    maxZ = kwargs.get('maxZ', np.max(z))
+    if (minX == np.min(x) and 
+        maxX == np.max(x) and 
+        minY == np.min(y) and 
+        maxY == np.max(y) and 
+        minZ == np.min(z) and 
+        maxZ == np.max(z)):
+        # No cropping to do - pass out the dict unmodified
+        return inDict
+    selectedBool = np.logical_and(x >= minX, \
+                   np.logical_and(x <= maxX, \
+                   np.logical_and(y >= minY, \
+                   np.logical_and(y <= maxY, \
+                   np.logical_and(z >= minZ, \
+                                  z <= maxZ)))))
+    return selectByBool(inDict, selectedBool)
+
+def cropSpaceFrame(inDict, **kwargs):
+    if len(inDict['ts']) == 0: # no data to crop
+        return inDict
+    firstFrame = inDict['frame'][0]
+    minX = kwargs.get('minX', 0)
+    maxX = kwargs.get('maxX', firstFrame.shape[1] - 1)
+    minY = kwargs.get('minY', 0)
+    maxY = kwargs.get('maxY', firstFrame.shape[0] - 1)
+    if (minX == 0 and 
+        maxX == firstFrame.shape[1] - 1 and 
+        minY == 0 and 
+        maxY == firstFrame.shape[0] - 1):
+        # No cropping to do - pass out the dict unmodified
+        return inDict
+    framesCropped = [frame[minY:maxY+1, minX:maxX+1] for frame in inDict['frame']]
+    return{**inDict, 'frame': framesCropped}
+    
 def cropSpace(inDict, **kwargs):
     if isinstance(inDict, list):
         return [cropSpace(inDictInst, **kwargs) for inDictInst in inDict]
@@ -151,31 +235,11 @@ def cropSpace(inDict, **kwargs):
         # TODO: consider rezeroing space        
         return outDict
     elif 'x' in inDict and 'y' in inDict:
-        x = inDict['x']
-        y = inDict['y']
-        if len(x) == 0: # no data to crop
-            return inDict
-        minX = kwargs.get('minX', np.min(x))
-        maxX = kwargs.get('maxX', np.max(x))
-        minY = kwargs.get('minY', np.min(y))
-        maxY = kwargs.get('maxY', np.max(y))
-        if (minX == np.min(x) and 
-            maxX == np.max(x) and 
-            minY == np.min(y) and 
-            maxY == np.max(y)):
-            # No cropping to do - pass out the dict unmodified
-            return inDict
-        selectedBool = np.logical_and(x >= minX, \
-                                      np.logical_and(x <= maxX, \
-                                              np.logical_and(y >= minY, y <= maxY)))
-        outDict = {}
-        for fieldName in inDict.keys():
-            field = inDict[fieldName]
-            try:
-                outDict[fieldName] = field[selectedBool]
-            except IndexError:
-                outDict[fieldName] = field.copy() # This might fail for certain data types
-        return outDict
+        return cropSpaceXYArrays(inDict, **kwargs)
+    elif 'frame' in inDict:
+        return cropSpaceFrame(inDict, **kwargs)
+    elif 'point' in inDict:
+        return cropSpacePoint(inDict, **kwargs)
     else:
         # We assume that this is a datatype which doesn't contain x/y
         # so we pass it out unmodified
