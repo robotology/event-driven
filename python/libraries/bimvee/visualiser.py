@@ -402,9 +402,8 @@ class VisualiserPoint3(Visualiser):
                         }
         self.__data = internalData
             
-    def project3dTo2d(self, x=0, y=0, z=0, smallestRenderDim=1, perspective=True):
-                 
-        if perspective:
+    def project3dTo2d(self, x=0, y=0, z=0, smallestRenderDim=1, **kwargs):
+        if kwargs.get('perspective', True):
             # Move z out by 0.5, so that the data is between 0.5 and 1.5 distant in z
             x = (x - 0.5) / (z + 0.5) + 0.5
             y = (y - 0.5) / (z + 0.5) + 0.5
@@ -422,9 +421,8 @@ class VisualiserPoint3(Visualiser):
         pointY = point[1]
         pointZ = point[2]
         # Project the location
-        perspective = kwargs.get('perspective', False)
         projX, projY = self.project3dTo2d(x=pointX, y=pointY, z=pointZ, 
-            smallestRenderDim=self.smallestRenderDim, perspective=perspective)
+            smallestRenderDim=self.smallestRenderDim, **kwargs)
         try:
             image[projY, projX, :] = 255
         except IndexError: # perspective or other projection issues cause out of bounds? ignore
@@ -451,6 +449,22 @@ class VisualiserPoint3(Visualiser):
         firstIdx = np.searchsorted(data['ts'], time - timeWindow)
         lastIdx = np.searchsorted(data['ts'], time + timeWindow)
         points = data['point'][firstIdx:lastIdx, :]
+        # Use yaw and pitch sliders to transform points
+        yaw = -kwargs.get('yaw', 0) / 180 * np.pi
+        pitch = kwargs.get('pitch', 0) / 180 * np.pi
+        roll = 0
+        cosA = np.cos(roll)
+        cosB = np.cos(yaw)
+        cosC = np.cos(pitch)
+        sinA = np.sin(roll)
+        sinB = np.sin(yaw)
+        sinC = np.sin(pitch)
+        rotMat = np.array([[cosA*cosB, cosA*sinB*sinC-sinA*cosC, cosA*sinB*cosC+sinA*sinC],
+                           [sinA*cosB, sinA*sinB*sinC+cosA*cosC, sinA*sinB*cosC-cosA*sinC],
+                           [-sinB, cosB*sinC, cosB*cosC]], 
+                            dtype=np.float64)
+        points = np.matmul(rotMat, points.transpose()).transpose()
+
         for row in points:
             image = self.project_point(row, image, **kwargs)                
         
