@@ -500,7 +500,7 @@ def importIitYarpRecursive(**kwargs):
         
 def importIitYarp(**kwargs):
     importedDicts = importIitYarpRecursive(**kwargs)
-    if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
+    if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
         # Optional: start the timestamps at zero for the first event
         # This is done collectively for all the concurrent imports
         rezeroTimestampsForImportedDicts(importedDicts)

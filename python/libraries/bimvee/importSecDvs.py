@@ -166,7 +166,8 @@ def importSecDvs(**kwargs):
                'pol': pol,
                }
 
-    zeroTimestampsForADataType(dvsDict)
+    if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)): 
+        zeroTimestampsForADataType(dvsDict)
     outDict = {
     'info': {'filePathOrName':filePathOrName,
         'fileFormat': 'secdvs'},
