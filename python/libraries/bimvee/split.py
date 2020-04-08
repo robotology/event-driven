@@ -67,20 +67,36 @@ def selectByBool(inDict, selectedEvents):
 
 # Choose a field and split the dict into dicts each of which contain a unique
 # value for that field
-def splitByLabel(inDict, labelName):
+# if param outList is true, return a list of dicts,otherwise return a dict
+# of dicts, each of which having the name of the unique field value
+def splitByLabel(inDict, labelName, outList=False):
     labels = np.unique(inDict[labelName])
-    outList = []
-    for label in labels:
-        selectedEvents = inDict[labelName] == label
-        outDict = {}
-        for fieldName in inDict.keys():
-            try:
-                assert len(inDict[fieldName]) == len(selectedEvents)
-                outDict[fieldName] = inDict[fieldName][selectedEvents]
-            except (TypeError, AssertionError):
-                outDict[fieldName] = inDict[fieldName]
-        outList.append(outDict)
-    return outList
+    if outList:
+        outList = []
+        for label in labels:
+            selectedEvents = inDict[labelName] == label
+            outDict = {}
+            for fieldName in inDict.keys():
+                try:
+                    assert len(inDict[fieldName]) == len(selectedEvents)
+                    outDict[fieldName] = inDict[fieldName][selectedEvents]
+                except (TypeError, AssertionError):
+                    outDict[fieldName] = inDict[fieldName]
+            outList.append(outDict)
+        return outList
+    else:
+        outDictParent = {}
+        for label in labels:
+            selectedEvents = inDict[labelName] == label
+            outDict = {}
+            for fieldName in inDict.keys():
+                try:
+                    assert len(inDict[fieldName]) == len(selectedEvents)
+                    outDict[fieldName] = inDict[fieldName][selectedEvents]
+                except (TypeError, AssertionError):
+                    outDict[fieldName] = inDict[fieldName]
+            outDictParent[label] = outDict
+        return outDictParent
 
 ''' 
 receives a dict containing (probably) dvs events

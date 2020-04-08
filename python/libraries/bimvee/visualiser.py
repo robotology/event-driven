@@ -243,13 +243,13 @@ class VisualiserPose6q(Visualiser):
             self.__data = [internalData]
             
     def project3dTo2d(self, x=0, y=0, z=0, smallestRenderDim=1, perspective=True):               
-        windowFill = 0.9 #TODO: hardcoded; this is how much of the window wiidth and height the data should take up
+        windowFill = 0.9 #TODO: hardcoded; this is how much of the window width and height the data should take up
         if perspective:
-            # Move z out by 0.5, so that the data is between 0.5 and 1.5 distant in z
-            x = (x - 0.5) / (z + 0.5) + 0.5
-            y = (y - 0.5) / (z + 0.5) + 0.5
-        x *= smallestRenderDim * windowFill
-        y *= smallestRenderDim * windowFill
+            # Move z out by 1, so that the data is between 1 and 2 distant in z
+            x = (x - 0.5) / (z + 1) + 0.5
+            y = (y - 0.5) / (z + 1) + 0.5
+        x = (x * windowFill + (1 - windowFill) / 2) * smallestRenderDim
+        y = (y * windowFill + (1 - windowFill) / 2) * smallestRenderDim
         x = x.astype(int)
         y = y.astype(int)
         return x, y
