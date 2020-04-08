@@ -242,10 +242,12 @@ class VisualiserPose6q(Visualiser):
         else:
             self.__data = [internalData]
             
-    def project3dTo2d(self, x=0, y=0, z=0, smallestRenderDim=1, perspective=True):               
-        windowFill = 0.9 #TODO: hardcoded; this is how much of the window width and height the data should take up
-        if perspective:
+    def project3dTo2d(self, x=0, y=0, z=0, **kwargs):
+        smallestRenderDim = kwargs.get('smallestRenderDim', 1) 
+        windowFill = kwargs.get('windowFill', 0.9)
+        if kwargs.get('perspective', True):
             # Move z out by 1, so that the data is between 1 and 2 distant in z
+            # x and y are in range 0-1, so they get shifted to be centred around 0 during this operation
             x = (x - 0.5) / (z + 1) + 0.5
             y = (y - 0.5) / (z + 1) + 0.5
         x = (x * windowFill + (1 - windowFill) / 2) * smallestRenderDim
@@ -262,9 +264,8 @@ class VisualiserPose6q(Visualiser):
         pointY = point[1]
         pointZ = point[2]
         # Project the location
-        perspective = kwargs.get('perspective', False)
-        projX, projY = self.project3dTo2d(x=pointX, y=pointY, z=pointZ, 
-            smallestRenderDim=self.smallestRenderDim, perspective=perspective)
+        kwargs['smallestRenderDim'] = self.smallestRenderDim
+        projX, projY = self.project3dTo2d(x=pointX, y=pointY, z=pointZ, **kwargs)
         if rotation is None:
             # Just put a white dot where the point should be
             image[projY, projX, :] = 255
@@ -281,12 +282,9 @@ class VisualiserPose6q(Visualiser):
             zVectorCoordX = pointX + rotatedUnitVectors[0, 2]
             zVectorCoordY = pointY + rotatedUnitVectors[1, 2]
             zVectorCoordZ = pointZ + rotatedUnitVectors[2, 2]
-            xVectorProjX, xVectorProjY = self.project3dTo2d(x=xVectorCoordX, y=xVectorCoordY, z=xVectorCoordZ, 
-                smallestRenderDim=self.smallestRenderDim, perspective=perspective)
-            yVectorProjX, yVectorProjY = self.project3dTo2d(x=yVectorCoordX, y=yVectorCoordY, z=yVectorCoordZ, 
-                smallestRenderDim=self.smallestRenderDim, perspective=perspective)
-            zVectorProjX, zVectorProjY = self.project3dTo2d(x=zVectorCoordX, y=zVectorCoordY, z=zVectorCoordZ, 
-                smallestRenderDim=self.smallestRenderDim, perspective=perspective)
+            xVectorProjX, xVectorProjY = self.project3dTo2d(x=xVectorCoordX, y=xVectorCoordY, z=xVectorCoordZ, **kwargs)
+            yVectorProjX, yVectorProjY = self.project3dTo2d(x=yVectorCoordX, y=yVectorCoordY, z=yVectorCoordZ, **kwargs)
+            zVectorProjX, zVectorProjY = self.project3dTo2d(x=zVectorCoordX, y=zVectorCoordY, z=zVectorCoordZ, **kwargs)
             draw_line(image[:, :, 0], projX, projY, xVectorProjX, xVectorProjY)
             draw_line(image[:, :, 1], projX, projY, yVectorProjX, yVectorProjY)
             draw_line(image[:, :, 2], projX, projY, zVectorProjX, zVectorProjY)
@@ -402,13 +400,16 @@ class VisualiserPoint3(Visualiser):
                         }
         self.__data = internalData
             
-    def project3dTo2d(self, x=0, y=0, z=0, smallestRenderDim=1, **kwargs):
+    def project3dTo2d(self, x=0, y=0, z=0, **kwargs):
+        smallestRenderDim = kwargs.get('smallestRenderDim', 1)
+        windowFill = kwargs.get('windowFill', 0.9)
         if kwargs.get('perspective', True):
-            # Move z out by 0.5, so that the data is between 0.5 and 1.5 distant in z
-            x = (x - 0.5) / (z + 0.5) + 0.5
-            y = (y - 0.5) / (z + 0.5) + 0.5
-        x *= smallestRenderDim
-        y *= smallestRenderDim
+            # Move z out by 1, so that the data is between 1 and 2 distant in z
+            # x and y are in range 0-1, so they get shifted to be centred around 0 during this operation
+            x = (x - 0.5) / (z + 1) + 0.5
+            y = (y - 0.5) / (z + 1) + 0.5
+        x = (x * windowFill + (1 - windowFill) / 2) * smallestRenderDim
+        y = (y * windowFill + (1 - windowFill) / 2) * smallestRenderDim
         x = x.astype(int)
         y = y.astype(int)
         return x, y
@@ -463,7 +464,9 @@ class VisualiserPoint3(Visualiser):
                            [sinA*cosB, sinA*sinB*sinC+cosA*cosC, sinA*sinB*cosC-cosA*sinC],
                            [-sinB, cosB*sinC, cosB*cosC]], 
                             dtype=np.float64)
+        points = points - 0.5
         points = np.matmul(rotMat, points.transpose()).transpose()
+        points = points + 0.5
 
         for row in points:
             image = self.point_to_image(row, image, **kwargs)                
