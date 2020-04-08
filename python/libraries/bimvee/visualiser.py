@@ -413,7 +413,7 @@ class VisualiserPoint3(Visualiser):
         y = y.astype(int)
         return x, y
 
-    def project_point(self, point, image, **kwargs):
+    def point_to_image(self, point, image, **kwargs):
         if point is None:
             return image
         # Unpack
@@ -466,7 +466,7 @@ class VisualiserPoint3(Visualiser):
         points = np.matmul(rotMat, points.transpose()).transpose()
 
         for row in points:
-            image = self.project_point(row, image, **kwargs)                
+            image = self.point_to_image(row, image, **kwargs)                
         
         # Allow for arbitrary post-production on image with a callback
         # TODO: as this is boilerplate, it could be pushed into pie syntax ...
