@@ -157,7 +157,7 @@ void vIPT::setProjectedImageSize(int height, int width)
     size_shared.width = width;
 }
 
-const cv::Mat& vIPT::getQ(){
+const cv::Mat vIPT::getQ(){
     return Q;
 }
 
