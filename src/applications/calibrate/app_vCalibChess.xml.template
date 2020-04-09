@@ -12,7 +12,7 @@
 
 <module>
     <name> vPreProcess</name>
-    <parameters> --split --undistort false --flipx --flipy --filter_temporal false --filter_spatial true </parameters>
+    <parameters> --split_stereo --undistort false --flipx --flipy --filter_temporal false --filter_spatial true </parameters>
     <node> localhost </node>
 </module>
 

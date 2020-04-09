@@ -35,6 +35,7 @@ private:
     cv::Mat stereo_rotation, stereo_translation;
     cv::Mat projection[2];
     cv::Mat rotation[2];
+    cv::Mat Q;
 
     cv::Mat point_forward_map[2];
     cv::Mat point_reverse_map[2];
@@ -50,6 +51,7 @@ public:
 
     vIPT();
 
+    const cv::Mat& getQ();
     void setProjectedImageSize(int height, int width);
     bool configure(const std::string calibContext, const std::string calibFile, int size_scaler = 2);
     bool showMapProjections(double seconds = 0);
