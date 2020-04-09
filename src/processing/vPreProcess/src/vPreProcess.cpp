@@ -83,25 +83,25 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
     res.width = rf.check("width", Value(304)).asInt();
 
     bool filter_spatial = rf.check("filter_spatial") &&
-                          rf.check("filter_spatial", Value(true)).asBool();
+            rf.check("filter_spatial", Value(true)).asBool();
     bool filter_temporal = rf.check("filter_temporal") &&
-                           rf.check("filter_temporal", Value(true)).asBool();
+            rf.check("filter_temporal", Value(true)).asBool();
     undistort = rf.check("undistort") &&
-                rf.check("undistort", Value(true)).asBool();
+            rf.check("undistort", Value(true)).asBool();
     flipx = rf.check("flipx") &&
             rf.check("flipx", Value(true)).asBool();
     flipy = rf.check("flipy") &&
             rf.check("flipy", Value(true)).asBool();
     precheck = rf.check("precheck") &&
-               rf.check("precheck", Value(true)).asBool();
+            rf.check("precheck", Value(true)).asBool();
     split_stereo = rf.check("split_stereo") &&
-                   rf.check("split_stereo", Value(true)).asBool();
+            rf.check("split_stereo", Value(true)).asBool();
     split_polarities = rf.check("split_polarities") &&
-                       rf.check("split_polarities", Value(true)).asBool();
+            rf.check("split_polarities", Value(true)).asBool();
     combined_stereo = rf.check("combined_stereo") &&
-                      rf.check("combined_stereo", Value(true)).asBool();
+            rf.check("combined_stereo", Value(true)).asBool();
     use_local_stamp = rf.check("local_stamp") &&
-                      rf.check("local_stamp", Value(true)).asBool();
+            rf.check("local_stamp", Value(true)).asBool();
 
     if(!split_stereo) combined_stereo = true;
 
@@ -131,24 +131,24 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
     }
     if(filter_spatial) {
         filter_left.use_spatial_filter(
-                rf.check("sf_time",
-                         Value(0.05)).asDouble() * vtsHelper::vtsscaler,
-                rf.check("sf_size",
-                         Value(1)).asInt());
+                    rf.check("sf_time",
+                             Value(0.05)).asDouble() * vtsHelper::vtsscaler,
+                    rf.check("sf_size",
+                             Value(1)).asInt());
         filter_right.use_spatial_filter(
-                rf.check("sf_time",
-                         Value(0.05)).asDouble() * vtsHelper::vtsscaler,
-                rf.check("sf_size",
-                         Value(1)).asInt());
+                    rf.check("sf_time",
+                             Value(0.05)).asDouble() * vtsHelper::vtsscaler,
+                    rf.check("sf_size",
+                             Value(1)).asInt());
     }
 
     if(filter_temporal) {
         filter_left.use_temporal_filter(
-                rf.check("tf_time",
-                         Value(0.1)).asDouble() * vtsHelper::vtsscaler);
+                    rf.check("tf_time",
+                             Value(0.1)).asDouble() * vtsHelper::vtsscaler);
         filter_right.use_temporal_filter(
-                rf.check("tf_time",
-                         Value(0.1)).asDouble() * vtsHelper::vtsscaler);
+                    rf.check("tf_time",
+                             Value(0.1)).asDouble() * vtsHelper::vtsscaler);
     }
 
     if(undistort) {
@@ -250,15 +250,15 @@ bool vPreProcess::updateModule() {
     auto max_d = *bounds.second * 1000;
 
     auto mean_d = 1000 *
-                  std::accumulate(delays.begin(), delays.end(), 0.0) / delays.size();
+            std::accumulate(delays.begin(), delays.end(), 0.0) / delays.size();
     delays.clear();
 
     auto meanr = vtsHelper::vtsscaler *
-                 std::accumulate(rates.begin(), rates.end(), 0.0) / rates.size();
+            std::accumulate(rates.begin(), rates.end(), 0.0) / rates.size();
     rates.clear();
 
     auto meani = 1000 *
-                 std::accumulate(intervals.begin(), intervals.end(), 0.0) / intervals.size();
+            std::accumulate(intervals.begin(), intervals.end(), 0.0) / intervals.size();
     intervals.clear();
 
     //yInfo() << mind << meand << maxd << " : min | mean | max";
