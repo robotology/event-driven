@@ -31,7 +31,6 @@ namespace ev {
 vIPT::vIPT()
 {
     size_shared = Size(0, 0);
-    Q = cv::Mat(4, 4, CV_64FC1);
 }
 
 bool vIPT::importIntrinsics(int cam, Bottle &parameters)
@@ -109,13 +108,13 @@ bool vIPT::computeForwardReverseMaps(int cam)
     if(mat_reverse_map[cam].empty()) {
         yError() << "Camera Calibration failed";
         std::cout << "Camera Matrix: " << std::endl << cam_matrix[cam]
-                     << std::endl << std::endl;
+                  << std::endl << std::endl;
         std::cout << "Distortion Coefficients: " << std::endl << dist_coeff[cam]
-                     << std::endl << std::endl;
+                  << std::endl << std::endl;
         std::cout << "Rotation Matrix: " << std::endl << rotation[cam]
-                     << std::endl << std::endl;
+                  << std::endl << std::endl;
         std::cout << "Projection Matrix: " << std::endl << projection[cam]
-                     << std::endl << std::endl;
+                  << std::endl << std::endl;
         std::cout << "Size of Projection Space: " << size_shared << std::endl;
         return false;
     }
@@ -158,7 +157,7 @@ void vIPT::setProjectedImageSize(int height, int width)
 }
 
 
-const cv::Mat vIPT::getQ(){
+const cv::Mat& vIPT::getQ(){
     return Q;
 }
 
@@ -190,6 +189,7 @@ bool vIPT::configure(const string calibContext, const string calibFile, int size
         yInfo() << "Camera 0 and Camera 1 is and Extrinsic parameters exist - creating rectified transforms";
         //compute stereo + rectification
 
+        Q = cv::Mat(4, 4, CV_64FC1);
 
         //Computing homographies for left and right image
         cv::stereoRectify(cam_matrix[0], dist_coeff[0], cam_matrix[1],
