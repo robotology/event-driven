@@ -238,15 +238,15 @@ def encodeImu(ts, **kwargs):
     unsigned int type:1; - should be 1 to indicate sample (cf event)
     unsigned int _r2:8; - reserved
     'Sensor' is defined as: 
-    0: Accel X
-    1: Accel Y
+    0: Accel -Y
+    1: Accel X
     2: Accel Z
-    3: Gyro X
-    4: Gyro Y
+    3: Gyro -Y
+    4: Gyro X
     5: Gyro Z
     6: Temperature
-    7: Mag X
-    8: Mag Y
+    7: Mag -Y
+    8: Mag X
     9: Mag Z
     
     For the IMU on STEFI, which is this one:
@@ -271,7 +271,15 @@ def encodeImu(ts, **kwargs):
     angV = np.zeros((numSamples, 3), dtype = np.int16) if angV is None else (angV * angVConversionFactor).astype(np.int16)
     temp = np.zeros((numSamples, 1), dtype = np.int16) if temp is None else ((temp + tempConversionOffset) * tempConversionFactor).astype(np.int16)
     mag = np.zeros((numSamples, 3), dtype = np.int16) if mag is None else (mag * magConversionFactor).astype(np.int16)
-        
+    
+    # switch X and Y; negate Y, to match IMU as mounted on Stefi
+    acc = acc[:, [1, 0, 2]]
+    angV = angV[:, [1, 0, 2]]
+    mag = mag[:, [1, 0, 2]]
+    acc[:, 0] = - acc[:, 0]
+    angV[:, 0] = - angV[:, 0]
+    mag[:, 0] = - mag[:, 0]
+    
     ts = ts / 0.00000008
     ts = ts.astype(np.uint32) # Timestamp wrapping occurs here
     ts = np.tile(ts, (1, 10))
