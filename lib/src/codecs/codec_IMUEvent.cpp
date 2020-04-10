@@ -86,4 +86,38 @@ std::string IMUevent::getType() const
     return IMUevent::tag;
 }
 
+double IMUevent::convertToSI(int index, int value)
+{
+    static constexpr double ay_bias = 0.12;
+    static constexpr double ax_bias = 0.21;
+    static constexpr double az_bias = 0.06;
+    static constexpr double ay_gain = 9.80665/9.83;
+    static constexpr double ax_gain = 9.80665/9.84;
+    static constexpr double az_gain = 9.80665/9.95;
+
+
+    switch(index) {
+    case(ACC_X):
+        return (value * (9.80665 / 16384.0)+ax_bias)*ax_gain;
+    case(ACC_Y):
+        return (value * -(9.80665 / 16384.0)+ay_bias)*ay_gain;
+    case(ACC_Z):
+        return (value * (9.80665 / 16384.0)+az_bias)*az_gain;
+    case(GYR_X):
+    case(GYR_Z):
+        return value * (250.0 * M_PI / (2.0 * 180.0 * 16384.0));
+    case(GYR_Y):
+        return value * -(250.0 * M_PI / (2.0 * 180.0 * 16384.0));
+    case(TEMP):
+        return (value / 333.87) + (273.15 + 21.0);
+    case(MAG_X):
+    case(MAG_Z):
+        return value * (/*10e6 **/ 4900.0 / 16384.0);
+    case(MAG_Y):
+        return value * -(/*10e6 **/ 4900.0 / 16384.0);
+    }
+
+    return -1;
+}
+
 }
