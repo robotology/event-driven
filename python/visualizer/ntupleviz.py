@@ -60,12 +60,18 @@ from kivy.metrics import dp
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # local imports (from bimvee)
 try:
-    from visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
+    from visualiser import VisualiserDvs
+    from visualiser import VisualiserFrame
+    from visualiser import VisualiserPose6q
+    from visualiser import VisualiserPoint3
     from timestamps import getLastTimestamp
 except ModuleNotFoundError:
     if __package__ is None or __package__ == '':
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from libraries.bimvee.visualiser import VisualiserDvs, VisualiserFrame, VisualiserPose6q
+    from libraries.bimvee.visualiser import VisualiserDvs
+    from libraries.bimvee.visualiser import VisualiserFrame
+    from libraries.bimvee.visualiser import VisualiserPose6q
+    from libraries.bimvee.visualiser import VisualiserPoint3
     from libraries.bimvee.timestamps import getLastTimestamp
     
 class ErrorPopup(Popup):
@@ -235,6 +241,21 @@ class ViewerPose6q(Viewer):
                     }
             self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
    
+class ViewerPoint3(Viewer):
+    def __init__(self, **kwargs):
+        super(ViewerPoint3, self).__init__(**kwargs)
+
+    def get_frame(self, time_value, time_window):
+        if self.dsm is None:
+            self.data = plt.imread('graphics/missing.jpg')
+        else:
+            kwargs = {
+                'perspective': self.perspective,
+                'yaw': self.yaw,
+                'pitch': self.pitch,
+                    }
+            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
+   
 class DataController(GridLayout):
     ending_time = NumericProperty(.0)
     filePathOrName = StringProperty('')
@@ -258,6 +279,9 @@ class DataController(GridLayout):
             new_viewer = ViewerPose6q()
             visualiser = VisualiserPose6q(data_dict)
             label = 'red=x green=y, blue=z ' + label
+        elif data_type == 'point3':
+            new_viewer = ViewerPoint3()
+            visualiser = VisualiserPoint3(data_dict)
         new_viewer.label = label
         new_viewer.dsm = visualiser
         self.add_widget(new_viewer)
@@ -272,7 +296,7 @@ class DataController(GridLayout):
             for key_name in in_dict.keys():
                 if isinstance(in_dict[key_name], dict):
                     if 'ts' in in_dict[key_name]:
-                        if key_name in ['dvs', 'frame', 'pose6q']:
+                        if key_name in ['dvs', 'frame', 'pose6q', 'point3']:
                             print('Creating a new viewer, of type: ' + key_name)
                             self.add_viewer_and_resize(key_name, in_dict[key_name], label=label+':'+str(key_name))
                         else:

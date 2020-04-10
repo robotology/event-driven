@@ -21,11 +21,13 @@ http://rpg.ifi.uzh.ch/davis_data.html
 It also supports some standard ros types:
     geometry_msgs/PoseStamped 
     geometry_msgs/Transform
+    geometry_msgs/TransformStamped
     geometry_msgs/TwistStamped
     sensor_msgs/CameraInfo, (calibration)
     sensor_msgs/Image
     sensor_msgs/Imu 
     sensor_msgs/PointCloud2
+    tf/tfMessage
 Furthermore there is support for:
     esim_msgs/OpticFlow
 
@@ -89,11 +91,13 @@ def bimveeTypeForRosbagType(rosbagType):
     if rosbagType == 'esim_msgs_OpticFlow': return 'flowMap'
     if rosbagType == 'geometry_msgs_PoseStamped': return 'pose6q'
     if rosbagType == 'geometry_msgs_Transform': return 'pose6q'
+    if rosbagType == 'geometry_msgs_TransformStamped': return 'pose6q'
     if rosbagType == 'geometry_msgs_TwistStamped': return 'twist'
     if rosbagType == 'sensor_msgs_CameraInfo': return 'cam'
     if rosbagType == 'sensor_msgs_Image': return 'frame'
     if rosbagType == 'sensor_msgs_Imu': return 'imu'
     if rosbagType == 'sensor_msgs_PointCloud2': return 'point3'
+    if rosbagType == 'tf_tfMessage': return 'pose6q'
     return None
 
 def importRpgDvsRos(filePathOrName, **kwargs):    

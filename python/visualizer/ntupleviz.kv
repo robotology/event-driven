@@ -188,6 +188,7 @@
     perspective: perspective.active
     on_interpolate: root.update_data(self.data)
     on_perspective: root.update_data(self.data)
+    orientation: 'vertical'
     Image:
         id: image
         allow_stretch: True
@@ -207,6 +208,53 @@
         CheckBox:
             id: perspective
             active: True
+
+<ViewerPoint3@Viewer>
+    id: viewer
+    label: 'no data'
+    image: image
+    perspective: perspective.active
+    yaw: slider_yaw.value
+    pitch: slider_pitch.value
+    on_perspective: root.update_data(self.data)
+    on_yaw: self.get_frame(self.parent.time_value, self.parent.time_window)
+    on_pitch: self.get_frame(self.parent.time_value, self.parent.time_window)
+    orientation: 'vertical'
+    BoxLayout:
+        orientation: 'horizontal'
+        Image:
+            id: image
+            allow_stretch: True
+        BoxLayout:
+            orientation: 'vertical'
+            Label:
+                text: 'pitch'
+            Slider:
+                orientation: 'vertical'
+                id: slider_pitch
+                min: -90
+                max: 90
+                step: 1
+                value: 0            
+    Label:
+        size_hint: 1, 0.1
+        text: viewer.label        
+    BoxLayout:
+        size_hint: 1, 0.1
+        orientation: 'horizontal'
+        Label:
+            text: 'perspective'
+        CheckBox:
+            id: perspective
+            active: True
+        Label:
+            text: 'yaw'
+        Slider:
+            id: slider_yaw
+            min: -90
+            max: 90
+            step: 1
+            value: 0            
 
 <ControlButton@ButtonBehavior+Image>
 
