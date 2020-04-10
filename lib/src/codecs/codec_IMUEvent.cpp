@@ -109,7 +109,7 @@ double IMUevent::convertToSI(int index, int value)
     case(GYR_Y):
         return value * -(250.0 * M_PI / (2.0 * 180.0 * 16384.0));
     case(TEMP):
-        return (value + (273.15 - 21)) * 333.87;
+        return (value / 333.87) + (273.15 + 21.0);
     case(MAG_X):
     case(MAG_Z):
         return value * (/*10e6 **/ 4900.0 / 16384.0);
