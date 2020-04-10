@@ -198,15 +198,15 @@ def samplesToImu(inDict, **kwargs):
     Assume these are IMU samples, and compile them (up to) 10 at a time.
     Output is ts, acc, angV, temp and mag
     'Sensor' is defined as:
-    0: Accel X
-    1: Accel Y
+    0: - (negative) Accel Y
+    1: Accel X
     2: Accel Z
-    3: Gyro X
-    4: Gyro Y
+    3: - (negative) Gyro Y
+    4: Gyro X
     5: Gyro Z
     6: Temperature
-    7: Mag X
-    8: Mag Y
+    7: - (negative) Mag Y
+    8: Mag X
     9: Mag Z
     For the IMU on STEFI, (which is this one ICM-20948):
     gyro full scale is +/-2000 degrees per second,
@@ -240,23 +240,23 @@ def samplesToImu(inDict, **kwargs):
             tsOut[imuPtr] = ts # Just take the first ts for a group of samples
         sensorPrev = sensor
         if sensor == 0:
-            acc[imuPtr, 0] = value
+            acc[imuPtr, 1] = -value
         elif sensor == 1:
-            acc[imuPtr, 1] = value
+            acc[imuPtr, 0] = value
         elif sensor == 2:
             acc[imuPtr, 2] = value
         elif sensor == 3:
-            angV[imuPtr, 0] = value
+            angV[imuPtr, 1] = -value
         elif sensor == 4:
-            angV[imuPtr, 1] = value
+            angV[imuPtr, 0] = value
         elif sensor == 5:
             angV[imuPtr, 2] = value
         elif sensor == 6:
             temp[imuPtr, 0] = value
         elif sensor == 7:
-            mag[imuPtr, 0] = value
+            mag[imuPtr, 1] = -value
         elif sensor == 8:
-            mag[imuPtr, 1] = value
+            mag[imuPtr, 0] = value
         elif sensor== 9:
             mag[imuPtr, 2] = value
     acc = acc.astype(np.float64) / accConversionFactor
