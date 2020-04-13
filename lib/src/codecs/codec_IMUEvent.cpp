@@ -98,25 +98,22 @@ double IMUevent::convertToSI(int value, int index)
 
     switch(index) {
     case(ACC_X):
-        return (value * (9.80665 / 16384.0)+ax_bias)*ax_gain;
-    case(ACC_Y):
-        return -(value * (9.80665 / 16384.0)+ay_bias)*ay_gain;
     case(ACC_Z):
         return (value * (9.80665 / 16384.0)+az_bias)*az_gain;
+    case(ACC_Y):
+        return -(value * (9.80665 / 16384.0)+ay_bias)*ay_gain;
     case(GYR_X):
-        return (value * (250.0 * M_PI / (2.0 * 180.0 * 16384.0)));
-    case(GYR_Y):
-        return -(value * (250.0 * M_PI / (2.0 * 180.0 * 16384.0)));
     case(GYR_Z):
         return value * (250.0 * M_PI / (2.0 * 180.0 * 16384.0));
+    case(GYR_Y):
+        return -(value * (250.0 * M_PI / (2.0 * 180.0 * 16384.0)));
     case(TEMP):
         return (value / 333.87) + (273.15 + 21.0);
     case(MAG_X):
+    case(MAG_Z):
         return value * (/*10e6 **/ 4900.0 / 16384.0);
     case(MAG_Y):
         return -(value * (/*10e6 **/ 4900.0 / 16384.0));
-    case(MAG_Z):
-        return value * (/*10e6 **/ 4900.0 / 16384.0);
     }
 
     return -1;
