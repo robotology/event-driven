@@ -12,7 +12,7 @@
 
 <module>
     <name> vPreProcess </name>
-    <parameters> --flipx --flipy --pepper false --split </parameters>
+    <parameters> --flipx --flipy --pepper false --split_stereo </parameters>
     <node> icub23 </node>
 </module>
 
