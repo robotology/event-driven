@@ -87,7 +87,7 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
     bool filter_temporal = rf.check("filter_temporal") &&
                            rf.check("filter_temporal", Value(true)).asBool();
     undistort = rf.check("undistort") &&
-            rf.check("undistort", Value(true)).asBool();
+                rf.check("undistort", Value(true)).asBool();
     flipx = rf.check("flipx") &&
             rf.check("flipx", Value(true)).asBool();
     flipy = rf.check("flipy") &&
@@ -135,7 +135,7 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
                          Value(0.05)).asDouble() * vtsHelper::vtsscaler,
                 rf.check("sf_size",
                          Value(1)).asInt());
-    filter_right.use_spatial_filter(
+        filter_right.use_spatial_filter(
                 rf.check("sf_time",
                          Value(0.05)).asDouble() * vtsHelper::vtsscaler,
                 rf.check("sf_size",
@@ -146,7 +146,7 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
         filter_left.use_temporal_filter(
                 rf.check("tf_time",
                          Value(0.1)).asDouble() * vtsHelper::vtsscaler);
-    filter_right.use_temporal_filter(
+        filter_right.use_temporal_filter(
                 rf.check("tf_time",
                          Value(0.1)).asDouble() * vtsHelper::vtsscaler);
     }
