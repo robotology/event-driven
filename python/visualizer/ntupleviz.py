@@ -288,21 +288,31 @@ class DataController(GridLayout):
 
         self.cols = int(np.ceil(np.sqrt(len(self.children))))
 
-    def add_viewer_for_each_channel_and_data_type(self, in_dict, label=''):
+    def add_viewer_for_each_channel_and_data_type(self, in_dict, label='', recursionDepth=0):
         if isinstance(in_dict, list):
+            print('    ' * recursionDepth + 'Received a list - looking through the list for containers...')
             for num, in_dict_element in enumerate(in_dict):
-                self.add_viewer_for_each_channel_and_data_type(in_dict_element, label=label+':'+str(num))
+                self.add_viewer_for_each_channel_and_data_type(in_dict_element, label=label+':'+str(num), recursionDepth=recursionDepth+1)
         elif isinstance(in_dict, dict):
+            print('    ' * recursionDepth + 'Received a dict - looking through its keys ...')
             for key_name in in_dict.keys():
+                print('    ' * recursionDepth + 'Dict contains a key "' + key_name + '" ...')
                 if isinstance(in_dict[key_name], dict):
                     if 'ts' in in_dict[key_name]:
-                        if key_name in ['dvs', 'frame', 'pose6q', 'point3']:
-                            print('Creating a new viewer, of type: ' + key_name)
+                        if key_name in ['dvs', 'frame', 'pose6q']:
+                            print('    ' * recursionDepth + 'Creating a new viewer, of type: ' + key_name)
                             self.add_viewer_and_resize(key_name, in_dict[key_name], label=label+':'+str(key_name))
                         else:
-                            print('datatype not supported: ' + key_name)
+                            print('    ' * recursionDepth + 'Datatype not supported: ' + key_name)
                     else: # recurse through the sub-dict
-                        self.add_viewer_for_each_channel_and_data_type(in_dict[key_name], label=label+':'+str(key_name))
+                        self.add_viewer_for_each_channel_and_data_type(in_dict[key_name], label=label+':'+str(key_name), recursionDepth=recursionDepth+1)
+                elif isinstance(in_dict[key_name], list):
+                    self.add_viewer_for_each_channel_and_data_type(in_dict[key_name], label=label+':'+str(key_name), recursionDepth=recursionDepth+1)
+                    
+                else:
+                    print('    ' * recursionDepth + 'Ignoring that key ...')
+
+
     
     def on_data_dict(self, instance, value):
         self.ending_time = float(getLastTimestamp(self.data_dict)) # timer is watching this
