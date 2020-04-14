@@ -30,7 +30,13 @@ Returns a dict in this format:
 
 import numpy as np
 from tqdm import tqdm 
-from timestamps import unwrapTimestamps, zeroTimestampsForADataType
+
+# Local imports
+if __package__ is None or __package__ == '':
+    from timestamps import unwrapTimestamps, zeroTimestampsForADataType
+else:
+    from .timestamps import unwrapTimestamps, zeroTimestampsForADataType
+
 
 def importSecDvs(**kwargs):
     filePathOrName = kwargs['filePathOrName']

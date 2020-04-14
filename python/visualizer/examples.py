@@ -39,15 +39,14 @@ import threading
 # Get os-specific path for local libraries (YMMV)
 prefix = 'C:/' if os.name == 'nt' else '/home/sbamford/'    
 
-# Add path to bimvee library
-sys.path.append(os.path.join(prefix, 'repos/event-driven-python-dev/python/libraries/bimvee'))
-# Add path to visualizer
-sys.path.append(os.path.join(prefix, 'repos/event-driven-python-dev/python/visualizer'))
+# Add paths
+sys.path.append(os.path.join(prefix, 'repos/event-driven/python'))
+sys.path.append(os.path.join(prefix, 'repos/event-driven/python/libraries'))
 
-import ntupleviz
+import visualizer.ntupleviz
 
 # Create the ntupleViz app and start it in a thread
-visualizerApp = ntupleviz.Ntupleviz()
+visualizerApp = visualizer.ntupleviz.Ntupleviz()
 thread = threading.Thread(target=visualizerApp.run)
 thread.daemon = True
 thread.start()
@@ -71,6 +70,16 @@ from importIitYarp import importIitYarp
 filePathOrName = os.path.join(prefix, "data/2019_11_11_AikoImu/tripod_pitch/ATIS")
 container = importIitYarp(filePathOrName=filePathOrName, tsBits=30)
 
+visualizerApp.root.data_controller.data_dict = container
+
+#%% Data from SECDVS
+
+from bimvee.importSecDvs import importSecDvs
+
+filePathOrName = os.path.join(prefix, "data/2020_03_23 SecDvs from Ander/2020-03-24-12-45-00.bin")
+container = importSecDvs(filePathOrName=filePathOrName)
+
+# Having loaded a dvs dataDict - poke it into the dsm
 visualizerApp.root.data_controller.data_dict = container
 
 #%% Simulated DAVIS data
