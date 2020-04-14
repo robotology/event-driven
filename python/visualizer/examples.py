@@ -73,6 +73,15 @@ container = importSecDvs(filePathOrName=filePathOrName)
 
 visualizerApp.root.data_controller.data_dict = container
 
+#%% Load some generic data
+
+from bimvee.importAe import importAe
+
+filePathOrName = os.path.join(prefix, "data/2020_03_23 SecDvs from Ander/2020-03-24-12-45-13.bin")
+container = importAe(filePathOrName=filePathOrName)
+
+visualizerApp.root.data_controller.data_dict = container
+
 #%% Simulated DAVIS data
 
 # This example demonstrates the use of a template to limit what data is imported,

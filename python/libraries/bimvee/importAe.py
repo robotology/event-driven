@@ -61,9 +61,11 @@ import os
 if __package__ is None or __package__ == '':
     from importIitYarp import importIitYarp
     from importRpgDvsRos import importRpgDvsRos
+    from importSecDvs import importSecDvs
 else:
     from .importIitYarp import importIitYarp
     from .importRpgDvsRos import importRpgDvsRos
+    from .importSecDvs import importSecDvs
     
 def getOrInsertDefault(inDict, arg, default):
     # get an arg from a dict.
@@ -109,8 +111,8 @@ def importAe(**kwargs):
         importedData = importRpgDvsRos(**kwargs)
     #elif fileFormat in ['iniaedat', 'aedat', 'dat', 'jaer', 'caer', 'ini', 'inivation', 'inilabs']:        
     #    importedData = importIniAedat(kwargs)
-    #elif fileFormat in ['secdvs', 'bin', 'samsung', 'sec', 'gen3']:
-    #    importedData = importSecDvs(kwargs)
+    elif fileFormat in ['secdvs', 'bin', 'samsung', 'sec', 'gen3']:
+        importedData = importSecDvs(**kwargs)
     else:
         raise Exception("fileFormat: " + str(fileFormat) + " not supported.")
     #celex    
