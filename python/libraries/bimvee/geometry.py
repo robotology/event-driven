@@ -19,6 +19,8 @@ for example, for manipulating poses, orientations, projections etc
 
 import numpy as np
 
+from .timestamps import sortDataTypeDictByTime
+
 # Can accept an existing matrix, which should be min 3x3; 
 #if it creates a matrix it makes it 4x4
 def quat2RotM(quat, M=None):
@@ -74,32 +76,59 @@ expects pose dict in the form: {'ts': 1d np.array of np.float64 timestamps,
                                 'point': 2d array np.float64 of positions [x, y, z], 
                                 'rotation': 2d array np.float64 of quaternions [rw, rx, ry, rz]
                                 (i.e. 6dof with rotation as quaternion)}
-returns (point, rotation) tuple, being np.array 1d x 3 and 4 respectively, np.float64, 
-which is interpolated pose
+Two modes of operation:
+If time is not None, then returns the interpolated pose at that time -
+    returns (point, rotation) tuple, being np.array 1d x 3 and 4 respectively, np.float64,    which is interpolated pose;
+Else if maxPeriod is not None, then it returns the entire pose dict,
+    but with additional points necessary to ensure that time between samples 
+    never exceeds maxPeriod
 '''
-def pose6qInterp(poseDict, time):
+def pose6qInterp(poseDict, time=None, maxPeriod=None):
     ts = poseDict['ts']
-    allPoints = poseDict['point']
-    allRotations = poseDict['rotation']
-    idxPre = np.searchsorted(ts, time, side='right') - 1
-    timePre = ts[idxPre]
-    if timePre == time:
-        # In this edge-case of desired time == timestamp, there is no need 
-        # to interpolate 
-        return (allPoints[idxPre, :], allRotations[idxPre, :])
-    if idxPre < 0:
-        return (allPoints[0, :], allRotations[0, :])
-    if idxPre >= len(poseDict['ts']):
-        return (allPoints[-1, :], allRotations[-1, :])
-    timePost = ts[idxPre + 1]
-    qPre = allRotations[idxPre, :]
-    qPost = allRotations[idxPre + 1, :]
-    timeRel = (time - timePre) / (timePost - timePre)
-    qOut = slerp(qPre, qPost, timeRel)
-    locPre = allPoints[idxPre, :] 
-    locPost = allPoints[idxPre + 1, :]
-    locOut = locPre * (1-timeRel) + locPost * timeRel
-    return (locOut, qOut)
+    points = poseDict['point']
+    rotations = poseDict['rotation']
+    if time is not None:
+        idxPre = np.searchsorted(ts, time, side='right') - 1
+        timePre = ts[idxPre]
+        if timePre == time:
+            # In this edge-case of desired time == timestamp, there is no need 
+            # to interpolate 
+            return (points[idxPre, :], rotations[idxPre, :])
+        if idxPre < 0:
+            return (points[0, :], rotations[0, :])
+        if idxPre >= len(poseDict['ts']):
+            return (points[-1, :], rotations[-1, :])
+        timePost = ts[idxPre + 1]
+        rotPre = rotations[idxPre, :]
+        rotPost = rotations[idxPre + 1, :]
+        timeRel = (time - timePre) / (timePost - timePre)
+        rotOut = slerp(rotPre, rotPost, timeRel)
+        pointPre = points[idxPre, :] 
+        pointPost = points[idxPre + 1, :]
+        pointOut = pointPre * (1-timeRel) + pointPost * timeRel
+        return (pointOut, rotOut)
+    elif maxPeriod is not None:
+        firstTime = ts[0]
+        lastTime = ts[-1]
+        proposedAdditionalTimes = np.arange(firstTime, lastTime, maxPeriod)
+        prevIds = np.searchsorted(ts, proposedAdditionalTimes, side='right') - 1
+        distPre = proposedAdditionalTimes - ts[prevIds]
+        distPost = ts[prevIds + 1] - proposedAdditionalTimes
+        dist = distPre + distPost
+        keepAdditional = dist > maxPeriod
+        additionalTimes = proposedAdditionalTimes[keepAdditional]
+        additionalPoses = [pose6qInterp(poseDict, time=additionalTime) 
+                            for additionalTime in additionalTimes] 
+        additionalPoints, additionalRotations = zip(*additionalPoses)
+        ts = np.concatenate((ts, additionalTimes))
+        points = np.concatenate((points, np.array(additionalPoints)))
+        rotations = np.concatenate((rotations, np.array(additionalRotations)))
+        poseDict['ts'] = ts
+        poseDict['point'] = points
+        poseDict['rotation'] = rotations
+        poseDict = sortDataTypeDictByTime(poseDict)
+        return poseDict
+        
 
 def combineTwoQuaternions(q1, q2):
     # Quaternion multiplication

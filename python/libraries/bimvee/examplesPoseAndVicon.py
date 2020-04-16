@@ -45,18 +45,6 @@ if 'uniqueIds' in viconDataDict['data']['vicon']['pose6q']:
 if 'uniqueIds' in viconDataDict['data']['vicon']['point3']:
     print('The parsed marker IDs are: ', viconDataDict['data']['vicon']['point3']['uniqueIds'])
 
-#%% Import pose data from Vicon - select only one of the bodies for further analysis
-
-from bimvee.importIitVicon import importIitVicon
-from bimvee.split import selectByLabel
-
-filePathOrName = os.path.join(prefix, '/data/2019_12_12_vicon/Trial2WithVicon/Vicon/data.log')
-kwargs = {'filePathOrName': filePathOrName,
-          'separateBodiesAsChannels': False}
-viconDataDict = importVicon(**kwargs)
-posesForSelectedBody = selectByLabel(viconDataDict['data']['vicon']['pose6q'], 'bodyId', 'Subj_StEFI::Seg_body')
-del posesForSelectedBody['uniqueIds']
-
 #%% Import with each body as separate channel
 
 from bimvee.importIitVicon import importIitVicon
@@ -98,6 +86,43 @@ exclude = []
 plotTrajectories(viconDataDict, uniqueIds, include, exclude, ax=ax)
 
 plt.show()
+
+
+#%% Import poses from Vicon and select only one body for further analysis
+
+from bimvee.importIitVicon import importIitVicon
+from bimvee.split import selectByLabel
+
+filePathOrName = os.path.join(prefix, '/data/2019_12_12_vicon/Trial2WithVicon/Vicon/data.log')
+kwargs = {'filePathOrName': filePathOrName,
+          'separateBodiesAsChannels': False}
+viconDataDict = importIitVicon(**kwargs)
+posesForSelectedBody = selectByLabel(viconDataDict['data']['vicon']['pose6q'], 'bodyId', 'Subj_StEFI::Seg_body')
+del posesForSelectedBody['uniqueIds']
+
+dataDict = {'pose6q': posesForSelectedBody}
+
+#%% Remove erroneous pose samples
+
+# We observe null poses in our data, elimnate these. In practice, these are set 
+# to point=0,0,0 rotation=0,0.5,0,0  so one way to tell that they're
+# erroneous is to test for magnitude != unity
+
+import numpy as np
+
+rotation = dataDict['pose6q']['rotation']
+magnitude = np.sum(rotation ** 2, axis = 1) 
+toKeep = magnitude == 1
+
+dataDict['pose6q']['toKeep'] = toKeep
+dataDict['pose6q'] = selectByLabel(dataDict['pose6q'], 'toKeep', True)
+
+#%% Interpolate poses - make sure there is at least one sample every 10 ms
+
+from bimvee.geometry import pose6qInterp
+                                         
+dataDict['pose6q'] = pose6qInterp(dataDict['pose6q'], maxPeriod=0.005)
+
 
 #%% Construct a pose sequence by hand
 
@@ -194,33 +219,17 @@ thread = threading.Thread(target=visualizerApp.run)
 thread.daemon = True
 thread.start()
 
-
 #%% Visualise
 
 visualizerApp.root.data_controller.data_dict = dataDict
 
-#%% Export a posedict as csv for evoSimulator
+#%% Export a posedict as csv for eSim simulator
 
-'''
-Note:
-    a) conversion of ts to ns
-    b) switch of quaternion to qx, qy, qz, qw format
-'''
+from bimvee.exportPoseRpgEsimCsv import exportPoseRpgEsimCsv
 
-with open('evoPosesForSimulation.csv', 'w') as file:
-    file.write('# timestamp, x, y, z, qx, qy, qz, qw\n')
-    for idx in range(401):
-        file.write('%f, %f, %f, %f, %f, %f, %f, %f\n' % (
-                ts[idx] * 1000000000,                                                       
-                point[idx, 0],                                                       
-                point[idx, 1],                                                       
-                point[idx, 2],                                                       
-                rotation[idx, 1],                                                       
-                rotation[idx, 2],                                                       
-                rotation[idx, 3],                                                       
-                rotation[idx, 0],                                                       
-                ))
-    
+filePathAndName = os.path.join(prefix, 'data/poses.csv')
+exportPoseRpgEsimCsv(dataDict['pose6q'], filePathAndName=filePathAndName)
+
 #%% Import the resulting simulation
         
 from importRpgDvsRos import importRpgDvsRos
