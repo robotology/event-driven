@@ -299,7 +299,7 @@ class DataController(GridLayout):
                 print('    ' * recursionDepth + 'Dict contains a key "' + key_name + '" ...')
                 if isinstance(in_dict[key_name], dict):
                     if 'ts' in in_dict[key_name]:
-                        if key_name in ['dvs', 'frame', 'pose6q']:
+                        if key_name in ['dvs', 'frame', 'pose6q', 'point3']:
                             print('    ' * recursionDepth + 'Creating a new viewer, of type: ' + key_name)
                             self.add_viewer_and_resize(key_name, in_dict[key_name], label=label+':'+str(key_name))
                         else:

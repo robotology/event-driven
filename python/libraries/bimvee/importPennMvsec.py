@@ -71,59 +71,6 @@ def importPennMvsecGt(**kwargs): # Ground truth
             }
     return importRpgDvsRos(**kwargs)
 
-'''
-import h5py
-import numpy as np
-
-def importFromHdf5(**kwargs):
-    Opens a .hdf5 file in param pathOrFileName
-    Format defined here:
-    https://daniilidis-group.github.io/mvsec/download/    
-    We expect the following format - the hdf5 file opens into a dict as:
-    {   velodyne
-        davis
-            left
-                events
-                image_raw
-                image_raw_event_inds
-                image_raw_ts
-                imu
-                imu_ts
-            right ...
-    ... where each of the above fields follows the appropirate rosbag format,
-    and in particular, events follows rpg_dvs_ros events format. 
-    This format is documented at: http://rpg.ifi.uzh.ch/davis_data.html
-
-    file = h5py.File(kwargs.get('filePathOrName'), 'r')
-    channels = file['davis'].keys()
-    # Expecting 'left' and 'right' here
-    outputDict = {
-        'info': kwargs,
-        'data': {}}
-    
-    for channel in channels:
-        print('Exploring channel: ' + str(channel))
-        outputDict['data'][channel] = {}
-        currentChannelDict = outputDict['data'][channel]
-        try:
-            eventData = file['davis'][channel]['events']
-            currentChannelDict['pol'] = {
-                'x': np.asarray(eventData[:, 0], dtype=np.int16), 
-                'y': np.asarray(eventData[:, 1], dtype=np.int16), 
-                'ts': np.asarray(eventData[:, 2] - np.min(eventData[:, 2]), dtype=np.float64), 
-                'pol': np.asarray(eventData[:, 3] == 1, dtype=np.bool), 
-                }    
-        except KeyError:
-            print('No event data found for channel ' + str(channel))
-         #'image_raw',
-         #'image_raw_event_inds',
-         #'image_raw_ts',
-         #'imu',
-         #'imu_ts']
-
-    return outputDict
-'''
-    
 
 
 

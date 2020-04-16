@@ -2,6 +2,7 @@
 """
 Copyright (C) 2019 Event-driven Perception for Robotics
 Author: Suman Ghosh
+        Sim Bamford
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later version.
@@ -64,14 +65,17 @@ then the data in the vicon channel is broken into two datatypes:
                     'uniqueIds' : <1D array of strings, one for each unique marker>} } ...
 """
 
+import os
 import re
 import numpy as np
 
 # local imports
 if __package__ is None or __package__ == '':
-    from timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
+    from timestamps import zeroTimestampsForADataType, rezeroTimestampsForImportedDicts
+    from split import splitByLabel
 else:
-    from .timestamps import zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
+    from .timestamps import zeroTimestampsForADataType, rezeroTimestampsForImportedDicts
+    from .split import splitByLabel
 
 def getOrInsertDefault(inDict, arg, default):
     # get an arg from a dict.
@@ -103,16 +107,22 @@ def separateMarkersFromSegments(poseDict):
         'pose6q': poseDict,
         'point3': pointDict}
 
-def importVicon(**kwargs):
-    filePathOrName = kwargs['filePathOrName']
+def importIitVicon(**kwargs):
+    filePathOrName = kwargs.get('filePathOrName')
+    # handle the case in which filename is not specified - iterate through files 
+    # in the current directory looking for data.log
+    if filePathOrName is None:
+        files = [file for file in os.listdir('.') if os.path.isfile(file)]
+        for filename in files:
+            if filename == 'data.log':
+                kwargs['filePathOrName'] = filename
+                return importIitVicon(**kwargs)
+        print('No suitable file found')
+        return None
     pattern = re.compile('(\d+) (\d+\.\d+) \((.*)\)')
     # yarpBottleTimes = []
     outDict = {'info': {'filePathOrName': filePathOrName}, 'data': {}}
-    separateBodiesAsChannels = kwargs.get('separateBodiesAsChannels', False)
-    if separateBodiesAsChannels:
-        uniqueIds = []
-    else: 
-        poseDict = {'ts': [], 'point': [], 'rotation': [], 'bodyId': []}
+    poseDict = {'ts': [], 'point': [], 'rotation': [], 'bodyId': []}
     with open(filePathOrName, 'r') as file:
         print('Found file to read')
         line = file.readline()
@@ -129,45 +139,33 @@ def importVicon(**kwargs):
                 # Note: quaternion order is [w,x,y,z] - this is defined by yarp 
                 # IFrameTransform component, so ignore vicon documentation
                 rotation = elements[6:] 
-                if separateBodiesAsChannels:
-                    try:
-                        poseDict = outDict['data'][bodyId]['pose6q']
-                    except KeyError:
-                        print('KeyError exception.. Creating new key', bodyId)
-                        uniqueIds.append(bodyId)
-                        outDict['data'][bodyId] = {'pose6q': {'ts': [], 'point': [], 'rotation': []}}
-                        poseDict = outDict['data'][bodyId]['pose6q']
                 poseDict['ts'].append(ts)
                 poseDict['point'].append(point)
                 poseDict['rotation'].append(rotation)
-                if not separateBodiesAsChannels:
-                    poseDict['bodyId'].append(bodyId.encode('utf-8'))
+                poseDict['bodyId'].append(bodyId)
             line = file.readline()
 
     # converting lists of strings to numpy arrays of objects
-    if separateBodiesAsChannels:
-        for id in uniqueIds:
-            outDict['data'][id]['pose6q']['ts'] = np.array(outDict['data'][id]['pose6q']['ts'], dtype=np.float64)
-            outDict['data'][id]['pose6q']['point'] = np.array(outDict['data'][id]['pose6q']['point'], dtype=np.float64)
-            outDict['data'][id]['pose6q']['rotation'] = np.array(outDict['data'][id]['pose6q']['rotation'], dtype=np.float64)
-            if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
-                zeroTimestampsForAChannel(outDict['data'][id])
-        if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
-            rezeroTimestampsForImportedDicts(outDict)
-        outDict['info']['uniqueIds'] = uniqueIds
-    else:
-        poseDict['ts'] = np.array(poseDict['ts'], dtype=np.float64)
-        poseDict['point'] = np.array(poseDict['point'], dtype=np.float64)
-        poseDict['rotation'] = np.array(poseDict['rotation'], dtype=np.float64)
-        poseDict['bodyId'] = np.array(poseDict['bodyId'])
-        poseDict['uniqueIds'] = np.unique(poseDict['bodyId'])
-        if kwargs.get('separateMarkersFromSegments', False):
-            outDict['data']['vicon'] = separateMarkersFromSegments(poseDict)
-        else:            
-            outDict['data']['vicon'] = {'pose6q': poseDict}
-            
-        if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
-            zeroTimestampsForAChannel(outDict['data']['vicon']) # TODO: Zeroing in the separated channel case
+    poseDict['ts'] = np.array(poseDict['ts'], dtype=np.float64)
+    poseDict['point'] = np.array(poseDict['point'], dtype=np.float64)
+    poseDict['rotation'] = np.array(poseDict['rotation'], dtype=np.float64)
+    poseDict['bodyId'] = np.array(poseDict['bodyId'], dtype=object)
+    poseDict['uniqueIds'] = np.unique(poseDict['bodyId'])
+    if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
+        zeroTimestampsForADataType(poseDict)
+    if kwargs.get('separateBodiesAsChannels', False):
+        outDict['info']['uniqueIds'] = poseDict['uniqueIds']
+        del poseDict['uniqueIds']
+        separatedBodies = splitByLabel(poseDict, 'bodyId')
+        # The next line inserts the missing 'pose6q' dattype level into the hierarchy
+        outDict['data'] = {bodyName: {'pose6q': bodyDict} 
+                           for bodyName, bodyDict in zip(
+                                   separatedBodies.keys(), 
+                                   separatedBodies.values())}
+    elif kwargs.get('separateMarkersFromSegments', False):
+        outDict['data']['vicon'] = separateMarkersFromSegments(poseDict)
+    else:            
+        outDict['data']['vicon'] = {'pose6q': poseDict}
     return outDict
 
 
