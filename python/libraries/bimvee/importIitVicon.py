@@ -71,10 +71,10 @@ import numpy as np
 
 # local imports
 if __package__ is None or __package__ == '':
-    from timestamps import zeroTimestampsForADataType, rezeroTimestampsForImportedDicts
+    from timestamps import zeroTimestampsForADataType
     from split import splitByLabel
 else:
-    from .timestamps import zeroTimestampsForADataType, rezeroTimestampsForImportedDicts
+    from .timestamps import zeroTimestampsForADataType
     from .split import splitByLabel
 
 def getOrInsertDefault(inDict, arg, default):
@@ -106,7 +106,7 @@ def separateMarkersFromSegments(poseDict):
     return {
         'pose6q': poseDict,
         'point3': pointDict}
-
+    
 def importIitVicon(**kwargs):
     filePathOrName = kwargs.get('filePathOrName')
     # handle the case in which filename is not specified - iterate through files 
@@ -157,7 +157,7 @@ def importIitVicon(**kwargs):
         outDict['info']['uniqueIds'] = poseDict['uniqueIds']
         del poseDict['uniqueIds']
         separatedBodies = splitByLabel(poseDict, 'bodyId')
-        # The next line inserts the missing 'pose6q' dattype level into the hierarchy
+        # The next line inserts the missing 'pose6q' dataType level into the hierarchy
         outDict['data'] = {bodyName: {'pose6q': bodyDict} 
                            for bodyName, bodyDict in zip(
                                    separatedBodies.keys(), 
