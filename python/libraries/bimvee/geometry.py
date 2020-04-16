@@ -143,6 +143,15 @@ def combineTwoQuaternions(q1, q2):
     qOut[1:4] = vOut
     return qOut
 
+'''
+Expects 
+    - poseDict in bimvee form {'ts', 'point', 'rotation' as above}
+    - rotation as a quaternion w,x,y,z
+Returns a copy of the poseDict, rotated
+'''    
+def rotatePoses(poseDict, translation=None, rotation=None):
+    pass
+    
 # adapted from https://stackoverflow.com/questions/50387606/python-draw-line-between-two-coordinates-in-a-matrix
 def draw_line(mat, x0, y0, x1, y1):
     if (x0, y0) == (x1, y1):
