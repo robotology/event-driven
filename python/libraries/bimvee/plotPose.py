@@ -67,8 +67,6 @@ def plotPose(inDict, **kwargs):
         axesT.legend(['x', 'y', 'z'])
     # TODO: Callbacks
     
-
-
 """
 Plot the 3D trajectory of a body or marker for the entire duration of recording
 

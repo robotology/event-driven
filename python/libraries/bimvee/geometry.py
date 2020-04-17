@@ -19,7 +19,11 @@ for example, for manipulating poses, orientations, projections etc
 
 import numpy as np
 
-from .timestamps import sortDataTypeDictByTime
+# local imports
+if __package__ is None or __package__ == '':
+    from timestamps import sortDataTypeDictByTime
+else:
+    from .timestamps import sortDataTypeDictByTime
 
 # Can accept an existing matrix, which should be min 3x3; 
 #if it creates a matrix it makes it 4x4
@@ -163,7 +167,8 @@ def transformPoses(poseDict, translation=None, rotation=None):
         for idx in range(outDict['rotation'].shape[0]): # TODO: this could be matricised
             outDict['rotation'][idx, :] = \
                 combineTwoQuaternions(outDict['rotation'][idx, :], rotation)
-            
+    return outDict
+        
 # adapted from https://stackoverflow.com/questions/50387606/python-draw-line-between-two-coordinates-in-a-matrix
 def draw_line(mat, x0, y0, x1, y1):
     if (x0, y0) == (x1, y1):

@@ -89,7 +89,6 @@ def getOrInsertDefault(inDict, arg, default):
 # accepts a pose6q datatype dict; returns a channel dict containing pose6q and point3 datatypes
 def separateMarkersFromSegments(poseDict):
     isMarker = np.apply_along_axis(lambda x : 'Marker' in str(x[0]), 1, poseDict['bodyId'][..., np.newaxis])
-    uniqueIdIsMarker = np.apply_along_axis(lambda x : 'Marker' in str(x[0]), 1, poseDict['uniqueIds'][..., np.newaxis])
     pointDict = {
         'ts': poseDict['ts'][isMarker],
         'point': poseDict['point'][isMarker, :],

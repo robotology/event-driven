@@ -312,13 +312,15 @@ class DataController(GridLayout):
                 else:
                     print('    ' * recursionDepth + 'Ignoring that key ...')
 
-
-    
     def on_data_dict(self, instance, value):
-        self.ending_time = float(getLastTimestamp(self.data_dict)) # timer is watching this
         while len(self.children) > 0:
             self.remove_widget(self.children[0])
             print('Removed an old viewer; num remaining viewers: ' + str(len(self.children)))
+        if (self.data_dict is None) or not self.data_dict:
+            # When using ntupleviz programmatically, pass an empty dict or None 
+            # to allow the container to be passed again once updated
+            return
+        self.ending_time = float(getLastTimestamp(self.data_dict)) # timer is watching this
         self.add_viewer_for_each_channel_and_data_type(self.data_dict)
 
     def dismiss_popup(self): 
