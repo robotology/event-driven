@@ -216,8 +216,8 @@ void imuDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     auto radius = 20;
     auto axes = cv::Size(radius, radius);
     auto centre = cv::Point(Xlimit/2, Ylimit/2);
-    auto lin_scaler = std::min(Xlimit, Ylimit) * 0.5 / IMUevent::_max_value;
-    auto circ_scaler = 360.0 / IMUevent::_max_value;
+    auto lin_scaler = std::min(Xlimit, Ylimit) * 0.5 / imuHelper::_max_value;
+    auto circ_scaler = 360.0 / imuHelper::_max_value;
 
     cv::line(image, centre, centre + cv::Point(0, Ylimit * 0.25),
              black, 1);
@@ -241,40 +241,40 @@ void imuDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         auto aep = is_event<IMUevent>(*qi);
 
         switch(aep->sensor) {
-        case IMUevent::ACC_Y: { //acc y
+        case imuHelper::ACC_Y: { //acc y
             auto p_end = centre - cv::Point(0, aep->value * lin_scaler);
             cv::line(image, centre, p_end, violet, 4);
             break; }
-        case IMUevent::ACC_X: {//acc x
+        case imuHelper::ACC_X: {//acc x
             auto p_end = centre - cv::Point(aep->value * lin_scaler, 0);
             cv::line(image, centre, p_end, violet, 4);
             break;}
-        case IMUevent::ACC_Z: {//acc z
+        case imuHelper::ACC_Z: {//acc z
             auto p_end = centre + cv::Point(aep->value * lin_scaler * 0.71,
                                             aep->value * lin_scaler * 0.71);
             cv::line(image, centre, p_end, violet, 4);
             break;}
-        case IMUevent::GYR_Y: {//rot y
+        case imuHelper::GYR_Y: {//rot y
             auto pos = centre + cv::Point(0, Ylimit * 0.25);
             cv::ellipse(image, pos, axes, 0, 0, -aep->value * circ_scaler, orange, CV_FILLED);
             break;}
-        case IMUevent::GYR_X: {//rot x
+        case imuHelper::GYR_X: {//rot x
             auto pos = centre - cv::Point(Ylimit * 0.25, 0);
             cv::ellipse(image, pos, axes, 0, 0, aep->value * circ_scaler, orange, CV_FILLED);
             break;}
-        case IMUevent::GYR_Z: {//rot z
+        case imuHelper::GYR_Z: {//rot z
             auto pos = centre + cv::Point(Ylimit * 0.25*0.71, Ylimit * 0.25 * 0.71);
             cv::ellipse(image, pos, axes, 0, 0, aep->value * circ_scaler, orange, CV_FILLED);
             break;}
-        case IMUevent::TEMP: {//temp
+        case imuHelper::TEMP: {//temp
             //centre = cv::Point(radius, radius);
             //cv::ellipse(image, centre, axes, 0, 0, aep->value * circ_scaler, this->aqua, CV_FILLED);
             break;}
-        case IMUevent::MAG_Y: {//mag y
+        case imuHelper::MAG_Y: {//mag y
             break;}
-        case IMUevent::MAG_X: {//mag x
+        case imuHelper::MAG_X: {//mag x
             break;}
-        case IMUevent::MAG_Z: {//mag z
+        case imuHelper::MAG_Z: {//mag z
             break;}
 
         }
