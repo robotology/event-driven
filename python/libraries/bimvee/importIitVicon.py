@@ -40,7 +40,7 @@ Otherwise:
                     'point' : <2D array where each row has 3d position of a body at a time instant>,
                     'rotation' : <2D array where each row has rotation of a body at a time instant expressed as a quaternion (4d)>,
                     'bodyId' : <1D array where each row has the bodyId of the corresponding marker>,
-                    'uniqueIds' : <1D array of strings, one for each unique marker>} } } }
+                    } } } }
     
 A bodyID is the name assigned by vicon to a marker (labeled / unlableled) or rigid body
 The pose consists of a point in the form [x, y, z]
@@ -57,12 +57,12 @@ then the data in the vicon channel is broken into two datatypes:
                     'point' : <2D array where each row has 3d position of a body at a time instant>,
                     'rotation' : <2D array where each row has the rotation of a body at a time instant expressed as a quaternion (4d)>,
                     'bodyId' : <1D array where each row has the bodyId of the corresponding marker>,
-                    'uniqueIds' : <1D array of strings, one for each unique marker>} 
+                    } 
                 'point3': {
                     'ts' : <1D array of timestamps>,
                     'point' : <2D array where each row has 3d position of a body at a time instant>,
                     'bodyId' : <1D array where each row has the bodyId of the corresponding marker>,
-                    'uniqueIds' : <1D array of strings, one for each unique marker>} } ...
+                    } ...
 """
 
 import os
@@ -94,14 +94,12 @@ def separateMarkersFromSegments(poseDict):
         'ts': poseDict['ts'][isMarker],
         'point': poseDict['point'][isMarker, :],
         'bodyId': poseDict['bodyId'][isMarker],
-        'uniqueIds': poseDict['uniqueIds'][uniqueIdIsMarker],
         }
     poseDict = {
         'ts': poseDict['ts'][~isMarker],
         'point': poseDict['point'][~isMarker, :],
         'rotation': poseDict['rotation'][~isMarker, :],
         'bodyId': poseDict['bodyId'][~isMarker],
-        'uniqueIds': poseDict['uniqueIds'][~uniqueIdIsMarker],
         }
     return {
         'pose6q': poseDict,
@@ -150,12 +148,10 @@ def importIitVicon(**kwargs):
     poseDict['point'] = np.array(poseDict['point'], dtype=np.float64)
     poseDict['rotation'] = np.array(poseDict['rotation'], dtype=np.float64)
     poseDict['bodyId'] = np.array(poseDict['bodyId'], dtype=object)
-    poseDict['uniqueIds'] = np.unique(poseDict['bodyId'])
     if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
         zeroTimestampsForADataType(poseDict)
     if kwargs.get('separateBodiesAsChannels', False):
-        outDict['info']['uniqueIds'] = poseDict['uniqueIds']
-        del poseDict['uniqueIds']
+        outDict['info']['uniqueIds'] = np.unique(poseDict['bodyId'])
         separatedBodies = splitByLabel(poseDict, 'bodyId')
         # The next line inserts the missing 'pose6q' dataType level into the hierarchy
         outDict['data'] = {bodyName: {'pose6q': bodyDict} 

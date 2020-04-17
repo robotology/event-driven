@@ -146,12 +146,24 @@ def combineTwoQuaternions(q1, q2):
 '''
 Expects 
     - poseDict in bimvee form {'ts', 'point', 'rotation' as above}
-    - rotation as a quaternion w,x,y,z
+    - translation as np array of x,y,z
+    - rotation as a np array of w,x,y,z (quaternion)
+If either translation or rotation are passed, these are applied to all poses 
+in the poseDict.
 Returns a copy of the poseDict, rotated
 '''    
-def rotatePoses(poseDict, translation=None, rotation=None):
-    pass
-    
+def transformPoses(poseDict, translation=None, rotation=None):
+    # Create a copy of the input array - use the same contents
+    outDict = {}
+    for key in poseDict.keys():
+        outDict[key] = poseDict[key]
+    if translation is not None:
+        outDict['point'] = poseDict['point'] + translation
+    if rotation is not None:
+        for idx in range(outDict['rotation'].shape[0]): # TODO: this could be matricised
+            outDict['rotation'][idx, :] = \
+                combineTwoQuaternions(outDict['rotation'][idx, :], rotation)
+            
 # adapted from https://stackoverflow.com/questions/50387606/python-draw-line-between-two-coordinates-in-a-matrix
 def draw_line(mat, x0, y0, x1, y1):
     if (x0, y0) == (x1, y1):
