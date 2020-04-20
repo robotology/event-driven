@@ -1,6 +1,7 @@
 option(ENABLE_zynqgrabber "Build zynqGrabber" OFF)
 option(ENABLE_chronocamgrabber "Build chronocamGrabber" OFF)
 option(ENABLE_binarydumper "Build binaryDumper" OFF)
+option(ENABLE_qadIMUcal "Build qadIMUcalibrator" OFF)
 
 if(ENABLE_zynqgrabber)
     add_subdirectory(zynqGrabber)
@@ -12,4 +13,8 @@ endif()
 
 if(ENABLE_binarydumper)
     add_subdirectory(binaryDumper)
+endif()
+
+if(ENABLE_qadIMUcal)
+    add_subdirectory(qadIMUcal)
 endif()

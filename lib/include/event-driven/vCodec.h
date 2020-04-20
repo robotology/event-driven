@@ -293,14 +293,6 @@ public:
         };
     };
 
-    const static unsigned int _max_value = 32768;
-    enum {
-        ACC_Y = 0, ACC_X = 1, ACC_Z = 2,
-        GYR_Y = 3, GYR_X = 4, GYR_Z = 5,
-        TEMP  = 6,
-        MAG_Y = 7, MAG_X = 8, MAG_Z = 9};
-    static double convertToSI(int index, int value);
-
     IMUevent();
     IMUevent(const vEvent &v);
     IMUevent(const IMUevent &v);
