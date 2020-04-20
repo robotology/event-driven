@@ -1,22 +1,53 @@
-%% set these options!!
-winsize = 0.1; %seconds
-rate = 0.1; %seconds
-channel = 0;
-start_offset = 0;
-randomised = 0;
-counter_clock = 0.00000008;
-sensor_height = 240;
-sensor_width = 304;
+if(~exist('winsize', 'var'))
+    disp('Please specify the window size');
+    return;
+end
 
-%%
+if(~exist('rate', 'var'))
+    disp('Please specify the frame rate');
+    return;
+end
+
+if(~exist('channel', 'var'))
+    disp('Please specify the channel');
+    return;
+end
+
+if(~exist('randomised', 'var'))
+    disp('Please specify the parameter "randomised"');
+    return;
+end
+
+if(~exist('counter_clock', 'var'))
+    disp('Please specify the clock period');
+    return;
+end
+
+if(~exist('sensor_height', 'var'))
+    disp('Please specify the height of the sensor');
+    return;
+end
+
+if(~exist('sensor_width', 'var'))
+    disp('Please specify the width of the sensor');
+    return;
+end
+
 if(~exist('GTdataset', 'var'))
     disp('Please specify the path to the dataset in parameter "GTdataset"');
     return;
 end
 
-GTresultfile = [GTdataset(1:find(GTdataset == '.', 1, 'last')) 'GT'];
+if(~exist('GTresultfile', 'var'))
+    GTresultfile = [GTdataset(1:find(GTdataset == '.', 1, 'last')) 'GT'];
+    disp(strcat('Please specify the resulting file "GTdataset", setting to: ', GTresultfile));
+end
 
-
+if(~exist('runHough', 'var'))
+    runHough = false;
+    h_score = 0;
+    disp(strcat('Please specify the "runHough" parameter, setting to: ', runHough));
+end
 
 disp('Loading data...');
 %CH TS POL X Y
@@ -26,14 +57,12 @@ GTevents(GTevents(:, 1) ~= channel, :) = [];
 GTevents(:, 2) = GTevents(:, 2) * counter_clock; % change time scale to seconds
 start_offset = (GTevents(end, 2) - GTevents(1, 2))*start_offset + GTevents(1, 2);
 
-
-
 disp('Press Esc to quit');
 disp('Press Enter to log position');
 disp('Press Space to skip position');
 disp('Press +/- to change circle size');
 disp('Move circle with arrows');
-
+disp('alternatively, use "a,d,w,s" to move, "k,j" to change radius, "h" to log');
 disp(['Approximately ' int2str((GTevents(end, 2) - start_offset) / rate + 0.5) ...
     ' frames to GT']);
 
@@ -52,8 +81,6 @@ end
 
 figure(1); clf;
 
-
-
 if(randomised)
     cts = GTevents(round(rand(1) * length(GTevents)), 2);
     ci = find(GTevents(1:end, 2) > cts, 1) - 1;
@@ -69,6 +96,7 @@ cputs = GTevents(ci, 7);
 x = 152; y = 120; r = 30;
 
 finishedGT = false;
+initialised = false;
 
 while(~finishedGT)
     
@@ -77,16 +105,10 @@ while(~finishedGT)
     %if(ci - wini) < 2000; wini = ci - 2000; end
     if(wini < 1); wini = 1; end
     finishedLOG = false;
-    runHough = true;
     
     while(~finishedLOG)
         
         window = GTevents(wini:ci, :);
-        
-        if(runHough)
-            runHough = false;
-            [x, y, r, h_score] = event_hough(window, r-5, r+5, 240, 304);
-        end
         
         figure(1); clf; hold on;
         plot(window(window(:, 3) == 0, 4), window(window(:, 3) == 0, 5), 'g.');
@@ -119,35 +141,69 @@ while(~finishedGT)
             end
         end
         
-        if c == 13 %enter
-            runHough = true;
+        if c == 13  || c == 'h'%enter
+            if ~initialised
+                xold = x;
+                yold = y;
+                rold = r;
+                initialised = true;
+            end
+            
             finishedLOG = true;
             %result(res_i, :) = [cts, x, y, r];
             dlmwrite(GTresultfile, [cts, x, y, r, cputs], '-append', 'delimiter', ' ', 'precision', '%0.6f'); 
             figure(2); hold on; plot(cts, 1, 'gx');
+            
+            if(runHough)
+                [x, y, r, h_score] = event_hough(window, r-5, r+5, 240, 304);
+            else
+                dx = x - xold;
+                dy = y - yold;
+                dr = r - rold;
+                xold = x;
+                yold = y;
+                rold = r;
+                x = x + dx;
+                y = y + dy;
+            end
+            
         elseif c == 32 %space
-            runHough = true;
             finishedLOG = true;
+            
+            if(runHough)
+                [x, y, r, h_score] = event_hough(window, r-5, r+5, 240, 304);
+            else
+                if initialised
+                    dx = x - xold;
+                    dy = y - yold;
+                    dr = r - rold;
+                    xold = x;
+                    yold = y;
+                    rold = r;
+                    x = x + dx;
+                    y = y + dy;
+                end
+            end
         elseif c == 27 %ESC
             finishedLOG = true;
             finishedGT = true;
-        elseif c == '+' | c == '='
-            r = r + 1;
-        elseif c == '-' | c == '_'
-            r = r - 1;
-            if r == 0; r = 1; end;
-        elseif c == 30 %up
-            y = y + 1;
-            if y > sensor_height; y = sensor_height; end;
-        elseif c == 31 %down
-            y = y - 1;
-            if y == 0; y = 1; end;
-        elseif c == 29 %right
-            x = x + 1;
-            if x > sensor_width; x = sensor_width; end;
-        elseif c == 28 %left
-            x = x - 1;
-            if x == 0; x = 1; end;
+        elseif c == '+' || c == '=' || c == 'k'
+            r = r + sensitivity;
+        elseif c == '-' || c == '_' || c == 'j'
+            r = r - sensitivity;
+            if r == 0; r = 1; end
+        elseif c == 30  || c == 'w'%up
+            y = y + sensitivity;
+            if y > sensor_height; y = sensor_height; end
+        elseif c == 31  || c == 's'%down
+            y = y - sensitivity;
+            if y == 0; y = 1; end
+        elseif c == 29  || c == 'd'%right
+            x = x + sensitivity;
+            if x > sensor_width; x = sensor_width; end
+        elseif c == 28  || c == 'a'%left
+            x = x - sensitivity;
+            if x == 0; x = 1; end
         end
         
     end
@@ -190,6 +246,6 @@ catch
 end
 
 disp('Finished Ground-truthing');
-try close(1); end;
+try close(1); end
 %try close(2); end;
 
