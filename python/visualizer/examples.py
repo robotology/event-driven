@@ -40,14 +40,14 @@ import threading
 prefix = 'C:/' if os.name == 'nt' else '/home/sbamford/'    
 
 # Add path to bimvee library
-sys.path.append(os.path.join(prefix, 'repos/event-driven-python-dev/python/libraries/bimvee'))
+sys.path.append(os.path.join(prefix, 'repos/event-driven/python/libraries'))
 # Add path to visualizer
-sys.path.append(os.path.join(prefix, 'repos/event-driven-python-dev/python/visualizer'))
+sys.path.append(os.path.join(prefix, 'repos/event-driven/python'))
 
-import ntupleviz
+import visualizer.ntupleviz
 
 # Create the ntupleViz app and start it in a thread
-visualizerApp = ntupleviz.Ntupleviz()
+visualizerApp = visualizer.ntupleviz.Ntupleviz()
 thread = threading.Thread(target=visualizerApp.run)
 thread.daemon = True
 thread.start()
@@ -56,24 +56,38 @@ thread.start()
 
 #%% Load some data that you want to work with
 
-from importIitYarp import importIitYarp
+from bimvee.importIitYarp import importIitYarp
 
 filePathOrName = os.path.join(prefix, "data/2019_11_11_AikoImu/linear_100/ATIS")
 container = importIitYarp(filePathOrName=filePathOrName, tsBits=30)
 
 # Having loaded a dvs dataDict - poke it into the dsm
-visualizerApp.root.data_controller.data_dict = imported
+visualizerApp.root.data_controller.data_dict = container
 
-#%% Load some different data and push it in
+#%% Load some secdvs data
 
-from importIitYarp import importIitYarp
+from bimvee.importSecDvs import importSecDvs
 
-filePathOrName = os.path.join(prefix, "data/2019_11_11_AikoImu/tripod_pitch/ATIS")
-container = importIitYarp(filePathOrName=filePathOrName, tsBits=30)
+filePathOrName = os.path.join(prefix, "data/2020_03_23 SecDvs from Ander/2020-03-24-12-45-13.bin")
+container = importSecDvs(filePathOrName=filePathOrName)
+
+visualizerApp.root.data_controller.data_dict = container
+
+#%% Load some generic data
+
+from bimvee.importAe import importAe
+
+filePathOrName = os.path.join(prefix, "data/2020_03_23 SecDvs from Ander/2020-03-24-12-45-13.bin")
+container = importAe(filePathOrName=filePathOrName)
 
 visualizerApp.root.data_controller.data_dict = container
 
 #%% Simulated DAVIS data
+
+# This example demonstrates the use of a template to limit what data is imported,
+# and therefore what data gets visualised. 
+# You can also create a container with just the data you want before passing 
+# it to the visualiser.
 
 # http://rpg.ifi.uzh.ch/davis_data.html
 from importRpgDvsRos import importRpgDvsRos
@@ -108,28 +122,6 @@ container['data']['reduced'] = {'pose6q': poseKept}
 
 visualizerApp.root.data_controller.data_dict = container
 
-#%% Real DAVIS data
-
-# http://rpg.ifi.uzh.ch/davis_data.html
-from importRpgDvsRos import importRpgDvsRos
-    
-filePathOrName = os.path.join(prefix, 'data/rpg/shapes_translation.bag')
-
-template = {
-    'davis': {
-        'dvs': '/dvs/events',
-        'frame': '/dvs/image_raw',
-        'imu': '/dvs/imu',
-        },
-    'extra': {
-        'pose6q': '/optitrack/davis'
-        }
-    }
-
-container = importRpgDvsRos(filePathOrName=filePathOrName, template=template, )
-
-visualizerApp.root.data_controller.data_dict.data_dict = container
-
 #%% Constructed rolling poses - X
 
 import numpy as np
@@ -146,58 +138,11 @@ rotation = np.array([[1, 0, 0, 0],
                      [1, 0, 0, 0]],
                     dtype=np.float64)
 
-trialContainer = {'pose6q': {'ts': ts,
+container = {'pose6q': {'ts': ts,
                         'point': point,
                         'rotation': rotation
                         }
             }
 
-visualizerApp.root.data_controller.data_dict.data_dict = trialContainer
+visualizerApp.root.data_controller.data_dict.data_dict = container
 
-#%% Constructed rolling poses - Y
-
-import numpy as np
-
-ts = np.array([0, 1, 2, 3, 4], dtype=np.float64)
-point = np.zeros((5, 3), dtype=np.float64)
-# from neutral pose, to y = 1 (i.e. swivel clockwise through 180 as if on an office chair) 
-# back to neutral, then y to -1 ( i.eswivel anticlockwise through 180)
-# back to neutral 
-rotation = np.array([[1, 0, 0, 0], 
-                     [0, 0, 1, 0], 
-                     [1, 0, 0, 0], 
-                     [0, 0, -1, 0], 
-                     [1, 0, 0, 0]],
-                    dtype=np.float64)
-
-trialContainer = {'pose6q': {'ts': ts,
-                        'point': point,
-                        'rotation': rotation
-                        }
-            }
-
-visualizerApp.root.data_controller.data_dict.data_dict = trialContainer
-
-#%% Constructed rolling poses - Z
-
-import numpy as np
-
-ts = np.array([0, 1, 2, 3, 4], dtype=np.float64)
-point = np.zeros((5, 3), dtype=np.float64)
-# from neutral pose, to z = 1 (i.e. roll our head clockwise through 180, whilst still looking forwards) 
-# back to neutral, then z to -1 ( i.e. roll our head anticlockwise through 180, whilst still looking forwards)
-# back to neutral 
-rotation = np.array([[1, 0, 0, 0], 
-                     [0, 0, 0, 1], 
-                     [1, 0, 0, 0], 
-                     [0, 0, 0, -1], 
-                     [1, 0, 0, 0]],
-                    dtype=np.float64)
-
-trialContainer = {'pose6q': {'ts': ts,
-                        'point': point,
-                        'rotation': rotation
-                        }
-            }
-
-visualizerApp.root.data_controller.data_dict.data_dict = trialContainer
