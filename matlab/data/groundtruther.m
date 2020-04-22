@@ -46,8 +46,14 @@ end
 if(~exist('runHough', 'var'))
     runHough = false;
     h_score = 0;
-    disp(strcat('Please specify the "runHough" parameter, setting to: ', runHough));
+    disp(strcat('Please specify the "runHough" parameter, setting to: ', string(runHough)));
 end
+
+if(~exist('sensitivity', 'var'))
+    sensitivity = 1;
+    disp(strcat('Please specify the sensitivity of the keyboard commands, setting to: ', string(sensitivity)));
+end
+
 
 disp('Loading data...');
 %CH TS POL X Y
