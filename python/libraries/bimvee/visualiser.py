@@ -73,6 +73,9 @@ class Visualiser():
     def get_frame(self, time, timeWindow, **kwargs):
         return np.zeros((1, 1), dtype=np.uint8)
 
+    def get_b_box(self, time, with_labels=True):
+        return [[0, 0, 0, 0]]
+
     def get_colorfmt(self):
         return 'luminance'
 
@@ -107,6 +110,25 @@ class VisualiserDvs(Visualiser):
             kwargs['image'] = image
             image = kwargs['callback'](**kwargs)
         return image
+
+    def get_b_box(self, time, with_labels=True):
+        if self.__data is None:
+            return [[0, 0, 0, 0]]
+        data = self.__data
+        if not 'gt_bb' in data.keys():
+            return [[0, 0, 0, 0]]
+        gt_bb = data['gt_bb']
+        box_index = np.searchsorted(gt_bb['ts'], time)
+        if abs(gt_bb['ts'][box_index] - time) > 0.03:
+            return [[0, 0, 0, 0]]
+        indices = gt_bb['ts'] == gt_bb['ts'][box_index]
+        boxes = np.column_stack((gt_bb['minY'][indices], gt_bb['minX'][indices],
+                                 gt_bb['maxY'][indices], gt_bb['maxX'][indices])).astype(np.int)
+        if with_labels and 'label' in gt_bb.keys():
+            labels = gt_bb['label'][indices].astype(np.int)
+            boxes = np.column_stack([boxes, labels])
+
+        return boxes
 
     def get_dims(self):
         try:

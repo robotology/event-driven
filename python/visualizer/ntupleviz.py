@@ -43,6 +43,7 @@ from kivy.app import App
 from kivy.uix.slider import Slider
 from kivy.uix.image import Image
 from kivy.clock import Clock
+from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
@@ -133,12 +134,33 @@ class TemplateDialog(FloatLayout):
     cancel = ObjectProperty(None)
     load = ObjectProperty(None)
 
+class BoundingBox(Widget):
+    def __init__(self, bb_color, x, y, width, height, **kwargs):
+        super(BoundingBox, self).__init__(**kwargs)
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.bb_color = bb_color
+
+class LabeledBoundingBox(BoundingBox):
+    obj_label = StringProperty('')
+
+    def __init__(self, bb_color, x, y, width, height, label, **kwargs):
+        super(LabeledBoundingBox, self).__init__(bb_color, x, y, width, height, **kwargs)
+        self.obj_label = '{:d}'.format(int(label))
+
 class Viewer(BoxLayout):
     labels = ListProperty()
     data = ObjectProperty(force_dispatch=True)
+    b_boxes = ObjectProperty(force_dispatch=True)
+    b_boxes_visible = BooleanProperty(False)
+    flipHoriz = BooleanProperty(False)
+    flipVert = BooleanProperty(False)
     need_init = BooleanProperty(True)
     dsm = ObjectProperty(None, allownone=True)
     colorfmt = 'luminance'
+
     #allow_stretch = BooleanProperty(True)
     
     def on_dsm(self, instance, value):
@@ -147,8 +169,6 @@ class Viewer(BoxLayout):
             x, y = self.dsm.get_dims()
             buf_shape = (dp(x), dp(y))
             self.image.texture = Texture.create(size=buf_shape, colorfmt=self.colorfmt)
-            self.is_x_flipped = False
-            self.is_y_flipped = False
             self.need_init = False
             
     def __init__(self, **kwargs):
@@ -156,17 +176,23 @@ class Viewer(BoxLayout):
         #self.image = Image()
         #self.add_widget(self.image)
         self.cm = plt.get_cmap('tab20')
-        self.is_x_flipped = False
-        self.is_y_flipped = False
         self.image.texture = None
         Clock.schedule_once(self.init, 0)
         
     def init(self, dt):
         self.data = np.zeros((1, 1), dtype=np.uint8)
+        self.b_boxes = []
 
-    def on_data(self, instance, value): 
+    def on_data(self, instance, value):
         self.update_data(self.data)
-    
+
+    def on_b_boxes(self, instance, value):
+        self.update_b_boxes(self.b_boxes, self.b_boxes_visible)
+
+    def update(self):
+        self.update_data(self.data)
+        self.update_b_boxes(self.b_boxes, self.b_boxes_visible)
+
     def update_data(self, data):
         if self.need_init:
             self.on_dsm(None, None)
@@ -185,6 +211,9 @@ class Viewer(BoxLayout):
                     pass # It's not a class that allows flipping
                 self.image.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
 
+    def get_b_boxes(self, time_value):
+        self.b_boxes = self.dsm.get_b_box(time_value)
+
     def get_frame(self, time_value, time_window):
         if self.dsm is None:
             self.data = plt.imread('graphics/missing.jpg')
@@ -194,7 +223,64 @@ class Viewer(BoxLayout):
                 'contrast': self.contrast,
                     }
             self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-        
+        self.get_b_boxes(time_value)
+
+    def update_b_boxes(self, b_boxes, gt_visible=True):
+        self.image.clear_widgets()
+        if b_boxes is None:
+            return
+        if not gt_visible:
+            return
+
+        bb_copy = b_boxes.copy()
+
+        texture_width = self.image.texture.width
+        texture_height = self.image.texture.height
+        image_width = self.image.norm_image_size[0]
+        image_height = self.image.norm_image_size[1]
+
+        x_img = self.image.center_x - image_width / 2
+        y_img = self.image.center_y - image_height / 2
+
+        w_ratio = image_width / texture_width
+        h_ratio = image_height / texture_height
+        for n, b in enumerate(bb_copy):
+            for i in range(4):
+                b[i] = dp(b[i])
+            if self.flipHoriz:
+                min_x = texture_width - b[3]
+                max_x = texture_width - b[1]
+                b[1] = min_x
+                b[3] = max_x
+            if self.flipVert:
+                min_y = texture_height - b[2]
+                max_y = texture_height - b[0]
+                b[0] = min_y
+                b[2] = max_y
+
+            width = w_ratio * float(b[3] - b[1])
+            height = h_ratio * float(b[2] - b[0])
+            if width == 0 and height == 0:
+                break
+
+            x = x_img + w_ratio * float(b[1])
+            y = y_img + h_ratio * (texture_height - float(b[2]))
+
+            try:
+                bb_color = self.cm.colors[b[4] % len(self.cm.colors)] + (1,)
+                label = b[4]
+                box_item = LabeledBoundingBox(id='box_{}'.format(n),
+                                              bb_color=bb_color,
+                                              x=x, y=y,
+                                              width=width, height=height,
+                                              label=label)
+            except IndexError:
+                box_item = BoundingBox(id='box_{}'.format(n),
+                                       bb_color=self.cm.colors[0],
+                                       x=x, y=y,
+                                       width=width, height=height)
+            self.image.add_widget(box_item)
+
     #def get_frame_at_time(self, time, time_window, dualImg):
     #    if self.dsm is None:
     #        return plt.imread('graphics/missing.jpg')
@@ -212,6 +298,7 @@ class ViewerDvs(Viewer):
             kwargs = {
                 'polarised': self.polarised,
                 'contrast': self.contrast,
+                'pol_to_show': self.pol_to_show
                     }
             self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
    
@@ -267,6 +354,7 @@ class DataController(GridLayout):
     def update_children(self):
         for child in self.children:
             child.get_frame(self.time_value, self.time_window)
+            child.get_b_boxes(self.time_value)
        
     def add_viewer_and_resize(self, data_type, data_dict, label=''):
         if data_type == 'dvs':

@@ -90,7 +90,12 @@ def getEventImage(events, **kwargs):
                                      bins=[dimY, dimX],
                                      range=[[0, dimY-1], [0, dimX-1]]
                                      )[0]
-        eventImage = eventImagePos - eventImageNeg
+        if kwargs.get('pol_to_show') == 'Both':
+            eventImage = eventImagePos - eventImageNeg
+        elif kwargs.get('pol_to_show') == 'Pos':
+            eventImage = eventImagePos
+        elif kwargs.get('pol_to_show') == 'Neg':
+            eventImage = - eventImageNeg
     else:
         eventImage = np.histogram2d(events['y'], 
                                      events['x'], 

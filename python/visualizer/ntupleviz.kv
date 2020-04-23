@@ -11,6 +11,35 @@
     size_hint: .2, .3
     orientation: 'vertical'
 
+<BoundingBox@Widget>:
+    bb: 0.0, 0.0, 0.0, 0.0
+    bb_color: 1, .1, 1, .9
+    label: 0
+    size_hint: 1, 1
+    canvas:
+        Color:
+            rgba: self.bb_color
+        Line:
+            width: 2.
+            rectangle: (self.x, self.y, self.width, self.height)
+
+<LabeledBoundingBox@BoundingBox>:
+    Label:
+        pos: root.x, root.y +root.height
+        size_hint: None, None
+        size: self.texture_size
+        halign: 'left'
+        valign: 'bottom'
+        bold: True
+        text: root.obj_label
+        color: 0, 0, 0, 1
+        canvas.before:
+            Color:
+                rgba: root.bb_color
+            Rectangle:
+                pos: self.pos
+                size: self.texture_size
+
 <DictEditor@GridLayout>
     cols: 4
     padding: 10
@@ -109,17 +138,22 @@
     label: 'no data'
     image: image
     polarised: polarised.active
+    pol_to_show: pol_spinner.text
     contrast: contrast.value
     flipHoriz: flipHoriz.active
     flipVert: flipVert.active
-    on_flipHoriz: root.update_data(self.data)
-    on_flipVert: root.update_data(self.data)
+    b_boxes_visible: show_b_boxes.active
+    on_flipHoriz: root.update()
+    on_flipVert: root.update()
+    on_b_boxes_visible: root.update()
     on_contrast: self.get_frame(self.parent.time_value, self.parent.time_window)
     on_polarised: self.get_frame(self.parent.time_value, self.parent.time_window)
+    on_pol_to_show: self.get_frame(self.parent.time_value, self.parent.time_window)
     orientation: 'vertical'
     Image:
         id: image
         allow_stretch: True
+        on_pos: viewer.update()
     Label:
         text: viewer.label
         size_hint: 1, 0.07
@@ -133,7 +167,17 @@
         Label:
             text: 'flip vert'
         CheckBox:
-            id: flipVert 
+            id: flipVert
+        Label:
+            text: 'Show bounding boxes'
+        CheckBox:
+            id: show_b_boxes
+        Label:
+            text: 'Polarity to show'
+        Spinner:
+            id: pol_spinner
+            values: 'Pos', 'Neg', 'Both'
+            text: 'Both'
     BoxLayout:
         size_hint: 1, 0.07
         orientation: 'horizontal'
@@ -364,6 +408,7 @@
             on_time_value: self.update_children()
             time_window: tw_slider.log_value
             on_time_window: self.update_children()
+            on_data_dict: time_slider.value = 0
         TimeSlider:
             #disabled: not hasattr(data_controller.data_dict, 'data')
             id: time_slider

@@ -62,11 +62,13 @@ if __package__ is None or __package__ == '':
     from importIitYarp import importIitYarp
     from importRpgDvsRos import importRpgDvsRos
     from importSecDvs import importSecDvs
+    from importNumpy import importNumpy
 else:
+    from .importNumpy import importNumpy
     from .importIitYarp import importIitYarp
     from .importRpgDvsRos import importRpgDvsRos
     from .importSecDvs import importSecDvs
-    
+
 def getOrInsertDefault(inDict, arg, default):
     # get an arg from a dict.
     # If the the dict doesn't contain the arg, return the default, 
@@ -89,15 +91,18 @@ def importAe(**kwargs):
             # It's a path - assume YARP log directory
             kwargs['fileFormat'] = 'yarp'
         else:
-            if filePathOrName[-6:] == '.aedat' or filePathOrName[-4:] == '.dat':
+            ext = os.path.splitext(filePathOrName)[1]
+            if ext == '.aedat' or ext == '.dat':
                 # Assume it's aedat
                 kwargs['fileFormat'] = 'aedat'
-            elif filePathOrName[-4:] == '.bag':
+            elif ext == '.bag':
                 # Assume it's rpg_dvs_ros
                 kwargs['fileFormat'] = 'rosbag'
-            elif filePathOrName[-4:] == '.bin':
+            elif ext == '.bin':
                 # Assume it's a secdvs file
                 kwargs['fileFormat'] = 'secdvs'
+            elif ext == '.npy':
+                kwargs['fileFormat'] = 'npy'
             # etc ...
             else:
                 raise Exception("The file format cannot be determined.")
@@ -109,7 +114,9 @@ def importAe(**kwargs):
         if 'template' not in kwargs or kwargs['template'] is None:
             raise ValueError('Template for ROS bag not defined')
         importedData = importRpgDvsRos(**kwargs)
-    #elif fileFormat in ['iniaedat', 'aedat', 'dat', 'jaer', 'caer', 'ini', 'inivation', 'inilabs']:        
+    elif fileFormat in ['npy', 'numpy']:
+        importedData = importNumpy(**kwargs)
+    #elif fileFormat in ['iniaedat', 'aedat', 'dat', 'jaer', 'caer', 'ini', 'inivation', 'inilabs']:
     #    importedData = importIniAedat(kwargs)
     elif fileFormat in ['secdvs', 'bin', 'samsung', 'sec', 'gen3']:
         importedData = importSecDvs(**kwargs)
