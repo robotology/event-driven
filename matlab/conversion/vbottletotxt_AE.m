@@ -82,7 +82,7 @@ end
 
 infile = fopen(infilename, 'r');
 if(infile < 0)
-    display('Could not open file');
+    disp('Could not open file');
     return;
 end
 fseek(infile, 0, 'eof');
