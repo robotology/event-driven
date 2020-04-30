@@ -151,18 +151,13 @@ class LabeledBoundingBox(BoundingBox):
         self.obj_label = '{:d}'.format(int(label))
 
 class Viewer(BoxLayout):
-    labels = ListProperty()
     data = ObjectProperty(force_dispatch=True)
-    b_boxes = ObjectProperty(force_dispatch=True)
-    b_boxes_visible = BooleanProperty(False)
-    flipHoriz = BooleanProperty(False)
-    flipVert = BooleanProperty(False)
     need_init = BooleanProperty(True)
     dsm = ObjectProperty(None, allownone=True)
+    flipHoriz = BooleanProperty(False)
+    flipVert = BooleanProperty(False)
     colorfmt = 'luminance'
 
-    #allow_stretch = BooleanProperty(True)
-    
     def on_dsm(self, instance, value):
         if self.dsm is not None:
             self.colorfmt = self.dsm.get_colorfmt()
@@ -181,17 +176,12 @@ class Viewer(BoxLayout):
         
     def init(self, dt):
         self.data = np.zeros((1, 1), dtype=np.uint8)
-        self.b_boxes = []
 
     def on_data(self, instance, value):
         self.update_data(self.data)
 
-    def on_b_boxes(self, instance, value):
-        self.update_b_boxes(self.b_boxes, self.b_boxes_visible)
-
     def update(self):
         self.update_data(self.data)
-        self.update_b_boxes(self.b_boxes, self.b_boxes_visible)
 
     def update_data(self, data):
         if self.need_init:
@@ -211,29 +201,31 @@ class Viewer(BoxLayout):
                     pass # It's not a class that allows flipping
                 self.image.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
 
+    def get_frame(self, time_value, time_window):
+        pass
+
+
+class LabelableViewer(Viewer):
+
+    b_boxes = ObjectProperty(force_dispatch=True)
+    b_boxes_visible = BooleanProperty(False)
+
     def get_b_boxes(self, time_value):
         self.b_boxes = self.dsm.get_b_box(time_value)
 
-    def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = plt.imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-                'polarised': self.polarised,
-                'contrast': self.contrast,
-                    }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-        self.get_b_boxes(time_value)
+    def update(self):
+        self.update_data(self.data)
+        self.update_b_boxes(self.b_boxes, self.b_boxes_visible)
 
     def update_b_boxes(self, b_boxes, gt_visible=True):
         self.image.clear_widgets()
+
         if b_boxes is None:
             return
         if not gt_visible:
             return
 
         bb_copy = b_boxes.copy()
-
         texture_width = self.image.texture.width
         texture_height = self.image.texture.height
         image_width = self.image.norm_image_size[0]
@@ -281,13 +273,11 @@ class Viewer(BoxLayout):
                                        width=width, height=height)
             self.image.add_widget(box_item)
 
-    #def get_frame_at_time(self, time, time_window, dualImg):
-    #    if self.dsm is None:
-    #        return plt.imread('graphics/missing.jpg')
-    #    else:
-    #        return self.dsm.get_frame(time, time_window, children=self.children)
+    def on_b_boxes(self, instance, value):
+        self.update_b_boxes(self.b_boxes, self.b_boxes_visible)
 
-class ViewerDvs(Viewer):
+
+class ViewerDvs(LabelableViewer):
     def __init__(self, **kwargs):
         super(ViewerDvs, self).__init__(**kwargs)
 
@@ -301,8 +291,10 @@ class ViewerDvs(Viewer):
                 'pol_to_show': self.pol_to_show
                     }
             self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
+        self.get_b_boxes(time_value)
+
    
-class ViewerFrame(Viewer):
+class ViewerFrame(LabelableViewer):
     def __init__(self, **kwargs):
         super(ViewerFrame, self).__init__(**kwargs)
 
@@ -313,7 +305,9 @@ class ViewerFrame(Viewer):
             kwargs = {
                     }
             self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-   
+        self.get_b_boxes(time_value)
+
+
 class ViewerPose6q(Viewer):
     def __init__(self, **kwargs):
         super(ViewerPose6q, self).__init__(**kwargs)
@@ -354,7 +348,6 @@ class DataController(GridLayout):
     def update_children(self):
         for child in self.children:
             child.get_frame(self.time_value, self.time_window)
-            child.get_b_boxes(self.time_value)
        
     def add_viewer_and_resize(self, data_type, data_dict, label=''):
         if data_type == 'dvs':
@@ -425,6 +418,9 @@ class DataController(GridLayout):
 
     def show_load(self):
         self.dismiss_popup()
+        # FOR DEBUGGING
+        # self.load('/run/user/1000/gvfs/afp-volume:host=NAS011861.local,user=admin,volume=Backups/datasets/handheld/ball/numpy', ['events.npy'])
+        # return
         content = LoadDialog(load=self.load,
                              cancel=self.dismiss_popup)
         self._popup = Popup(title="Load file", content=content,

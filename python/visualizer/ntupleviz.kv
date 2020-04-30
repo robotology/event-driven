@@ -133,7 +133,7 @@
             text: "OK"
             on_press: root.dismiss()
 
-<ViewerDvs@Viewer>
+<ViewerDvs@LabelableViewer>
     id: viewer
     label: 'no data'
     image: image
@@ -157,13 +157,14 @@
     Label:
         text: viewer.label
         size_hint: 1, 0.07
-    BoxLayout:
+    GridLayout:
+        cols: 6
+        rows: 2
         size_hint: 1, 0.07
-        orientation: 'horizontal'
         Label:
             text: 'flip horiz'
         CheckBox:
-            id: flipHoriz 
+            id: flipHoriz
         Label:
             text: 'flip vert'
         CheckBox:
@@ -178,12 +179,9 @@
             id: pol_spinner
             values: 'Pos', 'Neg', 'Both'
             text: 'Both'
-    BoxLayout:
-        size_hint: 1, 0.07
-        orientation: 'horizontal'
         Label:
             text: 'polarised'
-        CheckBox: 
+        CheckBox:
             id: polarised
             active: True
         Label:
@@ -203,6 +201,7 @@
     flipVert: flipVert.active
     on_flipHoriz: root.update_data(self.data)
     on_flipVert: root.update_data(self.data)
+    b_boxes_visible: True
     orientation: 'vertical'
     Image:
         id: image
