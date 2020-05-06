@@ -62,11 +62,11 @@ def plotPose(inDict, **kwargs):
             firstPoint = inDict['point'][0, :]
             point = point - firstPoint
         else:
-            point = inDict['point']    
+            point = inDict['point']
         axesT.plot(inDict['ts'], point)
         axesT.legend(['x', 'y', 'z'])
     # TODO: Callbacks
-    
+
 """
 Plot the 3D trajectory of a body or marker for the entire duration of recording
 
@@ -95,6 +95,3 @@ def plotTrajectories(viconDataDict, bodyIds, include, exclude, **kwargs):
         kwargs['axes'] = ax # TODO: make this handling consistent across the library
         callback(**kwargs)
     #return ax # ax is also available to the calling function inside **kwargs
-
-    
-    

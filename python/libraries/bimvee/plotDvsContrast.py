@@ -117,7 +117,7 @@ def getEventImageForTimeRange(events, **kwargs):
 def getEventImageByCount(events, **kwargs):
     ts = kwargs.get('ts', 0)
     countBack = kwargs.get('countBack', 0)
-    lastEventId = np.searchsorted(events['ts'], ts) - 1
+    lastEventId = np.searchsorted(events['ts'], ts)
     firstEventId = max(lastEventId - countBack, 0)
     selectedEvents =  {
         'y': events['y'][firstEventId:lastEventId],
