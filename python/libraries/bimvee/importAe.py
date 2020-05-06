@@ -77,7 +77,24 @@ def getOrInsertDefault(inDict, arg, default):
     if value == default:
         inDict[arg] = default
     return value
-    
+
+def dict_keys_print(d, indent):
+    print(' ' * (4 * indent - 2) + '{ ', end='')
+    first = True
+    for key, value in d.items():
+        if first:
+            print(str(key), end='')
+            first = False
+        else:
+            print(' ' * 4 * indent + str(key), end='')
+        if isinstance(value, dict):
+            print(':')
+            dict_keys_print(value, indent + 1)
+        else:
+            print(',')
+            continue
+    print(' ' * (4 * indent - 2) + '}')
+
 def importAe(**kwargs):
     print(kwargs)
     filePathOrName = getOrInsertDefault(kwargs, 'filePathOrName', '.')
@@ -122,5 +139,6 @@ def importAe(**kwargs):
         importedData = importSecDvs(**kwargs)
     else:
         raise Exception("fileFormat: " + str(fileFormat) + " not supported.")
-    #celex    
+    #celex
+    dict_keys_print(importedData, 0)
     return importedData

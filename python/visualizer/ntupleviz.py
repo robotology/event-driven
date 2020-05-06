@@ -449,8 +449,8 @@ class DataController(GridLayout):
     def show_load(self):
         self.dismiss_popup()
         # FOR DEBUGGING
-        # self.load('/media/miacono/Shared/datasets/ball/numpy', ['events.npy'])
-        # return
+        self.load('/media/miacono/Shared/datasets/ball/numpy', ['events.npy'])
+        return
         content = LoadDialog(load=self.load,
                              cancel=self.dismiss_popup)
         self._popup = Popup(title="Load file", content=content,
