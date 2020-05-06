@@ -273,11 +273,24 @@ def samplesToImu(inDict, **kwargs):
     return outDict
 
 def importIitYarpBinaryDataLog(**kwargs):
-    with open(kwargs['filePathOrName'], 'rb') as inFile:
-        events = inFile.read()
-    events = np.frombuffer(events, np.uint32)
-    events = events.reshape((-1, 2))
-    dvs, samples = decodeEvents(events)
+
+    importFromByte = kwargs.get('importFromByte', 0)
+    importMaxBytes = kwargs.get('importMaxBytes')
+    if importMaxBytes is not None:
+        importMaxBytes -= np.mod(importMaxBytes, 8) # Events are 8 bytes long
+    with open(kwargs['filePathOrName'], 'rb') as file:
+        file.seek(importFromByte)
+        if importMaxBytes is not None:
+            events = file.read(importMaxBytes)
+        else:
+            events = file.read()
+        events = np.frombuffer(events, np.uint32)
+        events = events.reshape((-1, 2))
+        dvs, samples = decodeEvents(events)
+        if file.read(1) is None:
+            kwargs['importedToByte'] = 'EOF'
+        else:
+            kwargs['importedToByte'] = file.tell() - 2 # - 2 also compensates for the small read-ahead just performed to test EOF
     return importPostProcessing(dvs, samples, dvsLbl=None, flow=None, **kwargs)
 
 # Sample is an intermediate data type - later it gets converted to IMU etc
@@ -392,11 +405,10 @@ def importPostProcessing(dvs, samples, dvsLbl=None, dvsFlow=None, **kwargs):
     return outDict
 
 def importIitYarpDataLog(**kwargs):
-    # Read file
-    with open(kwargs['filePathOrName'], 'r') as inFile:
-        content = inFile.read()
     # Check if format suggests data from vicon dumper
     patternForVicon = re.compile('(\d+) (\d+\.\d+) \((.*)\)')
+    with open(kwargs['filePathOrName'], 'r') as inFile:
+        content = inFile.readline() # Look at first line of file
     found = patternForVicon.findall(content)
     if found:
         print('Yarp vicon dumper pattern found - passing this file to importVicon function')
@@ -408,46 +420,67 @@ def importIitYarpDataLog(**kwargs):
     dvsFlow = createDataTypeDvsFlow()
     samples = createDataTypeSample() # Sample is an intermediate datatype - later it gets converted to IMU etc
     pattern = re.compile('(\d+) (\d+\.\d+) ([A-Z]+) \((.*)\)')
-    print('Searching file for bottles...')
-    found = pattern.findall(content)
-    for elem in tqdm(found):
-        # The following values would be useful for indexing the input file:
-        #bottlenumber = np.uint32(elem[0])
-        #timestamp = np.float64(elem[1])
-        bottleType = elem[2]
-        if bottleType not in ['AE', 'IMUS', 'LAE', 'FLOW']:
-            print(bottleType)
-            continue
-        try:
-            events = np.array(elem[3].split(' '), dtype=np.uint32)
-            if bottleType == 'LAE':
-                numEventsInBatch = int(len(events) / 3)
-                events = events.reshape(numEventsInBatch, 3)
-                # TODO: finish handling this case
-                dvsBatch, samplesBatch = decodeEvents(events[:, :2])
-                dvsBatch['lbl'] = events[:, 2]          
-                appendBatch(dvsLbl, dvsBatch)
-            elif bottleType == 'FLOW':
-                numEventsInBatch = int(len(events) / 4)
-                events = events.reshape(numEventsInBatch, 4)
-                dvsBatch, samplesBatch = decodeEvents(events[:, :2])
-                dvsBatch['vx'] = events[:, 2]
-                dvsBatch['vy'] = events[:, 3]                
-                appendBatch(dvsFlow, dvsBatch)
-            else: # bottleType in ['AE', 'IMUS']
-                numEventsInBatch = int(len(events) / 2)
-                events = events.reshape(numEventsInBatch, 2)
-                dvsBatch, samplesBatch = decodeEvents(events[:, :2])
-                appendBatch(dvs, dvsBatch)
-            appendBatch(samples, samplesBatch)
-        except ValueError: # sometimes finding malformed packets at the end of files - ignoring
-            continue
+    importFromByte = kwargs.get('importFromByte', 0)
+    importToByte = kwargs.get('importMaxBytes')
+    if importToByte is not None:
+        importToByte += importFromByte
+    with open(kwargs['filePathOrName'], 'r') as file:
+        file.seek(importFromByte)
+        importedToByte = 'EOF' # default if the following loop exits normally    
+        # We are not using 'for' iteration because it's aincompatible with the tell() method
+        line = file.readline()
+        currentPointer = 0
+        while line:   
+            if importToByte is not None:
+                if file.tell() > importToByte:
+                    importedToByte = currentPointer - 1
+                    break
+                else:
+                    currentPointer = file.tell()
+            found = pattern.match(line)
+            if found is None:
+                continue
+            # The following values would be useful for indexing the input file:
+            #bottlenumber = np.uint32(found[1])
+            #timestamp = np.float64(found[2])
+            bottleType = found[3]
+            if bottleType not in ['AE', 'IMUS', 'LAE', 'FLOW']:
+                print(bottleType)
+                continue
+            try:
+                events = np.array(found[4].split(' '), dtype=np.uint32)
+                if bottleType == 'LAE':
+                    numEventsInBatch = int(len(events) / 3)
+                    events = events.reshape(numEventsInBatch, 3)
+                    # TODO: finish handling this case
+                    dvsBatch, samplesBatch = decodeEvents(events[:, :2])
+                    dvsBatch['lbl'] = events[:, 2]          
+                    appendBatch(dvsLbl, dvsBatch)
+                elif bottleType == 'FLOW':
+                    numEventsInBatch = int(len(events) / 4)
+                    events = events.reshape(numEventsInBatch, 4)
+                    dvsBatch, samplesBatch = decodeEvents(events[:, :2])
+                    dvsBatch['vx'] = events[:, 2]
+                    dvsBatch['vy'] = events[:, 3]                
+                    appendBatch(dvsFlow, dvsBatch)
+                else: # bottleType in ['AE', 'IMUS']
+                    numEventsInBatch = int(len(events) / 2)
+                    events = events.reshape(numEventsInBatch, 2)
+                    dvsBatch, samplesBatch = decodeEvents(events[:, :2])
+                    appendBatch(dvs, dvsBatch)
+                appendBatch(samples, samplesBatch)
+            except ValueError: # sometimes finding malformed packets at the end of files - ignoring
+                continue
+            line = file.readline()
+
+    # If importedToByte is not defined then we reached the end of the file
     delattr(decodeEvents, "is24bitCodec")
     # Crop arrays to number of events
     cropArraysToNumEvents(dvs)
     cropArraysToNumEvents(dvsLbl)
     cropArraysToNumEvents(samples)
     cropArraysToNumEvents(dvsFlow)
+    kwargs['importedToByte'] = importedToByte
     return importPostProcessing(dvs, samples, dvsLbl=dvsLbl, dvsFlow=dvsFlow, **kwargs)
 
 # From the info.log we want the time that the channel connected; we assume this is the first decimal found

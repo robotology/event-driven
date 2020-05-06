@@ -175,7 +175,7 @@ def offsetTimestampsForAContainer(container, offset):
             container['ts'] = container['ts'] + offset
             container['tsOffset'] = container['tsOffset'] + offset
         else:
-            for field in container:
+            for field in container.values():
                 offsetTimestampsForAContainer(field, offset)
     else:
         # We have descended too far
