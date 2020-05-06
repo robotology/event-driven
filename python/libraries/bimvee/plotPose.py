@@ -25,6 +25,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 
+
 def plotPose(inDict, **kwargs):
     if isinstance(inDict, list):
         for inDictInst in inDict:
@@ -46,7 +47,7 @@ def plotPose(inDict, **kwargs):
                 plotPose(channelData['point3'], **kwargs)
             if 'pose6q' not in channelData and 'point3' not in channelData:
                 print('Channel ' + channelName + ' skipped because it contains no pose data')
-        return    
+        return
 
     if 'rotation' in inDict:
         fig, allAxes = plt.subplots(2, 1)
@@ -67,6 +68,7 @@ def plotPose(inDict, **kwargs):
         axesT.legend(['x', 'y', 'z'])
     # TODO: Callbacks
 
+
 """
 Plot the 3D trajectory of a body or marker for the entire duration of recording
 
@@ -75,6 +77,7 @@ To select which bodies to plot using bodyID:
  - pass a list of strings present in the bodyID of choice, through the parameter include
  - pass a list of strings that should be absent from the bodyID of choice, through the parameter exclude
 """
+
 
 def plotTrajectories(viconDataDict, bodyIds, include, exclude, **kwargs):
     ax = kwargs.get('ax')
@@ -92,6 +95,6 @@ def plotTrajectories(viconDataDict, bodyIds, include, exclude, **kwargs):
     ax.legend()
     callback = kwargs.get('callback')
     if callback is not None:
-        kwargs['axes'] = ax # TODO: make this handling consistent across the library
+        kwargs['axes'] = ax  # TODO: make this handling consistent across the library
         callback(**kwargs)
-    #return ax # ax is also available to the calling function inside **kwargs
+    # return ax # ax is also available to the calling function inside **kwargs
