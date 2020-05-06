@@ -154,6 +154,7 @@ Expects
     - rotation as a np array of w,x,y,z (quaternion)
 If either translation or rotation are passed, these are applied to all poses 
 in the poseDict.
+The rotations are defined wrt local axes, unlike the translations.
 Returns a copy of the poseDict, rotated
 '''    
 def transformPoses(poseDict, translation=None, rotation=None):
