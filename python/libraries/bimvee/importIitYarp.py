@@ -60,11 +60,11 @@ import struct
 
 # local imports
 if __package__ is None or __package__ == '':
-    from importVicon import importVicon
+    from importIitVicon import importIitVicon
     from timestamps import unwrapTimestamps, zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
     from split import selectByLabel
 else:
-    from .importVicon import importVicon
+    from .importIitVicon import importIitVicon
     from .timestamps import unwrapTimestamps, zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
     from .split import selectByLabel
 
@@ -400,7 +400,7 @@ def importIitYarpDataLog(**kwargs):
     found = patternForVicon.findall(content)
     if found:
         print('Yarp vicon dumper pattern found - passing this file to importVicon function')
-        return importVicon(**kwargs)
+        return importIitVicon(**kwargs)
 
     # Create dicts for each possible datatype
     dvs = createDataTypeDvs()

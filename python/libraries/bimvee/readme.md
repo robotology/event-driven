@@ -19,16 +19,15 @@ including but not limited to:
 - Camera calibration info is also imported from e.g. ros (cam) 
 
 Aim is to include, in reverse order of importance:
-IIT YARP .log - ATIS Gen1 - 24 bit (incl. IMU, SKIN?)
-rpg_dvs_ros - DVS/DAVIS .bag
-Penn MvSEC (by using the above rosbag import)
-Intel realsense 265 (by using the above rosbag import)
-Vicon - as dumped by yarpDumper; maybe also c3d?
-INI jAER / cAER .aedat (v1/2/3) DVS / DAVIS / Cochlea 
-(there is legacy code for this from "aedattools" repo)
-Samsung (SEC) Gen3 VGA .bin
-Celex v5 .bin
-Maybe Prophesee raw?
+- IIT YARP .log - ATIS Gen1 - 24 bit (incl. IMU, SKIN?)
+- rpg_dvs_ros - DVS/DAVIS .bag
+- Penn MvSEC (by using the above rosbag import)
+- Intel realsense 265 (by using the above rosbag import)
+- Vicon - as dumped by yarpDumper; maybe also c3d?
+- INI jAER / cAER .aedat (v1/2/3) DVS / DAVIS / Cochlea (there is legacy code for this from "aedattools" repo)
+- Samsung (SEC) Gen3 VGA .bin
+- Celex v5 .bin
+- Maybe Prophesee raw?
 
 # Contents of library
 
