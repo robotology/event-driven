@@ -29,10 +29,10 @@ def importNumpy(filePathOrName, **kwargs):
         outDict['data']['ch']['dvs']['b_boxes']['maxX'] = b_boxes[:, 4]
         outDict['data']['ch']['dvs']['b_boxes']['label'] = b_boxes[:, 5]
 
-    framesPath = (os.path.join(os.path.dirname(filePathOrName), '../processed/frames_left'))
+    framesPath = (os.path.join(os.path.dirname(filePathOrName), '../processed/frames_left')) # TODO make path argument
     if os.path.exists(framesPath):
         import re
-        from matplotlib.pyplot import imread
+        from imageio import imread
         pattern = re.compile('\d+ (\d+\.\d+) (.+\.\w+) \[rgb\]')
         with open(os.path.join(framesPath, 'data.log')) as f:
             content = f.read()
@@ -46,10 +46,10 @@ def importNumpy(filePathOrName, **kwargs):
         outDict['data']['ch']['frame']['frames'] = [imread(os.path.join(framesPath, x)) for x in found[:, 1]]
 
 
-    framesPath = (os.path.join(os.path.dirname(filePathOrName), '../processed/gt_left'))
+    framesPath = (os.path.join(os.path.dirname(filePathOrName), '../processed/gt_left')) # TODO make path argument
     if os.path.exists(framesPath):
         import re
-        pattern = re.compile('\d+ (\d+\.\d+) (\d+\.\w+) (.*)')
+        pattern = re.compile('\d+ (\d+\.\d+) (\d+\.\w+) (.*)') # TODO specific to yarp data format
         pattern2 = re.compile('\( (\d+ \d+ \d+ \d+) \) (\d+) (\d+\.\d+)')
         with open(os.path.join(framesPath, 'data.log')) as f:
             content = f.read()

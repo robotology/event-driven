@@ -90,7 +90,7 @@ def getEventImage(events, **kwargs):
                                      bins=[dimY, dimX],
                                      range=[[0, dimY-1], [0, dimX-1]]
                                      )[0]
-        if kwargs.get('pol_to_show') == 'Both':
+        if kwargs.get('pol_to_show') is None or kwargs.get('pol_to_show') == 'Both':
             eventImage = eventImagePos - eventImageNeg
         elif kwargs.get('pol_to_show') == 'Pos':
             eventImage = eventImagePos

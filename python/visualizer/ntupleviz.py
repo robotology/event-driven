@@ -277,7 +277,7 @@ class LabelableViewer(Viewer):
         self.update_b_boxes(self.b_boxes, self.b_boxes_visible)
 
 
-class ViewerDvs(LabelableViewer):
+class ViewerDvs(Viewer):
     def __init__(self, **kwargs):
         super(ViewerDvs, self).__init__(**kwargs)
 
@@ -291,12 +291,41 @@ class ViewerDvs(LabelableViewer):
                 'pol_to_show': self.pol_to_show
                     }
             self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-        self.get_b_boxes(time_value)
 
-   
-class ViewerFrame(LabelableViewer):
+
+class ViewerFrame(Viewer):
     def __init__(self, **kwargs):
         super(ViewerFrame, self).__init__(**kwargs)
+
+    def get_frame(self, time_value, time_window):
+        if self.dsm is None:
+            self.data = plt.imread('graphics/missing.jpg')
+        else:
+            kwargs = {
+            }
+            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
+
+
+class LabelableViewerDvs(LabelableViewer):
+    def __init__(self, **kwargs):
+        super(LabelableViewerDvs, self).__init__(**kwargs)
+
+    def get_frame(self, time_value, time_window):
+        if self.dsm is None:
+            self.data = plt.imread('graphics/missing.jpg')
+        else:
+            kwargs = {
+                'polarised': self.polarised,
+                'contrast': self.contrast,
+                'pol_to_show': self.pol_to_show
+                    }
+            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
+        self.get_b_boxes(time_value)
+
+
+class LabelableViewerFrame(LabelableViewer):
+    def __init__(self, **kwargs):
+        super(LabelableViewerFrame, self).__init__(**kwargs)
 
     def get_frame(self, time_value, time_window):
         if self.dsm is None:
@@ -349,12 +378,12 @@ class DataController(GridLayout):
         for child in self.children:
             child.get_frame(self.time_value, self.time_window)
        
-    def add_viewer_and_resize(self, data_type, data_dict, label=''):
+    def add_viewer_and_resize(self, data_type, data_dict, label='', with_boxes=False):
         if data_type == 'dvs':
-            new_viewer = ViewerDvs()
+            new_viewer = LabelableViewerDvs() if with_boxes else ViewerDvs()
             visualiser = VisualiserDvs(data_dict)
         elif data_type == 'frame':
-            new_viewer = ViewerFrame()
+            new_viewer = LabelableViewerFrame() if with_boxes else ViewerFrame()
             visualiser = VisualiserFrame(data_dict)
         elif data_type == 'pose6q':
             new_viewer = ViewerPose6q()
@@ -382,7 +411,8 @@ class DataController(GridLayout):
                     if 'ts' in in_dict[key_name]:
                         if key_name in ['dvs', 'frame', 'pose6q']:
                             print('    ' * recursionDepth + 'Creating a new viewer, of type: ' + key_name)
-                            self.add_viewer_and_resize(key_name, in_dict[key_name], label=label+':'+str(key_name))
+                            self.add_viewer_and_resize(key_name, in_dict[key_name], label=label+':'+str(key_name),
+                                                       with_boxes='b_boxes' in in_dict[key_name].keys())
                         else:
                             print('    ' * recursionDepth + 'Datatype not supported: ' + key_name)
                     else: # recurse through the sub-dict
@@ -419,7 +449,7 @@ class DataController(GridLayout):
     def show_load(self):
         self.dismiss_popup()
         # FOR DEBUGGING
-        # self.load('/run/user/1000/gvfs/afp-volume:host=NAS011861.local,user=admin,volume=Backups/datasets/handheld/ball/numpy', ['events.npy'])
+        # self.load('/media/miacono/Shared/datasets/ball/numpy', ['events.npy'])
         # return
         content = LoadDialog(load=self.load,
                              cancel=self.dismiss_popup)
