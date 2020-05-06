@@ -86,9 +86,9 @@ def plotTrajectories(viconDataDict, bodyIds, include, exclude, **kwargs):
         if select_body:  # modify this line to plot whichever markers you want
             marker_pose = viconDataDict['data'][name]['pose6q']['point']
             ax.scatter3D(marker_pose[:, 0], marker_pose[:, 1], marker_pose[:, 2], label=name)
-    ax.set_xlabel('X Label')
-    ax.set_ylabel('Y Label')
-    ax.set_zlabel('Z Label')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
     ax.legend()
     callback = kwargs.get('callback')
     if callback is not None:
