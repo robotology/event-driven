@@ -114,12 +114,14 @@ def getEventImageForTimeRange(events, **kwargs):
     return getEventImage(events, **kwargs)
 
 
+# This function accepts a dict of events and returns an event-image
+# formed by collecting countBack number of events in the past from time ts
 def getEventImageByCount(events, **kwargs):
     ts = kwargs.get('ts', 0)
     countBack = kwargs.get('countBack', 0)
     lastEventId = np.searchsorted(events['ts'], ts)
     firstEventId = max(lastEventId - countBack, 0)
-    selectedEvents =  {
+    selectedEvents = {
         'y': events['y'][firstEventId:lastEventId],
         'x': events['x'][firstEventId:lastEventId],
         'pol': events['pol'][firstEventId:lastEventId]
