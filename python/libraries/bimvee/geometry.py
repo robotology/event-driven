@@ -147,6 +147,26 @@ def combineTwoQuaternions(q1, q2):
     qOut[1:4] = vOut
     return qOut
 
+def angleBetweenTwoQuaternions(q1, q2):
+    # returns minimal angle in radians between two unit quaternions, following:
+    # https://www.researchgate.net/post/How_do_I_calculate_the_smallest_angle_between_two_quaternions    
+    w1 = q1[0]
+    v1 = q1[1:4]
+    w2 = q2[0]
+    v2 = q2[1:4]
+    v = w1*v2 + w2*v1 + np.cross(v1, v2)
+    normV = np.linalg.norm(v)
+    return 2 * np.arcsin(normV)
+
+def averageOfQuaternions(allQ):
+    # follows: http://wiki.unity3d.com/index.php/Averaging_Quaternions_and_Vectors?_ga=2.89251931.1981359277.1588961760-2124566047.1586341788
+    qAvg = allQ[0, :]
+    for idx, nextQ in enumerate(allQ[1:, :]):
+        weight = 1.0 / (idx+2)
+        qAvg = slerp(qAvg, nextQ, weight)
+    return qAvg
+
+    
 '''
 Expects 
     - poseDict in bimvee form {'ts', 'point', 'rotation' as above}
