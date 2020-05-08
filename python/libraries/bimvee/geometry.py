@@ -147,15 +147,24 @@ def combineTwoQuaternions(q1, q2):
     qOut[1:4] = vOut
     return qOut
 
+def quaternionConjugate(q):
+    return np.array([q[0], -q[1], -q[2], -q[3]])
+
+def quaternionInverse(q):
+    return quaternionConjugate(q) / np.sum(q ** 2)
+
+def quaternionProduct(q1, q2):
+    return np.array([ 
+    q1[0] * q2[0] - q1[1] * q2[1] - q1[2] * q2[2] - q1[3] * q2[3],
+    q1[0] * q2[1] + q1[1] * q2[0] + q1[2] * q2[3] - q1[3] * q2[2],
+    q1[0] * q2[2] - q1[1] * q2[3] + q1[2] * q2[0] + q1[3] * q2[1],
+    q1[0] * q2[3] + q1[1] * q2[2] - q1[2] * q2[1] + q1[3] * q2[0] ])
+
 def angleBetweenTwoQuaternions(q1, q2):
     # returns minimal angle in radians between two unit quaternions, following:
     # https://www.researchgate.net/post/How_do_I_calculate_the_smallest_angle_between_two_quaternions    
-    w1 = q1[0]
-    v1 = q1[1:4]
-    w2 = q2[0]
-    v2 = q2[1:4]
-    v = w1*v2 + w2*v1 + np.cross(v1, v2)
-    normV = np.linalg.norm(v)
+    qP = quaternionProduct(q1, quaternionInverse(q2))
+    normV = np.linalg.norm(qP[1:])
     return 2 * np.arcsin(normV)
 
 def averageOfQuaternions(allQ):
