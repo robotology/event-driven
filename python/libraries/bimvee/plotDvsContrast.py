@@ -115,18 +115,25 @@ def getEventImageForTimeRange(events, **kwargs):
 
 
 # This function accepts a dict of events and returns an event-image
-# formed by collecting countBack number of events in the past from time ts
+# formed by collecting count number of events in the past/future from time ts
+# direction =
+# -1 : look back in the past;
+# 1: look to the future
 def getEventImageByCount(events, **kwargs):
+    direction = kwargs.get('direction', -1)  # default direction is past
     ts = kwargs.get('ts', 0)
-    countBack = kwargs.get('countBack', 0)
-    lastEventId = np.searchsorted(events['ts'], ts)
-    firstEventId = max(lastEventId - countBack, 0)
+    count = kwargs.get('count', 0)
+    seedEventId = np.searchsorted(events['ts'], ts, side='right')
+    startOrEndEventId = min(max(seedEventId + direction * count, 0), len(events['ts']) - 1) # limit ID within range
+    startOrEndTime = events['ts'][startOrEndEventId]
+    firstEventId = min(seedEventId, startOrEndEventId)
+    lastEventId = max(seedEventId, startOrEndEventId)
     selectedEvents = {
         'y': events['y'][firstEventId:lastEventId],
         'x': events['x'][firstEventId:lastEventId],
         'pol': events['pol'][firstEventId:lastEventId]
     }
-    return getEventImage(selectedEvents, **kwargs)
+    return getEventImage(selectedEvents, **kwargs), startOrEndTime
 
 
 def plotDvsContrastSingle(inDict, **kwargs):
