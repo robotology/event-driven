@@ -85,6 +85,23 @@ def infoTs(containers, **kwargs):
 
 #%% Legacy function names
 
+def dict_keys_print(d, indent):
+    print(' ' * (4 * indent - 2) + '{ ', end='')
+    first = True
+    for key, value in d.items():
+        if first:
+            print(str(key), end='')
+            first = False
+        else:
+            print(' ' * 4 * indent + str(key), end='')
+        if isinstance(value, dict):
+            print(':')
+            dict_keys_print(value, indent + 1)
+        else:
+            print(',')
+            continue
+    print(' ' * (4 * indent - 2) + '}')
+
 def infoForImportedDicts(container, **kwargs):
     info(container, **kwargs)
 
