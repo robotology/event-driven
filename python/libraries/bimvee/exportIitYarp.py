@@ -14,9 +14,9 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 
 Intended as part of bimvee (Batch Import, Manipulation, Visualisation and Export of Events etc)
-exportIitYarp takes a data dict resulting from importAe. 
-Exports data.log and info.log for each channel contained. 
-Uses the "exportFilePath" parameter for the top-level folder, 
+exportIitYarp takes a data dict resulting from importAe.
+Exports data.log and info.log for each channel contained.
+Uses the "exportFilePath" parameter for the top-level folder,
 creating it if it doesn't exist. This can be relative or absolute.
 Defaults to the current directory.
 Uses the "yarpOutputPort" parameter for the port defined in info.log.
@@ -24,8 +24,9 @@ Default is "/file" - then the following is appended: "/AE:o"
 Where more than one channel is contained, the channel name is used in place of "AE".
 If the "viewerApp" parameter is True (default = True), then a play.xml 
 file is created at the top level directory, which is configured so that when
-run from yarpmanager, the data which has been exported can be viewed. 
-"overwrite" (default=False) overwrites any existing data in the target exportFilePath
+run from yarpmanager, the data which has been exported can be viewed.
+"writeProtected" (default=True) protects any existing data in the target exportFilePath from being overwritten.
+"writeMode" (default='w') can be set to append mode ('a') for exporting (large) files in batches.
 """
 
 #%%
@@ -169,7 +170,7 @@ def encodeEvents24Bit(ts, x, y, pol, **kwargs):
     data = list(map(str, data))
     return data
 
-def exportDvs(dataFile, data, **kwargs):
+def exportDvs(dataFile, data, bottleNumber, **kwargs):
     # preconvert numpy arrays into bottle-ready data
     print('Converting event arrays to bottle-ready string format ...')
     eventsAsListOfStrings = encodeEvents24Bit(data['ts'], 
@@ -182,7 +183,6 @@ def exportDvs(dataFile, data, **kwargs):
     minTimeStepPerBottle = kwargs.get('minTimeStepPerBottle', 2e-3)
     numEvents = len(data['ts'])
     ptr = 0
-    bottleNumber = 0
     pbar = tqdm(total=numEvents, position=0, leave=True)
     bottleStrs = []
     while ptr < numEvents:
@@ -298,7 +298,7 @@ def encodeImu(ts, **kwargs):
     data = list(map(str, data))
     return data
       
-def exportImu(dataFile, data, **kwargs):
+def exportImu(dataFile, data, bottleNumber, **kwargs):
     # preconvert numpy arrays into bottle-ready data
     print('Converting event arrays to bottle-ready string format ...')
     eventsAsListOfStrings = encodeImu(ts=data['ts'], 
@@ -309,7 +309,6 @@ def exportImu(dataFile, data, **kwargs):
     minTimeStepPerBottle = kwargs.get('minTimeStepPerBottle', 2e-3)
     numEvents = len(data['ts'])
     ptr = 0
-    bottleNumber = 0
     pbar = tqdm(total=numEvents, position=0, leave=True)
     bottleStrs = []
     while ptr < numEvents:
@@ -349,7 +348,7 @@ def encodeSample(data, **kwargs):
     return data
       
 
-def exportSample(dataFile, data, **kwargs):
+def exportSample(dataFile, data, bottleNumber, **kwargs):
     # preconvert numpy arrays into bottle-ready data
     print('Converting event arrays to bottle-ready string format ...')
     eventsAsListOfStrings = encodeSample(data, **kwargs)
@@ -358,7 +357,6 @@ def exportSample(dataFile, data, **kwargs):
     minTimeStepPerBottle = kwargs.get('minTimeStepPerBottle', 2e-3)
     numEvents = len(data['ts'])
     ptr = 0
-    bottleNumber = 0
     pbar = tqdm(total=numEvents, position=0, leave=True)
     bottleStrs = []
     while ptr < numEvents:
@@ -408,13 +406,22 @@ def exportIitYarp(importedDict, **kwargs):
                 except FileExistsError: # The folder already exists
                     pass
                 dirList = os.listdir(channelPath)
+
+                writeMode = kwargs.get('writeMode', 'w')
                 if 'data.log' in dirList:
                     print('data already exists in export directory for channel and datatype' + str(channelNameAndDataType))
-                    if kwargs.get('overwrite', False):
-                        print('data is being overwitten!')
-                    else:
+                    if kwargs.get('protectedWrite', True):
                         print('export not performed')
                         continue
+                    else:
+                        if writeMode == 'w':
+                            print('data is being overwritten!')
+                        elif writeMode == 'a':
+                            print('data is being appended!')
+                            with open(os.path.join(channelPath, 'data.log'), 'r') as f:
+                                lines = f.read().splitlines()
+                                bottleNumberStart = len(lines)
+
                 # Write the info.log file
                 yarpOutputPortForChannel = yarpOutputPort + '/' + channelNameAndDataType + ":o"
                 with open(os.path.join(channelPath, 'info.log'), 'w') as infoFile:
@@ -423,21 +430,32 @@ def exportIitYarp(importedDict, **kwargs):
                     # - placeholder 0.0 put in the following line 
                     infoFile.write('[0.0] ' + yarpOutputPortForChannel + ' [connected]\n')
                 # Write the data.log file
-                with open(os.path.join(channelPath, 'data.log'), 'w') as dataFile:
+                with open(os.path.join(channelPath, 'data.log'), writeMode) as dataFile:
+                    if writeMode == 'a':
+                        dataFile.write('\n')
                     data = importedDict['data'][channelName][dataType]
                     if dataType == 'dvs':
-                        exportDvs(dataFile, data, **kwargs)
+                        if writeMode == 'a':
+                             exportDvs(dataFile, data, bottleNumberStart, **kwargs)
+                        else:
+                            exportDvs(dataFile, data, 0, **kwargs)
                     elif dataType == 'frame':
+                        # TODO: handle bottle numbering for writeMode = 'a'
                         exportFrame(dataFile, data, **kwargs)
                     elif dataType == 'imu':
-                        exportImu(dataFile, data, **kwargs)
+                        if writeMode == 'a':
+                            exportImu(dataFile, data, bottleNumberStart, **kwargs)
+                        else:
+                            exportImu(dataFile, data, 0, **kwargs)
                     elif dataType == 'pose6q':
+                        # TODO: handle bottle numbering for writeMode = 'a'
                         exportPose6q(dataFile, data, **kwargs)
                     elif dataType == 'sample':
-                        exportSample(dataFile, data, **kwargs)
+                        if writeMode == 'a':
+                            exportSample(dataFile, data, bottleNumberStart, **kwargs)
+                        else:
+                            exportSample(dataFile, data, 0, **kwargs)
             else:
                 print("datatype: ", dataType, " not handled yet")
     if kwargs.get('viewerApp', True):
         exportIitYarpViewer(importedDict, **kwargs)
-
-                  
