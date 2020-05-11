@@ -64,7 +64,8 @@ def find_nearest(array, value):
 class Visualiser:
     
     __data = None
-    
+    data_type = None
+
     def __init__(self, data):
         self.set_data(data)
 
@@ -84,8 +85,7 @@ class Visualiser:
 
 class VisualiserDvs(Visualiser):
 
-    def __init__(self, data):
-        self.set_data(data)
+    data_type = 'dvs'
 
     def set_data(self, data):
         self.__data = {}
@@ -113,24 +113,6 @@ class VisualiserDvs(Visualiser):
             image = kwargs['callback'](**kwargs)
         return image
 
-    def get_b_box(self, time, with_labels=True): # TODO duplicate
-        if self.__data is None:
-            return [[0, 0, 0, 0]]
-        data = self.__data
-        if not 'boundingBoxes' in data.keys():
-            return [[0, 0, 0, 0]]
-        gt_bb = data['boundingBoxes']
-        box_index = np.searchsorted(gt_bb['ts'], time)
-        if abs(gt_bb['ts'][box_index] - time) > 0.03:
-            return [[0, 0, 0, 0]]
-        indices = gt_bb['ts'] == gt_bb['ts'][box_index]
-        boxes = np.column_stack((gt_bb['minY'][indices], gt_bb['minX'][indices],
-                                 gt_bb['maxY'][indices], gt_bb['maxX'][indices])).astype(np.int)
-        if with_labels and 'label' in gt_bb.keys():
-            labels = gt_bb['label'][indices].astype(np.int)
-            boxes = np.column_stack([boxes, labels])
-
-        return boxes
 
     def get_dims(self):
         try:
@@ -151,6 +133,8 @@ class VisualiserDvs(Visualiser):
 
     
 class VisualiserFrame(Visualiser):
+
+    data_type = 'frame'
 
     def set_data(self, data):
         self.__data = {}
@@ -175,25 +159,6 @@ class VisualiserFrame(Visualiser):
         x, y = self.get_dims()
         # Return an x,y,3 by default i.e. rgb, for safety, since in the absence of data we may not know how the texture's colorfmt is set
         return np.ones((x, y, 3), dtype=np.uint8) * 128 # TODO: Hardcoded midway (grey) value
-
-    def get_b_box(self, time, with_labels=True): #TODO duplicate
-        if self.__data is None:
-            return [[0, 0, 0, 0]]
-        data = self.__data
-        if not 'boundingBoxes' in data.keys():
-            return [[0, 0, 0, 0]]
-        gt_bb = data['boundingBoxes']
-        box_index = np.searchsorted(gt_bb['ts'], time)
-        if abs(gt_bb['ts'][box_index] - time) > 0.03:
-            return [[0, 0, 0, 0]]
-        indices = gt_bb['ts'] == gt_bb['ts'][box_index]
-        boxes = np.column_stack((gt_bb['minY'][indices], gt_bb['minX'][indices],
-                                 gt_bb['maxY'][indices], gt_bb['maxX'][indices])).astype(np.int)
-        if with_labels and 'label' in gt_bb.keys():
-            labels = gt_bb['label'][indices].astype(np.int)
-            boxes = np.column_stack([boxes, labels])
-
-        return boxes
 
     # TODO: There can be methods which better choose the best frame, or which create a visualisation which
     # respects the time_window parameter 
@@ -237,6 +202,7 @@ class VisualiserPose6q(Visualiser):
     renderX = 300 # TODO Hardcoded
     renderY = 300
     labels = None
+    data_type = 'pose6q'
 
     def __init__(self, data):
         self.set_data(data)
@@ -403,6 +369,7 @@ class VisualiserPoint3(Visualiser):
     renderX = 300 # TODO Hardcoded
     renderY = 300
     labels = None
+    data_type = 'point3'
 
     def __init__(self, data):
         self.set_data(data)
@@ -526,3 +493,31 @@ class VisualiserPoint3(Visualiser):
 
     def get_colorfmt(self):
         return 'rgb'
+
+
+class VisualiserBoundingBoxes(Visualiser):
+
+    data_type = 'boundingBoxes'
+
+    def __init__(self, data):
+        self.set_data(data)
+
+    def set_data(self, data):
+        self.__data = {}
+        self.__data.update(data)
+
+    def get_frame(self, time, timeWindow, **kwargs):
+        if self.__data is None:
+            return [[0, 0, 0, 0]]
+        gt_bb = self.__data
+        box_index = np.searchsorted(gt_bb['ts'], time)
+        if abs(gt_bb['ts'][box_index] - time) > 0.03:
+            return [[0, 0, 0, 0]]
+        indices = gt_bb['ts'] == gt_bb['ts'][box_index]
+        boxes = np.column_stack((gt_bb['minY'][indices], gt_bb['minX'][indices],
+                                 gt_bb['maxY'][indices], gt_bb['maxX'][indices])).astype(np.int)
+        if kwargs['with_labels'] and 'label' in gt_bb.keys():
+            labels = gt_bb['label'][indices].astype(np.int)
+            boxes = np.column_stack([boxes, labels])
+
+        return boxes

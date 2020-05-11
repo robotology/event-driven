@@ -21,7 +21,7 @@ from imageio import imread
 import numpy as np
 from kivy.graphics.texture import Texture
 from kivy.uix.widget import Widget
-from kivy.properties import BooleanProperty, ObjectProperty, StringProperty
+from kivy.properties import BooleanProperty, ObjectProperty, StringProperty, ListProperty, DictProperty
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
@@ -46,20 +46,21 @@ class LabeledBoundingBox(BoundingBox):
 
 
 class Viewer(BoxLayout):
-    data = ObjectProperty(force_dispatch=True)
-    need_init = BooleanProperty(True)
-    dsm = ObjectProperty(None, allownone=True)
+    data = DictProperty(force_dispatch=True)
+    visualisers = ListProperty([], allownone=True)
     flipHoriz = BooleanProperty(False)
     flipVert = BooleanProperty(False)
+    settings = DictProperty({}, allownone=True)
     colorfmt = 'luminance'
 
-    def on_dsm(self, instance, value):
-        if self.dsm is not None:
-            self.colorfmt = self.dsm.get_colorfmt()
-            x, y = self.dsm.get_dims()
-            buf_shape = (dp(x), dp(y))
-            self.image.texture = Texture.create(size=buf_shape, colorfmt=self.colorfmt)
-            self.need_init = False
+    def on_visualisers(self, instance, value):
+        if self.visualisers is not None and self.visualisers:
+            for v in self.visualisers: # TODO manage cases with multiple of below data_types
+                if v.data_type in ['dvs', 'frame', 'pose6q', 'point3']:
+                    self.colorfmt = v.get_colorfmt()
+                    self.data_shape = v.get_dims()
+                    buf_shape = (dp(self.data_shape[0]), dp(self.data_shape[1]))
+                    self.image.texture = Texture.create(size=buf_shape, colorfmt=self.colorfmt)
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
@@ -67,26 +68,24 @@ class Viewer(BoxLayout):
         # self.add_widget(self.image)
         from matplotlib.pyplot import get_cmap
         self.cm = get_cmap('tab20')
-        self.image.texture = None
+        #self.image.texture = None
         Clock.schedule_once(self.init, 0)
 
     def init(self, dt):
-        self.data = np.zeros((1, 1), dtype=np.uint8)
+        self.data = {}
 
     def on_data(self, instance, value):
-        self.update_data(self.data)
+        for data_type in self.data.keys():
+            if data_type in ['dvs', 'frame', 'pose6q', 'point3']:
+                self.update_image(self.data[data_type])
+            elif data_type in ['boundingBoxes']:
+                self.update_b_boxes(self.data[data_type])
 
-    def update(self):
-        self.update_data(self.data)
-
-    def update_data(self, data):
-        if self.need_init:
-            self.on_dsm(None, None)
+    def update_image(self, data):
         if self.image.texture is not None:
-            x, y = self.dsm.get_dims()
-            size_required = x * y * (1 + (self.colorfmt == 'rgb') * 2)
+            size_required = self.data_shape[0] * self.data_shape[1] * (1 + (self.colorfmt == 'rgb') * 2)
             if not isinstance(data, np.ndarray):
-                data = np.zeros((x, y, 3), dtype=np.uint8)
+                data = np.zeros((self.data_shape[0], self.data_shape[1], 3), dtype=np.uint8)
             if data.size >= size_required:
                 try:
                     if self.flipHoriz:
@@ -96,21 +95,6 @@ class Viewer(BoxLayout):
                 except AttributeError:
                     pass  # It's not a class that allows flipping
                 self.image.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
-
-    def get_frame(self, time_value, time_window):
-        pass
-
-
-class LabelableViewer(Viewer):
-    b_boxes = ObjectProperty(force_dispatch=True)
-    b_boxes_visible = BooleanProperty(False)
-
-    def get_b_boxes(self, time_value):
-        self.b_boxes = self.dsm.get_b_box(time_value)
-
-    def update(self):
-        self.update_data(self.data)
-        self.update_b_boxes(self.b_boxes, self.b_boxes_visible)
 
     def update_b_boxes(self, b_boxes, gt_visible=True):
         self.image.clear_widgets()
@@ -168,96 +152,9 @@ class LabelableViewer(Viewer):
                                        width=width, height=height)
             self.image.add_widget(box_item)
 
-    def on_b_boxes(self, instance, value):
-        self.update_b_boxes(self.b_boxes, self.b_boxes_visible)
-
-
-class ViewerDvs(Viewer):
-    def __init__(self, **kwargs):
-        super(ViewerDvs, self).__init__(**kwargs)
-
     def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-                'polarised': self.polarised,
-                'contrast': self.contrast,
-                'pol_to_show': self.pol_to_show
-            }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-
-
-class ViewerFrame(Viewer):
-    def __init__(self, **kwargs):
-        super(ViewerFrame, self).__init__(**kwargs)
-
-    def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-            }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-
-
-class LabelableViewerDvs(LabelableViewer):
-    def __init__(self, **kwargs):
-        super(LabelableViewerDvs, self).__init__(**kwargs)
-
-    def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-                'polarised': self.polarised,
-                'contrast': self.contrast,
-                'pol_to_show': self.pol_to_show
-            }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-        self.get_b_boxes(time_value)
-
-
-class LabelableViewerFrame(LabelableViewer):
-    def __init__(self, **kwargs):
-        super(LabelableViewerFrame, self).__init__(**kwargs)
-
-    def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-            }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-        self.get_b_boxes(time_value)
-
-
-class ViewerPose6q(Viewer):
-    def __init__(self, **kwargs):
-        super(ViewerPose6q, self).__init__(**kwargs)
-
-    def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-                'interpolate': self.interpolate,
-                'perspective': self.perspective,
-                    }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-
-
-class ViewerPoint3(Viewer):
-    def __init__(self, **kwargs):
-        super(ViewerPoint3, self).__init__(**kwargs)
-
-    def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-                'perspective': self.perspective,
-                'yaw': self.yaw,
-                'pitch': self.pitch,
-                    }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
+        data_dict = {}
+        for v in self.visualisers:
+            data_dict[v.data_type] = {}
+            data_dict[v.data_type] = v.get_frame(time_value, time_window, **self.settings[v.data_type])
+        self.data.update(data_dict)

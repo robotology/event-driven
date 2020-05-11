@@ -56,18 +56,12 @@ from kivy.properties import DictProperty
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # local imports (from bimvee)
 try:
-    from visualiser import VisualiserDvs
-    from visualiser import VisualiserFrame
-    from visualiser import VisualiserPose6q
-    from visualiser import VisualiserPoint3
+    from visualiser import *
     from timestamps import getLastTimestamp
 except ModuleNotFoundError:
     if __package__ is None or __package__ == '':
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from libraries.bimvee.visualiser import VisualiserDvs
-    from libraries.bimvee.visualiser import VisualiserFrame
-    from libraries.bimvee.visualiser import VisualiserPose6q
-    from libraries.bimvee.visualiser import VisualiserPoint3
+    from libraries.bimvee.visualiser import *
     from libraries.bimvee.timestamps import getLastTimestamp
 from viewer import *
 
@@ -138,40 +132,41 @@ class DataController(GridLayout):
     ending_time = NumericProperty(.0)
     filePathOrName = StringProperty('')
     data_dict = DictProperty({}) # A bimvee-style container of channels
-    
+
     def __init__(self, **kwargs):
         super(DataController, self).__init__(**kwargs)
 
     def update_children(self):
         for child in self.children:
             child.get_frame(self.time_value, self.time_window)
-       
-    def add_viewer_and_resize(self, data_type, data_dict, label='', labels_dict=None):
-        if data_type == 'dvs':
-            if labels_dict is not None:
-                new_viewer = LabelableViewerDvs()
-                data_dict['boundingBoxes'] = {}
-                data_dict['boundingBoxes'].update(labels_dict)
-            else:
-                new_viewer = ViewerDvs()
-            visualiser = VisualiserDvs(data_dict)
-        elif data_type == 'frame':
-            if labels_dict is not None:
-                new_viewer = LabelableViewerFrame()
-                data_dict['boundingBoxes'] = {}
-                data_dict['boundingBoxes'].update(labels_dict)
-            else:
-                new_viewer = ViewerFrame()
-            visualiser = VisualiserFrame(data_dict)
-        elif data_type == 'pose6q':
-            new_viewer = ViewerPose6q()
-            visualiser = VisualiserPose6q(data_dict)
-            label = 'red=x green=y, blue=z ' + label
-        elif data_type == 'point3':
-            new_viewer = ViewerPoint3()
-            visualiser = VisualiserPoint3(data_dict)
+
+    def add_viewer_and_resize(self, data_type, data_dict, label=''):
+        new_viewer = Viewer()
+        for data_type in data_dict.keys():
+            new_viewer.settings[data_type] = {}
+            if data_type == 'dvs':
+                visualiser = VisualiserDvs(data_dict[data_type])
+                new_viewer.settings[data_type] = {'polarised': True,
+                                                  'contrast': 3,
+                                                  'pol_to_show': 'Both'}
+            elif data_type == 'frame':
+                visualiser = VisualiserFrame(data_dict[data_type])
+            elif data_type == 'pose6q':
+                visualiser = VisualiserPose6q(data_dict[data_type])
+                new_viewer.settings[data_type] = {'interpolate': True,
+                                                  'perspective': True}
+                label = 'red=x green=y, blue=z ' + label
+            elif data_type == 'point3':
+                visualiser = VisualiserPoint3(data_dict[data_type])
+                new_viewer.settings[data_type] = {'perspective': True,
+                                                  'yaw': 0,
+                                                  'pitch': 0}
+            elif data_type == 'boundingBoxes':
+                visualiser = VisualiserBoundingBoxes(data_dict[data_type])
+                new_viewer.settings[data_type] = {'with_labels': True}
+
+            new_viewer.visualisers.append(visualiser)
         new_viewer.label = label
-        new_viewer.dsm = visualiser
         self.add_widget(new_viewer)
 
         self.cols = int(np.ceil(np.sqrt(len(self.children))))
@@ -191,11 +186,9 @@ class DataController(GridLayout):
                     if 'ts' in in_dict[key_name]:
                         if key_name in ['dvs', 'frame', 'pose6q', 'point3']:
                             print('    ' * recursionDepth + 'Creating a new viewer, of type: ' + key_name)
-                            labels_dict = in_dict['boundingBoxes'] if 'boundingBoxes' in in_dict else None
                             self.add_viewer_and_resize(key_name,
-                                                       in_dict[key_name],
-                                                       label=label+':'+str(key_name),
-                                                       labels_dict=labels_dict)
+                                                       in_dict,
+                                                       label=label+':'+str(key_name))
                         else:
                             print('    ' * recursionDepth + 'Datatype not supported: ' + key_name)
                     else: # recurse through the sub-dict
@@ -220,7 +213,7 @@ class DataController(GridLayout):
         self.ending_time = float(getLastTimestamp(self.data_dict)) # timer is watching this
         self.add_viewer_for_each_channel_and_data_type(self.data_dict)
 
-    def dismiss_popup(self): 
+    def dismiss_popup(self):
         if hasattr(self, '_popup'):
             self._popup.dismiss()
 
@@ -278,19 +271,19 @@ class TimeSlider(Slider):
         super(TimeSlider, self).__init__(**kwargs)
         self.clock = None
         self.speed = 1
-    
+
     def increase_slider(self, dt):
         self.value = min(self.value + dt / self.speed, self.max)
         if self.value >= self.max:
             if self.clock is not None:
                 self.clock.cancel()
-    
+
     def decrease_slider(self, dt):
         self.value = max(self.value - dt / self.speed, 0.0)
         if self.value <= 0.0:
             if self.clock is not None:
                 self.clock.cancel()
-    
+
     def play_pause(self):
         if self.clock is None:
             self.clock = Clock.schedule_interval(self.increase_slider, 0.001)
@@ -303,23 +296,23 @@ class TimeSlider(Slider):
 
     def pause(self):
         if self.clock is not None:
-            self.clock.cancel() 
- 
+            self.clock.cancel()
+
     def play_forward(self):
         if self.clock is not None:
-            self.clock.cancel() 
+            self.clock.cancel()
         self.clock = Clock.schedule_interval(self.increase_slider, 0.001)
- 
+
     def play_backward(self):
         if self.clock is not None:
-            self.clock.cancel() 
+            self.clock.cancel()
         self.clock = Clock.schedule_interval(self.decrease_slider, 0.001)
- 
+
     def stop(self):
         if self.clock is not None:
             self.clock.cancel()
             self.set_norm_value(0)
-    
+
     def reset(self):
         self.value = 0
 
