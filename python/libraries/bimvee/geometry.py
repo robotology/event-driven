@@ -170,7 +170,7 @@ def angleBetweenTwoQuaternions(q1, q2):
     return 2 * np.arcsin(normV)
 
 def averageOfQuaternions(allQ):
-    # follows: http://wiki.unity3d.com/index.php/Averaging_Quaternions_and_Vectors?_ga=2.89251931.1981359277.1588961760-2124566047.1586341788
+    # applies slerp incrementally on pairs of quaternions
     qAvg = allQ[0, :]
     for idx, nextQ in enumerate(allQ[1:, :]):
         weight = 1.0 / (idx+2)
