@@ -279,7 +279,7 @@ class VisualiserPose6q(Visualiser):
         if 'bodyId' in data:
             # split pose data by label, for ease of reference during rendering
             internalData['bodyId'] = data['bodyId']
-            self.__data = splitByLabel(internalData, 'bodyId')
+            self.__data = splitByLabel(internalData, 'bodyId', outList=True)
             self.labels = np.unique(data['bodyId'])
         else:
             self.__data = [internalData]

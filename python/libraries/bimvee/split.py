@@ -44,9 +44,10 @@ def selectByLabel(inDict, labelName, labelValue):
     outDict = {}
     for fieldName in inDict.keys():
         if fieldName != labelName:
-            if len(inDict[fieldName]) == len(selectedEvents):
+            try:
+                assert len(inDict[fieldName]) == len(selectedEvents)
                 outDict[fieldName] = inDict[fieldName][selectedEvents]
-            else:
+            except (AssertionError, TypeError):
                 outDict[fieldName] = inDict[fieldName]
     return outDict
 
