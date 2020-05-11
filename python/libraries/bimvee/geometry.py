@@ -132,10 +132,14 @@ def pose6qInterp(poseDict, time=None, maxPeriod=None):
         poseDict['rotation'] = rotations
         poseDict = sortDataTypeDictByTime(poseDict)
         return poseDict
-        
 
-def combineTwoQuaternions(q1, q2):
-    # Quaternion multiplication
+def quaternionProduct(q1, q2):
+    return np.array([ 
+    q1[0] * q2[0] - q1[1] * q2[1] - q1[2] * q2[2] - q1[3] * q2[3],
+    q1[0] * q2[1] + q1[1] * q2[0] + q1[2] * q2[3] - q1[3] * q2[2],
+    q1[0] * q2[2] - q1[1] * q2[3] + q1[2] * q2[0] + q1[3] * q2[1],
+    q1[0] * q2[3] + q1[1] * q2[2] - q1[2] * q2[1] + q1[3] * q2[0] ])
+    ''' alternative definition - less efficient
     w1 = q1[0]
     v1 = q1[1:4]
     w2 = q2[0]
@@ -146,19 +150,17 @@ def combineTwoQuaternions(q1, q2):
     qOut[0] = wOut
     qOut[1:4] = vOut
     return qOut
+    '''
+
+# Legacy name for Quaternion multiplication
+def combineTwoQuaternions(q1, q2):
+    return quaternionProduct(q1, q2)
 
 def quaternionConjugate(q):
     return np.array([q[0], -q[1], -q[2], -q[3]])
 
 def quaternionInverse(q):
     return quaternionConjugate(q) / np.sum(q ** 2)
-
-def quaternionProduct(q1, q2):
-    return np.array([ 
-    q1[0] * q2[0] - q1[1] * q2[1] - q1[2] * q2[2] - q1[3] * q2[3],
-    q1[0] * q2[1] + q1[1] * q2[0] + q1[2] * q2[3] - q1[3] * q2[2],
-    q1[0] * q2[2] - q1[1] * q2[3] + q1[2] * q2[0] + q1[3] * q2[1],
-    q1[0] * q2[3] + q1[1] * q2[2] - q1[2] * q2[1] + q1[3] * q2[0] ])
 
 def angleBetweenTwoQuaternions(q1, q2):
     # returns minimal angle in radians between two unit quaternions, following:
@@ -175,7 +177,6 @@ def averageOfQuaternions(allQ):
         qAvg = slerp(qAvg, nextQ, weight)
     return qAvg
 
-    
 '''
 Expects 
     - poseDict in bimvee form {'ts', 'point', 'rotation' as above}
