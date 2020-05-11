@@ -142,31 +142,37 @@ class DataController(GridLayout):
 
     def add_viewer_and_resize(self, data_type, data_dict, label=''):
         new_viewer = Viewer()
+        visualisers = []
+        settings = {}
         for data_type in data_dict.keys():
-            new_viewer.settings[data_type] = {}
+            settings[data_type] = {}
             if data_type == 'dvs':
                 visualiser = VisualiserDvs(data_dict[data_type])
-                new_viewer.settings[data_type] = {'polarised': True,
+                settings[data_type] = {'polarised': True,
                                                   'contrast': 3,
                                                   'pol_to_show': 'Both'}
             elif data_type == 'frame':
                 visualiser = VisualiserFrame(data_dict[data_type])
             elif data_type == 'pose6q':
                 visualiser = VisualiserPose6q(data_dict[data_type])
-                new_viewer.settings[data_type] = {'interpolate': True,
+                settings[data_type] = {'interpolate': True,
                                                   'perspective': True}
                 label = 'red=x green=y, blue=z ' + label
             elif data_type == 'point3':
                 visualiser = VisualiserPoint3(data_dict[data_type])
-                new_viewer.settings[data_type] = {'perspective': True,
+                settings[data_type] = {'perspective': True,
                                                   'yaw': 0,
                                                   'pitch': 0}
             elif data_type == 'boundingBoxes':
                 visualiser = VisualiserBoundingBoxes(data_dict[data_type])
-                new_viewer.settings[data_type] = {'with_labels': True}
-
-            new_viewer.visualisers.append(visualiser)
+                settings[data_type] = {'with_labels': True}
+            else:
+                print("Warning! {} is not a recognized data type. Ignoring.".format(data_type))
+                continue
+            visualisers.append(visualiser)
         new_viewer.label = label
+        new_viewer.visualisers = visualisers
+        new_viewer.settings = settings
         self.add_widget(new_viewer)
 
         self.cols = int(np.ceil(np.sqrt(len(self.children))))

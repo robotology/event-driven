@@ -21,9 +21,13 @@ from imageio import imread
 import numpy as np
 from kivy.graphics.texture import Texture
 from kivy.uix.widget import Widget
-from kivy.properties import BooleanProperty, ObjectProperty, StringProperty, ListProperty, DictProperty
+from kivy.uix.slider import Slider
+from kivy.uix.checkbox import CheckBox
+from kivy.uix.label import Label
+from kivy.properties import BooleanProperty, StringProperty, ListProperty, DictProperty
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.clock import Clock
 
 
@@ -52,6 +56,7 @@ class Viewer(BoxLayout):
     flipVert = BooleanProperty(False)
     settings = DictProperty({}, allownone=True)
     colorfmt = 'luminance'
+    orientation = 'vertical'
 
     def on_visualisers(self, instance, value):
         if self.visualisers is not None and self.visualisers:
@@ -61,6 +66,32 @@ class Viewer(BoxLayout):
                     self.data_shape = v.get_dims()
                     buf_shape = (dp(self.data_shape[0]), dp(self.data_shape[1]))
                     self.image.texture = Texture.create(size=buf_shape, colorfmt=self.colorfmt)
+
+    def on_settings(self, instance, settings_dict):
+        settings_grid = GridLayout(cols=0, rows=0)
+        self.add_widget(settings_grid)
+        self.update_settings(settings_grid, settings_dict)
+
+    def update_settings(self, parent_widget, settings_dict):
+        for key in settings_dict:
+            if isinstance(settings_dict[key], dict):
+                parent_widget.cols += 1
+                parent_widget.rows += 2
+                parent_widget.add_widget(Label(text=key))
+                settings_grid = GridLayout(cols=2, rows=0)
+                parent_widget.add_widget(settings_grid)
+                self.update_settings(settings_grid, settings_dict[key])
+            elif isinstance(settings_dict[key], bool):
+                parent_widget.rows += 1
+                parent_widget.add_widget(Label(text=key))
+                check_box = CheckBox(active=settings_dict[key])
+                parent_widget.add_widget(check_box)
+                settings_dict[key] = check_box.active
+            elif isinstance(settings_dict[key], (int, float)):
+                parent_widget.rows += 1
+                parent_widget.add_widget(Label(text=key))
+                parent_widget.add_widget(Slider(value=settings_dict[key],
+                                       min=-90, max=90))# TODO retrieve boundaries from code
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
