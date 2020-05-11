@@ -169,14 +169,6 @@ def angleBetweenTwoQuaternions(q1, q2):
     normV = np.linalg.norm(qP[1:])
     return 2 * np.arcsin(normV)
 
-def averageOfQuaternions(allQ):
-    # applies slerp incrementally on pairs of quaternions
-    qAvg = allQ[0, :]
-    for idx, nextQ in enumerate(allQ[1:, :]):
-        weight = 1.0 / (idx+2)
-        qAvg = slerp(qAvg, nextQ, weight)
-    return qAvg
-
 '''
 Expects 
     - poseDict in bimvee form {'ts', 'point', 'rotation' as above}
@@ -222,3 +214,29 @@ def draw_line(mat, x0, y0, x1, y1):
                             np.logical_and(x<mat.shape[1], 
                                            np.logical_and(y >= 0, y<mat.shape[0])))
     mat[y[toKeep], x[toKeep]] = 255
+
+# The following adapted from https://github.com/christophhagen/averaging-quaternions
+# Note that the signs of the output quaternion can be reversed, 
+# since q and -q describe the same orientation.
+# w is an optional weight array, which must have the same number of elements 
+# as the number of quaternions
+def averageOfQuaternions(allQ, w=None):
+    # Number of quaternions to average
+    M = allQ.shape[0]
+    A = np.zeros((4,4), dtype = np.float64)
+    if w is None:
+        w = np.ones(M,)
+    weightSum = 0
+    for i in range(0, M):
+        q = allQ[i, :]
+        # multiply q with its transposed version q' and add A
+        A = w[i] * np.outer(q,q) + A
+        weightSum += w[i]
+    # scale
+    A = (1.0 / M) * A
+    # compute eigenvalues and -vectors
+    eigenValues, eigenVectors = np.linalg.eig(A)
+    # Sort by largest eigenvalue
+    eigenVectors = eigenVectors[:,eigenValues.argsort()[::-1]]
+    # return the real part of the largest eigenvector (has only real part)
+    return eigenVectors[:,0]
