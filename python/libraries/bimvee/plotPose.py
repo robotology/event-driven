@@ -51,6 +51,7 @@ def plotPose(inDict, **kwargs):
 
     if 'rotation' in inDict:
         fig, allAxes = plt.subplots(2, 1)
+        fig.suptitle(kwargs.get('title', ''))
         axesT = allAxes[0]
         axesR = allAxes[1]
         axesR.plot(inDict['ts'], inDict['rotation'])
@@ -88,7 +89,20 @@ def plotTrajectories(viconDataDict, bodyIds, include, exclude, **kwargs):
         select_body = all([(inc in name) for inc in include]) and all([not (exc in name) for exc in exclude])
         if select_body:  # modify this line to plot whichever markers you want
             marker_pose = viconDataDict['data'][name]['pose6q']['point']
-            ax.scatter3D(marker_pose[:, 0], marker_pose[:, 1], marker_pose[:, 2], label=name)
+            X = marker_pose[:, 0]
+            Y = marker_pose[:, 1]
+            Z = marker_pose[:, 2]
+            ax.scatter3D(X, Y, Z, label=name)
+
+            # Create cubic bounding box to simulate equal aspect ratio
+            max_range = np.array([X.max() - X.min(), Y.max() - Y.min(), Z.max() - Z.min()]).max()
+            Xb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][0].flatten() + 0.5 * (X.max() + X.min())
+            Yb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][1].flatten() + 0.5 * (Y.max() + Y.min())
+            Zb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][2].flatten() + 0.5 * (Z.max() + Z.min())
+            # Comment or uncomment following both lines to test the fake bounding box:
+            for xb, yb, zb in zip(Xb, Yb, Zb):
+                ax.plot([xb], [yb], [zb], 'w')
+
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
