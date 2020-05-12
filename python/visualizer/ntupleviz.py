@@ -41,20 +41,16 @@ except ModuleNotFoundError:
 # kivy imports
 from kivy.app import App
 from kivy.uix.slider import Slider
-from kivy.uix.image import Image
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
-from kivy.uix.button import Button
 from kivy.uix.checkbox import CheckBox
-from kivy.graphics.texture import Texture
 from kivy.properties import ObjectProperty
-from kivy.properties import StringProperty, NumericProperty, ListProperty, BooleanProperty
-from kivy.properties import DictProperty, ReferenceListProperty
-from kivy.metrics import dp
+from kivy.properties import StringProperty, NumericProperty
+from kivy.properties import DictProperty
 
 # To get the graphics, set this as the current working directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -73,7 +69,9 @@ except ModuleNotFoundError:
     from libraries.bimvee.visualiser import VisualiserPose6q
     from libraries.bimvee.visualiser import VisualiserPoint3
     from libraries.bimvee.timestamps import getLastTimestamp
-    
+from viewer import *
+
+
 class ErrorPopup(Popup):
     label_text = StringProperty(None)
 
@@ -84,6 +82,7 @@ class WarningPopup(Popup):
 
 class TextInputPopup(Popup):
     label_text = StringProperty(None)
+
 
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
@@ -128,134 +127,13 @@ class DictEditor(GridLayout):
             out_dict[ch][type] = data
         return out_dict
 
+
 class TemplateDialog(FloatLayout):
     template = DictProperty(None)
     cancel = ObjectProperty(None)
     load = ObjectProperty(None)
 
-class Viewer(BoxLayout):
-    labels = ListProperty()
-    data = ObjectProperty(force_dispatch=True)
-    need_init = BooleanProperty(True)
-    dsm = ObjectProperty(None, allownone=True)
-    colorfmt = 'luminance'
-    #allow_stretch = BooleanProperty(True)
-    
-    def on_dsm(self, instance, value):
-        if self.dsm is not None:
-            self.colorfmt = self.dsm.get_colorfmt()
-            x, y = self.dsm.get_dims()
-            buf_shape = (dp(x), dp(y))
-            self.image.texture = Texture.create(size=buf_shape, colorfmt=self.colorfmt)
-            self.is_x_flipped = False
-            self.is_y_flipped = False
-            self.need_init = False
-            
-    def __init__(self, **kwargs):
-        super(Viewer, self).__init__(**kwargs)
-        #self.image = Image()
-        #self.add_widget(self.image)
-        self.cm = plt.get_cmap('tab20')
-        self.is_x_flipped = False
-        self.is_y_flipped = False
-        self.image.texture = None
-        Clock.schedule_once(self.init, 0)
-        
-    def init(self, dt):
-        self.data = np.zeros((1, 1), dtype=np.uint8)
 
-    def on_data(self, instance, value): 
-        self.update_data(self.data)
-    
-    def update_data(self, data):
-        if self.need_init:
-            self.on_dsm(None, None)
-        if self.image.texture is not None:
-            x, y = self.dsm.get_dims()
-            size_required = x * y * (1 + (self.colorfmt == 'rgb') * 2)
-            if not isinstance(data, np.ndarray):
-                data = np.zeros((x, y, 3), dtype=np.uint8)
-            if data.size >= size_required:
-                try:
-                    if self.flipHoriz:
-                        data = np.flip(data, axis = 1)
-                    if not self.flipVert: # Not, because by default, y should increase downwards, following https://arxiv.org/pdf/1610.08336.pdf
-                        data = np.flip(data, axis = 0)
-                except AttributeError:
-                    pass # It's not a class that allows flipping
-                self.image.texture.blit_buffer(data.tostring(), bufferfmt="ubyte", colorfmt=self.colorfmt)
-
-    def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = plt.imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-                'polarised': self.polarised,
-                'contrast': self.contrast,
-                    }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-        
-    #def get_frame_at_time(self, time, time_window, dualImg):
-    #    if self.dsm is None:
-    #        return plt.imread('graphics/missing.jpg')
-    #    else:
-    #        return self.dsm.get_frame(time, time_window, children=self.children)
-
-class ViewerDvs(Viewer):
-    def __init__(self, **kwargs):
-        super(ViewerDvs, self).__init__(**kwargs)
-
-    def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = plt.imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-                'polarised': self.polarised,
-                'contrast': self.contrast,
-                    }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-   
-class ViewerFrame(Viewer):
-    def __init__(self, **kwargs):
-        super(ViewerFrame, self).__init__(**kwargs)
-
-    def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = plt.imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-                    }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-   
-class ViewerPose6q(Viewer):
-    def __init__(self, **kwargs):
-        super(ViewerPose6q, self).__init__(**kwargs)
-
-    def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = plt.imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-                'interpolate': self.interpolate,
-                'perspective': self.perspective,
-                    }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-   
-class ViewerPoint3(Viewer):
-    def __init__(self, **kwargs):
-        super(ViewerPoint3, self).__init__(**kwargs)
-
-    def get_frame(self, time_value, time_window):
-        if self.dsm is None:
-            self.data = plt.imread('graphics/missing.jpg')
-        else:
-            kwargs = {
-                'perspective': self.perspective,
-                'yaw': self.yaw,
-                'pitch': self.pitch,
-                    }
-            self.data = self.dsm.get_frame(time_value, time_window, **kwargs)
-   
 class DataController(GridLayout):
     ending_time = NumericProperty(.0)
     filePathOrName = StringProperty('')
@@ -268,12 +146,22 @@ class DataController(GridLayout):
         for child in self.children:
             child.get_frame(self.time_value, self.time_window)
        
-    def add_viewer_and_resize(self, data_type, data_dict, label=''):
+    def add_viewer_and_resize(self, data_type, data_dict, label='', labels_dict=None):
         if data_type == 'dvs':
-            new_viewer = ViewerDvs()
+            if labels_dict is not None:
+                new_viewer = LabelableViewerDvs()
+                data_dict['boundingBoxes'] = {}
+                data_dict['boundingBoxes'].update(labels_dict)
+            else:
+                new_viewer = ViewerDvs()
             visualiser = VisualiserDvs(data_dict)
         elif data_type == 'frame':
-            new_viewer = ViewerFrame()
+            if labels_dict is not None:
+                new_viewer = LabelableViewerFrame()
+                data_dict['boundingBoxes'] = {}
+                data_dict['boundingBoxes'].update(labels_dict)
+            else:
+                new_viewer = ViewerFrame()
             visualiser = VisualiserFrame(data_dict)
         elif data_type == 'pose6q':
             new_viewer = ViewerPose6q()
@@ -292,7 +180,9 @@ class DataController(GridLayout):
         if isinstance(in_dict, list):
             print('    ' * recursionDepth + 'Received a list - looking through the list for containers...')
             for num, in_dict_element in enumerate(in_dict):
-                self.add_viewer_for_each_channel_and_data_type(in_dict_element, label=label+':'+str(num), recursionDepth=recursionDepth+1)
+                self.add_viewer_for_each_channel_and_data_type(in_dict_element,
+                                                               label=label+':'+str(num),
+                                                               recursionDepth=recursionDepth+1)
         elif isinstance(in_dict, dict):
             print('    ' * recursionDepth + 'Received a dict - looking through its keys ...')
             for key_name in in_dict.keys():
@@ -301,14 +191,21 @@ class DataController(GridLayout):
                     if 'ts' in in_dict[key_name]:
                         if key_name in ['dvs', 'frame', 'pose6q', 'point3']:
                             print('    ' * recursionDepth + 'Creating a new viewer, of type: ' + key_name)
-                            self.add_viewer_and_resize(key_name, in_dict[key_name], label=label+':'+str(key_name))
+                            labels_dict = in_dict['boundingBoxes'] if 'boundingBoxes' in in_dict else None
+                            self.add_viewer_and_resize(key_name,
+                                                       in_dict[key_name],
+                                                       label=label+':'+str(key_name),
+                                                       labels_dict=labels_dict)
                         else:
                             print('    ' * recursionDepth + 'Datatype not supported: ' + key_name)
                     else: # recurse through the sub-dict
-                        self.add_viewer_for_each_channel_and_data_type(in_dict[key_name], label=label+':'+str(key_name), recursionDepth=recursionDepth+1)
+                        self.add_viewer_for_each_channel_and_data_type(in_dict[key_name],
+                                                                       label=label+':'+str(key_name),
+                                                                       recursionDepth=recursionDepth+1)
                 elif isinstance(in_dict[key_name], list):
-                    self.add_viewer_for_each_channel_and_data_type(in_dict[key_name], label=label+':'+str(key_name), recursionDepth=recursionDepth+1)
-                    
+                    self.add_viewer_for_each_channel_and_data_type(in_dict[key_name],
+                                                                   label=label+':'+str(key_name),
+                                                                   recursionDepth=recursionDepth+1)
                 else:
                     print('    ' * recursionDepth + 'Ignoring that key ...')
 
@@ -335,7 +232,6 @@ class DataController(GridLayout):
         self._popup = Popup(title="Define template", content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
-                
 
     def show_load(self):
         self.dismiss_popup()
@@ -373,10 +269,7 @@ class DataController(GridLayout):
 
         self.update_children()
 
-#    def dismiss_popup(self):
-#        if self._popup is not None:
-#            self._popup.dismiss()
-    
+
 class TimeSlider(Slider):
     def __init__(self, **kwargs):
         super(TimeSlider, self).__init__(**kwargs)
@@ -428,13 +321,14 @@ class TimeSlider(Slider):
         self.value = 0
 
     def step_forward(self):
-        #self.increase_slider(self.time_window)
+        # self.increase_slider(self.time_window)
         self.increase_slider(0.016)
 
     def step_backward(self):
         #self.decrease_slider(self.time_window)
         self.decrease_slider(0.016)
-                
+
+
 class RootWidget(BoxLayout):
     def __init__(self, **kwargs):
         super(RootWidget, self).__init__(**kwargs)
@@ -444,6 +338,6 @@ class Ntupleviz(App):
     def build(self):
         return RootWidget()
 
+
 if __name__ == '__main__':
     Ntupleviz().run()
-

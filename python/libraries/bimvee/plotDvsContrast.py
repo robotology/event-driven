@@ -86,17 +86,22 @@ def getEventImage(events, **kwargs):
         dimX = 1
         dimY = 1
     if kwargs.get('polarised', (kwargs.get('polarized'), True)):
-        eventImagePos = np.histogram2d(events['y'][events['pol']],
-                                       events['x'][events['pol']],
-                                       bins=[dimY, dimX],
-                                       range=[[0, dimY - 1], [0, dimX - 1]]
-                                       )[0]
-        eventImageNeg = np.histogram2d(events['y'][~events['pol']],
-                                       events['x'][~events['pol']],
-                                       bins=[dimY, dimX],
-                                       range=[[0, dimY - 1], [0, dimX - 1]]
-                                       )[0]
-        eventImage = eventImagePos - eventImageNeg
+        eventImagePos = np.histogram2d(events['y'][events['pol']], 
+                                     events['x'][events['pol']], 
+                                     bins=[dimY, dimX],
+                                     range=[[0, dimY-1], [0, dimX-1]]
+                                     )[0]
+        eventImageNeg = np.histogram2d(events['y'][~events['pol']], 
+                                     events['x'][~events['pol']],
+                                     bins=[dimY, dimX],
+                                     range=[[0, dimY-1], [0, dimX-1]]
+                                     )[0]
+        if kwargs.get('pol_to_show') is None or kwargs.get('pol_to_show') == 'Both':
+            eventImage = eventImagePos - eventImageNeg
+        elif kwargs.get('pol_to_show') == 'Pos':
+            eventImage = eventImagePos
+        elif kwargs.get('pol_to_show') == 'Neg':
+            eventImage = - eventImageNeg
     else:
         eventImage = np.histogram2d(events['y'],
                                     events['x'],

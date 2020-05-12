@@ -2,3 +2,4 @@ kivy
 matplotlib
 numpy
 tqdm
+imageio

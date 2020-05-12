@@ -50,6 +50,7 @@ else:
     from .geometry import quat2RotM, rotateUnitVectors, slerp, draw_line
     from .split import splitByLabel
 
+
 # A function intended to find the nearest timestamp
 # adapted from https://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
 def find_nearest(array, value):
@@ -59,7 +60,8 @@ def find_nearest(array, value):
     else:
         return idx
 
-class Visualiser():
+
+class Visualiser:
     
     __data = None
     
@@ -73,6 +75,9 @@ class Visualiser():
     def get_frame(self, time, timeWindow, **kwargs):
         return np.zeros((1, 1), dtype=np.uint8)
 
+    def get_b_box(self, time, with_labels=True):
+        return [[0, 0, 0, 0]]
+
     def get_colorfmt(self):
         return 'luminance'
 
@@ -85,7 +90,7 @@ class VisualiserDvs(Visualiser):
     def set_data(self, data):
         self.__data = {}
         self.__data.update(data)
-        
+
     # TODO: There can be methods which better choose the best frame, or which create a visualisation which
     # respects the time_window parameter 
     def get_frame(self, time, timeWindow, **kwargs):
@@ -107,6 +112,25 @@ class VisualiserDvs(Visualiser):
             kwargs['image'] = image
             image = kwargs['callback'](**kwargs)
         return image
+
+    def get_b_box(self, time, with_labels=True): # TODO duplicate
+        if self.__data is None:
+            return [[0, 0, 0, 0]]
+        data = self.__data
+        if not 'boundingBoxes' in data.keys():
+            return [[0, 0, 0, 0]]
+        gt_bb = data['boundingBoxes']
+        box_index = np.searchsorted(gt_bb['ts'], time)
+        if abs(gt_bb['ts'][box_index] - time) > 0.03:
+            return [[0, 0, 0, 0]]
+        indices = gt_bb['ts'] == gt_bb['ts'][box_index]
+        boxes = np.column_stack((gt_bb['minY'][indices], gt_bb['minX'][indices],
+                                 gt_bb['maxY'][indices], gt_bb['maxX'][indices])).astype(np.int)
+        if with_labels and 'label' in gt_bb.keys():
+            labels = gt_bb['label'][indices].astype(np.int)
+            boxes = np.column_stack([boxes, labels])
+
+        return boxes
 
     def get_dims(self):
         try:
@@ -131,13 +155,13 @@ class VisualiserFrame(Visualiser):
     def set_data(self, data):
         self.__data = {}
         self.__data.update(data)
-       
+
         if self.__data['frames'][0].dtype != np.uint8:
             # Convert to uint8, converting to fullscale accross the whole dataset
             minValue = min([frame.min() for frame in self.__data['frames']])
             maxValue = max([frame.max() for frame in self.__data['frames']])
             self.__data['frames'] = [((frame-minValue)/(maxValue-minValue)*255).astype(np.uint8) for frame in data['frames']] #TODO: assuming that it starts scaled in 0-1 - could have more general approach?
-    
+
     def get_colorfmt(self):
         try:
             if len(self.__data['frames'][0].shape) == 3:
@@ -151,7 +175,25 @@ class VisualiserFrame(Visualiser):
         x, y = self.get_dims()
         # Return an x,y,3 by default i.e. rgb, for safety, since in the absence of data we may not know how the texture's colorfmt is set
         return np.ones((x, y, 3), dtype=np.uint8) * 128 # TODO: Hardcoded midway (grey) value
-        
+
+    def get_b_box(self, time, with_labels=True): #TODO duplicate
+        if self.__data is None:
+            return [[0, 0, 0, 0]]
+        data = self.__data
+        if not 'boundingBoxes' in data.keys():
+            return [[0, 0, 0, 0]]
+        gt_bb = data['boundingBoxes']
+        box_index = np.searchsorted(gt_bb['ts'], time)
+        if abs(gt_bb['ts'][box_index] - time) > 0.03:
+            return [[0, 0, 0, 0]]
+        indices = gt_bb['ts'] == gt_bb['ts'][box_index]
+        boxes = np.column_stack((gt_bb['minY'][indices], gt_bb['minX'][indices],
+                                 gt_bb['maxY'][indices], gt_bb['maxX'][indices])).astype(np.int)
+        if with_labels and 'label' in gt_bb.keys():
+            labels = gt_bb['label'][indices].astype(np.int)
+            boxes = np.column_stack([boxes, labels])
+
+        return boxes
 
     # TODO: There can be methods which better choose the best frame, or which create a visualisation which
     # respects the time_window parameter 
@@ -355,6 +397,7 @@ class VisualiserPose6q(Visualiser):
     def get_colorfmt(self):
         return 'rgb'
 
+
 class VisualiserPoint3(Visualiser):
 
     renderX = 300 # TODO Hardcoded
@@ -482,4 +525,4 @@ class VisualiserPoint3(Visualiser):
         return self.renderX, self.renderY
 
     def get_colorfmt(self):
-        return 'rgb'    
+        return 'rgb'
