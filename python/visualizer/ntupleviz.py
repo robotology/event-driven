@@ -20,21 +20,23 @@ importAe, and allow synchronised playback for each of the contained channels and
 import matplotlib.pyplot as plt
 import numpy as np
 import sys, os
+
 os.environ['KIVY_NO_ARGS'] = 'T'
 
 # Optional import of tkinter allows setting of app size wrt screen size
 try:
     import tkinter as tk
     from kivy.config import Config
+
     root = tk.Tk()
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
     Config.set('graphics', 'position', 'custom')
-    Config.set('graphics', 'left', int(screen_width/8))
-    Config.set('graphics', 'top',  int(screen_width/8))
-    Config.set('graphics', 'width',  int(screen_width/4*3))
-    Config.set('graphics', 'height',  int(screen_height/4*3))
-    #Config.set('graphics', 'fullscreen', 1)
+    Config.set('graphics', 'left', int(screen_width / 8))
+    Config.set('graphics', 'top', int(screen_width / 8))
+    Config.set('graphics', 'width', int(screen_width / 4 * 3))
+    Config.set('graphics', 'height', int(screen_height / 4 * 3))
+    # Config.set('graphics', 'fullscreen', 1)
 except ModuleNotFoundError:
     pass
 
@@ -131,7 +133,7 @@ class TemplateDialog(FloatLayout):
 class DataController(GridLayout):
     ending_time = NumericProperty(.0)
     filePathOrName = StringProperty('')
-    data_dict = DictProperty({}) # A bimvee-style container of channels
+    data_dict = DictProperty({})  # A bimvee-style container of channels
 
     def __init__(self, **kwargs):
         super(DataController, self).__init__(**kwargs)
@@ -148,24 +150,63 @@ class DataController(GridLayout):
             settings[data_type] = {}
             if data_type == 'dvs':
                 visualiser = VisualiserDvs(data_dict[data_type])
-                settings[data_type] = {'polarised': True,
-                                                  'contrast': 3,
-                                                  'pol_to_show': 'Both'}
+                settings[data_type] = {'polarised': {},
+                                       'contrast': {},
+                                       'pol_to_show': {}
+                                       }
+                settings[data_type]['polarised'] = {'type': 'boolean',
+                                                    'default': True
+                                                    }
+                settings[data_type]['contrast'] = {'type': 'range',
+                                                   'default': 3,
+                                                   'min': 1,
+                                                   'max': 20,
+                                                   'step': 1
+                                                   }
+                settings[data_type]['pol_to_show'] = {'type': 'value_list',
+                                                      'default': 'Both',
+                                                      'values': ['Pos', 'Neg', 'Both']
+                                                      }
+
             elif data_type == 'frame':
                 visualiser = VisualiserFrame(data_dict[data_type])
             elif data_type == 'pose6q':
                 visualiser = VisualiserPose6q(data_dict[data_type])
-                settings[data_type] = {'interpolate': True,
-                                                  'perspective': True}
+                settings[data_type] = {'interpolate': {},
+                                       'perspective': {}}
+                settings[data_type]['interpolate'] = {'type': 'boolean',
+                                                      'default': True
+                                                      }
+                settings[data_type]['perspective'] = {'type': 'boolean',
+                                                      'default': True
+                                                      }
                 label = 'red=x green=y, blue=z ' + label
             elif data_type == 'point3':
                 visualiser = VisualiserPoint3(data_dict[data_type])
-                settings[data_type] = {'perspective': True,
-                                                  'yaw': 0,
-                                                  'pitch': 0}
+                settings[data_type] = {'perspective': {},
+                                       'yaw': {},
+                                       'pitch': {}}
+                settings[data_type]['perspective'] = {'type': 'boolean',
+                                                      'default': True
+                                                      }
+                settings[data_type]['yaw'] = {'type': 'range',
+                                              'default': 0,
+                                              'min': -90,
+                                              'max': 90,
+                                              'step': 1
+                                              }
+                settings[data_type]['pitch'] = {'type': 'range',
+                                                'default': 0,
+                                                'min': -90,
+                                                'max': 90,
+                                                'step': 1
+                                                }
             elif data_type == 'boundingBoxes':
                 visualiser = VisualiserBoundingBoxes(data_dict[data_type])
-                settings[data_type] = {'with_labels': True}
+                settings[data_type] = {'with_labels': {}}
+                settings[data_type]['with_labels'] = {'type': 'boolean',
+                                                      'default': True
+                                                      }
             else:
                 print("Warning! {} is not a recognized data type. Ignoring.".format(data_type))
                 continue
@@ -182,8 +223,8 @@ class DataController(GridLayout):
             print('    ' * recursionDepth + 'Received a list - looking through the list for containers...')
             for num, in_dict_element in enumerate(in_dict):
                 self.add_viewer_for_each_channel_and_data_type(in_dict_element,
-                                                               label=label+':'+str(num),
-                                                               recursionDepth=recursionDepth+1)
+                                                               label=label + ':' + str(num),
+                                                               recursionDepth=recursionDepth + 1)
         elif isinstance(in_dict, dict):
             print('    ' * recursionDepth + 'Received a dict - looking through its keys ...')
             for key_name in in_dict.keys():
@@ -194,17 +235,17 @@ class DataController(GridLayout):
                             print('    ' * recursionDepth + 'Creating a new viewer, of type: ' + key_name)
                             self.add_viewer_and_resize(key_name,
                                                        in_dict,
-                                                       label=label+':'+str(key_name))
+                                                       label=label + ':' + str(key_name))
                         else:
                             print('    ' * recursionDepth + 'Datatype not supported: ' + key_name)
-                    else: # recurse through the sub-dict
+                    else:  # recurse through the sub-dict
                         self.add_viewer_for_each_channel_and_data_type(in_dict[key_name],
-                                                                       label=label+':'+str(key_name),
-                                                                       recursionDepth=recursionDepth+1)
+                                                                       label=label + ':' + str(key_name),
+                                                                       recursionDepth=recursionDepth + 1)
                 elif isinstance(in_dict[key_name], list):
                     self.add_viewer_for_each_channel_and_data_type(in_dict[key_name],
-                                                                   label=label+':'+str(key_name),
-                                                                   recursionDepth=recursionDepth+1)
+                                                                   label=label + ':' + str(key_name),
+                                                                   recursionDepth=recursionDepth + 1)
                 else:
                     print('    ' * recursionDepth + 'Ignoring that key ...')
 
@@ -216,7 +257,7 @@ class DataController(GridLayout):
             # When using ntupleviz programmatically, pass an empty dict or None 
             # to allow the container to be passed again once updated
             return
-        self.ending_time = float(getLastTimestamp(self.data_dict)) # timer is watching this
+        self.ending_time = float(getLastTimestamp(self.data_dict))  # timer is watching this
         self.add_viewer_for_each_channel_and_data_type(self.data_dict)
 
     def dismiss_popup(self):
@@ -255,9 +296,9 @@ class DataController(GridLayout):
         # If both path and selection are None than it will try to reload previously given path
         if path is not None or selection is not None:
             if selection:
-                self.filePathOrName=join(path, selection[0])
+                self.filePathOrName = join(path, selection[0])
             else:
-                self.filePathOrName=path
+                self.filePathOrName = path
 
         try:
             self.data_dict = importAe(filePathOrName=self.filePathOrName, template=template)
@@ -327,7 +368,7 @@ class TimeSlider(Slider):
         self.increase_slider(0.016)
 
     def step_backward(self):
-        #self.decrease_slider(self.time_window)
+        # self.decrease_slider(self.time_window)
         self.decrease_slider(0.016)
 
 

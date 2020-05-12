@@ -20,6 +20,8 @@ a visualiser which is responsible for the data management and retrieval.
 from imageio import imread
 import numpy as np
 from kivy.graphics.texture import Texture
+from kivy.uix.spinner import Spinner
+from kivy.uix.image import Image
 from kivy.uix.widget import Widget
 from kivy.uix.slider import Slider
 from kivy.uix.checkbox import CheckBox
@@ -60,7 +62,7 @@ class Viewer(BoxLayout):
 
     def on_visualisers(self, instance, value):
         if self.visualisers is not None and self.visualisers:
-            for v in self.visualisers: # TODO manage cases with multiple of below data_types
+            for v in self.visualisers:  # TODO manage cases with multiple of below data_types
                 if v.data_type in ['dvs', 'frame', 'pose6q', 'point3']:
                     self.colorfmt = v.get_colorfmt()
                     self.data_shape = v.get_dims()
@@ -68,38 +70,56 @@ class Viewer(BoxLayout):
                     self.image.texture = Texture.create(size=buf_shape, colorfmt=self.colorfmt)
 
     def on_settings(self, instance, settings_dict):
-        settings_grid = GridLayout(cols=0, rows=0)
+        settings_grid = GridLayout(cols=len(settings_dict), size_hint=(1, 0.2))
         self.add_widget(settings_grid)
         self.update_settings(settings_grid, settings_dict)
 
+    def on_settings_change(self, instance, value):
+        self.settings[instance.parent.id][instance.id] = value
+        self.get_frame(self.current_time, self.current_time_window)
+
     def update_settings(self, parent_widget, settings_dict):
         for key in settings_dict:
-            if isinstance(settings_dict[key], dict):
-                parent_widget.cols += 1
-                parent_widget.rows += 2
+            if 'type' not in settings_dict[key]:
+                if settings_dict[key]:
+                    parent_widget.add_widget(Label(text=key))
+                    settings_grid = GridLayout(cols=2, id=key)
+                    parent_widget.add_widget(settings_grid)
+                    self.update_settings(settings_grid, settings_dict[key])
+            elif settings_dict[key]['type'] == 'boolean':
                 parent_widget.add_widget(Label(text=key))
-                settings_grid = GridLayout(cols=2, rows=0)
-                parent_widget.add_widget(settings_grid)
-                self.update_settings(settings_grid, settings_dict[key])
-            elif isinstance(settings_dict[key], bool):
-                parent_widget.rows += 1
-                parent_widget.add_widget(Label(text=key))
-                check_box = CheckBox(active=settings_dict[key])
+                check_box = CheckBox(active=settings_dict[key]['default'], id=key)
                 parent_widget.add_widget(check_box)
                 settings_dict[key] = check_box.active
-            elif isinstance(settings_dict[key], (int, float)):
-                parent_widget.rows += 1
+                check_box.bind(active=self.on_settings_change)
+            elif settings_dict[key]['type'] == 'range':
                 parent_widget.add_widget(Label(text=key))
-                parent_widget.add_widget(Slider(value=settings_dict[key],
-                                       min=-90, max=90))# TODO retrieve boundaries from code
+                slider = Slider(value=settings_dict[key]['default'],
+                                min=settings_dict[key]['min'],
+                                max=settings_dict[key]['max'],
+                                step=settings_dict[key]['step'],
+                                id=key)
+                parent_widget.add_widget(slider)
+                settings_dict[key] = slider.value
+                slider.bind(value=self.on_settings_change)
+            elif settings_dict[key]['type'] == 'value_list':
+                parent_widget.add_widget(Label(text=key))
+                spinner = Spinner(text=settings_dict[key]['default'],
+                                  values=settings_dict[key]['values'],
+                                  id=key)
+                parent_widget.add_widget(spinner)
+                settings_dict[key] = spinner.text
+                spinner.bind(text=self.on_settings_change)
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
-        # self.image = Image()
-        # self.add_widget(self.image)
+        self.image = Image(allow_stretch=True)
+        self.add_widget(self.image)
+        self.image.texture = None
         from matplotlib.pyplot import get_cmap
         self.cm = get_cmap('tab20')
-        #self.image.texture = None
+        self.current_time = 0
+        self.current_time_window = 0
         Clock.schedule_once(self.init, 0)
 
     def init(self, dt):
@@ -185,6 +205,8 @@ class Viewer(BoxLayout):
 
     def get_frame(self, time_value, time_window):
         data_dict = {}
+        self.current_time = time_value
+        self.current_time_window = time_window
         for v in self.visualisers:
             data_dict[v.data_type] = {}
             data_dict[v.data_type] = v.get_frame(time_value, time_window, **self.settings[v.data_type])
