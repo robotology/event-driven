@@ -58,14 +58,23 @@ from kivy.properties import DictProperty
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # local imports (from bimvee)
 try:
-    from visualiser import *
+    from visualiser import VisualiserDvs
+    from visualiser import VisualiserFrame
+    from visualiser import VisualiserPoint3
+    from visualiser import VisualiserPose6q
+    from visualiser import VisualiserBoundingBoxes
     from timestamps import getLastTimestamp
 except ModuleNotFoundError:
     if __package__ is None or __package__ == '':
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from libraries.bimvee.visualiser import *
+    from libraries.bimvee.visualiser import VisualiserDvs
+    from libraries.bimvee.visualiser import VisualiserFrame
+    from libraries.bimvee.visualiser import VisualiserPoint3
+    from libraries.bimvee.visualiser import VisualiserPose6q
+    from libraries.bimvee.visualiser import VisualiserBoundingBoxes
     from libraries.bimvee.timestamps import getLastTimestamp
-from viewer import *
+
+from viewer import Viewer
 
 
 class ErrorPopup(Popup):

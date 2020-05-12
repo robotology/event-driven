@@ -19,6 +19,7 @@ a visualiser which is responsible for the data management and retrieval.
 
 from imageio import imread
 import numpy as np
+import re
 from kivy.graphics.texture import Texture
 from kivy.uix.spinner import Spinner
 from kivy.uix.image import Image
@@ -30,7 +31,6 @@ from kivy.properties import BooleanProperty, StringProperty, ListProperty, DictP
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
-from kivy.clock import Clock
 
 
 class BoundingBox(Widget):
@@ -60,6 +60,18 @@ class Viewer(BoxLayout):
     colorfmt = 'luminance'
     orientation = 'vertical'
 
+    def __init__(self, **kwargs):
+        super(Viewer, self).__init__(**kwargs)
+        self.image = Image(allow_stretch=True)
+        self.add_widget(self.image)
+        self.image.texture = None
+        self.image.bind(size=self.on_data)
+        self.settings_box = None
+        from matplotlib.pyplot import get_cmap
+        self.cm = get_cmap('tab20')
+        self.current_time = 0
+        self.current_time_window = 0
+
     def on_visualisers(self, instance, value):
         if self.visualisers is not None and self.visualisers:
             for v in self.visualisers:  # TODO manage cases with multiple of below data_types
@@ -70,9 +82,11 @@ class Viewer(BoxLayout):
                     self.image.texture = Texture.create(size=buf_shape, colorfmt=self.colorfmt)
 
     def on_settings(self, instance, settings_dict):
-        settings_grid = GridLayout(cols=len(settings_dict), size_hint=(1, 0.2))
-        self.add_widget(settings_grid)
-        self.update_settings(settings_grid, settings_dict)
+        if self.settings_box is not None:
+            self.clear_widgets(self.settings_box)
+        self.settings_box = BoxLayout(size_hint=(1, 0.4))
+        self.add_widget(self.settings_box)
+        self.update_settings(self.settings_box, settings_dict)
 
     def on_settings_change(self, instance, value):
         self.settings[instance.parent.id][instance.id] = value
@@ -82,9 +96,12 @@ class Viewer(BoxLayout):
         for key in settings_dict:
             if 'type' not in settings_dict[key]:
                 if settings_dict[key]:
-                    parent_widget.add_widget(Label(text=key))
+                    box = BoxLayout(orientation='vertical')
+                    splitted = re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', key)).upper()
+                    box.add_widget(Label(text=splitted, size_hint=(1, 0.1)))
                     settings_grid = GridLayout(cols=2, id=key)
-                    parent_widget.add_widget(settings_grid)
+                    box.add_widget(settings_grid)
+                    parent_widget.add_widget(box)
                     self.update_settings(settings_grid, settings_dict[key])
             elif settings_dict[key]['type'] == 'boolean':
                 parent_widget.add_widget(Label(text=key))
@@ -110,20 +127,6 @@ class Viewer(BoxLayout):
                 parent_widget.add_widget(spinner)
                 settings_dict[key] = spinner.text
                 spinner.bind(text=self.on_settings_change)
-
-    def __init__(self, **kwargs):
-        super(Viewer, self).__init__(**kwargs)
-        self.image = Image(allow_stretch=True)
-        self.add_widget(self.image)
-        self.image.texture = None
-        from matplotlib.pyplot import get_cmap
-        self.cm = get_cmap('tab20')
-        self.current_time = 0
-        self.current_time_window = 0
-        Clock.schedule_once(self.init, 0)
-
-    def init(self, dt):
-        self.data = {}
 
     def on_data(self, instance, value):
         for data_type in self.data.keys():
