@@ -133,6 +133,17 @@
             text: "OK"
             on_press: root.dismiss()
 
+<Viewer>
+    image: image
+    Label:
+        text: root.title
+        size_hint: 1, 0.1
+        id: title
+    Image:
+        id: image
+        allow_stretch: True
+        on_size: root.on_data
+
 <ControlButton@ButtonBehavior+Image>
 
 <RootWidget>

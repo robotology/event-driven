@@ -57,15 +57,12 @@ class Viewer(BoxLayout):
     flipHoriz = BooleanProperty(False)
     flipVert = BooleanProperty(False)
     settings = DictProperty({}, allownone=True)
+    title = StringProperty('Title')
     colorfmt = 'luminance'
     orientation = 'vertical'
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
-        self.image = Image(allow_stretch=True)
-        self.add_widget(self.image)
-        self.image.texture = None
-        self.image.bind(size=self.on_data)
         self.settings_box = None
         from matplotlib.pyplot import get_cmap
         self.cm = get_cmap('tab20')
@@ -75,7 +72,7 @@ class Viewer(BoxLayout):
     def on_visualisers(self, instance, value):
         if self.visualisers is not None and self.visualisers:
             for v in self.visualisers:  # TODO manage cases with multiple of below data_types
-                if v.data_type in ['dvs', 'frame', 'pose6q', 'point3']:
+                if v.data_type in ['dvs', 'frame', 'pose6q', 'point3', 'flowMap']:
                     self.colorfmt = v.get_colorfmt()
                     self.data_shape = v.get_dims()
                     buf_shape = (dp(self.data_shape[0]), dp(self.data_shape[1]))
@@ -98,7 +95,7 @@ class Viewer(BoxLayout):
                 if settings_dict[key]:
                     box = BoxLayout(orientation='vertical')
                     splitted = re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', key)).upper()
-                    box.add_widget(Label(text=splitted, size_hint=(1, 0.1)))
+                    box.add_widget(Label(text='Settings for {}'.format(splitted), size_hint=(1, 0.1)))
                     settings_grid = GridLayout(cols=2, id=key)
                     box.add_widget(settings_grid)
                     parent_widget.add_widget(box)
@@ -130,7 +127,7 @@ class Viewer(BoxLayout):
 
     def on_data(self, instance, value):
         for data_type in self.data.keys():
-            if data_type in ['dvs', 'frame', 'pose6q', 'point3']:
+            if data_type in ['dvs', 'frame', 'pose6q', 'point3', 'flowMap']:
                 self.update_image(self.data[data_type])
             elif data_type in ['boundingBoxes']:
                 self.update_b_boxes(self.data[data_type])

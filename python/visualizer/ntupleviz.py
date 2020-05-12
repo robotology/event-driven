@@ -63,6 +63,7 @@ try:
     from visualiser import VisualiserPoint3
     from visualiser import VisualiserPose6q
     from visualiser import VisualiserBoundingBoxes
+    from visualiser import VisualiserOpticFlow
     from timestamps import getLastTimestamp
 except ModuleNotFoundError:
     if __package__ is None or __package__ == '':
@@ -72,6 +73,7 @@ except ModuleNotFoundError:
     from libraries.bimvee.visualiser import VisualiserPoint3
     from libraries.bimvee.visualiser import VisualiserPose6q
     from libraries.bimvee.visualiser import VisualiserBoundingBoxes
+    from libraries.bimvee.visualiser import VisualiserOpticFlow
     from libraries.bimvee.timestamps import getLastTimestamp
 
 from viewer import Viewer
@@ -106,7 +108,7 @@ class DictEditor(GridLayout):
             check_box = CheckBox()
             self.add_widget(check_box)
             self.add_widget(TextInput(text=str(n)))
-            spinner = Spinner(values=['dvs', 'frame', 'pose6q', 'cam', 'imu'])
+            spinner = Spinner(values=['dvs', 'frame', 'pose6q', 'cam', 'imu', 'flowMap'])
             if 'events' in topic:
                 spinner.text = 'dvs'
                 check_box.active = True
@@ -115,6 +117,9 @@ class DictEditor(GridLayout):
                 check_box.active = True
             elif 'pose' in topic:
                 spinner.text = 'pose6q'
+                check_box.active = True
+            elif 'flow' in topic:
+                spinner.text = 'flowMap'
                 check_box.active = True
 
             self.add_widget(spinner)
@@ -216,11 +221,13 @@ class DataController(GridLayout):
                 settings[data_type]['with_labels'] = {'type': 'boolean',
                                                       'default': True
                                                       }
+            elif data_type == 'flowMap':
+                visualiser = VisualiserOpticFlow(data_dict[data_type])
             else:
                 print("Warning! {} is not a recognized data type. Ignoring.".format(data_type))
                 continue
             visualisers.append(visualiser)
-        new_viewer.label = label
+        new_viewer.title = label
         new_viewer.visualisers = visualisers
         new_viewer.settings = settings
         self.add_widget(new_viewer)
@@ -240,13 +247,10 @@ class DataController(GridLayout):
                 print('    ' * recursionDepth + 'Dict contains a key "' + key_name + '" ...')
                 if isinstance(in_dict[key_name], dict):
                     if 'ts' in in_dict[key_name]:
-                        if key_name in ['dvs', 'frame', 'pose6q', 'point3']:
-                            print('    ' * recursionDepth + 'Creating a new viewer, of type: ' + key_name)
-                            self.add_viewer_and_resize(key_name,
-                                                       in_dict,
-                                                       label=label + ':' + str(key_name))
-                        else:
-                            print('    ' * recursionDepth + 'Datatype not supported: ' + key_name)
+                        print('    ' * recursionDepth + 'Creating a new viewer, of type: ' + key_name)
+                        self.add_viewer_and_resize(key_name,
+                                                   in_dict,
+                                                   label=label + ':' + str(key_name))
                     else:  # recurse through the sub-dict
                         self.add_viewer_for_each_channel_and_data_type(in_dict[key_name],
                                                                        label=label + ':' + str(key_name),
@@ -285,7 +289,7 @@ class DataController(GridLayout):
     def show_load(self):
         self.dismiss_popup()
         # FOR DEBUGGING
-        self.load('/media/miacono/Shared/datasets/ball/numpy', ['events.npy'])
+        self.load('/media/miacono/Shared/datasets/simulated_data', ['roomViconPose10.bag'])
         return
         content = LoadDialog(load=self.load,
                              cancel=self.dismiss_popup)
