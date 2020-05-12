@@ -4,8 +4,8 @@ close all;
 
 % these are the ones you need to set up
 % probably wirte a higher level script which iterates in between these
-roi_log_file = '/home/leandro/results/RegionOfInterest/6DOF_advanced_ego/roiLog.txt';
-benchmark_folder = '/home/leandro/dumpATIS/6DOF/flyingCube_independent_001_converted';
+roi_log_file = '/home/leandro/results/RegionOfInterest/6DOF_advanced_ego/RoundTable/roiLog.txt';
+benchmark_folder = '/home/leandro/dumpATIS/6DOF/roundTableCube_6DOF_001_convertedCropped';
 
 %folder to save the results
 processed_data_folder = [benchmark_folder '/processedData'];
@@ -84,6 +84,7 @@ if( ~exist('filtered_events', 'var') )
         end
 
         dlmwrite(filtered_file, filtered_events, 'delimiter', ' ','precision', 20);
+        disp('filtered events saved');
     end
 end
 
@@ -110,7 +111,7 @@ end
 
 clearvars -except GTevents GTdataset counter_clock GTresultfile ...
     sensor_width sensor_height roi_log_file roi_log_data filtered_events ...
-    results_folder;
+    results_folder outfilename;
 
 %% Apply cubic spline to interpolate ground truth
 disp('loading ground truth file')
@@ -151,9 +152,10 @@ yy = ppval(cy, events_times);
 rr = ppval(cr, events_times);
 
 %% Plot the interpolation for for debugging
-plotRoI = false;
+plotRoI = true;
 
 if(plotRoI)
+    close all;
     plotRate = 1000;
     figure(1)
     axis ij
@@ -225,7 +227,7 @@ title('considering RoI delay');
 exportgraphics(gcf,[results_folder '/confusion_matrix_x_time.png'],'Resolution',300)
 hold off;
 
-%% try to align RoI with ES somehow
+%% align RoI with ES
 
 % add the x y r according to the roi_ts to compensate the delay
 undelayed_data = [roi_log_data(idx, :) zeros(numel(xx), 3)];
