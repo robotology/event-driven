@@ -39,8 +39,8 @@ if(~exist('GTdataset', 'var'))
 end
 
 if(~exist('GTresultfile', 'var'))
-    GTresultfile = [GTdataset(1:find(GTdataset == '.', 1, 'last')) 'GT'];
-    disp(strcat('Please specify the resulting file "GTdataset", setting to: ', GTresultfile));
+    disp(strcat('Please specify the resulting file'));
+    return;
 end
 
 if(~exist('runHough', 'var'))
@@ -54,15 +54,13 @@ if(~exist('sensitivity', 'var'))
     disp(strcat('Please specify the sensitivity of the keyboard commands, setting to: ', string(sensitivity)));
 end
 
-
-disp('Loading data...');
-%CH TS POL X Y
-if( ~exist('GTevents', 'var') )
-    GTevents = importdata(GTdataset); % import data
+% {class, pol, x, y, ts, roi_ts, ts_cont, roi_ts_cont}
+if( ~exist('events_data', 'var') )
+    disp('Loading events data...')
+    events_data = importdata(GTdataset); % import data
 end
 
-GTevents(GTevents(:, 1) ~= channel, :) = [];
-eventsTime = GTevents(:, 2) * counter_clock; % change time scale to seconds
+eventsTime = events_data(:, 7) * counter_clock; % change time scale to seconds
 start_offset = eventsTime(1);
 
 disp('Press Esc to quit');
@@ -88,15 +86,14 @@ end
 figure(1); clf;
 
 if(randomised)
-    cts = eventsTime(round(rand(1) * length(GTevents)));
+    [nrows , ~] = size(events_data);
+    cts = eventsTime(round(rand(1) * nrows));
     ci = find(eventsTime > cts, 1) - 1;
 else
     cts = start_offset + winsize;
     ci = find(eventsTime > cts, 1) - 1;
     cts = eventsTime(ci);
 end
-
-cputs = GTevents(ci, 7);
 
 %res_i = 1;
 x = 152; y = 120; r = 30;
@@ -117,11 +114,15 @@ while(~finishedGT)
     figure(1); axis ij
     while(~finishedLOG)
         
-        window = GTevents(wini:ci, :);
+        window = events_data(wini:ci, :);
         
         figure(1); clf; hold on; axis ij
-        plot(window(window(:, 3) == 0, 4), window(window(:, 3) == 0, 5), 'g.');
-        plot(window(window(:, 3) ==  1, 4), window(window(:, 3) ==  1, 5), 'm.');
+        %{class, pol, x, y, ts, roi_ts, ts_cont, roi_ts_cont}
+        neg_idx = window(:, 2) == 0;
+        pos_idx = not(neg_idx);
+        
+        plot(window(neg_idx, 3), window(neg_idx, 4), 'g.');
+        plot(window(pos_idx, 3), window(pos_idx, 4), 'm.');
         
         rectangle('curvature', [1 1], 'position', [x-r y-r r*2 r*2]);
         axis([0 sensor_width 0 sensor_height]);
@@ -162,9 +163,9 @@ while(~finishedGT)
             
             finishedLOG = true;
             %result(res_i, :) = [cts, x, y, r];
-            logData = [logData; [cts, x, y, r, cputs]];
+            logData = [logData; [cts, x, y, r]];
             
-            %dlmwrite(GTresultfile, [cts, x, y, r, cputs], '-append','delimiter', ' ', 'precision', 20); 
+            %dlmwrite(GTresultfile, [cts, x, y, r], '-append','delimiter', ' ', 'precision', 20); 
             
             figure(2); hold on; plot(cts, 1, 'gx'); 
             
@@ -232,7 +233,7 @@ while(~finishedGT)
     %res_i = res_i + 1;
     cts = cts + rate;
     if(randomised)
-        cts = eventsTime(round(rand(1) * length(GTevents)));
+        cts = eventsTime(round(rand(1) * length(events_data)));
     end
         
     ci = find(eventsTime > cts, 1);
@@ -240,7 +241,6 @@ while(~finishedGT)
         finishedGT = true;
     else
         cts = eventsTime(ci);
-        cputs = GTevents(ci, 7);
     end
 
     if cts >= eventsTime(end)
