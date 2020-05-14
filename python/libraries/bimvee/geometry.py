@@ -132,10 +132,14 @@ def pose6qInterp(poseDict, time=None, maxPeriod=None):
         poseDict['rotation'] = rotations
         poseDict = sortDataTypeDictByTime(poseDict)
         return poseDict
-        
 
-def combineTwoQuaternions(q1, q2):
-    # Quaternion multiplication
+def quaternionProduct(q1, q2):
+    return np.array([ 
+    q1[0] * q2[0] - q1[1] * q2[1] - q1[2] * q2[2] - q1[3] * q2[3],
+    q1[0] * q2[1] + q1[1] * q2[0] + q1[2] * q2[3] - q1[3] * q2[2],
+    q1[0] * q2[2] - q1[1] * q2[3] + q1[2] * q2[0] + q1[3] * q2[1],
+    q1[0] * q2[3] + q1[1] * q2[2] - q1[2] * q2[1] + q1[3] * q2[0] ])
+    ''' alternative definition - less efficient
     w1 = q1[0]
     v1 = q1[1:4]
     w2 = q2[0]
@@ -146,6 +150,24 @@ def combineTwoQuaternions(q1, q2):
     qOut[0] = wOut
     qOut[1:4] = vOut
     return qOut
+    '''
+
+# Legacy name for Quaternion multiplication
+def combineTwoQuaternions(q1, q2):
+    return quaternionProduct(q1, q2)
+
+def quaternionConjugate(q):
+    return np.array([q[0], -q[1], -q[2], -q[3]])
+
+def quaternionInverse(q):
+    return quaternionConjugate(q) / np.sum(q ** 2)
+
+def angleBetweenTwoQuaternions(q1, q2):
+    # returns minimal angle in radians between two unit quaternions, following:
+    # https://www.researchgate.net/post/How_do_I_calculate_the_smallest_angle_between_two_quaternions    
+    qP = quaternionProduct(q1, quaternionInverse(q2))
+    normV = np.linalg.norm(qP[1:])
+    return 2 * np.arcsin(normV)
 
 '''
 Expects 
@@ -192,3 +214,29 @@ def draw_line(mat, x0, y0, x1, y1):
                             np.logical_and(x<mat.shape[1], 
                                            np.logical_and(y >= 0, y<mat.shape[0])))
     mat[y[toKeep], x[toKeep]] = 255
+
+# The following adapted from https://github.com/christophhagen/averaging-quaternions
+# Note that the signs of the output quaternion can be reversed, 
+# since q and -q describe the same orientation.
+# w is an optional weight array, which must have the same number of elements 
+# as the number of quaternions
+def averageOfQuaternions(allQ, w=None):
+    # Number of quaternions to average
+    M = allQ.shape[0]
+    A = np.zeros((4,4), dtype = np.float64)
+    if w is None:
+        w = np.ones(M,)
+    weightSum = 0
+    for i in range(0, M):
+        q = allQ[i, :]
+        # multiply q with its transposed version q' and add A
+        A = w[i] * np.outer(q,q) + A
+        weightSum += w[i]
+    # scale
+    A = (1.0 / M) * A
+    # compute eigenvalues and -vectors
+    eigenValues, eigenVectors = np.linalg.eig(A)
+    # Sort by largest eigenvalue
+    eigenVectors = eigenVectors[:,eigenValues.argsort()[::-1]]
+    # return the real part of the largest eigenvector (has only real part)
+    return eigenVectors[:,0]

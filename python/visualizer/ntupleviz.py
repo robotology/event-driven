@@ -156,7 +156,7 @@ class DataController(GridLayout):
         for child in self.children:
             child.get_frame(self.time_value, self.time_window)
 
-    def add_viewer_and_resize(self, data_type, data_dict, label=''):
+    def add_viewer_and_resize(self, data_dict, channel_name=''):
         new_viewer = Viewer()
         visualisers = []
         settings = {}
@@ -194,7 +194,7 @@ class DataController(GridLayout):
                 settings[data_type]['perspective'] = {'type': 'boolean',
                                                       'default': True
                                                       }
-                label = 'red=x green=y, blue=z ' + label
+                channel_name = channel_name + '\nred=x green=y, blue=z'
             elif data_type == 'point3':
                 visualiser = VisualiserPoint3(data_dict[data_type])
                 settings[data_type] = {'perspective': {},
@@ -227,37 +227,39 @@ class DataController(GridLayout):
                 print("Warning! {} is not a recognized data type. Ignoring.".format(data_type))
                 continue
             visualisers.append(visualiser)
-        new_viewer.title = label
+        new_viewer.title = channel_name
         new_viewer.visualisers = visualisers
         new_viewer.settings = settings
         self.add_widget(new_viewer)
 
         self.cols = int(np.ceil(np.sqrt(len(self.children))))
 
-    def add_viewer_for_each_channel_and_data_type(self, in_dict, label='', recursionDepth=0):
+    def add_viewer_for_each_channel_and_data_type(self, in_dict, seen_keys=[], recursionDepth=0):
         if isinstance(in_dict, list):
             print('    ' * recursionDepth + 'Received a list - looking through the list for containers...')
             for num, in_dict_element in enumerate(in_dict):
+                seen_keys.append(num)
                 self.add_viewer_for_each_channel_and_data_type(in_dict_element,
-                                                               label=label + ':' + str(num),
+                                                               seen_keys=seen_keys,
                                                                recursionDepth=recursionDepth + 1)
         elif isinstance(in_dict, dict):
             print('    ' * recursionDepth + 'Received a dict - looking through its keys ...')
             for key_name in in_dict.keys():
                 print('    ' * recursionDepth + 'Dict contains a key "' + key_name + '" ...')
                 if isinstance(in_dict[key_name], dict):
+                    seen_keys.append(key_name)
                     if 'ts' in in_dict[key_name]:
                         print('    ' * recursionDepth + 'Creating a new viewer, of type: ' + key_name)
-                        self.add_viewer_and_resize(key_name,
-                                                   in_dict,
-                                                   label=label + ':' + str(key_name))
+                        self.add_viewer_and_resize(in_dict,
+                                                   channel_name=seen_keys[-2])
+                        break # We suppose that all timestamped data are at the same level
                     else:  # recurse through the sub-dict
                         self.add_viewer_for_each_channel_and_data_type(in_dict[key_name],
-                                                                       label=label + ':' + str(key_name),
+                                                                       seen_keys=seen_keys,
                                                                        recursionDepth=recursionDepth + 1)
                 elif isinstance(in_dict[key_name], list):
                     self.add_viewer_for_each_channel_and_data_type(in_dict[key_name],
-                                                                   label=label + ':' + str(key_name),
+                                                                   seen_keys=seen_keys,
                                                                    recursionDepth=recursionDepth + 1)
                 else:
                     print('    ' * recursionDepth + 'Ignoring that key ...')
@@ -289,7 +291,7 @@ class DataController(GridLayout):
     def show_load(self):
         self.dismiss_popup()
         # FOR DEBUGGING
-        self.load('/media/miacono/Shared/datasets/simulated_data', ['roomViconPose10.bag'])
+        self.load('/media/miacono/Shared/datasets/simulated_data/', ['roomViconPose10.bag'])
         return
         content = LoadDialog(load=self.load,
                              cancel=self.dismiss_popup)

@@ -113,7 +113,6 @@ class VisualiserDvs(Visualiser):
             image = kwargs['callback'](**kwargs)
         return image
 
-
     def get_dims(self):
         try:
             data = self.__data

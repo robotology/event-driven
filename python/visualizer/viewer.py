@@ -22,7 +22,6 @@ import numpy as np
 import re
 from kivy.graphics.texture import Texture
 from kivy.uix.spinner import Spinner
-from kivy.uix.image import Image
 from kivy.uix.widget import Widget
 from kivy.uix.slider import Slider
 from kivy.uix.checkbox import CheckBox
@@ -94,7 +93,7 @@ class Viewer(BoxLayout):
             if 'type' not in settings_dict[key]:
                 if settings_dict[key]:
                     box = BoxLayout(orientation='vertical')
-                    splitted = re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', key)).upper()
+                    splitted = re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', key)).title()
                     box.add_widget(Label(text='Settings for {}'.format(splitted), size_hint=(1, 0.1)))
                     settings_grid = GridLayout(cols=2, id=key)
                     box.add_widget(settings_grid)

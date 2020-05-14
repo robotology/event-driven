@@ -69,6 +69,7 @@ else:
     from .importRpgDvsRos import importRpgDvsRos
     from .importSecDvs import importSecDvs
 
+
 def getOrInsertDefault(inDict, arg, default):
     # get an arg from a dict.
     # If the the dict doesn't contain the arg, return the default, 
@@ -78,22 +79,6 @@ def getOrInsertDefault(inDict, arg, default):
         inDict[arg] = default
     return value
 
-def dict_keys_print(d, indent):
-    print(' ' * (4 * indent - 2) + '{ ', end='')
-    first = True
-    for key, value in d.items():
-        if first:
-            print(str(key), end='')
-            first = False
-        else:
-            print(' ' * 4 * indent + str(key), end='')
-        if isinstance(value, dict):
-            print(':')
-            dict_keys_print(value, indent + 1)
-        else:
-            print(',')
-            continue
-    print(' ' * (4 * indent - 2) + '}')
 
 def importAe(**kwargs):
     print(kwargs)
@@ -140,5 +125,4 @@ def importAe(**kwargs):
     else:
         raise Exception("fileFormat: " + str(fileFormat) + " not supported.")
     #celex
-    dict_keys_print(importedData, 0)
     return importedData
