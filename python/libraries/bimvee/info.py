@@ -50,7 +50,7 @@ def info(containers, **kwargs):
     if not isinstance(containers, list):
         containers = [containers]
     for container in containers:
-        print(container['info'])
+        pp.pprint(container['info'])
         for channelName in container['data']:
             print('    Channel: ' + channelName)
             for dataType in container['data'][channelName]:
