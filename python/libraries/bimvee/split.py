@@ -18,6 +18,8 @@ Two general functions in which one chosen field is used to divide a whole datase
 - selectByLabel
 - splitByLabel
 
+selectByBool: divide a whole dataset based on a boolean array which is passed in
+
 splitByPolarity: divide events according to a boolean "pol" field (intended for dvs events)
 
 Two functions for narrowing down on the data by time or space:

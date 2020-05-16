@@ -114,7 +114,7 @@ def importAe(**kwargs):
         importedData = importIitYarp(**kwargs)
     elif fileFormat in ['rpgdvsros', 'rosbag', 'rpg', 'ros', 'bag', 'rpgdvs']:
         if 'template' not in kwargs or kwargs['template'] is None:
-            raise ValueError('Template for ROS bag not defined')
+            print('Template for ROS bag not defined - all data-type dicts will be imported into separate channels')
         importedData = importRpgDvsRos(**kwargs)
     elif fileFormat in ['npy', 'numpy']:
         importedData = importNumpy(**kwargs)
