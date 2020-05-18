@@ -46,7 +46,17 @@ def plotEventRate(inDicts, **kwargs):
         inDict = inDicts
     if not isinstance(inDict, dict):
         return
-    if 'ts' in inDict: # It's a data-type container
+    if 'ts' not in inDict:
+        title = kwargs.pop('title', '')
+        if 'info' in inDict and isinstance(inDict, dict):
+            fileName = inDict['info'].get('filePathOrName')
+            if fileName is not None:
+                print('plotEventRate was called for file ' + fileName)
+                title = (title + ' ' + fileName).lstrip()
+        for key in inDict.keys():
+            kwargs['title'] = (title + ' ' + key).lstrip()
+            plotEventRate(inDict[key], **kwargs)
+    else: # It's a data-type container
         # Break out data array for cleaner code
         ts = inDict['ts']
         if ts.shape[0] == 0: 
@@ -93,16 +103,7 @@ def plotEventRate(inDicts, **kwargs):
         callback = kwargs.get('callback')
         if callback is not None:
             kwargs = callback(**kwargs)            
-    else:
-        title = kwargs.pop('title', '')
-        if 'info' in inDict and isinstance(inDict, dict):
-            fileName = inDict['info'].get('filePathOrName')
-            if fileName is not None:
-                print('plotEventRate was called for file ' + fileName)
-                title = (title + ' ' + fileName).lstrip()
-        for key in inDict.keys():
-            kwargs['title'] = (title + ' ' + key).lstrip()
-            plotEventRate(inDict[key], **kwargs)
+
 
                 
                 
