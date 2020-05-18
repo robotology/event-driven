@@ -173,26 +173,30 @@ def plotDvsContrastSingle(inDict, **kwargs):
     return image
 
 
-def plotDvsContrast(inDict, **kwargs):
-    # Boilerplate for descending higher level containers
-    if isinstance(inDict, list):
-        for inDictInst in inDict:
-            plotDvsContrast(inDictInst, **kwargs)
+def plotDvsContrast(inDicts, **kwargs):
+    if isinstance(inDicts, list):
+        for inDict in inDicts:
+            plotDvsContrast(inDict, **kwargs)
         return
-    if 'info' in inDict:  # Top level container
-        fileName = inDict['info'].get('filePathOrName', '')
-        print('plotDvsContrast was called for file ' + fileName)
-        if not inDict['data']:
-            print('The import contains no data.')
-            return
-        for channelName in inDict['data']:
-            channelData = inDict['data'][channelName]
-            if 'dvs' in channelData and len(channelData['dvs']['ts']) > 0:
-                kwargs['title'] = ' '.join([fileName, str(channelName)])
-                plotDvsContrast(channelData['dvs'], **kwargs)
-            else:
-                print('Channel ' + channelName + ' skipped because it contains no polarity data')
+    else:
+        inDict = inDicts
+    if not isinstance(inDict, dict):
         return
+    if 'ts' not in inDict:
+        title = kwargs.pop('title', '')
+        if 'info' in inDict and isinstance(inDict, dict):
+            fileName = inDict['info'].get('filePathOrName')
+            if fileName is not None:
+                print('plotDvsContrast was called for file ' + fileName)
+                title = (title + ' ' + fileName).lstrip()
+        for key in inDict.keys():
+            kwargs['title'] = (title + ' ' + key).lstrip()
+            plotDvsContrast(inDict[key], **kwargs)
+        return
+    # From this point onwards, it's a data-type container
+    if 'pol' not in inDict:
+        return
+    # From this point onwards, it's a dvs container        
 
     # The proportion of an array-full of events which is shown on a plot
     proportionOfPixels = kwargs.get('proportionOfPixels', 0.1)

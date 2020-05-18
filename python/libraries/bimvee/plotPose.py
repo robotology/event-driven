@@ -25,37 +25,58 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 
+# local imports
+if __package__ is None or __package__ == '':
+    from split import cropTime
+else:
+    from .split import cropTime
 
-def plotPose(inDict, **kwargs):
-    if isinstance(inDict, list):
-        for inDictInst in inDict:
-            plotPose(inDictInst, **kwargs)
+def plotPose(inDicts, **kwargs):
+    if isinstance(inDicts, list):
+        for inDict in inDicts:
+            plotPose(inDict, **kwargs)
         return
-    if 'info' in inDict:
-        fileName = inDict['info'].get('filePathOrName', '')
-        print('plotPose was called for file ' + fileName)
-        if not inDict['data']:
-            print('The import contains no data.')
-            return
-        for channelName in inDict['data']:
-            channelData = inDict['data'][channelName]
-            if 'pose6q' in channelData and len(channelData['pose6q']['ts']) > 0:
-                kwargs['title'] = ' '.join([fileName, str(channelName)])
-                plotPose(channelData['pose6q'], **kwargs)
-            if 'point3' in channelData and len(channelData['point3']['ts']) > 0:
-                kwargs['title'] = ' '.join([fileName, str(channelName)])
-                plotPose(channelData['point3'], **kwargs)
-            if 'pose6q' not in channelData and 'point3' not in channelData:
-                print('Channel ' + channelName + ' skipped because it contains no pose data')
+    else:
+        inDict = inDicts
+    if not isinstance(inDict, dict):
         return
+    if 'ts' not in inDict:
+        title = kwargs.pop('title', '')
+        if 'info' in inDict and isinstance(inDict, dict):
+            fileName = inDict['info'].get('filePathOrName')
+            if fileName is not None:
+                print('plotPose was called for file ' + fileName)
+                title = (title + ' ' + fileName).lstrip()
+        for key in inDict.keys():
+            kwargs['title'] = (title + ' ' + key).lstrip()
+            plotPose(inDict[key], **kwargs)
+        return
+    # From this point onwards, it's a data-type container
+    if 'point' not in inDict:
+        return
+    # From this point onwards, it's a pose or point data-type container    
+
+    ts = inDict['ts']
+    minTime = kwargs.get('minTime', kwargs.get('startTime', kwargs.get('beginTime', ts.min())))
+    maxTime = kwargs.get('maxTime', kwargs.get('stopTime', kwargs.get('endTime', ts.max())))
+    if minTime > ts.min() or maxTime < ts.max():
+        inDict = cropTime(inDict, minTime=minTime, maxTime=maxTime, zeroTime=False)
+        ts = inDict['ts']
 
     if 'rotation' in inDict:
         fig, allAxes = plt.subplots(2, 1)
         fig.suptitle(kwargs.get('title', ''))
         axesT = allAxes[0]
         axesR = allAxes[1]
-        axesR.plot(inDict['ts'], inDict['rotation'])
+        rotation = inDict['rotation']
+        axesR.plot(ts, rotation[:, 0], 'k')
+        axesR.plot(ts, rotation[:, 1], 'r')
+        axesR.plot(ts, rotation[:, 2], 'g')
+        axesR.plot(ts, rotation[:, 3], 'b')
         axesR.legend(['r_w', 'r_x', 'r_y', 'r_z'])
+        axesR.set_xlabel('Time (s)')
+        axesR.set_ylabel('Quaternion components')
+        axesR.set_ylim([-1, 1])
     if 'point' in inDict:
         if not 'axesT' in locals():
             fig, axesT = plt.subplots()
@@ -65,10 +86,19 @@ def plotPose(inDict, **kwargs):
             point = point - firstPoint
         else:
             point = inDict['point']
-        axesT.plot(inDict['ts'], point)
+        axesT.plot(ts, point[:, 0], 'r')
+        axesT.plot(ts, point[:, 1], 'g')
+        axesT.plot(ts, point[:, 2], 'b')
         axesT.legend(['x', 'y', 'z'])
-    # TODO: Callbacks
-
+        axesT.set_xlabel('Time (s)')
+        axesT.set_ylabel('Coords (m)')
+    callback = kwargs.get('callback')
+    if callback is not None:
+        kwargs['axesT'] = axesT
+        kwargs['axesR'] = axesR
+        kwargs['minTime'] = minTime
+        kwargs['maxTime'] = maxTime
+        callback(**kwargs)
 
 """
 Plot the 3D trajectory of a body or marker for the entire duration of recording
