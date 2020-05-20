@@ -71,7 +71,7 @@ def plotImu(inDict, **kwargs):
     axesMag.legend(['x', 'y', 'z'])
 
 #-----------------------------------------------------------------------------------------------------
-def plotImuDistribution(imuDict, unitIMU, fig_path, fig_name):
+def plotImuDistribution(imuDict, unitIMU, fig_path, fig_name, fig_subtitle=None):
     """
     Plot the distribution of the IMU data in imuDict and save the generated
     figure as fig_name.png at the location defined by fig_path.
@@ -81,9 +81,15 @@ def plotImuDistribution(imuDict, unitIMU, fig_path, fig_name):
         unitIMU {string} -- either 'FPGA' or 'SI'
         fig_path {string} -- save path for the generated figure
         fig_name {string} -- name of the generated figure
+
+    Keyword Arguments:
+        fig_subtitle {string} -- optional figure sub-title (default: {None})
     """
     fig = plt.figure(figsize=(14.0, 10.0))
-    fig.suptitle("IMU Data Distribution", fontsize=20, fontweight='bold')
+    if isinstance(fig_subtitle, str):
+        fig.suptitle("IMU Samples Distribution\n" + fig_subtitle, fontsize=20, fontweight='bold')
+    else:
+        fig.suptitle("IMU Samples Distribution", fontsize=20, fontweight='bold')
 
     plt.subplot(3,2,1)
     sns.distplot([v for v, s in zip(imuDict['value'], imuDict['sensor']) if s == 0], bins=100, color=zesty_palette[0])
@@ -130,7 +136,11 @@ def plotImuDistribution(imuDict, unitIMU, fig_path, fig_name):
         plt.xlabel('gyroZ [rad/s]', fontsize=10, fontweight='bold')
 
     fig.tight_layout()
-    fig.subplots_adjust(top=0.9)
+    if isinstance(fig_subtitle, str):
+        fig.subplots_adjust(top=0.85)
+    else:
+        fig.subplots_adjust(top=0.9)
+
     plt.savefig(os.path.join(fig_path, fig_name + '.png'), dpi=300, bbox_inches='tight')
     print("Saving " + fig_name + ".png")
     plt.close()
