@@ -109,6 +109,189 @@ int vVisionCtrl::i2cRead(unsigned char reg, unsigned char *data, unsigned int si
 
 }
 
+int vVisionCtrl::ReadSisleyRegister(uint32_t sisley_reg_address, uint32_t *sisley_data)
+{
+    uint32_t data32;
+    char i2cdata[5];
+    uint8_t *tmp;
+
+    // Data to be written in SISLEY_ADDRESS_REG
+    data32=READ_SISLEY_REG | (0xFFFFFF&sisley_reg_address);
+    tmp = (uint8_t *)(&data32);
+    i2cdata[0] = I2C_AUTOTINCRREGS | VSCTRL_SISLEY_ADDRESS_REG;
+    i2cdata[1] = tmp[0];
+    i2cdata[2] = tmp[1];
+    i2cdata[3] = tmp[2];
+    i2cdata[4] = tmp[3];
+    write(fd, i2cdata, 5);
+
+    // Now the SISLEY_DATA_REG can be read
+    i2cdata[0] = I2C_AUTOTINCRREGS | VSCTRL_SISLEY_DATA_REG;
+    write (fd, i2cdata, 1);
+
+    if (read(fd, (char *)sisley_data, 4)!=4)
+    {
+        //ERROR HANDLING: i2c transaction failed
+        printf("Failed to read from the i2c bus.\n");
+        exit(1);
+    }
+    else
+    {
+        //printf("Data read: %02X%02X%02X%02X\n", (*sisley_data&0xFF000000)>>24, (*sisley_data&0xFF0000)>>16, (*sisley_data&0xFF00)>>8, (*sisley_data&0xFF)>>0);
+    }
+
+    return (0);
+}
+
+int vVisionCtrl::WriteSisleyRegister(uint32_t sisley_reg_address, uint32_t sisley_data)
+{
+    uint32_t data32;
+    char i2cdata[5];
+    uint8_t *tmp;
+
+    // Data to be written in SISLEY_DATA_REG
+    data32=sisley_data;
+    tmp = (uint8_t *)(&data32);
+    i2cdata[0] = I2C_AUTOTINCRREGS | VSCTRL_SISLEY_DATA_REG;
+    i2cdata[1] = tmp[0];
+    i2cdata[2] = tmp[1];
+    i2cdata[3] = tmp[2];
+    i2cdata[4] = tmp[3];
+    write(fd, i2cdata, 5);
+
+    // Data to be written in SISLEY_ADDRESS_REG
+    data32=WRITE_SISLEY_REG | (0xFFFFFF&sisley_reg_address);
+    tmp = (uint8_t *)(&data32);
+    i2cdata[0] = I2C_AUTOTINCRREGS | VSCTRL_SISLEY_ADDRESS_REG;
+    i2cdata[1] = tmp[0];
+    i2cdata[2] = tmp[1];
+    i2cdata[3] = tmp[2];
+    i2cdata[4] = tmp[3];
+    write(fd, i2cdata, 5);
+
+    return (0);
+}
+
+int vVisionCtrl::EnablePower()
+{	uint8_t value_8bit;
+
+    // VSCTRL: Enable VDDA, VDDD and VDDC end keep out from reset MRRSTN
+    i2cRead(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+    value_8bit=value_8bit|(VSCTRL_ENABLE_VDDA);
+    // I repeat three times as suggested in sisley reference stuff...
+    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+
+    i2cRead(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+    value_8bit=value_8bit|(VSCTRL_DISABLE_TDRSTN);
+    // I repeat three times as suggested in sisley reference stuff...
+    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+
+    return (0);
+}
+
+void vVisionCtrl::SisleySetup() {
+    // printf("VSCTRL: Program all biases as specified in Datasheet\n");
+    // BiasSisleyProgramming(file_i2c);
+    printf("GEN3: Enable analog\n");
+    WriteSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x02);
+    printf("GEN3: Assert bgen_en\n");
+    WriteSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x12);
+    printf("GEN3: Assert bgen_rstn\n");
+    WriteSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x1A);
+    usleep(1000);
+}
+
+int vVisionCtrl::SetROI(int start, int size, xory_t coord, tdorem_t type)
+{
+	int limit;
+	int addr_offset;
+	int address;
+	int pixel;
+	int low, high;
+	int temp;
+	int i;
+
+	if (coord==X) {
+		if (size+start>SISLEY_CAM_X_SIZE)
+			return(-1);
+
+		limit=SISLEY_CAM_X_SIZE;
+		if (type==TD)
+			addr_offset=SISLEY_TD_ROI_X_OFFSET;
+		else
+			addr_offset=SISLEY_EM_ROI_X_OFFSET;
+	} else {
+		if (size+start>SISLEY_CAM_Y_SIZE)
+			return(-1);
+
+		limit=SISLEY_CAM_Y_SIZE;
+		if (type==TD)
+			addr_offset=SISLEY_TD_ROI_Y_OFFSET;
+		else
+			addr_offset=SISLEY_EM_ROI_Y_OFFSET;
+	}
+
+	address=-1;
+    for (pixel=0;pixel<limit;pixel+=32)
+    {	address++;
+        //printf("@%03X ", address*4+addr_offset);
+		low=pixel;
+		high=pixel+31;
+		//printf("Low: %d High:%d ", low, high);
+		if (start>high) {
+			//printf ("0x00000000\n");
+			WriteSisleyRegister(address*4+addr_offset, 0x00000000);
+
+			continue;
+		}
+		if ( (start>=low) && (start+size-1<=high) ) {
+			temp=0;
+			for (i=0;i<32;i++) {
+				if (i>=(start-low) && (i<=(start+size-1-low)))
+					temp=temp+(1<<i);
+			}
+			//printf ("0x%08X\n", temp);
+			WriteSisleyRegister(address*4+addr_offset, temp);
+			continue;
+		}
+		if ( (start>=low) && (start+size-1>=high) ) {
+			temp=0;
+			for (i=0;i<32;i++) {
+				if (i>=(start-low))
+					temp=temp+(1<<i);
+			}
+			//printf ("0x%08X\n", temp);
+			WriteSisleyRegister(address*4+addr_offset, temp);
+
+			continue;
+		}
+		if ( (start+size-1) > high ) {
+			//printf("0xFFFFFFFF\n");
+			WriteSisleyRegister(address*4+addr_offset, 0xFFFFFFFF);
+		}
+		if ( (start+size-1)<low ) {
+			//printf ("0x00000000\n");
+			WriteSisleyRegister(address*4+addr_offset, 0x00000000);
+			continue;
+		}
+		if ( (start+size-1)< high) {
+			temp=0;
+			for (i=0;i<32;i++) {
+				if (i<=(start+size-low-1))
+					temp=temp+(1<<i);
+			}
+			//printf ("0x%08X\n", temp);
+			WriteSisleyRegister(address*4+addr_offset, temp);
+			continue;
+		}
+    }
+    return (0);
+}
+
 bool vVisionCtrl::configure(bool verbose)
 {
     if(!configureRegisters())
@@ -166,7 +349,7 @@ bool vVisionCtrl::configureRegisters()
 
     // --- configure HSSAER --- //
     // --- this should be done only if we use HSSAER (with ATIS, SKIN, but not with SpiNNaker nor DVS)
-    valReg[0] =  CH_SAER_EN;     // enable ch0, ch1, ch2
+    valReg[0] =  VSCTRL_ENABLE_ALLCHANNELS;     // enable ch0, ch1, ch2
     valReg[1] = 0;          // reserved
     valReg[2] = 0;          // reserved
     valReg[3] = 0;          // reserved

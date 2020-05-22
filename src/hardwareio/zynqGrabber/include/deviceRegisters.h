@@ -38,6 +38,9 @@
 // aux i2c -- skin and other sensors (e.g. accelerometers)
 #define I2C_ADDRESS_AUX          0x1e
 
+#define TIMESTAMP32BIT          1
+#define TIMESTAMP24BIT          0
+
 #define AUTOINCR      0x80
 
 // --- addresses of the registers --- //
@@ -49,14 +52,30 @@
 #define VSCTRL_PAER_CNFG_ADDR    0x14
 #define VSCTRL_HSSAER_CNFG_ADDR  0x18
 #define VSCTRL_GTP_CNFG_ADDR     0x1C
+// Addresses 0x20, 0x24 and 0x28 change meaning from ATIS gen1 to gen3
+//ATIS gen1
 #define VSCTRL_BG_CNFG_ADDR      0x20
 #define VSCTRL_BG_PRESC_ADDR     0x24
 #define VSCTRL_BG_TIMINGS_ADDR   0x28
+//ATIS gen3
+#define VSCTRL_SISLEY_LDO_RSTN_REG 0x20
+#define VSCTRL_SISLEY_LDO_RSTN_REG1 0x21
+#define VSCTRL_SISLEY_DATA_REG     0x28
+#define VSCTRL_SISLEY_ADDRESS_REG  0x24
+
+
 #define VSCTRL_BG_EXP_CRC_ADDR   0x2C
 #define VSCTRL_BG_DATA_ADDR      0x30
 #define VSCTRL_RSVD_34_ADDR      0x34
 #define VSCTRL_GPO_ADDR          0x38
 #define VSCTRL_GPI_ADDR          0x3C
+
+
+#define VSCTRL_DSTCTRL_REG         0x11
+#define VSCTRL_G3_SYNSTHDATARATE_REG 0x12
+
+
+
 
 // --- default values for ATIS chip --- //
 
@@ -90,6 +109,85 @@
 #define ATIS_PDSHIFT 4
 #define ATIS_PDSTRENGTH 3
 #define ATIS_BIASSHIFT 32
+
+// --- default values for ATIS Gen3 chip --- //
+
+#define GEN3_RIGHT 					0x11
+#define VSCTRL_ENABLE_GEN3 			0x08
+#define VSCTRL_ENABLE_GEN3_TESTMODE	0x10
+#define VSCTRL_ENABLE_CHANNEL0      0x01
+#define VSCTRL_ENABLE_CHANNEL1      0x02
+#define VSCTRL_ENABLE_CHANNEL2      0x04
+#define VSCTRL_ENABLE_CHANNEL3      0x08
+#define VSCTRL_ENABLE_ALLCHANNELS   (VSCTRL_ENABLE_CHANNEL0 | VSCTRL_ENABLE_CHANNEL1 | \
+                                     VSCTRL_ENABLE_CHANNEL2 | VSCTRL_ENABLE_CHANNEL3 )
+#define VSCTRL_DESTINATION_PAER     0x0
+#define VSCTRL_DESTINATION_HSSAER   0x1
+#define VSCTRL_DESTINATION_GTP      0x2
+#define VSCTRL_ENABLETXON_PAER      0x1
+#define VSCTRL_ENABLETXON_HSSAER    0x2
+#define VSCTRL_ENABLETXON_GTP       0x4
+#define VSCTRL_FLUSH_FIFO           (0x1<<6)
+#define VSCTRL_ENABLE_CLK           0x1
+#define VSCTRL_DISABLE_CLK          0x0
+#define VSCTRL_ENABLE_VDDA          0x1
+#define VSCTRL_ENABLE_VDDC          0x2
+#define VSCTRL_ENABLE_VDDD          0x4
+#define VSCTRL_DISABLE_TDRSTN       0x40
+#define VSCTRL_DISABLE_TPRSTN       0x20
+#define VSCTRL_DISABLE_MRRSTN       0x10
+
+#define READ_SISLEY_REG  (0<<31)
+#define WRITE_SISLEY_REG (1<<31)
+
+#define I2C_AUTOTINCRREGS   0x80
+
+#define SISLEY_GLOBAL_CTRL_REG     0x00
+#define SISLEY_ROI_CTRL_REG        0x04
+#define SISLEY_READOUT_CTRL_REG    0x08
+#define SISLEY_TEST_BUS_CTRL_REG   0x0C
+#define SISLEY_CLK_SYNC_CTRL_REG   0x10
+#define SISLEY_CHIP_ID_REG         0x18
+#define SISLEY_SPARE_CTRL_REG	   0x1C
+
+#define SISLEY_BGEN0               0x100
+#define SISLEY_BGEN1               0x104
+#define SISLEY_BGEN2               0x108
+#define SISLEY_BGEN3               0x10C
+#define SISLEY_BGEN4               0x110
+#define SISLEY_BGEN5               0x114
+#define SISLEY_BGEN6               0x118
+#define SISLEY_BGEN7               0x11C
+#define SISLEY_BGEN8               0x120
+#define SISLEY_BGEN9               0x124
+#define SISLEY_BGEN10              0x128
+#define SISLEY_BGEN11              0x12C
+#define SISLEY_BGEN12              0x130
+#define SISLEY_BGEN13              0x134
+#define SISLEY_BGEN14              0x138
+#define SISLEY_BGEN15              0x13C
+#define SISLEY_BGEN16              0x140
+#define SISLEY_BGEN17              0x144
+#define SISLEY_BGEN18              0x148
+#define SISLEY_BGEN19              0x14C
+#define SISLEY_BGEN20              0x150
+#define SISLEY_BGEN21              0x154
+#define SISLEY_BGEN22              0x158
+#define SISLEY_BGEN23              0x15C
+#define SISLEY_BGEN24              0x160
+#define SISLEY_BGEN25              0x164
+#define SISLEY_BGEN26              0x168
+
+#define SISLEY_TD_ROI_X_OFFSET	   0x200
+#define SISLEY_TD_ROI_Y_OFFSET	   0x300
+#define SISLEY_EM_ROI_X_OFFSET	   0x400
+#define SISLEY_EM_ROI_Y_OFFSET	   0x500
+
+#define SISLEY_CAM_X_SIZE          640
+#define SISLEY_CAM_Y_SIZE          480
+
+#define COUPLES32BIT            80000
+#define DIFF_TIMESTAMP_SYSCLK   8
 
 // --- register VSCTRL_STATUS --- //
 
@@ -327,6 +425,15 @@ typedef struct {
     int auxspinn_rx_err;
 } hpu_hw_status_t;
 
+typedef enum {
+    TD,
+    EM,
+} tdorem_t;
+
+typedef enum {
+    X,
+    Y,
+} xory_t;
 
 // HPU CORE IOCTLS
 
