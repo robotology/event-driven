@@ -68,80 +68,97 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     if(lwo) logwriter << "ZYNQGRABBER RUNNING: " << curdate->tm_mday << "-" << curdate->tm_mon + 1 << "-" << curdate->tm_year+1900;
     if(lwo) logwriter << " " << curdate->tm_hour << ":" << curdate->tm_min << ":" << curdate->tm_sec << std::endl;
 
-
-    if(rf.check("visCtrlLeft")) {
+    const string &deviceType = rf.find("sensor").asString();
+    if (rf.check("visCtrlLeft")) {
 
         std::string visCtrlLeft = rf.find("visCtrlLeft").asString();
 
-        vsctrlMngLeft = vVisionCtrl(visCtrlLeft, I2C_ADDRESS_LEFT);
+        vsctrlMngLeft = vVisionCtrl(deviceType, visCtrlLeft, I2C_ADDRESS_LEFT);
         vsctrlMngLeft.useCurrentBias(iBias);
 
         //bias values
         yarp::os::Bottle biaslistl = rf.findGroup("ATIS_BIAS_LEFT");
 
-        if(!vsctrlMngLeft.setBias(biaslistl)) {
+        if (!vsctrlMngLeft.setBias(biaslistl)) {
             std::cerr << "Bias file required to run zynqGrabber" << std::endl;
-            if(lwo) logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
+            if (lwo)
+                logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl
+                          << std::endl;
             return false;
         }
         std::cout << std::endl;
-        if(!vsctrlMngLeft.connect())
-        {
+        if (!vsctrlMngLeft.connect()) {
             std::cerr << "Could not connect to vision controller left" << std::endl;
-            if(lwo) logwriter << "Could not connect to left camera" << std::endl;
+            if (lwo) logwriter << "Could not connect to left camera" << std::endl;
             return false;
         }
         vsctrlMngLeft.turnOnAPS(useAPS);
-        if(!vsctrlMngLeft.configure(verbose)) {
+        if (!vsctrlMngLeft.configure(verbose)) {
             std::cerr << "Could not configure left camera" << std::endl;
-            if(lwo) logwriter << "Could not configure left camera" << std::endl;
+            if (lwo) logwriter << "Could not configure left camera" << std::endl;
             return false;
         }
-        if(!rf.check("visLeftOn", yarp::os::Value(true)).asBool()) {
+        if (!rf.check("visLeftOn", yarp::os::Value(true)).asBool()) {
             yWarning() << "Left camera configured but initialised TURNED OFF";
             vsctrlMngLeft.suspend();
         }
-        if(lwo) logwriter << "Connected to and configured left camera" << std::endl;
+
+        if (rf.check("roi_x") && rf.check("roi_y") && rf.check("roi_width") && rf.check("roi_height")) {
+            int x = rf.find("roi_x").asInt();
+            int y = rf.find("roi_y").asInt();
+            int width = rf.find("roi_width").asInt();
+            int height = rf.find("roi_height").asInt();
+            vsctrlMngLeft.SisleyTDROIDefinition(x, y, width, height);
+        }
+        if (lwo) logwriter << "Connected to and configured left camera" << std::endl;
 
     }
 
 
-    if(rf.check("visCtrlRight")) {
+    if (rf.check("visCtrlRight")) {
 
         std::string visCtrlRight = rf.find("visCtrlRight").asString();
 
-        vsctrlMngRight = vVisionCtrl(visCtrlRight, I2C_ADDRESS_RIGHT);
+        vsctrlMngRight = vVisionCtrl(deviceType, visCtrlRight, I2C_ADDRESS_RIGHT);
         vsctrlMngRight.useCurrentBias(iBias);
 
         //bias values
         yarp::os::Bottle biaslistr = rf.findGroup("ATIS_BIAS_RIGHT");
 
-        if(!vsctrlMngRight.setBias(biaslistr)) {
+        if (!vsctrlMngRight.setBias(biaslistr)) {
             std::cerr << "Bias file required to run zynqGrabber" << std::endl;
-            if(lwo) logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
+            if (lwo)
+                logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl
+                          << std::endl;
             return false;
         }
         std::cout << std::endl;
-        if(!vsctrlMngRight.connect())
-        {
+        if (!vsctrlMngRight.connect()) {
             std::cerr << "Could not connect to vision controller Right" << std::endl;
-            if(lwo) logwriter << "Could not connect to Right camera" << std::endl;
+            if (lwo) logwriter << "Could not connect to Right camera" << std::endl;
             return false;
         }
         vsctrlMngRight.turnOnAPS(useAPS);
-        if(!vsctrlMngRight.configure(verbose)) {
+        if (!vsctrlMngRight.configure(verbose)) {
             std::cerr << "Could not configure Right camera" << std::endl;
-            if(lwo) logwriter << "Could not configure Right camera" << std::endl;
+            if (lwo) logwriter << "Could not configure Right camera" << std::endl;
             return false;
         }
-        if(!rf.check("visRightOn", yarp::os::Value(true)).asBool()) {
+        if (!rf.check("visRightOn", yarp::os::Value(true)).asBool()) {
             yWarning() << "Right camera configured but initialised TURNED OFF";
             vsctrlMngRight.suspend();
         }
-        if(lwo) logwriter << "Connected to and configured Right camera" << std::endl;
+
+        if (rf.check("roi_x") && rf.check("roi_y") && rf.check("roi_width") && rf.check("roi_height")) {
+            int x = rf.find("roi_x").asInt();
+            int y = rf.find("roi_y").asInt();
+            int width = rf.find("roi_width").asInt();
+            int height = rf.find("roi_height").asInt();
+            vsctrlMngLeft.SisleyTDROIDefinition(x, y, width, height);
+        }
+        if (lwo) logwriter << "Connected to and configured Right camera" << std::endl;
 
     }
-
 
     if(rf.check("skinCtrl")) {
 
@@ -195,17 +212,17 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
         string data_device = rf.find("dataDevice").asString();
         bool use_spinnaker = rf.check("use_spinnaker") &&
-                rf.check("use_spinnaker", yarp::os::Value(true)).asBool();
+                             rf.check("use_spinnaker", yarp::os::Value(true)).asBool();
         bool loopback = rf.check("loopback_debug") &&
-                rf.check("loopback_debug", yarp::os::Value(true)).asBool();
+                        rf.check("loopback_debug", yarp::os::Value(true)).asBool();
 
         if(!hpu.configureDevice(data_device, use_spinnaker, loopback))
             return false;
 
         bool read_flag = rf.check("hpu_read") &&
-                rf.check("hpu_read", yarp::os::Value(true)).asBool();
+                         rf.check("hpu_read", yarp::os::Value(true)).asBool();
         bool write_flag = rf.check("hpu_write") &&
-                rf.check("hpu_write", yarp::os::Value(true)).asBool();
+                          rf.check("hpu_write", yarp::os::Value(true)).asBool();
         int packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt();
 
         if(read_flag)
@@ -268,11 +285,11 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
     bool ok = false;
     bool rec = false; // is the command recognized?
     std::string helpMessage =  std::string(getName().c_str()) +
-            " commands are: \n" +
-            "help \n" +
-            "quit \n" +
-            "set thr <n> ... set the threshold \n" +
-            "(where <n> is an integer number) \n";
+                               " commands are: \n" +
+                               "help \n" +
+                               "quit \n" +
+                               "set thr <n> ... set the threshold \n" +
+                               "(where <n> is an integer number) \n";
 
     reply.clear();
 
@@ -286,224 +303,224 @@ bool zynqGrabberModule::respond(const yarp::os::Bottle& command,
     }
 
     switch (command.get(0).asVocab()) {
-    case COMMAND_VOCAB_HELP:
-        rec = true;
-    {
-        reply.addString("many");
-        reply.addString("help");
+        case COMMAND_VOCAB_HELP:
+            rec = true;
+            {
+                reply.addString("many");
+                reply.addString("help");
 
-        reply.addString("");
+                reply.addString("");
 
-        ok = true;
-    }
-        break;
-        //    case COMMAND_VOCAB_SUSPEND:
-        //        rec = true;
-        //    {
-        //        //D2Y.suspend();
-        //        std::cout << "Not implemented" << std::endl;
-        //        ok = true;
-        //    }
-        //        break;
-        //    case COMMAND_VOCAB_RESUME:
-        //        rec = true;
-        //    {
-        //        //D2Y.resume();
-        //        std::cout << "Not implemented" << std::endl;
-        //        ok = true;
-        //    }
-        //        break;
-    case COMMAND_VOCAB_GETBIAS:
-        rec = true;
-    {
-        std::string biasName = command.get(1).asString();
-        std::string channel = command.get(2).asString();
-
-        // setBias function
-        if (channel == "left") {
-            int val = vsctrlMngLeft.getBias(biasName);
-            if(val >= 0) {
-                reply.addString("Left: ");
-                reply.addString(biasName);
-                reply.addInt(val);
                 ok = true;
-            } else {
-                reply.addString("Left Unknown Bias");
-                ok = false;
             }
-        } else if (channel == "right") {
-            int val = vsctrlMngRight.getBias(biasName);
-            if(val >= 0) {
-                reply.addString("Right: ");
-                reply.addString(biasName);
-                reply.addInt(val);
-                ok = true;
-            } else {
-                reply.addString("Right Unknown Bias");
-                ok = false;
+            break;
+            //    case COMMAND_VOCAB_SUSPEND:
+            //        rec = true;
+            //    {
+            //        //D2Y.suspend();
+            //        std::cout << "Not implemented" << std::endl;
+            //        ok = true;
+            //    }
+            //        break;
+            //    case COMMAND_VOCAB_RESUME:
+            //        rec = true;
+            //    {
+            //        //D2Y.resume();
+            //        std::cout << "Not implemented" << std::endl;
+            //        ok = true;
+            //    }
+            //        break;
+        case COMMAND_VOCAB_GETBIAS:
+            rec = true;
+            {
+                std::string biasName = command.get(1).asString();
+                std::string channel = command.get(2).asString();
+
+                // setBias function
+                if (channel == "left") {
+                    int val = vsctrlMngLeft.getBias(biasName);
+                    if(val >= 0) {
+                        reply.addString("Left: ");
+                        reply.addString(biasName);
+                        reply.addInt(val);
+                        ok = true;
+                    } else {
+                        reply.addString("Left Unknown Bias");
+                        ok = false;
+                    }
+                } else if (channel == "right") {
+                    int val = vsctrlMngRight.getBias(biasName);
+                    if(val >= 0) {
+                        reply.addString("Right: ");
+                        reply.addString(biasName);
+                        reply.addInt(val);
+                        ok = true;
+                    } else {
+                        reply.addString("Right Unknown Bias");
+                        ok = false;
+                    }
+                } else if (channel == "") {
+                    int val = vsctrlMngLeft.getBias(biasName);
+                    if(val >= 0) {
+                        reply.addString("Left: ");
+                        reply.addString(biasName);
+                        reply.addInt(val);
+                        ok = true;
+                    } else {
+                        reply.addString("Left Unknown Bias");
+                        ok = false;
+                    }
+                    val = vsctrlMngRight.getBias(biasName);
+                    if(val >= 0) {
+                        reply.addString("Right: ");
+                        reply.addString(biasName);
+                        reply.addInt(val);
+                        ok = true & ok;
+                    } else {
+                        reply.addString("RightUnknown Bias");
+                        ok = false;
+                    }
+                }
+                else {
+                    std::cout << "unrecognised channel" << std::endl;
+                    ok = false;
+                }
             }
-        } else if (channel == "") {
-            int val = vsctrlMngLeft.getBias(biasName);
-            if(val >= 0) {
-                reply.addString("Left: ");
-                reply.addString(biasName);
-                reply.addInt(val);
-                ok = true;
-            } else {
-                reply.addString("Left Unknown Bias");
-                ok = false;
+            break;
+
+        case COMMAND_VOCAB_SETBIAS:
+            rec = true;
+            {
+                std::string biasName = command.get(1).asString();
+                unsigned int biasValue = command.get(2).asInt();
+                std::string channel = command.get(3).asString();
+
+                // setBias function
+                if (channel == "left"){
+                    vsctrlMngLeft.setBias(biasName, biasValue);
+                    ok = true;
+                } else if (channel == "right")
+                {
+                    vsctrlMngRight.setBias(biasName, biasValue);
+                    ok = true;
+                } else if (channel == "")
+                {
+                    vsctrlMngLeft.setBias(biasName, biasValue);
+                    vsctrlMngRight.setBias(biasName, biasValue);
+                    ok = true;
+                }
+                else {
+                    std::cout << "unrecognised channel" << std::endl;
+                    ok =false;
+                }
             }
-            val = vsctrlMngRight.getBias(biasName);
-            if(val >= 0) {
-                reply.addString("Right: ");
-                reply.addString(biasName);
-                reply.addInt(val);
-                ok = true & ok;
-            } else {
-                reply.addString("RightUnknown Bias");
-                ok = false;
+            break;
+        case COMMAND_VOCAB_PROG:
+            rec= true;
+            {
+                std::string channel = command.get(1).asString();
+
+                // progBias function
+                if (channel == "left"){
+                    vsctrlMngLeft.configureBiases();
+                    ok = true;
+                } else if (channel == "right")
+                {
+                    vsctrlMngRight.configureBiases();
+                    ok = true;
+                }
+                else if (channel == "")
+                {
+                    vsctrlMngLeft.configureBiases();
+                    vsctrlMngRight.configureBiases();
+                    ok = true;
+                } else {
+                    std::cout << "unrecognised channel" << std::endl;
+                    ok =false;
+                }
             }
-        }
-        else {
-            std::cout << "unrecognised channel" << std::endl;
-            ok = false;
-        }
-    }
-        break;
+            break;
+        case COMMAND_VOCAB_PWROFF:
+            rec= true;
+            {   std::string channel = command.get(1).asString();
 
-    case COMMAND_VOCAB_SETBIAS:
-        rec = true;
-    {
-        std::string biasName = command.get(1).asString();
-        unsigned int biasValue = command.get(2).asInt();
-        std::string channel = command.get(3).asString();
+                if (channel == "left"){
+                    vsctrlMngLeft.suspend();
+                    ok = true;
 
-        // setBias function
-        if (channel == "left"){
-            vsctrlMngLeft.setBias(biasName, biasValue);
-            ok = true;
-        } else if (channel == "right")
-        {
-            vsctrlMngRight.setBias(biasName, biasValue);
-            ok = true;
-        } else if (channel == "")
-        {
-            vsctrlMngLeft.setBias(biasName, biasValue);
-            vsctrlMngRight.setBias(biasName, biasValue);
-            ok = true;
-        }
-        else {
-            std::cout << "unrecognised channel" << std::endl;
-            ok =false;
-        }
-    }
-        break;
-    case COMMAND_VOCAB_PROG:
-        rec= true;
-    {
-        std::string channel = command.get(1).asString();
+                } else if (channel == "right") {
+                    vsctrlMngRight.suspend();
+                    ok = true;
+                } else if (channel == "") { // if channel is not specified power off both
+                    vsctrlMngRight.suspend();
+                    vsctrlMngLeft.suspend();
+                    ok = true;
+                } else {
+                    std::cout << "unrecognised channel" << std::endl;
+                    ok = false;
 
-        // progBias function
-        if (channel == "left"){
-            vsctrlMngLeft.configureBiases();
-            ok = true;
-        } else if (channel == "right")
-        {
-            vsctrlMngRight.configureBiases();
-            ok = true;
-        }
-        else if (channel == "")
-        {
-            vsctrlMngLeft.configureBiases();
-            vsctrlMngRight.configureBiases();
-            ok = true;
-        } else {
-            std::cout << "unrecognised channel" << std::endl;
-            ok =false;
-        }
-    }
-        break;
-    case COMMAND_VOCAB_PWROFF:
-        rec= true;
-    {   std::string channel = command.get(1).asString();
+                }
+            }
+            break;
 
-        if (channel == "left"){
-            vsctrlMngLeft.suspend();
-            ok = true;
+        case COMMAND_VOCAB_PWRON:
+            rec= true;
+            {   std::string channel = command.get(1).asString();
 
-        } else if (channel == "right") {
-            vsctrlMngRight.suspend();
-            ok = true;
-        } else if (channel == "") { // if channel is not specified power off both
-            vsctrlMngRight.suspend();
-            vsctrlMngLeft.suspend();
-            ok = true;
-        } else {
-            std::cout << "unrecognised channel" << std::endl;
-            ok = false;
+                if (channel == "left"){
+                    vsctrlMngLeft.activate();
+                    ok = true;
 
-        }
-    }
-        break;
+                } else if (channel == "right") {
+                    vsctrlMngRight.activate();
+                    ok = true;
+                } else if (channel == "") { // if channel is not specified power off both
+                    vsctrlMngRight.activate();
+                    vsctrlMngLeft.activate();
+                    ok = true;
+                } else {
+                    std::cout << "unrecognised channel" << std::endl;
+                    ok = false;
 
-    case COMMAND_VOCAB_PWRON:
-        rec= true;
-    {   std::string channel = command.get(1).asString();
+                }
+            }
+            break;
 
-        if (channel == "left"){
-            vsctrlMngLeft.activate();
-            ok = true;
+            //    case COMMAND_VOCAB_RST:
+            //        rec= true;
+            //    {   std::string channel = command.get(1).asString();
 
-        } else if (channel == "right") {
-            vsctrlMngRight.activate();
-            ok = true;
-        } else if (channel == "") { // if channel is not specified power off both
-            vsctrlMngRight.activate();
-            vsctrlMngLeft.activate();
-            ok = true;
-        } else {
-            std::cout << "unrecognised channel" << std::endl;
-            ok = false;
+            //        if (channel == "left"){
+            //            vsctrlMngLeft->chipReset();
+            //            ok = true;
 
-        }
-    }
-        break;
+            //        } else if (channel == "right") {
+            //            vsctrlMngRight->chipReset();
+            //            ok = true;
+            //        } else if (channel == "") { // if channel is not specified power off both
+            //            vsctrlMngRight->chipReset();
+            //            vsctrlMngLeft->chipReset();
+            //            ok = true;
+            //        } else {
+            //            std::cout << "unrecognised channel" << std::endl;
+            //            ok = false;
 
-        //    case COMMAND_VOCAB_RST:
-        //        rec= true;
-        //    {   std::string channel = command.get(1).asString();
+            //        }
+            //    }
+            //        break;
 
-        //        if (channel == "left"){
-        //            vsctrlMngLeft->chipReset();
-        //            ok = true;
-
-        //        } else if (channel == "right") {
-        //            vsctrlMngRight->chipReset();
-        //            ok = true;
-        //        } else if (channel == "") { // if channel is not specified power off both
-        //            vsctrlMngRight->chipReset();
-        //            vsctrlMngLeft->chipReset();
-        //            ok = true;
-        //        } else {
-        //            std::cout << "unrecognised channel" << std::endl;
-        //            ok = false;
-
-        //        }
-        //    }
-        //        break;
-
-    case COMMAND_VOCAB_SETSKIN:
-        rec = true;
-    {
-        if(!skctrlMng.configureRegisters(command.tail()))
-        {
-            std::cout << "unable to set skin register " << command.get(1).asString() << std::endl;
-            ok = false;
-        } else {
-            ok = true;
-        }
-    }
-        break;
+        case COMMAND_VOCAB_SETSKIN:
+            rec = true;
+            {
+                if(!skctrlMng.configureRegisters(command.tail()))
+                {
+                    std::cout << "unable to set skin register " << command.get(1).asString() << std::endl;
+                    ok = false;
+                } else {
+                    ok = true;
+                }
+            }
+            break;
 
     }
     if (!rec)

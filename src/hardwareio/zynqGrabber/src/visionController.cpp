@@ -27,10 +27,11 @@
 #include <sys/ioctl.h>
 #include <iostream>
 
-vVisionCtrl::vVisionCtrl(std::string deviceName, unsigned char i2cAddress)
+vVisionCtrl::vVisionCtrl(std::string deviceName, std::string deviceType, unsigned char i2cAddress)
 {
 
     fd = -1;
+    this->deviceType = deviceType;
     this->deviceName = deviceName;
     this->I2CAddress = i2cAddress;
 
@@ -167,10 +168,36 @@ int vVisionCtrl::WriteSisleyRegister(uint32_t sisley_reg_address, uint32_t sisle
     i2cdata[2] = tmp[1];
     i2cdata[3] = tmp[2];
     i2cdata[4] = tmp[3];
-    write(fd, i2cdata, 5);
+    return write(fd, i2cdata, 5) - 1 ; // -1 because of one is the starting register
 
-    return (0);
+
 }
+
+bool vVisionCtrl::configureBiaseseGen3() {
+
+    clearFpgaStatus("biasDone");
+    double vref, voltage;
+    std::string biasName;
+    int header;
+    size_t i;
+    for (i = 1; i < bias.size() - 1; i++) {
+        yarp::os::Bottle *biasdata = bias.get(i).asList();
+        biasName = biasdata->get(0).asString();
+        vref = biasdata->get(1).asInt();
+        header = biasdata->get(2).asInt();
+        voltage = biasdata->get(3).asInt();
+        uint32_t biasVal = 0;
+        if (iBias)
+            biasVal = voltage;
+        else
+            biasVal = 511 * (voltage / vref);
+        biasVal += header << 24;
+        if (WriteSisleyRegister(BIAS_LATCHOUT_OR_PU + i * 4, biasVal) != sizeof(biasVal))
+            return false;
+    }
+    return checkBiasProg();
+}
+
 
 int vVisionCtrl::EnablePower()
 {	uint8_t value_8bit;
@@ -194,8 +221,6 @@ int vVisionCtrl::EnablePower()
 }
 
 void vVisionCtrl::SisleySetup() {
-    // printf("VSCTRL: Program all biases as specified in Datasheet\n");
-    // BiasSisleyProgramming(file_i2c);
     printf("GEN3: Enable analog\n");
     WriteSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x02);
     printf("GEN3: Assert bgen_en\n");
@@ -307,7 +332,15 @@ bool vVisionCtrl::configure(bool verbose)
 
 bool vVisionCtrl::configureRegisters()
 {
+    if (deviceType == "ATIS")
+        return configureRegistersGen1();
+    else if (deviceType == "ATISGen3")
+        return configureRegistersGen3();
 
+    return false;
+}
+
+bool vVisionCtrl::configureRegistersGen1() {
     unsigned char valReg[4];
 
     // --- configure BG Timings --- //
@@ -348,7 +381,7 @@ bool vVisionCtrl::configureRegisters()
     if(i2cWrite(VSCTRL_SRC_DST_CTRL_ADDR, valReg, 4) < 0) return false;
 
     // --- configure HSSAER --- //
-    // --- this should be done only if we use HSSAER (with ATIS, SKIN, but not with SpiNNaker nor DVS)
+// --- this should be done only if we use HSSAER (with ATIS, SKIN, but not with SpiNNaker nor DVS)
     valReg[0] =  VSCTRL_ENABLE_ALLCHANNELS;     // enable ch0, ch1, ch2
     valReg[1] = 0;          // reserved
     valReg[2] = 0;          // reserved
@@ -363,6 +396,43 @@ bool vVisionCtrl::configureRegisters()
     if(i2cWrite(VSCTRL_GPO_ADDR, valReg, 4) < 0) return false;
 
     return true;
+}
+
+bool vVisionCtrl::configureRegistersGen3() {
+    SetupVSCTRLinHSSAERmode();
+    SisleySetup();
+    EnablePower();
+}
+
+bool vVisionCtrl::SisleyTDROIDefinition(int x, int y, int width, int height) {
+ // Set TD ROI of 400x400 starting from pixel (220,140)
+    if (SetROI(x, width, X, TD)) {
+		printf("Error in defining TD X ROI\n");
+		return false;
+	}
+    if (SetROI(y, height, Y, TD)) {
+		printf("Error in defining TD Y ROI\n");
+		return false;
+	}
+	// Enable TD ROI and trigger trasnfer values to the shadow registers
+ 	WriteSisleyRegister(SISLEY_ROI_CTRL_REG, 0x0000002E);
+	WriteSisleyRegister(SISLEY_ROI_CTRL_REG, 0x0000000E);
+}
+
+void vVisionCtrl::SetupVSCTRLinHSSAERmode() {
+    uint32_t data32;
+	// VSCTRL: Enable clock
+	data32=VSCTRL_ENABLE_CLK;
+	i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG1, (uint8_t *)&data32, 1);
+	// VSCTRL: Enable 4 HSSAER channels
+	data32=VSCTRL_ENABLE_ALLCHANNELS;
+	i2cWrite(VSCTRL_HSSAER_CNFG_ADDR, (uint8_t *)&data32, 1);
+	// VSCTRL: Select HSSAER as destination and Enable HSSAER
+	data32=(VSCTRL_DESTINATION_HSSAER<<4) | (VSCTRL_ENABLETXON_HSSAER<<0);
+	i2cWrite(VSCTRL_DSTCTRL_REG, (uint8_t *)&data32, 1);
+	// VSCTRL: Flush Fifo
+	data32=VSCTRL_FLUSH_FIFO;
+	i2cWrite(VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1);
 }
 
 bool vVisionCtrl::setBias(yarp::os::Bottle bias)
@@ -414,7 +484,13 @@ bool vVisionCtrl::activateAPSShutter()
 }
 
 bool vVisionCtrl::configureBiases(){
+    if (this->deviceType == "ATIS")
+        return configureBiasesGen1();
+    else if (this->deviceType == "ATISGen3")
+        return configureBiaseseGen3();
+}
 
+bool vVisionCtrl::configureBiasesGen1() {
     clearFpgaStatus("biasDone");
 
     suspend();
@@ -431,7 +507,7 @@ bool vVisionCtrl::configureBiases(){
     if(!setShiftCount(ATIS_BIASSHIFT))
         return false;
 
-    std::cout << "Programming " << bias.size()-1 << " biases:" << std::endl;
+    std::cout << "Programming " << bias.size() - 1 << " biases:" << std::endl;
     double vref, voltage;
     int header;
     size_t i;
@@ -451,7 +527,7 @@ bool vVisionCtrl::configureBiases(){
             return false;
     }
     //set the latch true for the last bias
-    //i = bias.size()
+//i = bias.size()
     if(!setLatchAtEnd(true)) return false;
     yarp::os::Bottle *biasdata = bias.get(i).asList();
     vref = biasdata->get(1).asInt();
@@ -466,9 +542,10 @@ bool vVisionCtrl::configureBiases(){
     //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
     if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
         return false;
+    return checkBiasProg();
+}
 
-    // --- checks --- //
-
+bool vVisionCtrl::checkBiasProg() {
     getFpgaStatus();
     int count = 0;
     while (!fpgaStat.biasDone & (count <= 10000)){
@@ -490,7 +567,6 @@ bool vVisionCtrl::configureBiases(){
     activate();
 
     return true;
-
 }
 
 bool vVisionCtrl::setShiftCount(uint8_t shiftCount){
@@ -640,6 +716,9 @@ void vVisionCtrl::printConfiguration()
     printf("GPI: 0x%08X\n", regval);
 
 }
+
+
+
 
 
 

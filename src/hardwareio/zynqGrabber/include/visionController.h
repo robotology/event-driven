@@ -43,6 +43,7 @@ private:
 
     //PARAMETERS
     std::string deviceName;
+    std::string deviceType;
     unsigned char I2CAddress;
 
     //INTERNAL VARIABLES
@@ -61,6 +62,14 @@ private:
     void SisleySetup();
     int SetROI(int start, int size, xory_t coord, tdorem_t type);
 
+    bool configureBiaseseGen3();
+    bool configureBiasesGen1();
+
+    bool configureRegistersGen1();
+    bool configureRegistersGen3();
+
+    void SetupVSCTRLinHSSAERmode();
+
     //WRAPPERS?
     bool configureRegisters(); //new initDevice
 
@@ -70,10 +79,12 @@ private:
     int getFpgaStatus();
     bool clearFpgaStatus(std::string clr);
 
+    bool checkBiasProg();
+
 public:
 
     //REQUIRE: devicefilename, chiptype (eg DVS/ATIS), chipFPGAaddress (eg LEFT or RIGHT)
-    vVisionCtrl(std::string deviceName = "", unsigned char i2cAddress = 0);
+    vVisionCtrl(std::string deviceName = "", std::string deviceType = "", unsigned char i2cAddress = 0);
 
     //SET/GET CONFIGURATION
     bool setBias(std::string biasName, unsigned int biasValue);
@@ -92,9 +103,11 @@ public:
 
     //COMMANDS
     bool configureBiases();
+    bool SisleyTDROIDefinition(int x, int y, int width, int height);
 
     //DEBUG OUTPUTS
     void printConfiguration(void); // bias file, void dumpRegisterValues();
+
 
 };
 
