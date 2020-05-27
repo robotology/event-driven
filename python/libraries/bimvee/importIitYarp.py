@@ -282,6 +282,7 @@ def importIitYarpBinaryDataLog(**kwargs):
         file.seek(importFromByte)
         if importMaxBytes is not None:
             events = file.read(importMaxBytes)
+            #TODO: check if importMaxBytes is "feasible" (not beyond the file size)?
         else:
             events = file.read()
         events = np.frombuffer(events, np.uint32)
@@ -439,6 +440,7 @@ def importIitYarpDataLog(**kwargs):
                     currentPointer = file.tell()
             found = pattern.match(line)
             if found is None:
+                line = file.readline()
                 continue
             # The following values would be useful for indexing the input file:
             #bottlenumber = np.uint32(found[1])
@@ -446,6 +448,7 @@ def importIitYarpDataLog(**kwargs):
             bottleType = found[3]
             if bottleType not in ['AE', 'IMUS', 'LAE', 'FLOW']:
                 print(bottleType)
+                line = file.readline()
                 continue
             try:
                 events = np.array(found[4].split(' '), dtype=np.uint32)
@@ -470,6 +473,7 @@ def importIitYarpDataLog(**kwargs):
                     appendBatch(dvs, dvsBatch)
                 appendBatch(samples, samplesBatch)
             except ValueError: # sometimes finding malformed packets at the end of files - ignoring
+                line = file.readline()
                 continue
             line = file.readline()
 
