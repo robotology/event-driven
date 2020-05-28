@@ -71,19 +71,19 @@ def plotImu(inDict, **kwargs):
     axesMag.legend(['x', 'y', 'z'])
 
 #-----------------------------------------------------------------------------------------------------
-def plotImuDistribution(imuDict, unitIMU, fig_path, fig_name, fig_subtitle=None):
+def plotImuDistribution(imuDict, unitIMU='FPGA', fig_path=None, fig_name=None, fig_subtitle=None):
     """
-    Plot the distribution of the IMU data in imuDict and save the generated
-    figure as fig_name.png at the location defined by fig_path.
+    Plot the distribution of the IMU data in imuDict. If specified, save the
+    generated figure as fig_name.png at the location defined by fig_path.
 
     Arguments:
         imuDict {dict} -- dictionary of IMU data (as formatted by bimvee)
-        unitIMU {string} -- either 'FPGA' or 'SI'
-        fig_path {string} -- save path for the generated figure
-        fig_name {string} -- name of the generated figure
 
     Keyword Arguments:
-        fig_subtitle {string} -- optional figure sub-title (default: {None})
+        unitIMU {str} -- either 'FPGA' or 'SI' (default: {'FPGA'})
+        fig_path {string} -- save path for the generated figure (default: {None})
+        fig_name {string} -- name of the generated figure (default: {None})
+        fig_subtitle {string} -- figure sub-title (default: {None})
     """
     fig = plt.figure(figsize=(14.0, 10.0))
     if isinstance(fig_subtitle, str):
@@ -141,6 +141,9 @@ def plotImuDistribution(imuDict, unitIMU, fig_path, fig_name, fig_subtitle=None)
     else:
         fig.subplots_adjust(top=0.9)
 
-    plt.savefig(os.path.join(fig_path, fig_name + '.png'), dpi=300, bbox_inches='tight')
-    print("Saving " + fig_name + ".png")
-    plt.close()
+    if isinstance(fig_path, str) and isinstance(fig_name, str): 
+        plt.savefig(os.path.join(fig_path, fig_name + '.png'), dpi=300, bbox_inches='tight')
+        print("Saving " + fig_name + ".png")
+        plt.close()
+    else:
+        plt.show()

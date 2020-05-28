@@ -31,18 +31,18 @@ retro_palette     = ['#601A4A', '#EE442F', '#63ACBE', '#F9F4EC']
 corporate_palette = ['#8DB8AD', '#EBE7E0', '#C6D4E1', '#44749D']
 
 #-----------------------------------------------------------------------------------------------------
-def plotFlow(flowDict, fig_path, fig_name, fig_subtitle=None):
+def plotFlow(flowDict, fig_path=None, fig_name=None, fig_subtitle=None):
     """
-    Plot the FLOW events in flowDict against the time.
-    Then, save the generated figure as fig_name.png at the location defined by fig_path.
+    Plot the FLOW events in flowDict against the time. If specified, save the
+    generated figure as fig_name.png at the location defined by fig_path.
 
     Arguments:
         flowDict {dict} -- dictionary of FLOW events as formatted by bimvee from event-driven library
-        fig_path {string} -- save path for the generated figure
-        fig_name {string} -- name of the generated figure
 
     Keyword Arguments:
-        fig_subtitle {string} -- optional figure sub-title (default: {None})
+        fig_path {string} -- save path for the generated figure (default: {None})
+        fig_name {string} -- name of the generated figure (default: {None})
+        fig_subtitle {string} -- figure sub-title (default: {None})
     """
     fig = plt.figure(figsize=(16.0, 10.0))
     if isinstance(fig_subtitle, str):
@@ -63,7 +63,6 @@ def plotFlow(flowDict, fig_path, fig_name, fig_subtitle=None):
     plt.ylabel('Vy [px/s]', fontsize=10, fontweight='bold')
     plt.grid(True)
 
-    # fig.tight_layout(pad=8, h_pad=2.0, w_pad=None)
     fig.tight_layout()
     if isinstance(fig_subtitle, str):
         fig.subplots_adjust(top=0.9)
@@ -72,23 +71,26 @@ def plotFlow(flowDict, fig_path, fig_name, fig_subtitle=None):
 
     fig.align_ylabels()
 
-    plt.savefig(os.path.join(fig_path, fig_name + ".png"), dpi=300, bbox_inches='tight')
-    print("Saving " + fig_name + ".png")
-    plt.close()
+    if isinstance(fig_path, str) and isinstance(fig_name, str):
+        plt.savefig(os.path.join(fig_path, fig_name + ".png"), dpi=300, bbox_inches='tight')
+        print("Saving " + fig_name + ".png")
+        plt.close()
+    else:
+        plt.show()
 
 #-----------------------------------------------------------------------------------------------------
-def plotFlowDistribution(flowDict, fig_path, fig_name, fig_subtitle=None):
+def plotFlowDistribution(flowDict, fig_path=None, fig_name=None, fig_subtitle=None):
     """
     Plot the distribution of the FLOW events in flowDict and save the generated
     figure as fig_name.png at the location defined by fig_path.
 
     Arguments:
         flowDict {dict} -- dictionary of FLOW events as formatted by bimvee from event-driven library
-        fig_path {string} -- save path for the generated figure
-        fig_name {string} -- name of the generated figure
 
     Keyword Arguments:
-        fig_subtitle {string} -- optional figure sub-title (default: {None})
+        fig_path {string} -- save path for the generated figure (default: {None})
+        fig_name {string} -- name of the generated figure (default: {None})
+        fig_subtitle {string} -- figure sub-title (default: {None})
     """
     fig = plt.figure(figsize=(14.0, 10.0))
     if isinstance(fig_subtitle, str):
@@ -110,6 +112,9 @@ def plotFlowDistribution(flowDict, fig_path, fig_name, fig_subtitle=None):
     else:
         fig.subplots_adjust(top=0.95)
 
-    plt.savefig(os.path.join(fig_path, fig_name + '.png'), dpi=300, bbox_inches='tight')
-    print("Saving " + fig_name + ".png")
-    plt.close()
+    if isinstance(fig_path, str) and isinstance(fig_name, str):
+        plt.savefig(os.path.join(fig_path, fig_name + '.png'), dpi=300, bbox_inches='tight')
+        print("Saving " + fig_name + ".png")
+        plt.close()
+    else:
+        plt.show()
