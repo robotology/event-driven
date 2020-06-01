@@ -2,6 +2,7 @@
 """
 Copyright (C) 2019 Event-driven Perception for Robotics
 Authors: Sim Bamford
+         Aiko Dinale
 This program is free software: you can redistribute it and/or modify it under 
 the terms of the GNU General Public License as published by the Free Software 
 Foundation, either version 3 of the License, or (at your option) any later version.
@@ -101,7 +102,7 @@ def splitByLabel(inDict, labelName, outList=False):
             outDictParent[label] = outDict
         return outDictParent
 
-''' 
+'''
 receives a dict containing (probably) dvs events
 returns a dict containing two dicts, labelled 0 and 1, for the polarities found
 Although redundant, the pol field is maintained within each dict for compatibility
@@ -122,7 +123,7 @@ def splitByPolarity(inDict):
             outDict['1'][key] = inDict[key]
     return outDict
 
-''' 
+'''
 expecting startTime, stopTime or both
 If given a single dataType dict, will just cut down all arrays by masking on the ts array. 
 If given a larger container, will split down all that it finds, realigning timestamps.
@@ -240,7 +241,7 @@ def cropSpaceFrame(inDict, **kwargs):
         return inDict
     framesCropped = [frame[minY:maxY+1, minX:maxX+1] for frame in inDict['frame']]
     return{**inDict, 'frame': framesCropped}
-    
+
 def cropSpace(inDict, **kwargs):
     if isinstance(inDict, list):
         return [cropSpace(inDictInst, **kwargs) for inDictInst in inDict]
@@ -251,7 +252,7 @@ def cropSpace(inDict, **kwargs):
             outDict['data'][channelName] = {}
             for dataTypeName in inDict['data'][channelName].keys():
                 outDict['data'][channelName][dataTypeName] = cropSpace(inDict['data'][channelName][dataTypeName], **kwargs)
-        # TODO: consider rezeroing space        
+        # TODO: consider rezeroing space
         return outDict
     elif 'x' in inDict and 'y' in inDict:
         return cropSpaceXYArrays(inDict, **kwargs)
@@ -268,9 +269,60 @@ def cropSpace(inDict, **kwargs):
 # synonyms
 def cropSpatial(inDict, **kwargs):
     return cropSpace(inDict, **kwargs)
-    
+
 # synonyms
 def cropTemporal(inDict, **kwargs):
     return cropTime(inDict, **kwargs)
-    
-    
+
+#-----------------------------------------------------------------------------------------------------
+def groupFlowTimeWindow(flowData, timeWindow):
+    """
+    Group the FLOW events based on a user-defined time window.
+
+    Arguments:
+        flowData {dict} -- dictionary of FLOW events as formatted by bimvee from event-driven library
+        timeWindow {float} -- user-defined time window
+
+    Returns:
+        [list] -- list of dictionaries of the grouped FLOW events
+    """
+    flowDataGrouped = []
+    timeWindowCount = int(round((max(flowData['ts']) - min(flowData['ts']))/timeWindow))
+    for twc in range(0, timeWindowCount):
+        flowDataCroppedTime = cropTime(flowData,
+                                       startTime = flowData['ts'][0] + timeWindow * twc,
+                                       stopTime = flowData['ts'][0] + timeWindow * (twc + 1),
+                                       zeroTime = False)
+
+        if len(flowDataCroppedTime['ts']) != 0:
+            flowDataCroppedTime.update({'numSamples': len(flowDataCroppedTime['ts']), 'twc': twc})
+            flowDataGrouped.append(flowDataCroppedTime)
+
+    return flowDataGrouped
+
+#-----------------------------------------------------------------------------------------------------
+def groupImuTimeWindow(imuData, timeWindow, flowData):
+    """
+    Group the IMU samples based on a user-defined time window, and taking also into account the FLOW events time windows.
+
+    Arguments:
+        imuData {dict} -- dictionary of IMU samples as formatted by bimvee from the event-driven library
+        timeWindow {float} -- user-defined time window
+        flowData {dict} -- dictionary of FLOW events as formatted by bimvee from the event-driven library
+
+    Returns:
+        [list] -- list of dictionaries of the grouped IMU samples
+    """
+    imuDataGrouped = []
+    timeWindowCount = int(round((max(imuData['ts']) - min(imuData['ts']))/timeWindow))
+    for twc in range(0, timeWindowCount):
+        imuDataCroppedTime = cropTime(imuData,
+                                      startTime = flowData['ts'][0] + timeWindow * twc,
+                                      stopTime = flowData['ts'][0] + timeWindow * (twc + 1),
+                                      zeroTime = False)
+
+        if len(imuDataCroppedTime['ts']) != 0:
+            imuDataCroppedTime.update({'numSamples': len(imuDataCroppedTime['ts']), 'twc': twc})
+            imuDataGrouped.append(imuDataCroppedTime)
+
+    return imuDataGrouped
