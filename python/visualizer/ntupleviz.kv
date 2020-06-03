@@ -136,15 +136,21 @@
 <Viewer>
     image: image
     spacing: 5
-    Label:
-        text: root.title
+    BoxLayout:
         size_hint: 1, 0.1
-        id: title
-        halign: 'center'
+        Label:
+            text: 'Channel: ' + root.title
+            id: title
+            halign: 'center'
+#        Label:
+#            text: 'Image size: ' + str(image.texture_size)
+#            id: texture_size_label
+#            halign: 'center'
     Image:
         id: image
         allow_stretch: True
         on_size: root.on_data
+        keep_ratio: True
 
 <ControlButton@ButtonBehavior+Image>
 
@@ -189,6 +195,15 @@
                 max: -0.693
                 value: -3.507
                 log_value: np.exp(tw_slider.value)
+            ConfigLabel:
+                text: 'Spacing {}'.format(spacing_slider.value)
+            ConfigSlider:
+                #disabled: not hasattr(data_controller.data_dict, 'data')
+                id: spacing_slider
+                step: 1
+                min: 0
+                max: 300
+                value: 50
         GridLayout:
             cols: 2
             id: controls
@@ -249,6 +264,7 @@
             id: data_controller
             size_hint: 1, .9
             orientation: 'horizontal'
+            spacing: spacing_slider.value
             file_path_and_name: ''
             time_value: time_slider.value
             on_time_value: self.update_children()

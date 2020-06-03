@@ -17,11 +17,9 @@ Collection of possible Viewers that can be spawned in the main app window. Each 
 a visualiser which is responsible for the data management and retrieval.
 """
 
-from imageio import imread
 import numpy as np
 import re
 from kivy.graphics.texture import Texture
-from kivy.uix.spinner import Spinner
 from kivy.uix.widget import Widget
 from kivy.uix.slider import Slider
 from kivy.uix.checkbox import CheckBox
@@ -117,6 +115,7 @@ class Viewer(BoxLayout):
                 slider.bind(value=self.on_settings_change)
             elif settings_dict[key]['type'] == 'value_list':
                 parent_widget.add_widget(Label(text=key))
+                from kivy.uix.spinner import Spinner
                 spinner = Spinner(text=settings_dict[key]['default'],
                                   values=settings_dict[key]['values'],
                                   id=key)

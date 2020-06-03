@@ -201,6 +201,7 @@ class VisualiserOpticFlow(Visualiser):
     data_type = 'flowMap'
 
     def __init__(self, data):
+        self.colorwheel = self.make_colorwheel()  # shape [55x3]
         self.set_data(data)
 
     def set_data(self, data):
@@ -300,8 +301,7 @@ class VisualiserOpticFlow(Visualiser):
             np.ndarray: Flow visualization image of shape [H,W,3]
         """
         flow_image = np.zeros((u.shape[0], u.shape[1], 3), np.uint8)
-        colorwheel = self.make_colorwheel()  # shape [55x3]
-        ncols = colorwheel.shape[0]
+        ncols = self.colorwheel.shape[0]
         rad = np.sqrt(np.square(u) + np.square(v))
         a = np.arctan2(-v, -u) / np.pi
         fk = (a + 1) / 2 * (ncols - 1)
@@ -309,8 +309,8 @@ class VisualiserOpticFlow(Visualiser):
         k1 = k0 + 1
         k1[k1 == ncols] = 0
         f = fk - k0
-        for i in range(colorwheel.shape[1]):
-            tmp = colorwheel[:, i]
+        for i in range(self.colorwheel.shape[1]):
+            tmp = self.colorwheel[:, i]
             col0 = tmp[k0] / 255.0
             col1 = tmp[k1] / 255.0
             col = (1 - f) * col0 + f * col1
