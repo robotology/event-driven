@@ -157,7 +157,6 @@ class DataController(GridLayout):
             child.get_frame(self.time_value, self.time_window)
 
     def add_viewer_and_resize(self, data_dict, channel_name=''):
-        new_viewer = Viewer()
         visualisers = []
         settings = {}
         for data_type in data_dict.keys():
@@ -227,12 +226,14 @@ class DataController(GridLayout):
                 print("Warning! {} is not a recognized data type. Ignoring.".format(data_type))
                 continue
             visualisers.append(visualiser)
-        new_viewer.title = channel_name
-        new_viewer.visualisers = visualisers
-        new_viewer.settings = settings
-        self.add_widget(new_viewer)
+        if visualisers:
+            new_viewer = Viewer()
+            new_viewer.title = channel_name
+            new_viewer.visualisers = visualisers
+            new_viewer.settings = settings
+            self.add_widget(new_viewer)
 
-        self.cols = int(np.ceil(np.sqrt(len(self.children))))
+            self.cols = int(np.ceil(np.sqrt(len(self.children))))
 
     def add_viewer_for_each_channel_and_data_type(self, in_dict, seen_keys=[], recursionDepth=0):
         if isinstance(in_dict, list):

@@ -195,15 +195,6 @@
                 max: -0.693
                 value: -3.507
                 log_value: np.exp(tw_slider.value)
-            ConfigLabel:
-                text: 'Spacing {}'.format(spacing_slider.value)
-            ConfigSlider:
-                #disabled: not hasattr(data_controller.data_dict, 'data')
-                id: spacing_slider
-                step: 1
-                min: 0
-                max: 300
-                value: 50
         GridLayout:
             cols: 2
             id: controls
@@ -264,7 +255,7 @@
             id: data_controller
             size_hint: 1, .9
             orientation: 'horizontal'
-            spacing: spacing_slider.value
+            spacing: 50
             file_path_and_name: ''
             time_value: time_slider.value
             on_time_value: self.update_children()
