@@ -156,6 +156,11 @@ void vIPT::setProjectedImageSize(int height, int width)
     size_shared.width = width;
 }
 
+
+const cv::Mat& vIPT::getQ(){
+    return Q;
+}
+
 bool vIPT::configure(const string calibContext, const string calibFile, int size_scaler)
 
 {
@@ -184,7 +189,8 @@ bool vIPT::configure(const string calibContext, const string calibFile, int size
         yInfo() << "Camera 0 and Camera 1 is and Extrinsic parameters exist - creating rectified transforms";
         //compute stereo + rectification
 
-        cv::Mat Q(4, 4, CV_64FC1);
+        Q = cv::Mat(4, 4, CV_64FC1);
+
         //Computing homographies for left and right image
         cv::stereoRectify(cam_matrix[0], dist_coeff[0], cam_matrix[1],
                 dist_coeff[1], size_cam[0], stereo_rotation, stereo_translation,

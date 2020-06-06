@@ -19,16 +19,15 @@ including but not limited to:
 - Camera calibration info is also imported from e.g. ros (cam) 
 
 Aim is to include, in reverse order of importance:
-IIT YARP .log - ATIS Gen1 - 24 bit (incl. IMU, SKIN?)
-rpg_dvs_ros - DVS/DAVIS .bag
-Penn MvSEC (by using the above rosbag import)
-Intel realsense 265 (by using the above rosbag import)
-Vicon - as dumped by yarpDumper; maybe also c3d?
-INI jAER / cAER .aedat (v1/2/3) DVS / DAVIS / Cochlea 
-(there is legacy code for this from "aedattools" repo)
-Samsung (SEC) Gen3 VGA .bin
-Celex v5 .bin
-Maybe Prophesee raw?
+- IIT YARP .log - ATIS Gen1 - 24 bit (incl. IMU, SKIN?)
+- rpg_dvs_ros - DVS/DAVIS .bag
+- Penn MvSEC (by using the above rosbag import)
+- Intel realsense 265 (by using the above rosbag import)
+- Vicon - as dumped by yarpDumper; maybe also c3d?
+- INI jAER / cAER .aedat (v1/2/3) DVS / DAVIS / Cochlea (there is legacy code for this from "aedattools" repo)
+- Samsung (SEC) Gen3 VGA .bin
+- Celex v5 .bin
+- Maybe Prophesee raw?
 
 # Contents of library
 
@@ -118,6 +117,7 @@ Notably, rosbag import is achieved without needing a ros installation.
 Beyond the python standard library, the main dependencies are:
 
 - numpy
+- tqdm (for progress bars during import and export functions)
 
 For the 'plot' family of visualisation functions:
 
@@ -129,12 +129,6 @@ without reference to matplotlib, for rendering by an external application.
 
 plotDvsLastTs uses rankdata from scipy; however if it's not installed, 
 it defaults to a local definition; scipy is therefore an optional dependency.
-
-import and export functions give progress bars using:
-
-- tqdm
-
-If this is not installed, a local tqdm module allows the library to function regardless. 
 
 # Type definitions
 

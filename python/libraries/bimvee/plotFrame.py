@@ -38,25 +38,30 @@ def roundToSf(x, sig=3):
     except ValueError: # log of zero
         return 0
 
-def plotFrame(inDict, **kwargs):
-    if isinstance(inDict, list):
-        for inDictInst in inDict:
-            plotFrame(inDictInst, **kwargs)
+def plotFrame(inDicts, **kwargs):
+    if isinstance(inDicts, list):
+        for inDict in inDicts:
+            plotFrame(inDict, **kwargs)
         return
-    if 'info' in inDict:
-        fileName = inDict['info'].get('filePathOrName', '')
-        print('plotFrame was called for file ' + fileName)
-        if not inDict['data']:
-            print('The import contains no data.')
-            return
-        for channelName in inDict['data']:
-            channelData = inDict['data'][channelName]
-            if 'frame' in channelData and len(channelData['frame']['ts']) > 0:
-                kwargs['title'] = ' '.join([fileName, str(channelName)])
-                plotFrame(channelData['frame'], **kwargs)
-            else:
-                print('Channel ' + channelName + ' skipped because it contains no frame data')
-        return    
+    else:
+        inDict = inDicts
+    if not isinstance(inDict, dict):
+        return
+    if 'ts' not in inDict:
+        title = kwargs.pop('title', '')
+        if 'info' in inDict and isinstance(inDict, dict):
+            fileName = inDict['info'].get('filePathOrName')
+            if fileName is not None:
+                print('plotFrame was called for file ' + fileName)
+                title = (title + ' ' + fileName).lstrip()
+        for key in inDict.keys():
+            kwargs['title'] = (title + ' ' + key).lstrip()
+            plotFrame(inDict[key], **kwargs)
+        return
+    # From this point onwards, it's a data-type container
+    if 'frames' not in inDict:
+        return
+    # From this point onwards, it's a frame data-type container
     distributeBy = kwargs.get('distributeBy', 'time').lower()
     numPlots = kwargs.get('numPlots', 6)
     

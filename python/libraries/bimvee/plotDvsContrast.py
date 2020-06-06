@@ -41,27 +41,32 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import log10, floor
 
+
 def roundToSf(x, sig=3):
     try:
-        return round(x, sig-int(floor(log10(abs(x))))-1)
-    except ValueError: # log of zero
+        return round(x, sig - int(floor(log10(abs(x)))) - 1)
+    except ValueError:  # log of zero
         return 0
+
 
 '''
 nomenclature:
     idx = index
     ids = indices
 '''
+
+
 def idsEventsInTimeRange(events, **kwargs):
     startTime = kwargs.get('startTime', kwargs.get('minTime', kwargs.get('beginTime', events['ts'][0])))
     endTime = kwargs.get('stopTime', kwargs.get('maxTime', kwargs.get('endTime', events['ts'][-1])))
     # The following returns logical indices
-    #return (events['ts'] >= startTime) & (events['ts'] < endTime)
+    # return (events['ts'] >= startTime) & (events['ts'] < endTime)
     # Alternatively, search for the start and end indices, then return a range
     # This might be faster, given that the ts array is already sorted
     startIdx = np.searchsorted(events['ts'], startTime)
     endIdx = np.searchsorted(events['ts'], endTime)
     return range(startIdx, endIdx)
+
 
 def getEventsInTimeRange(events, **kwargs):
     ids = kwargs.get('ids', idsEventsInTimeRange(events, **kwargs))
@@ -69,14 +74,15 @@ def getEventsInTimeRange(events, **kwargs):
         'y': events['y'][ids],
         'x': events['x'][ids],
         'pol': events['pol'][ids]
-        }
+    }
+
 
 def getEventImage(events, **kwargs):
     # dims might be in the events dict, but allow override from kwargs
     try:
-        dimX = kwargs.get('dimX', events.get('dimX', np.max(events['x'])+1))
-        dimY = kwargs.get('dimY', events.get('dimY', np.max(events['y'])+1))
-    except ValueError: # no defined dims and events arrays are empty
+        dimX = kwargs.get('dimX', events.get('dimX', np.max(events['x']) + 1))
+        dimY = kwargs.get('dimY', events.get('dimY', np.max(events['y']) + 1))
+    except ValueError:  # no defined dims and events arrays are empty
         dimX = 1
         dimY = 1
     if kwargs.get('polarised', (kwargs.get('polarized'), True)):
@@ -90,21 +96,50 @@ def getEventImage(events, **kwargs):
                                      bins=[dimY, dimX],
                                      range=[[0, dimY-1], [0, dimX-1]]
                                      )[0]
-        eventImage = eventImagePos - eventImageNeg
+        if kwargs.get('pol_to_show') is None or kwargs.get('pol_to_show') == 'Both':
+            eventImage = eventImagePos - eventImageNeg
+        elif kwargs.get('pol_to_show') == 'Pos':
+            eventImage = eventImagePos
+        elif kwargs.get('pol_to_show') == 'Neg':
+            eventImage = - eventImageNeg
     else:
-        eventImage = np.histogram2d(events['y'], 
-                                     events['x'], 
-                                     bins=[dimY, dimX],
-                                     range=[[0, dimY-1], [0, dimX-1]]
-                                     )[0]
+        eventImage = np.histogram2d(events['y'],
+                                    events['x'],
+                                    bins=[dimY, dimX],
+                                    range=[[0, dimY - 1], [0, dimX - 1]]
+                                    )[0]
     # Clip the values according to the contrast
     contrast = kwargs.get('contrast', 3)
     eventImage = np.clip(eventImage, -contrast, contrast)
     return eventImage
 
+
 def getEventImageForTimeRange(events, **kwargs):
     events = getEventsInTimeRange(events, **kwargs)
     return getEventImage(events, **kwargs)
+
+
+# This function accepts a dict of events and returns an event-image
+# formed by collecting count number of events in the past/future from time ts
+# direction =
+# -1 : look back in the past;
+# 1: look to the future
+def getEventImageByCount(events, **kwargs):
+    direction = kwargs.get('direction', -1)  # default direction is past
+    ts = kwargs.get('ts', 0)
+    count = kwargs.get('count', 0)
+    seedEventId = np.searchsorted(events['ts'], ts, side='right')
+    startOrEndEventId = min(max(seedEventId + direction * count, 0), len(events['ts']) - 1) # limit ID within range
+    startOrEndTime = events['ts'][startOrEndEventId]
+    firstEventId = min(seedEventId, startOrEndEventId)
+    lastEventId = max(seedEventId, startOrEndEventId)
+    selectedEvents = {
+        'y': events['y'][firstEventId:lastEventId],
+        'x': events['x'][firstEventId:lastEventId],
+        'pol': events['pol'][firstEventId:lastEventId]
+    }
+    return getEventImage(selectedEvents, **kwargs), startOrEndTime
+
 
 def plotDvsContrastSingle(inDict, **kwargs):
     frameFromEvents = getEventImage(inDict, **kwargs)
@@ -120,58 +155,63 @@ def plotDvsContrastSingle(inDict, **kwargs):
         fig, axes = plt.subplots()
     if kwargs.get('polarised', (kwargs.get('polarized'), False)):
         cmap = kwargs.get('cmap', kwargs.get('colormap', 'seismic_r'))
-        image = axes.imshow(frameFromEvents, cmap=cmap, 
+        image = axes.imshow(frameFromEvents, cmap=cmap,
                             vmin=-contrast, vmax=contrast)
     else:
         cmap = kwargs.get('cmap', kwargs.get('colormap', 'gray'))
-        image = axes.imshow(frameFromEvents, cmap=cmap, 
-                            vmin=0, vmax=contrast)        
+        image = axes.imshow(frameFromEvents, cmap=cmap,
+                            vmin=0, vmax=contrast)
     axes.set_aspect('equal', adjustable='box')
     title = kwargs.get('title')
     if title is not None:
         axes.set_title(title)
-    
+
     callback = kwargs.get('callback')
     if callback is not None:
         kwargs['axes'] = axes
         callback(frameFromEvents=frameFromEvents, **kwargs)
     return image
 
-def plotDvsContrast(inDict, **kwargs):
-    # Boilerplate for descending higher level containers
-    if isinstance(inDict, list):
-        for inDictInst in inDict:
-            plotDvsContrast(inDictInst, **kwargs)
+
+def plotDvsContrast(inDicts, **kwargs):
+    if isinstance(inDicts, list):
+        for inDict in inDicts:
+            plotDvsContrast(inDict, **kwargs)
         return
-    if 'info' in inDict: # Top level container
-        fileName = inDict['info'].get('filePathOrName', '')
-        print('plotDvsContrast was called for file ' + fileName)
-        if not inDict['data']:
-            print('The import contains no data.')
-            return
-        for channelName in inDict['data']:
-            channelData = inDict['data'][channelName]
-            if 'dvs' in channelData and len(channelData['dvs']['ts']) > 0:
-                kwargs['title'] = ' '.join([fileName, str(channelName)])
-                plotDvsContrast(channelData['dvs'], **kwargs)
-            else:
-                print('Channel ' + channelName + ' skipped because it contains no polarity data')
+    else:
+        inDict = inDicts
+    if not isinstance(inDict, dict):
         return
-    
+    if 'ts' not in inDict:
+        title = kwargs.pop('title', '')
+        if 'info' in inDict and isinstance(inDict, dict):
+            fileName = inDict['info'].get('filePathOrName')
+            if fileName is not None:
+                print('plotDvsContrast was called for file ' + fileName)
+                title = (title + ' ' + fileName).lstrip()
+        for key in inDict.keys():
+            kwargs['title'] = (title + ' ' + key).lstrip()
+            plotDvsContrast(inDict[key], **kwargs)
+        return
+    # From this point onwards, it's a data-type container
+    if 'pol' not in inDict:
+        return
+    # From this point onwards, it's a dvs container        
+
     # The proportion of an array-full of events which is shown on a plot
     proportionOfPixels = kwargs.get('proportionOfPixels', 0.1)
     # useAllData overrides the above - the windows used for the images together include all the data 
     useAllData = kwargs.get('useAllData', False)
-    
+
     numPlots = kwargs.get('numPlots', 6)
 
     # Choice of distributing by 'time' or by 'numEvents'
     distributeBy = kwargs.get('distributeBy', 'time').lower()
-    
-   #% Distribute plots in a raster with a 3:4 ratio
+
+    # % Distribute plots in a raster with a 3:4 ratio
     numPlotsX = int(round(np.sqrt(numPlots / 3 * 4)))
     numPlotsY = int(np.ceil(numPlots / numPlotsX))
-    
+
     # TODO: if the actual sensor size is known, use this instead of the following defaults
     minX = kwargs.get('minX', inDict['x'].min())
     maxX = kwargs.get('maxX', inDict['x'].max())
@@ -181,21 +221,21 @@ def plotDvsContrast(inDict, **kwargs):
     kwargs['maxX'] = maxX
     kwargs['minY'] = minY
     kwargs['maxY'] = maxY
-    
+
     numPixelsInArray = (maxY + 1 - minY) * (maxX + 1 - minX)
     numEventsToSelectEachWay = int(round(numPixelsInArray * proportionOfPixels / 2.0))
 
     # The following section results in a set of tuples of first and last event idx
     # one for each plot. It does this considering the choices of distributeBy, useAllData, and proportionOfPixels
-    
-    #unpack ts for brevity
+
+    # unpack ts for brevity
     ts = inDict['ts']
-    
+
     minTime = kwargs.get('minTime', kwargs.get('startTime', kwargs.get('beginTime', ts.min())))
     maxTime = kwargs.get('maxTime', kwargs.get('stopTime', kwargs.get('endTime', ts.max())))
     minEventIdx = np.searchsorted(ts, minTime)
     maxEventIdx = np.searchsorted(ts, maxTime)
-    numEvents = maxEventIdx-minEventIdx
+    numEvents = maxEventIdx - minEventIdx
     if distributeBy == 'time':
         totalTime = maxTime - minTime
         timeStep = totalTime / numPlots
@@ -203,7 +243,7 @@ def plotDvsContrast(inDict, **kwargs):
             timeBoundaries = np.arange(minTime, maxTime + timeStep / 2, timeStep)
             firstEventIds = [
                 np.where(ts >= timeBoundary)[0][0]
-                for timeBoundary in timeBoundaries ]
+                for timeBoundary in timeBoundaries]
             lastEventIds = [firstEventIdx - 1 for firstEventIdx in firstEventIds]
             lastEventIds = lastEventIds[1:]
             firstEventIds = firstEventIds[:-1]
@@ -212,7 +252,7 @@ def plotDvsContrast(inDict, **kwargs):
             centreEventIds = np.searchsorted(ts, timeCentres)
             firstEventIds = [idx - numEventsToSelectEachWay for idx in centreEventIds]
             lastEventIds = [idx + numEventsToSelectEachWay for idx in centreEventIds]
-    else: # distribute by event number
+    else:  # distribute by event number
         eventsPerStep = int(numEvents / numPlots)
         if useAllData:
             firstEventIds = range(minEventIdx, maxEventIdx, eventsPerStep)
@@ -220,17 +260,17 @@ def plotDvsContrast(inDict, **kwargs):
             lastEventIds = lastEventIds[1:]
             firstEventIds = firstEventIds[:-1]
         else:
-            centreEventIds = range(int(eventsPerStep/2), numEvents, eventsPerStep)
+            centreEventIds = range(int(eventsPerStep / 2), numEvents, eventsPerStep)
             firstEventIds = [idx - numEventsToSelectEachWay for idx in centreEventIds]
             lastEventIds = [idx + numEventsToSelectEachWay for idx in centreEventIds]
-    firstEventIds = np.clip(firstEventIds, minEventIdx, maxEventIdx-1)
-    lastEventIds = np.clip(lastEventIds, minEventIdx, maxEventIdx-1)
+    firstEventIds = np.clip(firstEventIds, minEventIdx, maxEventIdx - 1)
+    lastEventIds = np.clip(lastEventIds, minEventIdx, maxEventIdx - 1)
     firstTimes = ts[firstEventIds]
     lastTimes = ts[lastEventIds]
-    timeCentres = (firstTimes+lastTimes)/2
+    timeCentres = (firstTimes + lastTimes) / 2
     titles = [
         str(roundToSf(firstTime)) + ' - ' + str(roundToSf(lastTime)) + ' s'
-        for firstTime, lastTime in zip(firstTimes, lastTimes) ]
+        for firstTime, lastTime in zip(firstTimes, lastTimes)]
 
     fig, allAxes = plt.subplots(numPlotsY, numPlotsX)
     if numPlots == 1:
@@ -238,14 +278,14 @@ def plotDvsContrast(inDict, **kwargs):
     else:
         allAxes = allAxes.flatten()
     fig.suptitle(kwargs.get('title', ''))
-    
+
     for axes, firstEventIdx, lastEventIdx, title in zip(allAxes, firstEventIds, lastEventIds, titles):
         dvsDataDict = {
             'x': inDict['x'][firstEventIdx:lastEventIdx],
             'y': inDict['y'][firstEventIdx:lastEventIdx],
             'pol': inDict['pol'][firstEventIdx:lastEventIdx],
             'ts': inDict['ts'][firstEventIdx:lastEventIdx]
-                }
+        }
         kwargs['title'] = title
         image = plotDvsContrastSingle(inDict=dvsDataDict, axes=axes, **kwargs)
     fig.colorbar(image)

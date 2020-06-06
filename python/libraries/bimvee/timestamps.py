@@ -175,7 +175,7 @@ def offsetTimestampsForAContainer(container, offset):
             container['ts'] = container['ts'] + offset
             container['tsOffset'] = container['tsOffset'] + offset
         else:
-            for field in container:
+            for field in container.values():
                 offsetTimestampsForAContainer(field, offset)
     else:
         # We have descended too far
@@ -226,6 +226,23 @@ def getLastTimestamp(inDict):
 '''
 cropDataByTimeRange was here - replaced by cropTime in split.py
 '''
+
+'''
+Sort a dict containing ts according to ts, applying the new sort order to all
+the fields where axis 0 
+'''
+def sortDataTypeDictByTime(inDict):
+    ts = inDict['ts']
+    ids = np.argsort(ts) 
+    numEvents = ts.shape[0]
+    outDict = {}
+    for fieldName in inDict.keys():
+        try:
+            assert len(inDict[fieldName]) == numEvents
+            outDict[fieldName] = inDict[fieldName][ids]
+        except (AssertionError, TypeError):
+            outDict[fieldName] = inDict[fieldName]
+    return outDict
             
 #%% LEGACY CODE - timestamps for different data types present in aedat
 # There are exceptions around the timestamps for frame data to consider 

@@ -2,7 +2,7 @@ if(~exist('infilename', 'var'))
     disp('Please specify the path to the dataset in parameter "infilename"');
     return;
 end
-outfilename = [infilename '.txt'];
+%outfilename = [infilename '.txt'];
 
 if(~exist('CODEC_TYPE', 'var'))
     disp('Please specify CODEC_TYPE:');
@@ -82,7 +82,7 @@ end
 
 infile = fopen(infilename, 'r');
 if(infile < 0)
-    display('Could not open file');
+    disp('Could not open file');
     return;
 end
 fseek(infile, 0, 'eof');
@@ -166,7 +166,7 @@ while(ischar(l))
         display('error');
     end
     
-    dlmwrite(outfilename, textformat, '-append', 'delimiter', ' ', 'precision', 20);
+    dlmwrite(outfilename, textformat, '-append','delimiter', ' ', 'precision', 20);
     
     if(ftell(infile) / totch > dth)
         display([int2str(100 * ftell(infile) / totch) '% done']);

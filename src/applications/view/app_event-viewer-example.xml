@@ -6,7 +6,7 @@
 
 <module>
     <name> vPreProcess </name>
-    <parameters>--flipx --flipy --split </parameters>
+    <parameters>--flipx --flipy --split_stereo </parameters>
     <node> localhost </node>
 </module>
 

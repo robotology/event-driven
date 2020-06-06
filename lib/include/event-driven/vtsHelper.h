@@ -22,6 +22,8 @@
 
 #include <yarp/os/all.h>
 #include <fstream>
+#include <math.h>
+#include <vector>
 
 namespace ev {
 
@@ -68,9 +70,14 @@ public:
         return dt;
     }
 
+    static double deltaS(const int current_tick, const int prev_tick)
+    {
+        return deltaTicks(current_tick, prev_tick) * tsscaler;
+    }
+
     static double deltaMS(const int current_tick, const int prev_tick)
     {
-        return deltaTicks(current_tick, prev_tick) * tsscaler * 1000.0;
+        return deltaS(current_tick, prev_tick) * 1000.0;
     }
 
 };
@@ -100,6 +107,84 @@ struct resolution {
     unsigned int width:10;
     unsigned int height:10;
 };
+
+class imuHelper {
+private:
+    std::vector<double> bias;
+    std::vector<double> gain;
+public:
+
+    const static unsigned int _max_value = 32768;
+
+    enum
+    {
+        ACC_Y = 0, ACC_X = 1, ACC_Z = 2,
+        GYR_Y = 3, GYR_X = 4, GYR_Z = 5,
+        TEMP  = 6,
+        MAG_Y = 7, MAG_X = 8, MAG_Z = 9
+    };
+
+    imuHelper()
+    {
+        bias = {0.0, 0.0, 0.0};
+        gain = {9.80665/16384.0, 9.80665/16384.0, 9.80665/16384.0};
+    }
+
+    bool configure(const yarp::os::Bottle* config)
+    {
+        if(!config) {
+            yWarning() << "No IMU config given";
+            return false;
+        } else if(config->size() != 6) {
+            yWarning() << "IMU config (6) incorrect size = " << config->size();
+            return false;
+        }
+        bias[ACC_X] = config->get(0).asDouble();
+        gain[ACC_X] = config->get(1).asDouble();
+        bias[ACC_Y] = config->get(2).asDouble();
+        gain[ACC_Y] = config->get(3).asDouble();
+        bias[ACC_Z] = config->get(4).asDouble();
+        gain[ACC_Z] = config->get(5).asDouble();
+
+        return true;
+    }
+
+    double convertToSI(const int value, const int index) const
+    {
+//        static constexpr double ax_bias = -344.536150;
+//        static constexpr double ay_bias = -207.041644;
+//        static constexpr double az_bias = -127.343397;
+
+//        static constexpr double ax_gain = 0.000623;
+//        static constexpr double ay_gain = 0.000613;
+//        static constexpr double az_gain = 0.000599;
+
+
+        switch(index) {
+        case(ACC_X):
+        case(ACC_Z):
+            return  (value + bias[index]) * gain[index];
+        case(ACC_Y):
+            return -(value + bias[index]) * gain[index];
+        case(GYR_X):
+        case(GYR_Z):
+            return value * (250.0 * M_PI / (2.0 * 180.0 * 16384.0));
+        case(GYR_Y):
+            return -(value * (250.0 * M_PI / (2.0 * 180.0 * 16384.0)));
+        case(TEMP):
+            return (value / 333.87) + (273.15 + 21.0);
+        case(MAG_X):
+        case(MAG_Z):
+            return value * (/*10e6 **/ 4900.0 / 16384.0);
+        case(MAG_Y):
+            return -(value * (/*10e6 **/ 4900.0 / 16384.0));
+        }
+
+        return -1;
+    }
+
+};
+
 
 }
 

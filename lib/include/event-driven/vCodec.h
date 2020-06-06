@@ -293,8 +293,6 @@ public:
         };
     };
 
-    const static unsigned int _max_value = 32768;
-
     IMUevent();
     IMUevent(const vEvent &v);
     IMUevent(const IMUevent &v);

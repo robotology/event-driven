@@ -60,11 +60,11 @@ import struct
 
 # local imports
 if __package__ is None or __package__ == '':
-    from importVicon import importVicon
+    from importIitVicon import importIitVicon
     from timestamps import unwrapTimestamps, zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
     from split import selectByLabel
 else:
-    from .importVicon import importVicon
+    from .importIitVicon import importIitVicon
     from .timestamps import unwrapTimestamps, zeroTimestampsForAChannel, rezeroTimestampsForImportedDicts
     from .split import selectByLabel
 
@@ -198,15 +198,15 @@ def samplesToImu(inDict, **kwargs):
     Assume these are IMU samples, and compile them (up to) 10 at a time.
     Output is ts, acc, angV, temp and mag
     'Sensor' is defined as:
-    0: Accel X
-    1: Accel Y
+    0: - (negative) Accel Y
+    1: Accel X
     2: Accel Z
-    3: Gyro X
-    4: Gyro Y
+    3: - (negative) Gyro Y
+    4: Gyro X
     5: Gyro Z
     6: Temperature
-    7: Mag X
-    8: Mag Y
+    7: - (negative) Mag Y
+    8: Mag X
     9: Mag Z
     For the IMU on STEFI, (which is this one ICM-20948):
     gyro full scale is +/-2000 degrees per second,
@@ -240,23 +240,23 @@ def samplesToImu(inDict, **kwargs):
             tsOut[imuPtr] = ts # Just take the first ts for a group of samples
         sensorPrev = sensor
         if sensor == 0:
-            acc[imuPtr, 0] = value
+            acc[imuPtr, 1] = -value
         elif sensor == 1:
-            acc[imuPtr, 1] = value
+            acc[imuPtr, 0] = value
         elif sensor == 2:
             acc[imuPtr, 2] = value
         elif sensor == 3:
-            angV[imuPtr, 0] = value
+            angV[imuPtr, 1] = -value
         elif sensor == 4:
-            angV[imuPtr, 1] = value
+            angV[imuPtr, 0] = value
         elif sensor == 5:
             angV[imuPtr, 2] = value
         elif sensor == 6:
             temp[imuPtr, 0] = value
         elif sensor == 7:
-            mag[imuPtr, 0] = value
+            mag[imuPtr, 1] = -value
         elif sensor == 8:
-            mag[imuPtr, 1] = value
+            mag[imuPtr, 0] = value
         elif sensor== 9:
             mag[imuPtr, 2] = value
     acc = acc.astype(np.float64) / accConversionFactor
@@ -273,11 +273,25 @@ def samplesToImu(inDict, **kwargs):
     return outDict
 
 def importIitYarpBinaryDataLog(**kwargs):
-    with open(kwargs['filePathOrName'], 'rb') as inFile:
-        events = inFile.read()
-    events = np.frombuffer(events, np.uint32)
-    events = events.reshape((-1, 2))
-    dvs, samples = decodeEvents(events)
+
+    importFromByte = kwargs.get('importFromByte', 0)
+    importMaxBytes = kwargs.get('importMaxBytes')
+    if importMaxBytes is not None:
+        importMaxBytes -= np.mod(importMaxBytes, 8) # Events are 8 bytes long
+    with open(kwargs['filePathOrName'], 'rb') as file:
+        file.seek(importFromByte)
+        if importMaxBytes is not None:
+            events = file.read(importMaxBytes)
+            #TODO: check if importMaxBytes is "feasible" (not beyond the file size)?
+        else:
+            events = file.read()
+        events = np.frombuffer(events, np.uint32)
+        events = events.reshape((-1, 2))
+        dvs, samples = decodeEvents(events)
+        if file.read(1) is None:
+            kwargs['importedToByte'] = 'EOF'
+        else:
+            kwargs['importedToByte'] = file.tell() - 2 # - 2 also compensates for the small read-ahead just performed to test EOF
     return importPostProcessing(dvs, samples, dvsLbl=None, flow=None, **kwargs)
 
 # Sample is an intermediate data type - later it gets converted to IMU etc
@@ -392,15 +406,14 @@ def importPostProcessing(dvs, samples, dvsLbl=None, dvsFlow=None, **kwargs):
     return outDict
 
 def importIitYarpDataLog(**kwargs):
-    # Read file
-    with open(kwargs['filePathOrName'], 'r') as inFile:
-        content = inFile.read()
     # Check if format suggests data from vicon dumper
     patternForVicon = re.compile('(\d+) (\d+\.\d+) \((.*)\)')
+    with open(kwargs['filePathOrName'], 'r') as inFile:
+        content = inFile.readline() # Look at first line of file
     found = patternForVicon.findall(content)
     if found:
         print('Yarp vicon dumper pattern found - passing this file to importVicon function')
-        return importVicon(**kwargs)
+        return importIitVicon(**kwargs)
 
     # Create dicts for each possible datatype
     dvs = createDataTypeDvs()
@@ -408,46 +421,70 @@ def importIitYarpDataLog(**kwargs):
     dvsFlow = createDataTypeDvsFlow()
     samples = createDataTypeSample() # Sample is an intermediate datatype - later it gets converted to IMU etc
     pattern = re.compile('(\d+) (\d+\.\d+) ([A-Z]+) \((.*)\)')
-    print('Searching file for bottles...')
-    found = pattern.findall(content)
-    for elem in tqdm(found):
-        # The following values would be useful for indexing the input file:
-        #bottlenumber = np.uint32(elem[0])
-        #timestamp = np.float64(elem[1])
-        bottleType = elem[2]
-        if bottleType not in ['AE', 'IMUS', 'LAE', 'FLOW']:
-            print(bottleType)
-            continue
-        try:
-            events = np.array(elem[3].split(' '), dtype=np.uint32)
-            if bottleType == 'LAE':
-                numEventsInBatch = int(len(events) / 3)
-                events = events.reshape(numEventsInBatch, 3)
-                # TODO: finish handling this case
-                dvsBatch, samplesBatch = decodeEvents(events[:, :2])
-                dvsBatch['lbl'] = events[:, 2]          
-                appendBatch(dvsLbl, dvsBatch)
-            elif bottleType == 'FLOW':
-                numEventsInBatch = int(len(events) / 4)
-                events = events.reshape(numEventsInBatch, 4)
-                dvsBatch, samplesBatch = decodeEvents(events[:, :2])
-                dvsBatch['vx'] = events[:, 2]
-                dvsBatch['vy'] = events[:, 3]                
-                appendBatch(dvsFlow, dvsBatch)
-            else: # bottleType in ['AE', 'IMUS']
-                numEventsInBatch = int(len(events) / 2)
-                events = events.reshape(numEventsInBatch, 2)
-                dvsBatch, samplesBatch = decodeEvents(events[:, :2])
-                appendBatch(dvs, dvsBatch)
-            appendBatch(samples, samplesBatch)
-        except ValueError: # sometimes finding malformed packets at the end of files - ignoring
-            continue
+    importFromByte = kwargs.get('importFromByte', 0)
+    importToByte = kwargs.get('importMaxBytes')
+    if importToByte is not None:
+        importToByte += importFromByte
+    with open(kwargs['filePathOrName'], 'r') as file:
+        file.seek(importFromByte)
+        importedToByte = 'EOF' # default if the following loop exits normally    
+        # We are not using 'for' iteration because it's aincompatible with the tell() method
+        line = file.readline()
+        currentPointer = 0
+        while line:   
+            if importToByte is not None:
+                if file.tell() > importToByte:
+                    importedToByte = currentPointer - 1
+                    break
+                else:
+                    currentPointer = file.tell()
+            found = pattern.match(line)
+            if found is None:
+                line = file.readline()
+                continue
+            # The following values would be useful for indexing the input file:
+            #bottlenumber = np.uint32(found[1])
+            #timestamp = np.float64(found[2])
+            bottleType = found[3]
+            if bottleType not in ['AE', 'IMUS', 'LAE', 'FLOW']:
+                print(bottleType)
+                line = file.readline()
+                continue
+            try:
+                events = np.array(found[4].split(' '), dtype=np.uint32)
+                if bottleType == 'LAE':
+                    numEventsInBatch = int(len(events) / 3)
+                    events = events.reshape(numEventsInBatch, 3)
+                    # TODO: finish handling this case
+                    dvsBatch, samplesBatch = decodeEvents(events[:, :2])
+                    dvsBatch['lbl'] = events[:, 2]          
+                    appendBatch(dvsLbl, dvsBatch)
+                elif bottleType == 'FLOW':
+                    numEventsInBatch = int(len(events) / 4)
+                    events = events.reshape(numEventsInBatch, 4)
+                    dvsBatch, samplesBatch = decodeEvents(events[:, :2])
+                    dvsBatch['vx'] = events[:, 2]
+                    dvsBatch['vy'] = events[:, 3]                
+                    appendBatch(dvsFlow, dvsBatch)
+                else: # bottleType in ['AE', 'IMUS']
+                    numEventsInBatch = int(len(events) / 2)
+                    events = events.reshape(numEventsInBatch, 2)
+                    dvsBatch, samplesBatch = decodeEvents(events[:, :2])
+                    appendBatch(dvs, dvsBatch)
+                appendBatch(samples, samplesBatch)
+            except ValueError: # sometimes finding malformed packets at the end of files - ignoring
+                line = file.readline()
+                continue
+            line = file.readline()
+
+    # If importedToByte is not defined then we reached the end of the file
     delattr(decodeEvents, "is24bitCodec")
     # Crop arrays to number of events
     cropArraysToNumEvents(dvs)
     cropArraysToNumEvents(dvsLbl)
     cropArraysToNumEvents(samples)
     cropArraysToNumEvents(dvsFlow)
+    kwargs['importedToByte'] = importedToByte
     return importPostProcessing(dvs, samples, dvsLbl=dvsLbl, dvsFlow=dvsFlow, **kwargs)
 
 # From the info.log we want the time that the channel connected; we assume this is the first decimal found
@@ -500,7 +537,7 @@ def importIitYarpRecursive(**kwargs):
         
 def importIitYarp(**kwargs):
     importedDicts = importIitYarpRecursive(**kwargs)
-    if getOrInsertDefault(kwargs, 'zeroTimestamps', True):
+    if kwargs.get('zeroTime', kwargs.get('zeroTimestamps', True)):
         # Optional: start the timestamps at zero for the first event
         # This is done collectively for all the concurrent imports
         rezeroTimestampsForImportedDicts(importedDicts)
