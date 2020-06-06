@@ -370,8 +370,8 @@ protected:
     deque<int> n_q;
 
 
-    Mutex m;
-    Mutex read_mutex;
+    std::mutex m;
+    std::mutex read_mutex;
     Semaphore dataavailable;
 
     unsigned int qlimit;
