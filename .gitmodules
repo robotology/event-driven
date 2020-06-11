@@ -1,3 +1,6 @@
 [submodule "python/libraries/bimvee/importRosbagSubmodule"]
 	path = python/libraries/bimvee/importRosbagSubmodule
 	url = https://github.com/event-driven-robotics/importRosbag
+[submodule "python/bimvee"]
+	path = python/bimvee
+	url = https://github.com/event-driven-robotics/bimvee
