@@ -56,6 +56,13 @@ bool vVisionCtrl::connect()
         return false;
     }
 
+	if (ioctl(fd, I2C_SLAVE, I2CAddress) < 0)
+	{
+		printf("Failed to acquire bus access and/or talk to i2c slave.\n");
+		//ERROR HANDLING; you can check errno to see what went wrong
+		return false;
+	}
+
     if(!clearFpgaStatus("all")) {
         std::cout << "Cannot write to " << deviceName << ":" << (int)I2CAddress << std::endl;
         std::cout << "Check sensor has correct I2CAddress and is physically connected" << std::endl;
@@ -174,6 +181,8 @@ int vVisionCtrl::WriteSisleyRegister(uint32_t sisley_reg_address, uint32_t sisle
 }
 
 bool vVisionCtrl::configureBiaseseGen3() {
+    return true; //checkBiasProg();
+    // TODO Check how to configure biases. At the moment they are set by the sensor itself
 
     clearFpgaStatus("biasDone");
     double vref, voltage;
@@ -187,47 +196,50 @@ bool vVisionCtrl::configureBiaseseGen3() {
         header = biasdata->get(2).asInt();
         voltage = biasdata->get(3).asInt();
         uint32_t biasVal = 0;
-        if (iBias)
+        if (iBias) {
             biasVal = voltage;
-        else
+        }
+        else {
             biasVal = 511 * (voltage / vref);
+        }
         biasVal += header << 24;
-        if (WriteSisleyRegister(BIAS_LATCHOUT_OR_PU + i * 4, biasVal) != sizeof(biasVal))
+        if (WriteSisleyRegister(BIAS_LATCHOUT_OR_PU + i * 4, biasVal) != sizeof(biasVal)) {
             return false;
+        }
     }
-    return checkBiasProg();
 }
 
 
-int vVisionCtrl::EnablePower()
+bool vVisionCtrl::EnablePower()
 {	uint8_t value_8bit;
 
     // VSCTRL: Enable VDDA, VDDD and VDDC end keep out from reset MRRSTN
-    i2cRead(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+    if (i2cRead(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
     value_8bit=value_8bit|(VSCTRL_ENABLE_VDDA);
     // I repeat three times as suggested in sisley reference stuff...
-    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
-    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
-    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+    if (i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+    if (i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+    if (i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
 
-    i2cRead(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+    if (i2cRead(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
     value_8bit=value_8bit|(VSCTRL_DISABLE_TDRSTN);
     // I repeat three times as suggested in sisley reference stuff...
-    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
-    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
-    i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1);
+    if (i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+    if (i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+    if (i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
 
-    return (0);
+    return true;
 }
 
-void vVisionCtrl::SisleySetup() {
+bool vVisionCtrl::SisleySetup() {
     printf("GEN3: Enable analog\n");
-    WriteSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x02);
+    if (WriteSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x02) != 4) return false;
     printf("GEN3: Assert bgen_en\n");
-    WriteSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x12);
+    if (WriteSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x12) != 4) return false;
     printf("GEN3: Assert bgen_rstn\n");
-    WriteSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x1A);
+    if (WriteSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x1A) != 4) return false;
     usleep(1000);
+    return true;
 }
 
 int vVisionCtrl::SetROI(int start, int size, xory_t coord, tdorem_t type)
@@ -399,9 +411,14 @@ bool vVisionCtrl::configureRegistersGen1() {
 }
 
 bool vVisionCtrl::configureRegistersGen3() {
-    SetupVSCTRLinHSSAERmode();
-    SisleySetup();
-    EnablePower();
+    if (!SetupVSCTRLinHSSAERmode()) return false;
+    if (!SisleySetup()) return false;
+    if (!EnablePower()) return false;
+    // Enable data transmission from VSCTRL
+    unsigned int data32=VSCTRL_ENABLE_GEN3;
+    if (i2cWrite(VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *) &data32, 1) != 1) return false;
+    std::cout << "ENABLED" << std::endl;
+    return true;
 }
 
 bool vVisionCtrl::SisleyTDROIDefinition(int x, int y, int width, int height) {
@@ -419,20 +436,21 @@ bool vVisionCtrl::SisleyTDROIDefinition(int x, int y, int width, int height) {
 	WriteSisleyRegister(SISLEY_ROI_CTRL_REG, 0x0000000E);
 }
 
-void vVisionCtrl::SetupVSCTRLinHSSAERmode() {
+bool vVisionCtrl::SetupVSCTRLinHSSAERmode() {
     uint32_t data32;
 	// VSCTRL: Enable clock
 	data32=VSCTRL_ENABLE_CLK;
-	i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG1, (uint8_t *)&data32, 1);
+	if (i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG1, (uint8_t *)&data32, 1) != 1) return false;
 	// VSCTRL: Enable 4 HSSAER channels
 	data32=VSCTRL_ENABLE_ALLCHANNELS;
-	i2cWrite(VSCTRL_HSSAER_CNFG_ADDR, (uint8_t *)&data32, 1);
+	if (i2cWrite(VSCTRL_HSSAER_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
 	// VSCTRL: Select HSSAER as destination and Enable HSSAER
 	data32=(VSCTRL_DESTINATION_HSSAER<<4) | (VSCTRL_ENABLETXON_HSSAER<<0);
-	i2cWrite(VSCTRL_DSTCTRL_REG, (uint8_t *)&data32, 1);
+	if (i2cWrite(VSCTRL_DSTCTRL_REG, (uint8_t *)&data32, 1) != 1) return false;
 	// VSCTRL: Flush Fifo
 	data32=VSCTRL_FLUSH_FIFO;
-	i2cWrite(VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1);
+	if (i2cWrite(VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+	return true;
 }
 
 bool vVisionCtrl::setBias(yarp::os::Bottle bias)

@@ -68,12 +68,13 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     if(lwo) logwriter << "ZYNQGRABBER RUNNING: " << curdate->tm_mday << "-" << curdate->tm_mon + 1 << "-" << curdate->tm_year+1900;
     if(lwo) logwriter << " " << curdate->tm_hour << ":" << curdate->tm_min << ":" << curdate->tm_sec << std::endl;
 
-    const string &deviceType = rf.find("sensor").asString();
+    std::string deviceType = rf.find("sensor").asString();
+
     if (rf.check("visCtrlLeft")) {
 
         std::string visCtrlLeft = rf.find("visCtrlLeft").asString();
 
-        vsctrlMngLeft = vVisionCtrl(deviceType, visCtrlLeft, I2C_ADDRESS_LEFT);
+        vsctrlMngLeft = vVisionCtrl(visCtrlLeft, deviceType, I2C_ADDRESS_LEFT);
         vsctrlMngLeft.useCurrentBias(iBias);
 
         //bias values
@@ -118,8 +119,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     if (rf.check("visCtrlRight")) {
 
         std::string visCtrlRight = rf.find("visCtrlRight").asString();
-
-        vsctrlMngRight = vVisionCtrl(deviceType, visCtrlRight, I2C_ADDRESS_RIGHT);
+        vsctrlMngRight = vVisionCtrl(visCtrlRight, deviceType, I2C_ADDRESS_RIGHT);
         vsctrlMngRight.useCurrentBias(iBias);
 
         //bias values
@@ -154,7 +154,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             int y = rf.find("roi_y").asInt();
             int width = rf.find("roi_width").asInt();
             int height = rf.find("roi_height").asInt();
-            vsctrlMngLeft.SisleyTDROIDefinition(x, y, width, height);
+            vsctrlMngRight.SisleyTDROIDefinition(x, y, width, height);
         }
         if (lwo) logwriter << "Connected to and configured Right camera" << std::endl;
 

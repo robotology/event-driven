@@ -58,8 +58,8 @@ private:
     int i2cWrite(unsigned char reg, unsigned char *data, unsigned int size);
     int ReadSisleyRegister(uint32_t sisley_reg_address, uint32_t *sisley_data);
     int WriteSisleyRegister(uint32_t sisley_reg_address, uint32_t sisley_data);
-    int EnablePower();
-    void SisleySetup();
+    bool EnablePower();
+    bool SisleySetup();
     int SetROI(int start, int size, xory_t coord, tdorem_t type);
 
     bool configureBiaseseGen3();
@@ -68,7 +68,7 @@ private:
     bool configureRegistersGen1();
     bool configureRegistersGen3();
 
-    void SetupVSCTRLinHSSAERmode();
+    bool SetupVSCTRLinHSSAERmode();
 
     //WRAPPERS?
     bool configureRegisters(); //new initDevice
