@@ -110,8 +110,8 @@ public:
         uint32_t _coded_data;
         struct {
             unsigned int polarity:1;
-            unsigned int x:10;
             unsigned int _xfill:1;
+            unsigned int x:10;
             unsigned int y:9;
             unsigned int _yfill:1;
             unsigned int channel:1;
