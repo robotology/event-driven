@@ -4,3 +4,6 @@
 [submodule "python/bimvee"]
 	path = python/bimvee
 	url = https://github.com/event-driven-robotics/bimvee
+[submodule "mustard"]
+	path = python/visualizer
+	url = https://github.com/event-driven-robotics/mustard
