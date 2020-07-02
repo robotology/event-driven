@@ -24,7 +24,11 @@
 
 #include <event-driven/all.h>
 #include <string>
+#if CV_MAJOR_VERSION  > 3
 #include <opencv4/opencv2/opencv.hpp>
+#else
+#include <opencv2/opencv.hpp>
+#endif
 
 namespace ev {
 
