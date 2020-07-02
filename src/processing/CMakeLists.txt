@@ -6,6 +6,7 @@ option(ENABLE_vFlow "Build optical flow module" OFF)
 option(ENABLE_vSkinInterface "Build basic skin pre-processing" OFF)
 option(ENABLE_vCorner "Build corner detection module" OFF)
 option(ENABLE_DualCamTransform "Build Frame->ATIS geometric transform" OFF)
+option(ENABLE_vHexviewer "Enable a hexadecimal raw-event viewer" ON)
 
 if(OpenCV_FOUND)
     if(ENABLE_vFramer)
@@ -55,4 +56,6 @@ if(ENABLE_DualCamTransform)
     add_subdirectory(DualCamTransform)
 endif()
 
-
+if(ENABLE_vHexviewer)
+    add_subdirectory(vHexviewer)
+endif()
