@@ -53,6 +53,8 @@ private:
     ev::vWritePort out_port_aps_stereo;
     ev::vWritePort out_port_imu_samples;
     ev::vWritePort out_port_audio;
+    ev::vWritePort out_port_crn_left;
+    ev::vWritePort out_port_crn_right;
 
     //parameters
     std::string name;
@@ -80,6 +82,7 @@ private:
     bool split_polarities;
     bool combined_stereo;
     bool use_local_stamp;
+    bool corners;
 
     //timing stats
     std::deque<double> delays;
