@@ -7,19 +7,11 @@ compiler:
 
 before_install:
           - sudo apt update -qq
+          - wget https://github.com/robotology/yarp/releases/download/v3.3.2/yarp-3.3.2-2.focal_amd64.deb
 install:
-          - sudo apt install -qq cmake build-essential libopencv-dev libace-dev libeigen3-dev
+          - sudo apt install -qq cmake build-essential libopencv-dev libace-dev libeigen3-dev yarp-3.3.2-2.focal_amd64.deb
 
 before_script:
-          - cd ../.. && pwd && export MYDIR=$PWD
-          - git clone -b v3.3.2 --depth 1 https://github.com/robotology/yarp.git
-          - cd yarp && mkdir build 
-          - cd build
-          - pwd
-          - cmake .. 
-          - make -j 2 
-          - cd $MYDIR
-          - cd robotology/event-driven
           - mkdir build
           - cd build
           - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$MYDIR/yarp/build -DBUILD_APPLICATIONS=ON -DBUILD_HARDWAREIO=ON -DBUILD_PROCESSING=ON -DENABLE_autosaccade=ON -DENABLE_binarydumper=ON -DENABLE_calibrate=ON -DENABLE_corner=ON -DENABLE_vCluster=ON -DENABLE_vFramer=ON -DENABLE_vPreProcess=ON -DENABLE_vSkinInterface=ON -DENABLE_view=ON -DENABLE_zynqgrabber=ON
