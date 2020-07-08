@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <yarp/os/all.h>
+#include <mutex>
 #include "event-driven/vCodec.h"
 #include "event-driven/vtsHelper.h"
 
