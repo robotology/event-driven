@@ -8,7 +8,7 @@ add_executable(${PROJECT_ALIAS} src/vFramerLite.cpp
 target_include_directories(${PROJECT_ALIAS} PRIVATE ${PROJECT_SOURCE_DIR}/include
                                                    ${OpenCV_INCLUDE_DIRS})
 
-target_link_libraries(${PROJECT_ALIAS} PRIVATE YARP::YARP_os
+target_link_libraries(${PROJECT_ALIAS} PRIVATE YARP::YARP_OS
                                                YARP::YARP_init
                                                YARP::YARP_sig
                                                YARP::YARP_cv

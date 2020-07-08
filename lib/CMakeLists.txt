@@ -84,11 +84,11 @@ target_compile_definitions(${EVENTDRIVEN_LIBRARY} PRIVATE "${VLIB_CODEC_TYPE}"
 target_compile_options(${EVENTDRIVEN_LIBRARY} PRIVATE -Wall)
 
 if(OpenCV_FOUND)
-    target_link_libraries(${EVENTDRIVEN_LIBRARY} PUBLIC YARP::YARP_os
+    target_link_libraries(${EVENTDRIVEN_LIBRARY} PUBLIC YARP::YARP_OS
                                                         YARP::YARP_sig
                                                         ${OpenCV_LIBRARIES})
 else()
-    target_link_libraries(${EVENTDRIVEN_LIBRARY} PUBLIC YARP::YARP_os
+    target_link_libraries(${EVENTDRIVEN_LIBRARY} PUBLIC YARP::YARP_OS
                                                         YARP::YARP_sig)
 endif()
 
