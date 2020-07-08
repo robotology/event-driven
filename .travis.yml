@@ -6,10 +6,12 @@ compiler:
           - gcc
 
 before_install:
+          - sudo sh -c 'echo "deb http://www.icub.org/ubuntu focal contrib/science" > /etc/apt/sources.list.d/icub.list'
+          - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 57A5ACB6110576A6
           - sudo apt update -qq
-          - wget https://github.com/robotology/yarp/releases/download/v3.3.2/yarp-3.3.2-2.focal_amd64.deb
+          
 install:
-          - sudo apt install -qq cmake build-essential libopencv-dev libace-dev libeigen3-dev yarp-3.3.2-2.focal_amd64.deb
+          - sudo apt install -qq cmake build-essential yarp
 
 before_script:
           - mkdir build
