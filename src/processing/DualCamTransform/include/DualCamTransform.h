@@ -51,7 +51,7 @@ class ImagePort : public yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::Pi
 
 private:
     yarp::sig::ImageOf<yarp::sig::PixelBgr> image;
-    yarp::os::Mutex mutex;
+    std::mutex mutex;
     bool imageReady{ false };
 public:
 

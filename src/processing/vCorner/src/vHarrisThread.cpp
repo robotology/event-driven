@@ -47,8 +47,8 @@ vHarrisThread::vHarrisThread(unsigned int height, unsigned int width, std::strin
     surfaceright = new temporalSurface(width, height, this->temporalsize);
 
     //mutex to protect the writing
-    mutex_writer = new yarp::os::Mutex();
-    mutex_reader = new yarp::os::Mutex();
+    mutex_writer = new std::mutex();
+    mutex_reader = new std::mutex();
     readcount = 0;
 
     //start the threads
@@ -200,7 +200,7 @@ void vHarrisThread::run()
 //threaded computation
 /*////////////////////////////////////////////////////////////////////////////*/
 vComputeHarrisThread::vComputeHarrisThread(int sobelsize, int windowRad, double sigma, double thresh, unsigned int qlen, collectorPort *outthread,
-                               yarp::os::Mutex *mutex_writer, yarp::os::Mutex *mutex_reader, int *readcount)
+                               std::mutex *mutex_writer, std::mutex *mutex_reader, int *readcount)
 {
     this->sobelsize = sobelsize;
     this->windowRad = windowRad;
