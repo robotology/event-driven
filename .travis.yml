@@ -1,18 +1,18 @@
 language: cpp
 
-dist: bionic
+dist: focal
 
 compiler:
           - gcc
 
 before_install:
-          - sudo apt-get update -qq
+          - sudo apt update -qq
 install:
-          - sudo apt-get install -qq cmake build-essential libopencv-dev libace-dev libeigen3-dev
+          - sudo apt install -qq cmake build-essential libopencv-dev libace-dev libeigen3-dev
 
 before_script:
           - cd ../.. && pwd && export MYDIR=$PWD
-          - git clone -b v3.2.1 --depth 1 https://github.com/robotology/yarp.git
+          - git clone -b v3.3.2 --depth 1 https://github.com/robotology/yarp.git
           - cd yarp && mkdir build 
           - cd build
           - pwd
