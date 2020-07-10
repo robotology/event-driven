@@ -55,6 +55,7 @@ private:
     ev::vWritePort out_port_audio;
     ev::vWritePort out_port_crn_left;
     ev::vWritePort out_port_crn_right;
+    ev::vWritePort out_port_crn_stereo;
 
     //parameters
     std::string name;

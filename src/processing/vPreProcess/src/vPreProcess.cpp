@@ -60,6 +60,9 @@ vPreProcess::vPreProcess() : name("/vPreProcess") {
     out_port_aps_right.setWriteType(AE::tag);
     out_port_imu_samples.setWriteType(IMUevent::tag);
     out_port_audio.setWriteType(AE::tag);
+    out_port_crn_left.setWriteType(AE::tag);
+    out_port_crn_right.setWriteType(AE::tag);
+    out_port_crn_stereo.setWriteType(AE::tag);
 }
 
 
@@ -74,6 +77,10 @@ vPreProcess::~vPreProcess() {
     out_port_aps_right.close();
     out_port_imu_samples.close();
     out_port_audio.close();
+    out_port_crn_left.close();
+    out_port_crn_right.close();
+    out_port_crn_stereo.close();
+
 }
 
 bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
@@ -204,7 +211,7 @@ bool vPreProcess::threadInit() {
                 return false;
         }
         if(corners) {
-            if(!out_port_crn_left.open(getName() + "/corners/AE:o"))
+            if(!out_port_crn_stereo.open(getName() + "/corners/AE:o"))
                 return false;
         }
         if(!out_port_aps_stereo.open(getName() + "/APS:o"))
@@ -305,7 +312,7 @@ void vPreProcess::run() {
         std::deque<AE> qleft_aps, qright_aps, qstereo_aps;
         std::deque<int32_t> qimusamples;
         std::deque<int32_t> qaudio;
-        std::deque<AE> qleft_corners, qright_corners;
+        std::deque<AE> qleft_corners, qright_corners, qstereo_corners;
 
         const std::vector<int32_t> *q = inPort.read(zynq_stamp);
         if(!q) break;
@@ -428,7 +435,7 @@ void vPreProcess::run() {
                         qstereo.push_back(v);
                     }
                     if(corners && IS_CORNER(v._coded_data))
-                        qleft_corners.push_back(v);
+                        qstereo_corners.push_back(v);
                 }
             }
         }
@@ -520,6 +527,9 @@ void vPreProcess::run() {
         }
         if(qright_corners.size()) {
             out_port_crn_right.write(qright_corners, zynq_stamp);
+        }
+        if(qstereo_corners.size()) {
+            out_port_crn_stereo.write(qstereo_corners, zynq_stamp);
         }
     }
 }
