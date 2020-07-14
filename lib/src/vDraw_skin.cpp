@@ -71,11 +71,11 @@ void skinDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             cv::Point centr(x, y);
             if(!aep->polarity)
             {
-                cv::circle(image, centr, radius, aqua, CV_FILLED,CV_AA);
+                cv::circle(image, centr, radius, aqua, cv::FILLED, cv::LINE_AA);
             }
             else
             {
-                cv::circle(image, centr, radius, violet, CV_FILLED,CV_AA);
+                cv::circle(image, centr, radius, violet, cv::FILLED, cv::LINE_AA);
             }
         }
         else
@@ -142,7 +142,7 @@ void skinsampleDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
                     radius = radius_max;
                 }
 
-                cv::circle(image, centr, radius, red, 1, CV_AA);
+                cv::circle(image, centr, radius, red, 1, cv::LINE_AA);
             }
         }
         else{
@@ -195,7 +195,7 @@ void taxelsampleDraw :: draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
             cv::Point dot(10 + dt*vtsHelper::tsscaler*500, Ylimit - sample);
 
-            cv::circle(image, dot, 1, red, CV_FILLED);
+            cv::circle(image, dot, 1, red, cv::FILLED);
         }
 
     }
@@ -238,11 +238,11 @@ void taxeleventDraw :: draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
             if(!aep->polarity)
             {
-                cv::circle(image, dot, 1, aqua, CV_FILLED);
+                cv::circle(image, dot, 1, aqua, cv::FILLED);
             }
             else
             {
-                cv::circle(image, dot, 1, violet, CV_FILLED);
+                cv::circle(image, dot, 1, violet, cv::FILLED);
             }
 
         }
@@ -315,11 +315,11 @@ void isoDrawSkin::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if(!aep->polarity) {
             //isoimage.at<cv::Vec3b>(py, px) = light_violet;
             cv::Point center(px,py);
-            cv::circle(isoimage, center, radius, aqua, CV_FILLED,CV_AA);
+            cv::circle(isoimage, center, radius, aqua, cv::FILLED, cv::LINE_AA);
         } else {
             //  isoimage.at<cv::Vec3b>(py, px) = light_aqua;
             cv::Point center(px,py);
-            cv::circle(isoimage, center, radius, violet,CV_FILLED,CV_AA);
+            cv::circle(isoimage, center, radius, violet,cv::FILLED, cv::LINE_AA);
         }
     }
 

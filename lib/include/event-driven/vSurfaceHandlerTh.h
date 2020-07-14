@@ -39,7 +39,7 @@ private:
 
     std::deque<ev::vQueue *> qq;
     std::deque<yarp::os::Stamp> sq;
-    yarp::os::Mutex m;
+    std::mutex m;
     yarp::os::Semaphore dataready;
 
     unsigned int qlimit;
@@ -212,7 +212,7 @@ private:
 
     queueAllocator allocatorCallback;
 
-    yarp::os::Mutex m;
+    std::mutex m;
     yarp::os::Stamp yarpstamp;
     unsigned int ctime;
 
@@ -328,7 +328,7 @@ private:
     queueAllocator allocatorCallback;
     historicalSurface surfaceleft;
     historicalSurface surfaceright;
-    yarp::os::Mutex m;
+    std::mutex m;
 
     //current stamp to propagate
     yarp::os::Stamp ystamp;
@@ -591,11 +591,11 @@ private:
     vTempWindow windowleft;
     vTempWindow windowright;
 
-    yarp::os::Mutex safety;
+    std::mutex safety;
 
     int strictUpdatePeriod;
     int currentPeriod;
-    yarp::os::Mutex waitforquery;
+    std::mutex waitforquery;
     yarp::os::Stamp yarpstamp;
     unsigned int ctime;
     bool updated;

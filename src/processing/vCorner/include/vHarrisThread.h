@@ -50,8 +50,8 @@ private:
 
     yarp::os::Semaphore *semaphore;
 
-    yarp::os::Mutex *mutex_writer;
-    yarp::os::Mutex *mutex_reader;
+    std::mutex *mutex_writer;
+    std::mutex *mutex_reader;
     int *readcount;
 
     ev::event<ev::AddressEvent> aep;
@@ -62,7 +62,7 @@ private:
 public:
 
     vComputeHarrisThread(int sobelsize, int windowRad, double sigma, double thresh, unsigned int qlen, ev::collectorPort *outthread,
-                    yarp::os::Mutex *mutex_writer, yarp::os::Mutex *mutex_reader, int *readcount);
+                    std::mutex *mutex_writer, std::mutex *mutex_reader, int *readcount);
     void assignTask(ev::event<ev::AddressEvent> ae, ev::temporalSurface *cSurf, yarp::os::Stamp *ystamp);
     void suspend();
     void wakeup();
@@ -90,11 +90,11 @@ private:
 
     //list of thread for processing
     std::vector<vComputeHarrisThread *> computeThreads;
-    yarp::os::Mutex semaphore;
+    std::mutex semaphore;
 
     //to protect the writing
-    yarp::os::Mutex *mutex_writer;
-    yarp::os::Mutex *mutex_reader;
+    std::mutex *mutex_writer;
+    std::mutex *mutex_reader;
     int readcount;
 
     //thread for the output

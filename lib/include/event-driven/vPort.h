@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <yarp/os/all.h>
+#include <mutex>
 #include "event-driven/vCodec.h"
 #include "event-driven/vtsHelper.h"
 
@@ -370,8 +371,8 @@ protected:
     deque<int> n_q;
 
 
-    Mutex m;
-    Mutex read_mutex;
+    std::mutex m;
+    std::mutex read_mutex;
     Semaphore dataavailable;
 
     unsigned int qlimit;

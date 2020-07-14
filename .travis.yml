@@ -1,25 +1,19 @@
 language: cpp
 
-dist: bionic
+dist: focal
 
 compiler:
           - gcc
 
 before_install:
-          - sudo apt-get update -qq
+          - sudo sh -c 'echo "deb http://www.icub.org/ubuntu focal contrib/science" > /etc/apt/sources.list.d/icub.list'
+          - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 57A5ACB6110576A6
+          - sudo apt update -qq
+          
 install:
-          - sudo apt-get install -qq cmake build-essential libopencv-dev libace-dev libeigen3-dev
+          - sudo apt install -qq cmake build-essential yarp
 
 before_script:
-          - cd ../.. && pwd && export MYDIR=$PWD
-          - git clone -b v3.2.1 --depth 1 https://github.com/robotology/yarp.git
-          - cd yarp && mkdir build 
-          - cd build
-          - pwd
-          - cmake .. 
-          - make -j 2 
-          - cd $MYDIR
-          - cd robotology/event-driven
           - mkdir build
           - cd build
           - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$MYDIR/yarp/build -DBUILD_APPLICATIONS=ON -DBUILD_HARDWAREIO=ON -DBUILD_PROCESSING=ON -DENABLE_autosaccade=ON -DENABLE_binarydumper=ON -DENABLE_calibrate=ON -DENABLE_corner=ON -DENABLE_vCluster=ON -DENABLE_vFramer=ON -DENABLE_vPreProcess=ON -DENABLE_vSkinInterface=ON -DENABLE_view=ON -DENABLE_zynqgrabber=ON

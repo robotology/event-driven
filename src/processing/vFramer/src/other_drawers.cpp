@@ -486,11 +486,11 @@ void accDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         if(!aep->polarity)
         {
-            cv::circle(image, centr, radius, pos, CV_FILLED);
+            cv::circle(image, centr, radius, pos, cv::FILLED);
         }
         else
         {
-            cv::circle(image, centr, radius, neg, CV_FILLED);
+            cv::circle(image, centr, radius, neg, cv::FILLED);
         }
 
     }
@@ -642,7 +642,7 @@ void rasterDrawHN::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     for(auto i  = 0; i < lines.size(); i++) {
         int y = (lines[i] - neuron_min) * ((double)Ylimit / (1 + neuron_max - neuron_min));
         cv::line(image, cv::Point(0, y), cv::Point(Xlimit, y), aqua, 3);
-        cv::putText(image, texts[i], cv::Point(0, y), CV_FONT_HERSHEY_SIMPLEX, 1.0, black, 2);
+        cv::putText(image, texts[i], cv::Point(0, y), cv::FONT_HERSHEY_SIMPLEX, 1.0, black, 2);
     }
 
     for(auto qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
@@ -666,6 +666,6 @@ void rasterDrawHN::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         }
 
         //image.at<cv::Vec3b>(y, x) = this->black;
-        cv::circle(image, cv::Point(x, y), 5, black, CV_FILLED);
+        cv::circle(image, cv::Point(x, y), 5, black, cv::FILLED);
     }
 }
