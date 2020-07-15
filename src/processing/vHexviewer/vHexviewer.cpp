@@ -14,6 +14,7 @@ private:
 
     vReadPort< vector<AE> > input_port;
     int mask;
+    int bits_to_check;
     int cols;
 
 public:
@@ -32,14 +33,41 @@ public:
         }
 
         cols = rf.check("cols", Value(4)).asInt();
-        mask = rf.check("mask", Value(0x00000000)).asInt();
+        std::string maskstring = rf.check("mask", Value("")).asString();
+        bits_to_check = 0; mask = 0;
+
+        //navigate through
+        int bit = 0;
+        for(std::string::const_reverse_iterator c = maskstring.rbegin();
+            c != maskstring.rend(); c++, bit++) {
+
+            if(*c == '1') {
+                mask |= (1 << bit);
+                bits_to_check |= (1 << bit);
+            } else if(*c == '0') {
+                bits_to_check |= (1 << bit);
+            }
+
+        }
 
         std::stringstream ss;
-        ss << std::hex << std::setfill('0') << std::internal << std::uppercase
-           << "0x" << std::setw(8) << mask;
+        //ss << std::hex << std::setfill('0') << std::internal << std::uppercase
+        //   << "0x" << std::setw(8) << mask;
 
-        if(mask)
+        if(bits_to_check) {
+            for(int i = 31; i >= 0; i--) {
+                if(bits_to_check & (1 << i)) {
+                    if(mask & (1 << i))
+                        ss << "1";
+                    else
+                        ss << "0";
+                } else {
+                    ss << "x";
+                }
+            }
+            ss << "b";
             yInfo() << "Showing only events with bits: " << ss.str();
+        }
 
         //start the asynchronous and synchronous threads
         return Thread::start();
@@ -87,6 +115,12 @@ public:
                 if(!q) return;
                 for(auto &v : (*q))
                 {
+
+
+                    //make a mask for "care or not care"
+
+                    //do ^ (XOR) for equals
+
                     if((v._coded_data & mask) == mask) {
                         if(coli++ % cols == 0) std::cout << std::endl;
                         std::cout << "0x" << std::setw(8) << v._coded_data << " ";
