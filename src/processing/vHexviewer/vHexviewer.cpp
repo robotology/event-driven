@@ -147,7 +147,7 @@ int main(int argc, char * argv[])
     yarp::os::Network yarp;
     if(!yarp.checkNetwork(2)) {
         std::cout << "Could not connect to YARP" << std::endl;
-        return false;
+        return -1;
     }
 
     /* prepare and configure the resource finder */
