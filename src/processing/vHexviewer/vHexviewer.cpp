@@ -13,8 +13,8 @@ class hexViewer : public RFModule, public Thread {
 private:
 
     vReadPort< vector<AE> > input_port;
-    int mask;
-    int bits_to_check;
+    unsigned int mask;
+    unsigned int bits_to_check;
     int cols;
 
 public:
@@ -125,13 +125,7 @@ public:
                 if(!q) return;
                 for(auto &v : (*q))
                 {
-
-
-                    //make a mask for "care or not care"
-
-                    //do ^ (XOR) for equals
-
-                    if((v._coded_data & mask) == mask) {
+                    if((v._coded_data & bits_to_check) == mask) {
                         if(coli++ % cols == 0) std::cout << std::endl;
                         std::cout << "0x" << std::setw(8) << v._coded_data << " ";
                     }
