@@ -33,7 +33,7 @@ private:
 
     vQueue filler;
     ev::vWritePort sendPort;
-    yarp::os::Mutex m;
+    std::mutex m;
     yarp::os::Stamp ystamp;
 
 

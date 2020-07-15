@@ -58,8 +58,8 @@ private:
     std::vector<int> hy;
     std::vector<int> hang;
 
-    yarp::os::Mutex mstart; /// for thread safety when starting computation
-    yarp::os::Mutex mdone; /// for thread safety when computation is finished
+    std::mutex mstart; /// for thread safety when starting computation
+    std::mutex mdone; /// for thread safety when computation is finished
 
     //current data
     ev::vQueue * procQueue; /// pointer to list of events to add to Hough space

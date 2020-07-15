@@ -256,15 +256,15 @@ void imuDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             break;}
         case imuHelper::GYR_Y: {//rot y
             auto pos = centre + cv::Point(0, Ylimit * 0.25);
-            cv::ellipse(image, pos, axes, 0, 0, -aep->value * circ_scaler, orange, CV_FILLED);
+            cv::ellipse(image, pos, axes, 0, 0, -aep->value * circ_scaler, orange, cv::FILLED);
             break;}
         case imuHelper::GYR_X: {//rot x
             auto pos = centre - cv::Point(Ylimit * 0.25, 0);
-            cv::ellipse(image, pos, axes, 0, 0, aep->value * circ_scaler, orange, CV_FILLED);
+            cv::ellipse(image, pos, axes, 0, 0, aep->value * circ_scaler, orange, cv::FILLED);
             break;}
         case imuHelper::GYR_Z: {//rot z
             auto pos = centre + cv::Point(Ylimit * 0.25*0.71, Ylimit * 0.25 * 0.71);
-            cv::ellipse(image, pos, axes, 0, 0, aep->value * circ_scaler, orange, CV_FILLED);
+            cv::ellipse(image, pos, axes, 0, 0, aep->value * circ_scaler, orange, cv::FILLED);
             break;}
         case imuHelper::TEMP: {//temp
             //centre = cv::Point(radius, radius);
@@ -360,7 +360,7 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         else
             c = aqua;
 
-        cv::circle(image, cv::Point(x, y), 5, c, CV_FILLED);
+        cv::circle(image, cv::Point(x, y), 5, c, cv::FILLED);
 
     }
 }

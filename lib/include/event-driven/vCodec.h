@@ -34,6 +34,7 @@ namespace ev {
 #define IS_SSV(x)       x&0x00800000
 #define IS_IMUSAMPLE(x) x&0x02000000
 #define IS_AUDIO(x)     x&0x04000000
+#define IS_CORNER(x)    x&0x00100000
 
 //macros
 class vEvent;

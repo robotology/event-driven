@@ -1059,7 +1059,7 @@ public:
             x = tmap.xoffset + tmap.scaling* std :: get<0>(it->second);
             y =  tmap.yoffset +tmap.scaling* std :: get<1>(it->second);
             cv::Point centr_all(x, y);
-            cv::circle(baseimage, centr_all, radius, black,1, CV_AA);
+            cv::circle(baseimage, centr_all, radius, black,1, cv::LINE_AA);
         }
 
     };
@@ -1110,7 +1110,7 @@ public:
             x = tmap.xoffset + tmap.scaling* std :: get<0>(it->second);
             y =  tmap.yoffset +tmap.scaling* std :: get<1>(it->second);
             cv::Point centr_all(x, y);
-            cv::circle(baseimage, centr_all, radius, black,1, CV_AA);
+            cv::circle(baseimage, centr_all, radius, black,1, cv::LINE_AA);
         }
     };
 

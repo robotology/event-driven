@@ -48,7 +48,7 @@ private:
 
     yarp::sig::Vector leftTarget;
     yarp::sig::Vector rightTarget;
-    Mutex m;
+    std::mutex m;
 
 public:
 
