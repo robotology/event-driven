@@ -33,40 +33,50 @@ public:
         }
 
         cols = rf.check("cols", Value(4)).asInt();
-        std::string maskstring = rf.check("mask", Value("")).asString();
+        std::stringstream ss; ss.str("");
+
         bits_to_check = 0; mask = 0;
-
-        //navigate through
-        int bit = 0;
-        for(std::string::const_reverse_iterator c = maskstring.rbegin();
-            c != maskstring.rend(); c++, bit++) {
-
-            if(*c == '1') {
-                mask |= (1 << bit);
-                bits_to_check |= (1 << bit);
-            } else if(*c == '0') {
-                bits_to_check |= (1 << bit);
+        if(rf.check("mask")) {
+            std::string maskstring = rf.check("mask", Value("x")).asString();
+            if(maskstring.empty()) {
+                ss.str(""); ss << rf.find("mask").asInt();
+                maskstring = ss.str();
             }
 
-        }
+            //navigate through
+            int bit = 0;
+            for(std::string::const_reverse_iterator c = maskstring.rbegin();
+                c != maskstring.rend(); c++, bit++) {
 
-        std::stringstream ss;
-        //ss << std::hex << std::setfill('0') << std::internal << std::uppercase
-        //   << "0x" << std::setw(8) << mask;
-
-        if(bits_to_check) {
-            for(int i = 31; i >= 0; i--) {
-                if(bits_to_check & (1 << i)) {
-                    if(mask & (1 << i))
-                        ss << "1";
-                    else
-                        ss << "0";
-                } else {
-                    ss << "x";
+                if(*c == '1') {
+                    mask |= (1 << bit);
+                    bits_to_check |= (1 << bit);
+                } else if(*c == '0') {
+                    bits_to_check |= (1 << bit);
                 }
+
             }
-            ss << "b";
-            yInfo() << "Showing only events with bits: " << ss.str();
+
+            ss.str("");
+            if(bits_to_check) {
+                for(int i = 31; i >= 0; i--) {
+                    if(bits_to_check & (1 << i)) {
+                        if(mask & (1 << i))
+                            ss << "1";
+                        else
+                            ss << "0";
+                    } else {
+                        ss << "x";
+                    }
+                }
+                ss << "b";
+                yInfo() << "Showing only events with bits: " << ss.str();
+            } else {
+                yInfo() << "No valid mask provided - showing all events";
+            }
+
+        } else {
+            yInfo() << "No mask provided - showing all events";
         }
 
         //start the asynchronous and synchronous threads
