@@ -7,6 +7,7 @@ option(ENABLE_vSkinInterface "Build basic skin pre-processing" OFF)
 option(ENABLE_vCorner "Build corner detection module" OFF)
 option(ENABLE_DualCamTransform "Build Frame->ATIS geometric transform" OFF)
 option(ENABLE_vHexviewer "Enable a hexadecimal raw-event viewer" ON)
+option(ENABLE_esim "Enable the event simulator" ON)
 
 if(OpenCV_FOUND)
     if(ENABLE_vFramer)
@@ -58,4 +59,8 @@ endif()
 
 if(ENABLE_vHexviewer)
     add_subdirectory(vHexviewer)
+endif()
+
+if(ENABLE_esim)
+    add_subdirectory(esim-yarp)
 endif()
