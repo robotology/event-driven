@@ -9,12 +9,7 @@
  * which is passed to the simulator.
  */
 
-#include <yarp/os/BufferedPort.h>
-#include <yarp/os/ResourceFinder.h>
-#include <yarp/os/RFModule.h>
-#include <yarp/os/Network.h>
-#include <yarp/os/Log.h>
-#include <yarp/os/LogStream.h>
+#include <yarp/os/all.h>
 #include <yarp/sig/Image.h>
 #include <yarp/cv/Cv.h>
 
@@ -25,12 +20,15 @@
 
 #include <event-driven/vPort.h>
 
+using namespace yarp::sig;
+using namespace yarp::os;
+using namespace cv;
+using namespace ev;
+using std::deque;
 
-template<typename T>
-T sampleNormalDistribution(
-        bool deterministic = false,
-        T mean  = T{0.0},
-        T sigma = T{1.0})
+template<typename T> T sampleNormalDistribution(bool deterministic = false,
+                                                T mean  = T{0.0},
+                                                T sigma = T{1.0})
 {
     static std::mt19937 gen_nondeterministic(std::random_device{}());
     static std::mt19937 gen_deterministic(0);
@@ -38,25 +36,16 @@ T sampleNormalDistribution(
     return deterministic ? dist(gen_deterministic) : dist(gen_nondeterministic);
 }
 
-struct Config
-{
-    double Cp;
-    double Cm;
-    double sigma_Cp;
-    double sigma_Cm;
-    unsigned long refractory_period_ns;
-    bool use_log_image;
-    double log_eps;
-};
+
 
 class EsimModule : public yarp::os::RFModule,
                    public yarp::os::Thread
 {
-    yarp::os::RpcServer rpcPort;
 
-    bool            closing;
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>> imgPortIn;
-    Stamp stamp;
+private:
+
+    BufferedPort< ImageOf<PixelRgb> > imgPortIn;
+    ev::vWritePort eventPortOut;
 
     bool is_initialized_;
     long current_time_;
@@ -65,28 +54,41 @@ class EsimModule : public yarp::os::RFModule,
     cv::Mat_<double> last_event_timestamp_;
     cv::Size size_;
 
-    Config config_;
-
-    ev::vWritePort eventPortOut;
-
-    /********************************************************/
-    bool quit()
+    struct
     {
-        closing = true;
-        return true;
-    }
+        double Cp;
+        double Cm;
+        double sigma_Cp;
+        double sigma_Cm;
+        unsigned long refractory_period_ns;
+        bool use_log_image;
+        double log_eps;
+    } config_;
 
-    public:
-    /********************************************************/
+public:
+
     bool configure(yarp::os::ResourceFinder &rf)
     {
 
-        std::string moduleName = rf.check("name", yarp::os::Value("esim-yarp"), "module name (string)").asString();
+        std::string moduleName = rf.check("name", Value("/esim-yarp"), "module name (string)").asString();
         setName(moduleName.c_str());
 
-        rpcPort.open(("/"+getName("/rpc")));
+        yarp::os::Network yarp;
+        if (!yarp.checkNetwork(2.0))
+        {
+            yError()<<"YARP server not available!";
+            return false;
+        }
 
-        closing = false;
+        if(!imgPortIn.open(getName("/image:i"))) {
+            yError() << "Could not open" << getName("/image:i");
+            return false;
+        }
+
+        if(!eventPortOut.open(getName("/AE:o"))) {
+            yError() << "Could not open" << getName("/AE:o");
+            return false;
+        }
 
         config_.Cp = 0.05;
         config_.Cm = 0.03;
@@ -95,38 +97,29 @@ class EsimModule : public yarp::os::RFModule,
         config_.use_log_image = true;
         config_.log_eps = 0.001;
         config_.refractory_period_ns = 10;
-        imgPortIn.open("/" + getName("/image:i"));
-        eventPortOut.open("/" + getName("/AE:o"));
-        Thread::start();
+
         current_time_ = 0;
         is_initialized_ = false;
-        stamp = Stamp(0, yarp::os::Time::now());
 
-        attach(rpcPort);
-        return true;
+        return Thread::start();
     }
 
-    /********************************************************/
     bool close()
     {
-        imgPortIn.interrupt();
         imgPortIn.close();
-        rpcPort.close();
+        eventPortOut.close();
         return true;
     }
 
-    /********************************************************/
     double getPeriod()
     {
         return 1;
     }
 
-    /********************************************************/
     bool updateModule()
     {
-        return !closing;
+        return true;
     }
-
 
     void init(const cv::Mat_<double> &img, long time)
     {
@@ -145,7 +138,8 @@ class EsimModule : public yarp::os::RFModule,
 
         cv::Mat_<double> preprocessed_img;
         if (config_.use_log_image) {
-            yInfoOnce() << "Converting the image to log image with eps = " << config_.log_eps << ".";
+            //yInfoOnce() << "Converting the image to log image with eps = " << config_.log_eps << ".";
+            yInfo() << "Converting the image to log image with eps = " << config_.log_eps << ".";
             cv::log(config_.log_eps + img, preprocessed_img);
         }
 
@@ -190,16 +184,26 @@ class EsimModule : public yarp::os::RFModule,
     }
 
     void run(){
-        while (!Thread::isStopping()){
-            yarp::sig::ImageOf<yarp::sig::PixelRgb>* yarpImage = imgPortIn.read();
-            cv::Mat cvImage = yarp::cv::toCvMat(*yarpImage);
-            cv::cvtColor(cvImage, cvImage, CV_RGB2GRAY);
-            cv::Mat_<double> floatImage;
-            cvImage.convertTo(floatImage, CV_64FC1, 1 / 255.0);
-            stamp.update();
-            long time_ns = 1e9 * stamp.getTime();
-            std::deque<ev::AddressEvent> events = imageCallback(floatImage, time_ns);
 
+        Stamp stamp;
+        cv::Mat greyscale;
+        cv::Mat floatImage;
+        static constexpr double pixelscaler = 1.0 / 255.0;
+
+        while (!Thread::isStopping()) {
+
+            yarp::sig::ImageOf<yarp::sig::PixelRgb>* yarpImage = imgPortIn.read();
+            if(!yarpImage)
+                return;
+
+            stamp.update();
+
+            cv::Mat cvImage = yarp::cv::toCvMat(*yarpImage);
+            cv::cvtColor(cvImage, greyscale, CV_RGB2GRAY);
+            greyscale.convertTo(floatImage, CV_64FC1, pixelscaler);
+
+            long time_ns = 1e9 * stamp.getTime();
+            deque<AE> events = imageCallback(floatImage, time_ns);
 
             if(!events.empty())
             {
@@ -212,27 +216,17 @@ class EsimModule : public yarp::os::RFModule,
 
 int main(int argc, char *argv[])
 {
-    yarp::os::Network::init();
 
-    yarp::os::Network yarp;
-    if (!yarp.checkNetwork())
-    {
-        yError()<<"YARP server not available!";
-        return 1;
-    }
+    //cv::setUseOptimized(true);
+    //cv::setNumThreads(4);
 
-    EsimModule module;
     yarp::os::ResourceFinder rf;
-
-    cv::setUseOptimized(true);
-    cv::setNumThreads(4);
-
     rf.setVerbose();
-    rf.setDefaultConfigFile( "config.ini" );
-    rf.setDefaultContext("esim-yarp");
-
+    rf.setDefaultConfigFile( "esim-yarp.ini" );
+    rf.setDefaultContext("event-driven");
     rf.configure(argc,argv);
 
+    EsimModule module;
     return module.runModule(rf);
 }
 
