@@ -26,18 +26,6 @@ using namespace cv;
 using namespace ev;
 using std::deque;
 
-template<typename T> T sampleNormalDistribution(bool deterministic = false,
-                                                T mean  = T{0.0},
-                                                T sigma = T{1.0})
-{
-    static std::mt19937 gen_nondeterministic(std::random_device{}());
-    static std::mt19937 gen_deterministic(0);
-    auto dist = std::normal_distribution<T>(mean, sigma);
-    return deterministic ? dist(gen_deterministic) : dist(gen_nondeterministic);
-}
-
-
-
 class EsimModule : public yarp::os::RFModule,
                    public yarp::os::Thread
 {
@@ -47,12 +35,11 @@ private:
     BufferedPort< ImageOf<PixelRgb> > imgPortIn;
     ev::vWritePort eventPortOut;
 
-    bool is_initialized_;
-    long current_time_;
-    cv::Mat_<double> ref_values_;
-    cv::Mat_<double> last_img_;
-    cv::Mat_<double> last_event_timestamp_;
-    cv::Size size_;
+    cv::Mat ref_values;
+    cv::Mat prev_img;
+    double prev_time;
+
+    Stamp curr_stamp;
 
     struct
     {
@@ -61,6 +48,8 @@ private:
         double sigma_Cp;
         double sigma_Cm;
         double log_eps;
+        double tolerance;
+        double noise_variance;
         unsigned long refractory_period_ns;
         bool use_log_image;
     } config_;
@@ -95,11 +84,10 @@ public:
         config_.sigma_Cp = rf.check("sigma_Cp", Value(0.0)).asDouble();
         config_.sigma_Cm = rf.check("sigma_Cm", Value(0.0)).asDouble();
         config_.log_eps = rf.check("log_eps", Value(0.001)).asDouble();
+        config_.tolerance = rf.check("tolerance", Value(1e-6)).asDouble();
+        config_.noise_variance = rf.check("noise_variance", Value(0.25)).asDouble();
         config_.refractory_period_ns = rf.check("refractory_period_ns", Value(10)).asInt64();
         config_.use_log_image = rf.check("use_log_image", Value(true)).asBool();
-
-        current_time_ = 0;
-        is_initialized_ = false;
 
         return Thread::start();
     }
@@ -121,92 +109,85 @@ public:
         return true;
     }
 
-    void init(const cv::Mat_<double> &img, long time)
-    {
-        size_ = img.size();
-        yInfo() << "Initialized event camera simulator with sensor size: " << size_.width << "x" << size_.height ;
-        yInfo() << "and contrast thresholds: C+ = " << config_.Cp << " , C- = " << config_.Cm;
-        is_initialized_ = true;
-        last_img_ = img.clone();
-        ref_values_ = cv::Mat_<double>::zeros(size_);
-        last_event_timestamp_ = cv::Mat_<double>::zeros(size_);
-        current_time_ = time;
-    }
+    deque<AE> processImage(const cv::Mat &img, double curr_time) {
 
-    std::deque<ev::AddressEvent> imageCallback(const cv::Mat_<double>& img, long time) {
-        yAssert(time > 0);
+        static constexpr double pixelscaler = 1.0 / 255.0;
+        static Mat imgC1, img64, noise, diff64, abs64, abs8;
 
-        cv::Mat_<double> preprocessed_img;
-        if (config_.use_log_image) {
-            //yInfoOnce() << "Converting the image to log image with eps = " << config_.log_eps << ".";
-            yInfo() << "Converting the image to log image with eps = " << config_.log_eps << ".";
-            cv::log(config_.log_eps + img, preprocessed_img);
+        //perform image pre-processing (grey, double, log)
+        if(img.channels() > 1)
+            cvtColor(img, imgC1, COLOR_RGB2GRAY);
+        else
+            imgC1 = img;
+        imgC1.convertTo(img64, CV_64F, pixelscaler);
+
+        if (config_.use_log_image)
+            cv::log(config_.log_eps + img64, img64);
+
+
+        //if first image we need to initialise based on the image size
+        if (prev_img.empty()) {
+            img64.copyTo(prev_img);
+            ref_values = cv::Mat::zeros(prev_img.size(), CV_64F);
+            noise = Mat::zeros(prev_img.size(), CV_64F);
+            yInfo() << "Initialized event camera simulator with sensor size: " << prev_img.cols << "x" << prev_img.rows ;
+            return {}; //do not produce events on the first image
         }
 
-        if (!is_initialized_) {
-            init(preprocessed_img, time);
-            return {};
-        }
+        //create the noise matrix
+        double delta_t = curr_time - prev_time;
+        prev_time = curr_time;
+        cv::randn(noise, 0, config_.noise_variance*delta_t);
+        yInfo() << config_.noise_variance*delta_t;
+
+        //create the image difference and move current image to previous image
+        diff64 = img64 - prev_img;
+        img64.copyTo(prev_img);
+
+        //update the reference values from diff and noise
+        ref_values += (diff64 + noise);
 
         // For each pixel, check if new events need to be generated since the last image sample
-        static constexpr double tolerance = 1e-6;
+        abs64 = cv::abs(ref_values);
+        cv::threshold(abs64, abs64, config_.tolerance, 1.0, CV_THRESH_TOZERO);
+        abs64.convertTo(abs8, CV_8U);
+
+        // create events for each pixel that exceeds the threshold
+        cv::Mat event_list;
+        cv::findNonZero(abs8, event_list);
+
+        static ev::AddressEvent v;
         std::deque<ev::AddressEvent> events;
-        unsigned long delta_t_ns = time - current_time_;
-
-        yAssert(delta_t_ns > 0);
-        yAssert(img.size() == size_);
-        cv::Mat_<double> diffMat = last_img_ - preprocessed_img;
-        cv::Mat_<double> noise(diffMat.rows, diffMat.cols);
-        cv::randn(noise, 0, 0.01);
-        ref_values_ += diffMat + noise;
-        cv::Mat abs = cv::abs(ref_values_);
-        cv::threshold(abs, abs, tolerance, 1, CV_THRESH_TOZERO);
-        abs.convertTo(abs, CV_8UC1);
-        cv::Mat eventList;
-
-        cv::findNonZero(abs, eventList);
-        for (int i = 0; i < eventList.total(); i++) {
-            ev::AddressEvent v;
-            int x = eventList.at<cv::Point>(i).x;
-            int y = eventList.at<cv::Point>(i).y;
-            v.x = x;
-            v.y = y;
-            v.stamp = time * 1e-9 * ev::vtsHelper::vtsscaler; // To comply with ATIS timestamp
-            v.polarity = (ref_values_(y, x) > 0) ? 1 : 0;
-            ref_values_(y, x) = 0;
+        for (auto i = 0; i < event_list.total(); i++) {
+            v.x = event_list.at<cv::Point>(i).x;
+            v.y = event_list.at<cv::Point>(i).y;
+            v.stamp = curr_time * vtsHelper::vtsscaler; // To comply with ATIS timestamp
+            v.polarity = (ref_values.at<double>(v.y, v.x) > 0.0) ? 0 : 1;
             events.push_back(v);
-            last_event_timestamp_(y, x) = static_cast<double>(time) / 1e9;
-        }
 
-        last_img_ = preprocessed_img.clone();
+            ref_values.at<double>(v.y, v.x) = 0.0;
+        }
 
         return events;
     }
 
-    void run(){
-
-        Stamp stamp;
-        cv::Mat greyscale;
-        cv::Mat floatImage;
-        static constexpr double pixelscaler = 1.0 / 255.0;
+    void run() {
 
         while (!Thread::isStopping()) {
 
+            //read new image (blocking)
             yarp::sig::ImageOf<yarp::sig::PixelRgb>* yarpImage = imgPortIn.read();
             if(!yarpImage)
                 return;
 
-            stamp.update();
+            //update timing information based on image when images are available
+            //this could use the imgPortIn.getEnvelope() if it is valid
+            curr_stamp.update();
 
-            cv::Mat cvImage = yarp::cv::toCvMat(*yarpImage);
-            cv::cvtColor(cvImage, greyscale, CV_RGB2GRAY);
-            greyscale.convertTo(floatImage, CV_64FC1, pixelscaler);
-
-            long time_ns = 1e9 * stamp.getTime();
-            deque<AE> events = imageCallback(floatImage, time_ns);
-
+            //produce and write events
+            deque<AE> events = processImage(yarp::cv::toCvMat(*yarpImage), curr_stamp.getTime());
             if(!events.empty())
-                eventPortOut.write(events, stamp);
+                eventPortOut.write(events, curr_stamp);
         }
     }
 };
