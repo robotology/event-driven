@@ -60,9 +60,9 @@ private:
         double Cm;
         double sigma_Cp;
         double sigma_Cm;
+        double log_eps;
         unsigned long refractory_period_ns;
         bool use_log_image;
-        double log_eps;
     } config_;
 
 public:
@@ -90,13 +90,13 @@ public:
             return false;
         }
 
-        config_.Cp = 0.05;
-        config_.Cm = 0.03;
-        config_.sigma_Cp = 0;
-        config_.sigma_Cm = 0;
-        config_.use_log_image = true;
-        config_.log_eps = 0.001;
-        config_.refractory_period_ns = 10;
+        config_.Cp = rf.check("Cp", Value(0.05)).asDouble();
+        config_.Cm = rf.check("Cm", Value(0.03)).asDouble();
+        config_.sigma_Cp = rf.check("sigma_Cp", Value(0.0)).asDouble();
+        config_.sigma_Cm = rf.check("sigma_Cm", Value(0.0)).asDouble();
+        config_.log_eps = rf.check("log_eps", Value(0.001)).asDouble();
+        config_.refractory_period_ns = rf.check("refractory_period_ns", Value(10)).asInt64();
+        config_.use_log_image = rf.check("use_log_image", Value(true)).asBool();
 
         current_time_ = 0;
         is_initialized_ = false;
@@ -206,9 +206,7 @@ public:
             deque<AE> events = imageCallback(floatImage, time_ns);
 
             if(!events.empty())
-            {
                 eventPortOut.write(events, stamp);
-            }
         }
     }
 };
@@ -216,10 +214,6 @@ public:
 
 int main(int argc, char *argv[])
 {
-
-    //cv::setUseOptimized(true);
-    //cv::setNumThreads(4);
-
     yarp::os::ResourceFinder rf;
     rf.setVerbose();
     rf.setDefaultConfigFile( "esim-yarp.ini" );
