@@ -1,4 +1,24 @@
 /*
+ *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Author:massimiliano.iacono@iit.it
+ *          arren.glover@iit.it
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+
+/**
  * The EventSimulator takes as input a sequence of stamped images,
  * assumed to be sampled at a "sufficiently high" framerate,
  * and simulates the principle of operation of an idea event camera
@@ -43,14 +63,9 @@ private:
 
     struct
     {
-        double Cp;
-        double Cm;
-        double sigma_Cp;
-        double sigma_Cm;
+        double C;
         double log_eps;
-        double tolerance;
         double noise_variance;
-        unsigned long refractory_period_ns;
         bool use_log_image;
     } config_;
 
@@ -79,14 +94,9 @@ public:
             return false;
         }
 
-        config_.Cp = rf.check("Cp", Value(0.05)).asDouble();
-        config_.Cm = rf.check("Cm", Value(0.03)).asDouble();
-        config_.sigma_Cp = rf.check("sigma_Cp", Value(0.0)).asDouble();
-        config_.sigma_Cm = rf.check("sigma_Cm", Value(0.0)).asDouble();
         config_.log_eps = rf.check("log_eps", Value(0.001)).asDouble();
-        config_.tolerance = rf.check("tolerance", Value(1e-6)).asDouble();
+        config_.C = rf.check("C", Value(1e-6)).asDouble();
         config_.noise_variance = rf.check("noise_variance", Value(0.25)).asDouble();
-        config_.refractory_period_ns = rf.check("refractory_period_ns", Value(10)).asInt64();
         config_.use_log_image = rf.check("use_log_image", Value(true)).asBool();
 
         return Thread::start();
@@ -138,7 +148,6 @@ public:
         double delta_t = curr_time - prev_time;
         prev_time = curr_time;
         cv::randn(noise, 0, config_.noise_variance*delta_t);
-        yInfo() << config_.noise_variance*delta_t;
 
         //create the image difference and move current image to previous image
         diff64 = img64 - prev_img;
@@ -149,7 +158,7 @@ public:
 
         // For each pixel, check if new events need to be generated since the last image sample
         abs64 = cv::abs(ref_values);
-        cv::threshold(abs64, abs64, config_.tolerance, 1.0, CV_THRESH_TOZERO);
+        cv::threshold(abs64, abs64, config_.C, 1.0, CV_THRESH_TOZERO);
         abs64.convertTo(abs8, CV_8U);
 
         // create events for each pixel that exceeds the threshold
@@ -158,7 +167,7 @@ public:
 
         static ev::AddressEvent v;
         std::deque<ev::AddressEvent> events;
-        for (auto i = 0; i < event_list.total(); i++) {
+        for (size_t i = 0; i < event_list.total(); i++) {
             v.x = event_list.at<cv::Point>(i).x;
             v.y = event_list.at<cv::Point>(i).y;
             v.stamp = curr_time * vtsHelper::vtsscaler; // To comply with ATIS timestamp
