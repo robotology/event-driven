@@ -54,6 +54,7 @@ private:
 
     BufferedPort< ImageOf<PixelRgb> > imgPortIn;
     ev::vWritePort eventPortOut;
+    yarp::os::Port debugPort;
 
     cv::Mat ref_values;
     cv::Mat prev_img;
@@ -64,6 +65,7 @@ private:
     struct
     {
         double C;
+        double refractory_period;
         double log_eps;
         double noise_variance;
         bool use_log_image;
@@ -94,9 +96,15 @@ public:
             return false;
         }
 
+        if(!debugPort.open(getName("/debug"))) {
+            yError() << "Could not open" << getName("/debug");
+            return false;
+        }
+
         config_.log_eps = rf.check("log_eps", Value(0.001)).asDouble();
         config_.C = rf.check("C", Value(1e-6)).asDouble();
         config_.noise_variance = rf.check("noise_variance", Value(0.25)).asDouble();
+        config_.refractory_period = rf.check("refractory_period", Value(10e-6)).asDouble();
         config_.use_log_image = rf.check("use_log_image", Value(true)).asBool();
 
         return Thread::start();
@@ -122,7 +130,7 @@ public:
     deque<AE> processImage(const cv::Mat &img, double curr_time) {
 
         static constexpr double pixelscaler = 1.0 / 255.0;
-        static Mat imgC1, img64, noise, diff64, abs64, abs8;
+        static Mat imgC1, img64, noise, diff64, abs64, abs8, last_timestamp;
 
         //perform image pre-processing (grey, double, log)
         if(img.channels() > 1)
@@ -135,18 +143,20 @@ public:
             cv::log(config_.log_eps + img64, img64);
 
 
+        //create the noise matrix
+        double delta_t = curr_time - prev_time;
+        prev_time = curr_time;
+
         //if first image we need to initialise based on the image size
         if (prev_img.empty()) {
             img64.copyTo(prev_img);
             ref_values = cv::Mat::zeros(prev_img.size(), CV_64F);
+            last_timestamp = cv::Mat::zeros(prev_img.size(), CV_64F);
             noise = Mat::zeros(prev_img.size(), CV_64F);
             yInfo() << "Initialized event camera simulator with sensor size: " << prev_img.cols << "x" << prev_img.rows ;
             return {}; //do not produce events on the first image
         }
 
-        //create the noise matrix
-        double delta_t = curr_time - prev_time;
-        prev_time = curr_time;
         cv::randn(noise, 0, config_.noise_variance*delta_t);
 
         //create the image difference and move current image to previous image
@@ -168,15 +178,33 @@ public:
         static ev::AddressEvent v;
         std::deque<ev::AddressEvent> events;
         for (size_t i = 0; i < event_list.total(); i++) {
-            v.x = event_list.at<cv::Point>(i).x;
-            v.y = event_list.at<cv::Point>(i).y;
-            v.stamp = curr_time * vtsHelper::vtsscaler; // To comply with ATIS timestamp
-            v.polarity = (ref_values.at<double>(v.y, v.x) > 0.0) ? 0 : 1;
-            events.push_back(v);
+            int x = event_list.at<cv::Point>(i).x;
+            int y = event_list.at<cv::Point>(i).y;
+            double delta_t_event;
+            double last_ts = last_timestamp.at<double>(y, x);
+            if (last_ts == 0)
+                delta_t_event = delta_t;
+            else
+                delta_t_event = curr_time - last_ts;
+            double ref_val = ref_values.at<double>(y, x);
 
-            ref_values.at<double>(v.y, v.x) = 0.0;
+            int num_events = std::min(delta_t_event / config_.refractory_period, abs(ref_val) / config_.C);
+            yAssert(num_events > 0);
+            double time_step = delta_t_event / num_events;
+            for (int j = 1; j <= num_events; ++j) {
+                v.x = x;
+                v.y = y;
+                v.stamp = (curr_time - delta_t_event + j * time_step) * vtsHelper::vtsscaler; // To comply with ATIS timestamp
+                 v.polarity = (ref_val > 0.0) ? 0 : 1;
+                events.push_back(v);
+            }
+            last_timestamp.at<double>(y, x) = curr_time;
+
+            ref_values.at<double>(y, x) = 0.0;
         }
-
+//        std::sort(events.begin(), events.end(), [](const ev::AddressEvent& a, const ev::AddressEvent& b) {
+//            return a.stamp > b.stamp;
+//        });
         return events;
     }
 
@@ -194,11 +222,17 @@ public:
             curr_stamp.update();
 
             //produce and write events
+            auto now = yarp::os::Time::now();
             deque<AE> events = processImage(yarp::cv::toCvMat(*yarpImage), curr_stamp.getTime());
+            now = yarp::os::Time::now() - now;
+            yarp::os::Bottle bot;
+            bot.addDouble(now);
+            debugPort.write(bot);
             if(!events.empty())
                 eventPortOut.write(events, curr_stamp);
         }
     }
+
 };
 
 
