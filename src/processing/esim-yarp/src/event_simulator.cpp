@@ -34,6 +34,7 @@
 #include <yarp/cv/Cv.h>
 
 #include <random>
+#include <execution>
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
@@ -194,17 +195,21 @@ public:
             for (int j = 1; j <= num_events; ++j) {
                 v.x = x;
                 v.y = y;
-                v.stamp = (curr_time - delta_t_event + j * time_step) * vtsHelper::vtsscaler; // To comply with ATIS timestamp
-                 v.polarity = (ref_val > 0.0) ? 0 : 1;
+                v.stamp = (curr_time - delta_t_event + j * time_step) *
+                          vtsHelper::vtsscaler; // To comply with ATIS timestamp
+                v.polarity = (ref_val > 0.0) ? 0 : 1;
                 events.push_back(v);
             }
             last_timestamp.at<double>(y, x) = curr_time;
 
             ref_values.at<double>(y, x) = 0.0;
         }
-//        std::sort(events.begin(), events.end(), [](const ev::AddressEvent& a, const ev::AddressEvent& b) {
-//            return a.stamp > b.stamp;
-//        });
+
+        std::sort(std::execution::par_unseq, events.begin(), events.end(),
+                  [](const ev::AddressEvent &a, const ev::AddressEvent &b) {
+                      return a.stamp < b.stamp;
+                  });
+
         return events;
     }
 
@@ -222,12 +227,8 @@ public:
             curr_stamp.update();
 
             //produce and write events
-            auto now = yarp::os::Time::now();
             deque<AE> events = processImage(yarp::cv::toCvMat(*yarpImage), curr_stamp.getTime());
-            now = yarp::os::Time::now() - now;
-            yarp::os::Bottle bot;
-            bot.addDouble(now);
-            debugPort.write(bot);
+
             if(!events.empty())
                 eventPortOut.write(events, curr_stamp);
         }
