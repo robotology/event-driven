@@ -404,7 +404,7 @@ void vPreProcess::run() {
                         } else {
                             qright.push_back(v);
                         }
-                        if(corners && IS_CORNER(v._coded_data))
+                        if(corners && v.corner)
                             qright_corners.push_back(v);
                     } else {
                         if(v.type)
@@ -418,7 +418,7 @@ void vPreProcess::run() {
                         } else {
                             qleft.push_back(v);
                         }
-                        if(corners && IS_CORNER(v._coded_data))
+                        if(corners && v.corner)
                             qleft_corners.push_back(v);
                     }
                 }
@@ -434,7 +434,7 @@ void vPreProcess::run() {
                     } else {
                         qstereo.push_back(v);
                     }
-                    if(corners && IS_CORNER(v._coded_data))
+                    if(corners && v.corner)
                         qstereo_corners.push_back(v);
                 }
             }
