@@ -138,7 +138,6 @@ public:
         static constexpr double pixelscaler = 1.0 / 255.0;
         static Mat imgC1, img64, noise, diff64, abs64, abs8, last_timestamp;
         static double ts_noise;
-        static unsigned int max_ts = 0;
         //perform image pre-processing (grey, double, log)
         if(img.channels() > 1)
             cvtColor(img, imgC1, COLOR_RGB2GRAY);
@@ -201,10 +200,8 @@ public:
                 ts_noise = double(random()) * config_.ts_noise_range / RAND_MAX - config_.ts_noise_range / 2;
                 double timestamp = (curr_time - delta_t + j * time_step + ts_noise);
                 timestamp = min(timestamp, curr_time);
+                timestamp = max(timestamp, curr_time - delta_t);
                 unsigned int timestamp_int = timestamp * vtsHelper::vtsscaler ;
-                if (max_ts != 0){
-                    timestamp_int = max(max_ts, timestamp_int);
-                }
                 v.stamp = timestamp_int;
                 v.polarity = (ref_val > 0.0) ? 0 : 1;
                 events.push_back(v);
@@ -219,10 +216,6 @@ public:
                       return a.stamp < b.stamp;
                   });
 
-
-        if (!events.empty()) {
-            max_ts = events.back().stamp;
-        }
         return events;
     }
 
