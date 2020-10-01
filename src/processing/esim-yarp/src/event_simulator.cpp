@@ -60,6 +60,7 @@ private:
     cv::Mat ref_values;
     cv::Mat prev_img;
     double prev_time;
+    double first_time;
 
     Stamp curr_stamp;
 
@@ -69,6 +70,7 @@ private:
         double refractory_period;
         double log_eps;
         double noise_variance;
+        double ts_noise_range;
         bool use_log_image;
     } config_;
 
@@ -105,8 +107,11 @@ public:
         config_.log_eps = rf.check("log_eps", Value(0.001)).asDouble();
         config_.C = rf.check("C", Value(1e-6)).asDouble();
         config_.noise_variance = rf.check("noise_variance", Value(0.25)).asDouble();
+        config_.ts_noise_range = rf.check("ts_noise_range", Value(0.04)).asDouble();
         config_.refractory_period = rf.check("refractory_period", Value(10e-6)).asDouble();
         config_.use_log_image = rf.check("use_log_image", Value(true)).asBool();
+        curr_stamp.update();
+        first_time = curr_stamp.getTime();
 
         return Thread::start();
     }
@@ -132,7 +137,8 @@ public:
 
         static constexpr double pixelscaler = 1.0 / 255.0;
         static Mat imgC1, img64, noise, diff64, abs64, abs8, last_timestamp;
-
+        static double ts_noise;
+        static unsigned int max_ts = 0;
         //perform image pre-processing (grey, double, log)
         if(img.channels() > 1)
             cvtColor(img, imgC1, COLOR_RGB2GRAY);
@@ -181,22 +187,25 @@ public:
         for (size_t i = 0; i < event_list.total(); i++) {
             int x = event_list.at<cv::Point>(i).x;
             int y = event_list.at<cv::Point>(i).y;
-            double delta_t_event;
-            double last_ts = last_timestamp.at<double>(y, x);
-            if (last_ts == 0)
-                delta_t_event = delta_t;
-            else
-                delta_t_event = curr_time - last_ts;
+
             double ref_val = ref_values.at<double>(y, x);
 
-            int num_events = std::min(delta_t_event / config_.refractory_period, abs(ref_val) / config_.C);
-            yAssert(num_events > 0);
-            double time_step = delta_t_event / num_events;
+            int num_events = std::min(delta_t / config_.refractory_period, abs(ref_val) / config_.C);
+            if (num_events <= 0 ) continue;
+
+            double time_step = delta_t / num_events;
+
             for (int j = 1; j <= num_events; ++j) {
                 v.x = x;
                 v.y = y;
-                v.stamp = (curr_time - delta_t_event + j * time_step) *
-                          vtsHelper::vtsscaler; // To comply with ATIS timestamp
+                ts_noise = double(random()) * config_.ts_noise_range / RAND_MAX - config_.ts_noise_range / 2;
+                double timestamp = (curr_time - delta_t + j * time_step + ts_noise);
+                timestamp = min(timestamp, curr_time);
+                unsigned int timestamp_int = timestamp * vtsHelper::vtsscaler ;
+                if (max_ts != 0){
+                    timestamp_int = max(max_ts, timestamp_int);
+                }
+                v.stamp = timestamp_int;
                 v.polarity = (ref_val > 0.0) ? 0 : 1;
                 events.push_back(v);
             }
@@ -210,6 +219,10 @@ public:
                       return a.stamp < b.stamp;
                   });
 
+
+        if (!events.empty()) {
+            max_ts = events.back().stamp;
+        }
         return events;
     }
 
@@ -227,7 +240,8 @@ public:
             curr_stamp.update();
 
             //produce and write events
-            deque<AE> events = processImage(yarp::cv::toCvMat(*yarpImage), curr_stamp.getTime());
+            double currTime = curr_stamp.getTime() - first_time;
+            deque<AE> events = processImage(yarp::cv::toCvMat(*yarpImage), currTime);
 
             if(!events.empty())
                 eventPortOut.write(events, curr_stamp);
