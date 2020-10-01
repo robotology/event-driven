@@ -6,6 +6,7 @@
 
     <module>
         <name> esim-yarp </name>
+        <parameters>--C 1e-2 --noise_variance 0.01 --refractory_period 0.01 --ts_noise_range 0.005</parameters>
         <node> localhost </node>
     </module>
 
