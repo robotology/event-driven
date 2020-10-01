@@ -39,6 +39,7 @@
 #include <opencv2/opencv.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 
+#include <filesystem>
 #include <event-driven/vPort.h>
 
 using namespace yarp::sig;
@@ -54,14 +55,17 @@ class EsimModule : public yarp::os::RFModule,
 private:
 
     BufferedPort< ImageOf<PixelRgb> > imgPortIn;
+    RpcServer rpcPort;
     ev::vWritePort eventPortOut;
     yarp::os::Port debugPort;
-
+    std::vector<std::deque<ev::AE>> queues;
+    std::vector<double> timestamps;
     cv::Mat ref_values;
     cv::Mat prev_img;
     double prev_time;
     double first_time;
 
+    bool recording;
     Stamp curr_stamp;
 
     struct
@@ -104,6 +108,11 @@ public:
             return false;
         }
 
+        if(!rpcPort.open(getName("/rpc"))) {
+            yError() << "Could not open" << getName("/rpc");
+            return false;
+        }
+
         config_.log_eps = rf.check("log_eps", Value(0.001)).asDouble();
         config_.C = rf.check("C", Value(1e-6)).asDouble();
         config_.noise_variance = rf.check("noise_variance", Value(0.25)).asDouble();
@@ -112,6 +121,7 @@ public:
         config_.use_log_image = rf.check("use_log_image", Value(true)).asBool();
         curr_stamp.update();
         first_time = curr_stamp.getTime();
+        recording = false;
 
         return Thread::start();
     }
@@ -125,11 +135,47 @@ public:
 
     double getPeriod()
     {
-        return 1;
+        return 0.1;
     }
 
-    bool updateModule()
-    {
+    bool updateModule() {
+        Bottle cmd_bottle;
+        Bottle response;
+        rpcPort.read(cmd_bottle, true);
+        std::string cmd = cmd_bottle.get(0).toString();
+
+        static std::string savePath;
+        std::ostringstream response_ss;
+
+        if (cmd == "record") {
+            std::string path = cmd_bottle.get(1).toString();
+
+            if (std::filesystem::is_directory(path)) {
+                response_ss << "Recording data in " << path;
+                savePath = path;
+                recording = true;
+            } else if (std::filesystem::is_regular_file(path)) {
+                response_ss << path << " is a file. Please provide a directory.";
+            } else if (!std::filesystem::exists(path)){
+                response_ss << "Cannot access " << path << ". Please provide a valid path to store the data";
+            }
+
+        } else if (cmd == "stop") {
+            if (!recording){
+                response_ss << "Please start a recording before trying to stop it.";
+            } else {
+                response_ss << "Stopping recording.";
+                recording = false;
+                saveData(savePath);
+                queues.clear();
+                timestamps.clear();
+            }
+        }
+
+        response.addString(response_ss.str());
+
+        rpcPort.reply(response);
+
         return true;
     }
 
@@ -219,6 +265,31 @@ public:
         return events;
     }
 
+    void saveData(std::string path) {
+        std::filesystem::path dir (path);
+        std::filesystem::path file ("data.log");
+        std::filesystem::path completePath = dir / file;
+        yInfo() << "Saving data to " << completePath;
+        std::ofstream dataFile (completePath);
+        if (dataFile.is_open())
+        {
+            for (int j = 0; j < queues.size(); ++j) {
+                dataFile << std::fixed << j << " " << timestamps.at(j) << " AE " << "(";
+                for (int k = 0; k < queues.at(j).size(); ++k) {
+                    AddressEvent v = queues.at(j).at(k);
+                    dataFile << std::fixed << v.stamp << " " << v._coded_data;
+                    if (k == queues.at(j).size() - 1) break;
+                    dataFile << " ";
+                }
+                dataFile << ")" << std::endl;
+            }
+            dataFile.close();
+            yInfo() << "Successfully saved data to " << completePath;
+        } else {
+            std::cout << "Unable to open file";
+        }
+    }
+
     void run() {
 
         while (!Thread::isStopping()) {
@@ -236,8 +307,14 @@ public:
             double currTime = curr_stamp.getTime() - first_time;
             deque<AE> events = processImage(yarp::cv::toCvMat(*yarpImage), currTime);
 
-            if(!events.empty())
+            if(!events.empty()){
                 eventPortOut.write(events, curr_stamp);
+                if(recording) {
+                    queues.push_back(events);
+                    timestamps.push_back(currTime);
+                }
+            }
+
         }
     }
 
