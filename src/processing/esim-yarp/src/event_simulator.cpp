@@ -166,7 +166,8 @@ public:
             } else {
                 response_ss << "Stopping recording.";
                 recording = false;
-                saveData(savePath);
+                saveDataYarpFormat(savePath);
+                saveDataTxtFormat(savePath);
                 queues.clear();
                 timestamps.clear();
             }
@@ -265,7 +266,7 @@ public:
         return events;
     }
 
-    void saveData(std::string path) {
+    void saveDataYarpFormat(std::string path) {
         std::filesystem::path dir (path);
         std::filesystem::path file ("data.log");
         std::filesystem::path completePath = dir / file;
@@ -282,6 +283,27 @@ public:
                     dataFile << " ";
                 }
                 dataFile << ")" << std::endl;
+            }
+            dataFile.close();
+            yInfo() << "Successfully saved data to " << completePath;
+        } else {
+            std::cout << "Unable to open file";
+        }
+    }
+
+    void saveDataTxtFormat(std::string path) {
+        std::filesystem::path dir (path);
+        std::filesystem::path file ("data.txt");
+        std::filesystem::path completePath = dir / file;
+        yInfo() << "Saving data to " << completePath;
+        std::ofstream dataFile (completePath);
+        if (dataFile.is_open())
+        {
+            for (int j = 0; j < queues.size(); ++j) {
+                for (int k = 0; k < queues.at(j).size(); ++k) {
+                    AddressEvent v = queues.at(j).at(k);
+                    dataFile << v.x << " " << v.y << " " << v.polarity << " " << v.stamp << std::endl;
+                }
             }
             dataFile.close();
             yInfo() << "Successfully saved data to " << completePath;
