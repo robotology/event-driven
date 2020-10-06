@@ -113,6 +113,8 @@ public:
             return false;
         }
 
+        attach(rpcPort);
+
         config_.log_eps = rf.check("log_eps", Value(0.001)).asDouble();
         config_.C = rf.check("C", Value(1e-6)).asDouble();
         config_.noise_variance = rf.check("noise_variance", Value(0.25)).asDouble();
@@ -138,10 +140,7 @@ public:
         return 0.1;
     }
 
-    bool updateModule() {
-        Bottle cmd_bottle;
-        Bottle response;
-        rpcPort.read(cmd_bottle, true);
+    bool respond(const yarp::os::Bottle& cmd_bottle, yarp::os::Bottle& reply) {
         std::string cmd = cmd_bottle.get(0).toString();
 
         static std::string savePath;
@@ -173,10 +172,11 @@ public:
             }
         }
 
-        response.addString(response_ss.str());
+        reply.addString(response_ss.str());
+        return true;
+    }
 
-        rpcPort.reply(response);
-
+    bool updateModule() {
         return true;
     }
 
