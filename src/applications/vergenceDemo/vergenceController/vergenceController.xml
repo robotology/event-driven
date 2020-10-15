@@ -24,7 +24,7 @@
      <data>
         <input>
             <type>eventdriven::vBottle</type>
-            <port carrier="udp">/vVergence/vBottle:i</port>
+            <port carrier="fast_tcp">/vVergence/vBottle:i</port>
             <required>yes</required>
             <priority>no</priority>
             <description>
@@ -42,7 +42,7 @@
         </output>
         <output>
             <type>yarp::os::Bottle</type>
-            <port carrier="udp">/vVergence/scopefilters:o</port>
+            <port carrier="fast_tcp">/vVergence/scopefilters:o</port>
             <description>
                 Outputs debug information for use with yarpscope. Energies of
                 several filters are shown with different colors.
