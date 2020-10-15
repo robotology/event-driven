@@ -40,31 +40,31 @@
     <connection>
         <from>/zynqGrabber/vBottle:o</from>
         <to>/vPepper/vBottle:i</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
     <connection>
         <from>/vPepper/vBottle:o</from>
         <to>/autoSaccade/vBottle:i</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
     <connection>
         <from>/vPepper/vBottle:o</from>
         <to>/vFramer/AE:i</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
     <connection>
         <from>/vFramer/left</from>
         <to>/viewLeft</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
     <connection>
         <from>/vFramer/right</from>
         <to>/viewRight</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
 </application>

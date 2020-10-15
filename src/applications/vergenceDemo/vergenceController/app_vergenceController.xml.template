@@ -56,13 +56,13 @@
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
   <to>/vPreProcess/vBottle:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vPreProcess/vBottle:o</from>
   <to>/vVergence/vBottle:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>

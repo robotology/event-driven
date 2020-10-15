@@ -84,43 +84,43 @@
 <connection>
   <from>/zynqGrabber/vBottle:o</from>
   <to>/vPreProcess/vBottle:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vPreProcess/left:o</from>
   <to>/vFramer/AE:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vPreProcess/right:o</from>
   <to>/vFramer/AE:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vPreProcess/left:o</from>
   <to>/vpfL/vBottle:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vPreProcess/right:o</from>
   <to>/vpfR/vBottle:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vpfL/vBottle:o</from>
   <to>/vFramer/GAE:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vpfR/vBottle:o</from>
   <to>/vFramer/GAE:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
@@ -138,31 +138,31 @@
 <connection>
   <from>/vpfL/debug:o</from>
   <to>/viewDebugL</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vpfR/debug:o</from>
   <to>/viewDebugR</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vpfL/vBottle:o</from>
   <to>/vGazeDemo/vBottle:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vpfR/vBottle:o</from>
   <to>/vGazeDemo/vBottle:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/demoRedBall/cmdFace:rpc</from>
   <to>/icub/face/emotions/in</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 

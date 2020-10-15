@@ -49,37 +49,37 @@
 <connection>
   <from>/zynqGrabber/AE:o</from>
   <to>/vPreProcess/AE:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vPreProcess/right:o</from>
   <to>/vFramer/right/AE:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/stefi/cam/right</from>
   <to>/stereoCalib/cam/right:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vFramer/right/image:o</from>
   <to>/stereoCalib/cam/left:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/stereoCalib/cam/right:o</from>
   <to>/viewCh0</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/stereoCalib/cam/left:o</from>
   <to>/viewCh1</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 </application>
