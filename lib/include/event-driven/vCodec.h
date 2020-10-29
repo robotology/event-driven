@@ -198,6 +198,45 @@ public:
 
 };
 
+class CochleaEvent : public CochleaEvent
+{
+public:
+    static const std::string tag;
+
+    union
+    {
+        uint32_t _cochleaei;
+        struct {
+            unsigned int polarity:1;
+            unsigned int freq_chnn:6;
+            unsigned int _reserved1:2;
+            unsigned int neuron_id:6;
+            unsigned int _reserved2:2;
+            unsigned int xso_type:1;
+            unsigned int auditory_model:1;
+            unsigned int sensor_id:3;
+            unsigned int channel:1;
+            unsigned int type:1;
+            unsigned int cochlea_sensor_id:3;
+            unsigned int _fill:5;
+        };
+    };
+
+    CochleaEvent();
+    CochleaEvent(const vEvent &v);
+    CochleaEvent(const CochleaEvent &v);
+
+    virtual event<> clone();
+    virtual void encode(yarp::os::Bottle &b) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
+    virtual void decode(const int32_t *&data);
+    virtual yarp::os::Property getContent() const;
+    virtual std::string getType() const;
+    virtual int getChannel() const;
+    virtual void setChannel(const int channel);
+}
+
 /// \brief an AddressEvent with a velocity in visual space
 class FlowEvent : public AddressEvent
 {
