@@ -198,7 +198,7 @@ public:
 
 };
 
-class CochleaEvent : public CochleaEvent
+class CochleaEvent : public vEvent
 {
 public:
     static const std::string tag;
@@ -235,7 +235,7 @@ public:
     virtual std::string getType() const;
     virtual int getChannel() const;
     virtual void setChannel(const int channel);
-}
+};
 
 /// \brief an AddressEvent with a velocity in visual space
 class FlowEvent : public AddressEvent
