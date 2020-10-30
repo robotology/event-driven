@@ -56,8 +56,8 @@ unsigned int packetSize(const std::string &type)
         return 2;
     if(type == SkinSample::tag)
         return 4;
-	if(type == CochleaEvent::tag)
-		return 2;
+    if(type == CochleaEvent::tag)
+        return 2;
     if(type == LabelledAE::tag)
         return 3;
     if(type == FlowEvent::tag)

@@ -24,7 +24,7 @@ namespace ev
 
 const std::string CochleaEvent::tag = "EAR";
 
-CochleaEvent::CochleaEvent() : eEvent(), polarity(0), freq_chnn(0), _reserved1(0),
+CochleaEvent::CochleaEvent() : vEvent(), polarity(0), freq_chnn(0), _reserved1(0),
                                neuron_id(0), _reserved2(0), xso_type(0), auditory_model(0), 
                                sensor_id(0), channel(0), type(0), cochlea_sensor_id(0), _fill(0) {}
 
