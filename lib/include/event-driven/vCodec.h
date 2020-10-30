@@ -198,6 +198,7 @@ public:
 
 };
 
+/// \brief an event with a frequency channel number, left/right, and polarity
 class CochleaEvent : public vEvent
 {
 public:
