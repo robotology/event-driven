@@ -209,12 +209,11 @@ public:
         uint32_t _cochleaei;
         struct {
             unsigned int polarity:1;
-            unsigned int freq_chnn:6;
-            unsigned int _reserved1:2;
-            unsigned int neuron_id:6;
-            unsigned int _reserved2:2;
-            unsigned int xso_type:1;
+            unsigned int freq_chnn:7;
+			unsigned int xso_type:1;
             unsigned int auditory_model:1;
+            unsigned int _reserved1:2;
+			unsigned int neuron_id:7;
             unsigned int sensor_id:3;
             unsigned int channel:1;
             unsigned int type:1;
