@@ -89,7 +89,7 @@ class DataManager:
         channel = data[:, 1] & 0x01
         return np.vstack([timestamps, channel, x, y, polarity]).T.astype(np.float)
     
-    def decode_earEvents(self, data):
+    def decode_cochleaEvents(self, data):
         # Events are encoded as 32 bits with
         #   polarity          (p: 0 -> positive; 1 -> negative)
         #   frequency channel (f: from 0 to 31)
@@ -188,7 +188,7 @@ class DataManager:
 	# Time unwrapping must be done in the code! Sum 2^30 everytime there's a jump
         np.savetxt(os.path.join(AE_file_path, 'decoded_events.txt'), AE_to_save, delimiter=',', fmt=['%f', '%d', '%d', '%d', '%d', '%d', '%d', '%d'])     # SPECIFY THE FORMAT OF THE DATA
     
-    def load_earEvents_from_yarp(self, AE_file_path):
+    def load_cochleaEvents_from_yarp(self, AE_file_path):
         pattern = re.compile('(\d*) (\d*.\d*) EAR \((.*)\)')
         AE_to_save = []
         with open(os.path.join(AE_file_path, 'data.log')) as boxFile:
@@ -199,7 +199,7 @@ class DataManager:
                 b_ts = b[1]
                 ev = np.array(b[2].split(' '), dtype=np.uint32)
                 ev = ev.reshape(int(len(ev)/2), 2)
-                ts, audio_model, ch, xso_type, neuron_id, freq_ch, pol = self.decode_earEvents(ev)[0]
+                ts, audio_model, ch, xso_type, neuron_id, freq_ch, pol = self.decode_cochleaEvents(ev)[0]
                 AE_to_save.append(np.array([ts, audio_model, ch, xso_type, neuron_id, freq_ch, pol]))       # SELECT WHAT TO SAVE
         AE_to_save = np.array(AE_to_save)       # * 80e-9  # 80ns to normalize w.r.t. the clock
     # Time unwrapping must be done in the code! Sum 2^30 everytime there's a jump
