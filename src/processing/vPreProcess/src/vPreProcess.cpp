@@ -59,7 +59,7 @@ vPreProcess::vPreProcess() : name("/vPreProcess") {
     out_port_aps_left.setWriteType(AE::tag);
     out_port_aps_right.setWriteType(AE::tag);
     out_port_imu_samples.setWriteType(IMUevent::tag);
-    out_port_audio.setWriteType(AE::tag);
+    out_port_audio.setWriteType(CochleaEvent::tag);
     out_port_crn_left.setWriteType(AE::tag);
     out_port_crn_right.setWriteType(AE::tag);
     out_port_crn_stereo.setWriteType(AE::tag);
