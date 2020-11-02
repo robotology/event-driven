@@ -39,7 +39,7 @@ A **GaussianAE** extends a cluster event with a 2 dimensional Gaussian distribut
 ```
 A **CochleaEvent** uses 4 bytes to encode frequency channel (_F_), polarity (_P_), neuron id of the Jeffress model (_N_), the olive model (_O_), the auditory model (_M_), and channel (_C_). Importantly, as CochleaEvent  is of type `vEvent` the timestamp information of this event is always encoded as well.
 ```
-[00000000 0C000MO0 0NNNNNN0 0FFFFFFP]
+[00000100 0C100NNN NNNNRRMO FFFFFFFP]
 ```
 
 # Coding in YARP
