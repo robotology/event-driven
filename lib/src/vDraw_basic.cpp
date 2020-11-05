@@ -334,11 +334,19 @@ std::string cochleaDraw::getDrawType()
 
 std::string cochleaDraw::getEventType()
 {
-    return AddressEvent::tag;
+    return CochleaEvent::tag;
 }
 
 void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
+    const static unsigned int num_freq_chn = 32;
+    const static unsigned int mono_stereo = 2;
+    const static unsigned int polarity_type = 2;
+    const static unsigned int offset = num_freq_chn * polarity_type * (mono_stereo - 1);
+    const static int circle_radius = 2;
+
+    image(cv::Rect(0,circle_radius, image.cols,image.rows-circle_radius)).copyTo(image(cv::Rect(0,0,image.cols,image.rows-circle_radius)));
+
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
     ev::vQueue::const_reverse_iterator qi;
@@ -349,10 +357,17 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if((unsigned int)dt > display_window) break;
 
 
-        auto aep = is_event<AddressEvent>(*qi);
+        auto aep = is_event<CochleaEvent>(*qi);
 
-        int x  = aep->x * (Xlimit-1) / 64;
-        int y = 120;
+        //int x  = aep->x * (Xlimit-1) / 64;
+        //int y = 120;
+
+        // Calculate the efective event address
+        int event_address = (aep->freq_chnn * polarity_type) + aep->polarity + (offset * aep->channel);
+
+        // Set the x and y value of the point to draw
+        int x = image.cols - circle_radius; //0;
+        int y = event_address + circle_radius;
 
         cv::Vec3b c;
         if(aep->polarity)
@@ -360,7 +375,7 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         else
             c = aqua;
 
-        cv::circle(image, cv::Point(x, y), 5, c, cv::FILLED);
+        cv::circle(image, cv::Point(x, y), circle_radius, c, cv::FILLED);
 
     }
 }
