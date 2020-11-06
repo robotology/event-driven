@@ -579,6 +579,10 @@ public:
         return event_rate * vtsHelper::vtsscaler;
     }
 
+    int getInputCount(){
+        return port.getInputCount();
+    }
+
     std::string delayStatString()
     {
         std::ostringstream oss;
