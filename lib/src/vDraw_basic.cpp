@@ -343,9 +343,50 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     const static unsigned int mono_stereo = 2;
     const static unsigned int polarity_type = 2;
     const static unsigned int offset = num_freq_chn * polarity_type * (mono_stereo - 1);
-    const static int circle_radius = 2;
+    const static int circle_radius = 1;
+    const static double ts_to_axis = (double)Xlimit * 3 / max_window;
+    static cv::Mat local_image = cv::Mat(image);
 
-    image(cv::Rect(0,circle_radius, image.cols,image.rows-circle_radius)).copyTo(image(cv::Rect(0,0,image.cols,image.rows-circle_radius)));
+    //float t_arr[6] = {1, 0, circle_radius, 0, 1, circle_radius};
+    //cv::Mat T(2, 3, CV_32F, t_arr);
+    //cv::warpAffine(image, image, T, cv::Size2i(image.rows, image.cols));
+//    const cv::Rect2i &roi1 = cv::Rect(circle_radius, 0, image.cols - circle_radius, image.rows);
+//    const cv::Rect2i &roi2 = cv::Rect(0, 0, image.cols - circle_radius, image.rows);
+//    image(roi1).copyTo(image(roi2));
+
+    // Just test
+    /*for(int x = 0; x < 100; x++) {
+        for(int y = 0; y < 100; y++) {
+            cv::Vec3b color = local_image.at<cv::Vec3b>(cv::Point(x,y));
+            color[0] = 0;
+            color[1] = 255;
+            color[2] = 0;
+            local_image.at<cv::Vec3b>(cv::Point(x,y)) = color;
+        }
+    }*/
+
+    // First, shift left the image pixel by pixel
+    int column_index = 0;
+    int row_index = 0;
+
+    for(column_index = 1+2; column_index < local_image.cols; column_index = column_index + 2) {
+        for(row_index = 0; row_index < local_image.rows; row_index++) {
+            // Get the pixel
+            cv::Vec3b pixel_info = local_image.at<cv::Vec3b>(cv::Point(column_index,row_index));
+            // Copy the pixel to the same pixel position but left-shifted
+            local_image.at<cv::Vec3b>(cv::Point(column_index-2, row_index)) = pixel_info;
+
+            // If the last column is being shifted, we can clean it also
+            if(column_index == (local_image.cols - 1)) {
+                // Set the pixel color to white
+                pixel_info[0] = 255;
+                pixel_info[1] = 255;
+                pixel_info[2] = 255;
+                // Write back the pixel
+                local_image.at<cv::Vec3b>(cv::Point(column_index,row_index)) = pixel_info;
+            }
+        }
+    }
 
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
@@ -356,6 +397,7 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if(dt < 0) dt += ev::vtsHelper::max_stamp;
         if((unsigned int)dt > display_window) break;
 
+        dt = (dt * ts_to_axis) + 0.5;
 
         auto aep = is_event<CochleaEvent>(*qi);
 
@@ -366,8 +408,11 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         int event_address = (aep->freq_chnn * polarity_type) + aep->polarity + (offset * aep->channel);
 
         // Set the x and y value of the point to draw
-        int x = image.cols - circle_radius; //0;
-        int y = event_address + circle_radius;
+        int x = local_image.cols - circle_radius; //0;
+        int y = local_image.rows - ((event_address + circle_radius) * circle_radius * 2);
+        if(y < 0){
+            y = 0;
+        }
 
         cv::Vec3b c;
         if(aep->polarity)
@@ -375,9 +420,14 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         else
             c = aqua;
 
-        cv::circle(image, cv::Point(x, y), circle_radius, c, cv::FILLED);
+        cv::circle(image, cv::Point(Xlimit - dt, y), circle_radius/2, c, cv::FILLED);
+        //image.at<cv::Vec3b>(cv::Point(Xlimit - dt, y)) = c;
+        //local_image.at<cv::Vec3b>(cv::Point(x,y)) = c;
+        //local_image.at<cv::Vec3b>(cv::Point(int(dt),y)) = c;
 
     }
+    //local_image.copyTo(image);
+
 }
 
 
