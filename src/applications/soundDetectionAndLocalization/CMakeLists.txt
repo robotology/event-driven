@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # produce the cmake var PROJECT_NAME
-project(example-module)
+project(soundDetectionAndLocalization)
 
 include(GNUInstallDirs)
 if(NOT CMAKE_CONFIGURATION_TYPES)
