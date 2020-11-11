@@ -132,14 +132,14 @@ int CochleaEvent::getAddress() const
             // Calculate the neuron address 
             address = address + (int)neuron_id + (((int)freq_chnn - CochleaEvent::mso_start_freq_channel) * CochleaEvent::mso_num_neurons_per_channel);
 
-        } else if ((int)xso_type = XSO_TYPE_LSO){
+        } else if ((int)xso_type = 1){
             // It is a LSO event
 
             // Add the MSO offset
             address =  address + CochleaEvent::mso_addresses_offset;
 
             // Calculate the neuron address
-            address =  address + (int)neuron_id + (((int)freq_chnn - (int)LSO_START_FREQ_CHANNEL) * (int)LSO_NUM_NEURONS_PER_CHANNEL);
+            address =  address + (int)neuron_id + (((int)freq_chnn - CochleaEvent::lso_start_freq_channel) * CochleaEvent::lso_num_neurons_per_channel;
 
         } else {
             // XSO type not recognized
