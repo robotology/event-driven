@@ -36,7 +36,7 @@
 
 <connection>
     <from>/vPreProcess/audio:o</from>
-    <to>/vFramer/cochlea/AE:i</to>
+    <to>/vFramer/cochlea/EAR:i</to>
     <protocol> fast_tcp </protocol>
 </connection>
 
