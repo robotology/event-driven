@@ -362,7 +362,7 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         if (event_address >= 0 && event_address < CochleaEvent::nas_addrresses_offset) {
             // Set the x and y value of the point to draw
             int x = dt;
-            int y = local_image.rows - ((event_address + circle_radius) * circle_radius * 2);
+            int y = image.rows - ((event_address + circle_radius) * circle_radius * 2);
 
             cv::Vec3b c;
             if(aep->polarity)
