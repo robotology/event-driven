@@ -19,138 +19,126 @@
 #include <yarp/os/Bottle.h>
 #include "event-driven/vCodec.h"
 
-namespace ev
-{
+namespace ev {
 
-const std::string CochleaEvent::tag = "EAR";
+    const std::string CochleaEvent::tag = "EAR";
 
-CochleaEvent::CochleaEvent() : vEvent(), polarity(0), freq_chnn(0), xso_type(0), auditory_model(0),
-							   _reserved1(0), neuron_id(0), sensor_id(0), channel(0), type(0), 
-							   cochlea_sensor_id(0), _fill(0) {}
+    CochleaEvent::CochleaEvent() : vEvent(), polarity(0), freq_chnn(0), xso_type(0), auditory_model(0),
+                                   _reserved1(0), neuron_id(0), sensor_id(0), channel(0), type(0),
+                                   cochlea_sensor_id(0), _fill(0) {}
 
-CochleaEvent::CochleaEvent(const vEvent &v) : vEvent(v), _cochleaei(0)
-{
-    const CochleaEvent *v2 = dynamic_cast<const CochleaEvent *>(&v);
-    if(v2) {
-        _cochleaei = v2->_cochleaei;
+    CochleaEvent::CochleaEvent(const vEvent &v) : vEvent(v), _cochleaei(0) {
+        const CochleaEvent *v2 = dynamic_cast<const CochleaEvent *>(&v);
+        if (v2) {
+            _cochleaei = v2->_cochleaei;
+        }
     }
-}
 
-CochleaEvent::CochleaEvent(const CochleaEvent &v) : vEvent(v)
-{
-    _cochleaei = v._cochleaei;
-}
-
-event<> CochleaEvent::clone()
-{
-    return std::make_shared<CochleaEvent>(*this);
-}
-
-void CochleaEvent::encode(yarp::os::Bottle &b) const
-{
-    vEvent::encode(b);
-    b.addInt32(_cochleaei);
-}
-
-void CochleaEvent::encode(std::vector<int32_t> &b, unsigned int &pos) const
-{
-    vEvent::encode(b, pos);
-    b[pos++] = _cochleaei;
-}
-
-void CochleaEvent::decode(const int32_t *&data)
-{
-    vEvent::decode(data);
-    _cochleaei = *(data++);
-}
-
-bool CochleaEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
-{
-    // check length
-    if (vEvent::decode(packet, pos) && pos + 1 <= packet.size())
-    {
-        _cochleaei = packet.get(pos++).asInt();
-        return true;
+    CochleaEvent::CochleaEvent(const CochleaEvent &v) : vEvent(v) {
+        _cochleaei = v._cochleaei;
     }
-    return false;
-}
 
-yarp::os::Property CochleaEvent::getContent() const
-{
-    yarp::os::Property prop = vEvent::getContent();
-    prop.put("auditory_model", (int)auditory_model);
-    prop.put("channel", (int)channel);
-    prop.put("xso_type", (int)xso_type);
-    prop.put("neuron_id", (int)neuron_id);
-    prop.put("freq_chnn", (int)freq_chnn);
-    prop.put("polarity", (int)polarity);
-    prop.put("sensor_id", (int)sensor_id);
-    prop.put("type", (int)type);
+    event<> CochleaEvent::clone() {
+        return std::make_shared<CochleaEvent>(*this);
+    }
 
-    return prop;
-}
+    void CochleaEvent::encode(yarp::os::Bottle &b) const {
+        vEvent::encode(b);
+        b.addInt32(_cochleaei);
+    }
 
-std::string CochleaEvent::getType() const
-{
-    return CochleaEvent::tag;
-}
+    void CochleaEvent::encode(std::vector<int32_t> &b, unsigned int &pos) const {
+        vEvent::encode(b, pos);
+        b[pos++] = _cochleaei;
+    }
 
-int CochleaEvent::getChannel() const
-{
-    return (int)channel;
-}
+    void CochleaEvent::decode(const int32_t *&data) {
+        vEvent::decode(data);
+        _cochleaei = *(data++);
+    }
 
-void CochleaEvent::setChannel(const int channel)
-{
-    this->channel=channel;
-}
+    bool CochleaEvent::decode(const yarp::os::Bottle &packet, size_t &pos) {
+        // check length
+        if (vEvent::decode(packet, pos) && pos + 1 <= packet.size()) {
+            _cochleaei = packet.get(pos++).asInt();
+            return true;
+        }
+        return false;
+    }
 
-} 
+    yarp::os::Property CochleaEvent::getContent() const {
+        yarp::os::Property prop = vEvent::getContent();
+        prop.put("auditory_model", (int) auditory_model);
+        prop.put("channel", (int) channel);
+        prop.put("xso_type", (int) xso_type);
+        prop.put("neuron_id", (int) neuron_id);
+        prop.put("freq_chnn", (int) freq_chnn);
+        prop.put("polarity", (int) polarity);
+        prop.put("sensor_id", (int) sensor_id);
+        prop.put("type", (int) type);
 
-int CochleaEvent::getAddress() const
-{
-    int address = 0;
+        return prop;
+    }
 
-    if((int)auditory_model == 0) {
-        // It is a NAS event
+    std::string CochleaEvent::getType() const {
+        return CochleaEvent::tag;
+    }
 
-        // Take the frequency channel id
-        address = (int)freq_chnn;
-        // Shift left 1 position and add the polarity
-        address = (address << 1) + (int)polarity;
-        // Add an offset if it is from the right channel
-        address = address + ((int)channel << 6);
+    int CochleaEvent::getChannel() const {
+        return (int) channel;
+    }
 
-    } else if ((int)auditory_model == 1) {
-        
-        // In this case, always add the NAS max address value
-        address = address + CochleaEvent::nas_addrresses_offset;
+    void CochleaEvent::setChannel(const int channel) {
+        this->channel = channel;
+    }
 
-        if ((int)xso_type == 0) {
-            // It is a MSO event
+    int CochleaEvent::getAddress() const {
+        int address = 0;
 
-            // Calculate the neuron address 
-            address = address + (int)neuron_id + (((int)freq_chnn - CochleaEvent::mso_start_freq_channel) * CochleaEvent::mso_num_neurons_per_channel);
+        if ((int) auditory_model == 0) {
+            // It is a NAS event
 
-        } else if ((int)xso_type == 1){
-            // It is a LSO event
+            // Take the frequency channel id
+            address = (int) freq_chnn;
+            // Shift left 1 position and add the polarity
+            address = (address << 1) + (int) polarity;
+            // Add an offset if it is from the right channel
+            address = address + ((int) channel << 6);
 
-            // Add the MSO offset
-            address =  address + CochleaEvent::mso_addresses_offset;
+        } else if ((int) auditory_model == 1) {
 
-            // Calculate the neuron address
-            address =  address + (int)neuron_id + (((int)freq_chnn - CochleaEvent::lso_start_freq_channel) * CochleaEvent::lso_num_neurons_per_channel);
+            // In this case, always add the NAS max address value
+            address = address + CochleaEvent::nas_addrresses_offset;
+
+            if ((int) xso_type == 0) {
+                // It is a MSO event
+
+                // Calculate the neuron address
+                address = address + (int) neuron_id + (((int) freq_chnn - CochleaEvent::mso_start_freq_channel) *
+                                                       CochleaEvent::mso_num_neurons_per_channel);
+
+            } else if ((int) xso_type == 1) {
+                // It is a LSO event
+
+                // Add the MSO offset
+                address = address + CochleaEvent::mso_addresses_offset;
+
+                // Calculate the neuron address
+                address = address + (int) neuron_id + (((int) freq_chnn - CochleaEvent::lso_start_freq_channel) *
+                                                       CochleaEvent::lso_num_neurons_per_channel);
+
+            } else {
+                // XSO type not recognized
+                address = -1;
+            }
 
         } else {
-            // XSO type not recognized
+            // Auditory model not recognized
             address = -1;
         }
 
-    } else {
-        // Auditory model not recognized
-        address = -1;
+        return address;
     }
 
-    return address;
 }
 // namespace ev
