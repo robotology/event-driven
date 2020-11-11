@@ -126,13 +126,13 @@ int CochleaEvent::getAddress() const
         // In this case, always add the NAS max address value
         address = address + CochleaEvent::nas_addrresses_offset;
 
-        if ((int)xso_type = 0) {
+        if ((int)xso_type == 0) {
             // It is a MSO event
 
             // Calculate the neuron address 
             address = address + (int)neuron_id + (((int)freq_chnn - CochleaEvent::mso_start_freq_channel) * CochleaEvent::mso_num_neurons_per_channel);
 
-        } else if ((int)xso_type = 1){
+        } else if ((int)xso_type == 1){
             // It is a LSO event
 
             // Add the MSO offset
