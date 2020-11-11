@@ -105,4 +105,52 @@ void CochleaEvent::setChannel(const int channel)
     this->channel=channel;
 }
 
-} // namespace ev
+} 
+
+int CochleaEvent::getAddress() const
+{
+    int address = 0;
+
+    if((int)auditory_model == 0) {
+        // It is a NAS event
+
+        // Take the frequency channel id
+        address = (int)freq_chnn;
+        // Shift left 1 position and add the polarity
+        address = (address << 1) + (int)polarity;
+        // Add an offset if it is from the right channel
+        address = address + ((int)channel << 6);
+
+    } else if ((int)auditory_model == 1) {
+        
+        // In this case, always add the NAS max address value
+        address = address + CochleaEvent::nas_addrresses_offset;
+
+        if ((int)xso_type = 0) {
+            // It is a MSO event
+
+            // Calculate the neuron address 
+            address = address + (int)neuron_id + (((int)freq_chnn - CochleaEvent::mso_start_freq_channel) * CochleaEvent::mso_num_neurons_per_channel);
+
+        } else if ((int)xso_type = XSO_TYPE_LSO){
+            // It is a LSO event
+
+            // Add the MSO offset
+            address =  address + CochleaEvent::mso_addresses_offset;
+
+            // Calculate the neuron address
+            address =  address + (int)neuron_id + (((int)freq_chnn - (int)LSO_START_FREQ_CHANNEL) * (int)LSO_NUM_NEURONS_PER_CHANNEL);
+
+        } else {
+            // XSO type not recognized
+            address = -1;
+        }
+
+    } else {
+        // Auditory model not recognized
+        address = -1;
+    }
+
+    return address;
+}
+// namespace ev
