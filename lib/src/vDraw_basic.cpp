@@ -356,24 +356,23 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         auto aep = is_event<CochleaEvent>(*qi);
 
         // Calculate the efective event address
-        int event_address = (aep->freq_chnn * polarity_type) + aep->polarity + (offset * aep->channel);
+        int event_address = aep.getAddress();
 
-        // Set the x and y value of the point to draw
-        int x = local_image.cols - circle_radius;
-        int y = local_image.rows - ((event_address + circle_radius) * circle_radius * 2);
-        if(y < 0){
-            y = 0;
+        // Check if it is a event from NAS
+        if (event_address >= 0 && event_address < CochleaEvent::nas_addrresses_offset) {
+            // Set the x and y value of the point to draw
+            int x = dt;
+            int y = local_image.rows - ((event_address + circle_radius) * circle_radius * 2);
+
+            cv::Vec3b c;
+            if(aep->polarity)
+                c = violet;
+            else
+                c = aqua;
+
+            cv::circle(image, cv::Point(Xlimit - dt, y), circle_radius/2, c, cv::FILLED);
         }
-
-        cv::Vec3b c;
-        if(aep->polarity)
-            c = violet;
-        else
-            c = aqua;
-
-        cv::circle(image, cv::Point(Xlimit - dt, y), circle_radius/2, c, cv::FILLED);
     }
-
 }
 
 
