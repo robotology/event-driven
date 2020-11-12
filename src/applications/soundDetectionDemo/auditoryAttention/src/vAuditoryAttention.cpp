@@ -2,7 +2,7 @@
 // Created by Daniel Gutierrez-Galan
 // dgutierrez@atc.us.es
 // University of Seville
-// 09/Nov/2020
+// 10/Nov/2020
 //
 
 #include <yarp/os/all.h>
@@ -10,34 +10,34 @@
 using namespace ev;
 using namespace yarp::os;
 
-class vCochleaEventsMapper : public RFModule, public Thread {
+class vAuditoryAttention : public RFModule, public Thread {
 
 private:
 
-    vReadPort< vector<CochleaEvent> > input_port;
+    vReadPort< vector<AE> > input_port;
     vWritePort output_port;
 
     bool is_debug_flag;
-    int example_parameter;
+    double example_parameter;
 
 public:
 
-    vCochleaEventsMapper() {}
+    vAuditoryAttention() {}
 
     virtual bool configure(yarp::os::ResourceFinder& rf)
     {
-        yInfo << "Configuring the module...";
+        yInfo() << "Configuring the module...";
 
         //set the module name used to name ports
-        setName((rf.check("name", Value("/vCochleaEventsMapper")).asString()).c_str());
+        setName((rf.check("name", Value("/vAuditoryAttention")).asString()).c_str());
 
         //open io ports
-        yInfo << "Opening input port...";
-        if(!input_port.open(getName() + "/CochleaEvent:i")) {
+        yInfo() << "Opening input port...";
+        if(!input_port.open(getName() + "/AE:i")) {
             yError() << "Could not open input port";
             return false;
         }
-        yInfo << "Opening output port...";
+        yInfo() << "Opening output port...";
         output_port.setWriteType(AE::tag);
         if(!output_port.open(getName() + "/AE:o")) {
             yError() << "Could not open input port";
@@ -47,17 +47,17 @@ public:
         //read flags and parameters
         is_debug_flag = rf.check("is_debug_flag") &&
                 rf.check("is_debug_flag", Value(true)).asBool();
-        yInfo << "Flag is_debug_flat is: " << is_debug_flag;
+        yInfo() << "Flag is_debug_flag is: " << is_debug_flag;
 
-        int default_example_parameter = 32;
-        example_parameter = rf.check("example_parameter", 
-                                    Value(default_example_parameter)).asInt();
-        yInfo << "Setting example_parameter parameter to: " << example_parameter;
+        double default_value = 0.1;
+        example_parameter = rf.check("example_parameter",
+                                     Value(default_value)).asDouble();
+        yInfo() << "Setting example_parameter parameter to: " << example_parameter;
 
         //do any other set-up required here
 
         //start the asynchronous and synchronous threads
-        yInfo << "Starting the thread...";
+        yInfo() << "Starting the thread...";
         return Thread::start();
     }
 
@@ -69,7 +69,7 @@ public:
     bool interruptModule()
     {
         //if the module is asked to stop ask the asynchrnous thread to stop
-        yInfo << "Interrupting the module: stopping thread...";
+        yInfo() << "Interrupting the module: stopping thread...";
         return Thread::stop();
     }
 
@@ -77,12 +77,12 @@ public:
     {
         //when the asynchrnous thread is asked to stop, close ports and do
         //other clean up
-        yInfo << "Stopping the module...";
-        yInfo << "Closing input port...";
+        yInfo() << "Stopping the module...";
+        yInfo() << "Closing input port...";
         input_port.close();
-        yInfo << "Closing output port...";
+        yInfo() << "Closing output port...";
         output_port.close();
-        yInfo << "Module has been closed!";
+        yInfo() << "Module has been closed!";
     }
 
     //synchronous thread
@@ -91,7 +91,7 @@ public:
 
         //add any synchronous operations here, visualisation, debug out prints
 
-        // Try to print here the spikegram, the histogram, the mean activity, the heatmap...
+        // Try to print here the result of the pure tones classification and the sound source localization
 
 
         return Thread::isRunning();
@@ -105,9 +105,15 @@ public:
         AE out_event;
         int address = 0;
 
+        static int pure_tones_short_term_memory[4];
+
+        for (int i = 0; i < 4; i++) {
+            pure_tones_short_term_memory[i] = 0;
+        }
+
         while(true) {
 
-            const vector<CochleaEvent> * q = input_port.read(yarpstamp);
+            const vector<AE> * q = input_port.read(yarpstamp);
             if(!q || Thread::isStopping()) return;
 
             //do asynchronous processing here
@@ -116,28 +122,16 @@ public:
                 //here you could try modifying the data of the event before
                 //pushing to the output q
 
-                // Get the real AER address
-                address = qi.getAddress();
+                // First, check from which SpiNNaker sub-network is the event coming from
 
-                if (is_debug_flag == true) {
-                    yDebug << "Event received and decoded address: " << address;
-                }
-                
-                // If the received event is valid
-                if (address >= 0 && address < CochleaEvent::max_num_addresses) {
-                    // Copy the address to the raw int32
-                    out_event._coded_data = address;
-                    // Copy the timestamp --> Is it necessary to pre-process?!!!!!!
-                    out_event.stamp = qi.stamp;
+                // If it is an event from pure tones classification
+                // then count and check the winer
 
-                    // Copy the output event into the output queue
-                    out_queue.push_back(out_event);   
-                } else {
-                    // Otherwise
-                    yWarning << "Not recognized event detected...";
-                    address = -1;
-                }
-                
+
+                // If it is an event from sound source localization
+                // then count and check the winer
+
+                out_queue.push_back(out_event);   
             }
 
             //after processing the packet output the results
@@ -167,6 +161,6 @@ int main(int argc, char * argv[])
     rf.configure( argc, argv );
 
     /* create the module */
-    vCochleaEventsMapper instance;
+    vAuditoryAttention instance;
     return instance.runModule(rf);
 }

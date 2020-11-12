@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # produce the cmake var PROJECT_NAME
-project(soundDetectionAndLocalization)
+project(vAuditoryAttention)
 
 include(GNUInstallDirs)
 if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -44,7 +44,7 @@ yarp_install(FILES ${PROJECT_NAME}.ini
 yarp_install(FILES app_${PROJECT_NAME}.xml 
              DESTINATION ${EVENT-DRIVEN_APPLICATIONS_INSTALL_DIR})
 
-option(ADD_DOCS_TO_IDE "Add apps/documentation to IDE" OFF)
+option(ADD_DOCS_TO_IDE "Add apps/documentation to IDE" ON)
 if(ADD_DOCS_TO_IDE)
   add_custom_target(${PROJECT_NAME}_docs SOURCES app_${PROJECT_NAME}.xml ${PROJECT_NAME}.ini README.md)
 endif()
