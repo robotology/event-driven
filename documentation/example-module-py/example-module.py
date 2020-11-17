@@ -1,6 +1,10 @@
 import yarp
 import sys
 
+#inizializzato una volta in configure o init
+
+# online run in update
+
 
 class exampleModule(yarp.RFModule):
 
@@ -44,17 +48,20 @@ class exampleModule(yarp.RFModule):
         return 3.0  # period of synchrnous thread, return 0 update module called as fast as it can
 
     def interruptModule(self):
-        # if the module is asked to stop ask the asynchrnous thread to stop
+        # interrupting all the ports
+        self.input_port.interrupt()
+        self.rpc_port.interrupt()
         return True
 
-    def onStop(self):
-        # when the asynchrnous thread is asked to stop, close ports and do
-        # other clean up
+    def close(self):
+        # closing ports
         self.input_port.close()
+        self.rpc_port.close()
 
-    # synchronous thread
     def updateModule(self):
-        # add any synchronous operations here, visualisation, debug out prints
+        # synchronous update called every get period seconds.
+
+        # THE CORE OF YOUR COMPUTATION SHOULD BE HERE
         print('updating ...')
         return True
 
@@ -70,9 +77,10 @@ if __name__ == '__main__':
     rf = yarp.ResourceFinder()
     rf.setVerbose(False)
     rf.setDefaultContext("eventdriven")
-    rf.setDefaultConfigFile("sample_module.ini")
+    rf.setDefaultConfigFile("example-module.ini")
     rf.configure(sys.argv)
 
     # create the module
     instance = exampleModule()
     instance.runModule(rf)
+
