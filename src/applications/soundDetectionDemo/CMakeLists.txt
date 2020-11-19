@@ -1,2 +1,3 @@
 add_subdirectory(cochleaEventsMapper)
+add_subdirectory(spinnakerEventsMapper)
 add_subdirectory(auditoryAttention)
