@@ -38,6 +38,18 @@
   </module>
 
   <module>
+    <name> vSpinnakerEventsMapper </name>
+    <parameters></parameters>
+    <node> localhost </node>
+  </module>
+
+  <module>
+    <name> vSoundClassification </name>
+    <parameters></parameters>
+    <node> localhost </node>
+  </module>
+
+  <module>
     <name> vAuditoryAttention </name>
     <parameters></parameters>
     <node> localhost </node>
@@ -93,13 +105,30 @@
   </connection>
 
   <!--
-	From SpiNNaker machine to vAuditoryAttention module
+	From SpiNNaker machine to vSpinnakerEventsMapper module
 	-->
   <connection>
     <from>/zynqGrabberSNNK/AE:o</from>
-    <to>/vAuditoryAttention/AE:i</to>
+    <to>/vSpinnakerEventsMapper/AE:i</to>
     <protocol>fast_tcp</protocol>
   </connection>
 
+  <!--
+	From vSpinnakerEventsMapper to vSoundClassification module
+	-->
+  <connection>
+    <from>/vSpinnakerEventsMapper/tones:o</from>
+    <to>/vSoundClassification/AE:i</to>
+    <protocol>fast_tcp</protocol>
+  </connection>
+
+  <!--
+	From vSpinnakerEventsMapper to vAuditoryAttention module
+	-->
+  <connection>
+    <from>/vSpinnakerEventsMapper/soundsource:o</from>
+    <to>/vAuditoryAttention/AE:i</to>
+    <protocol>fast_tcp</protocol>
+  </connection>
 
 </application>
