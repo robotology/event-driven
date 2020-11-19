@@ -15,7 +15,8 @@ class vSpinnakerEventsMapper : public RFModule, public Thread {
 private:
 
     vReadPort< vector<AE> > input_port;
-    vWritePort output_port;
+    vWritePort output_port_tones;
+    vWritePort output_port_soundsource;
 
     bool is_debug_flag;
     int example_parameter;
@@ -37,10 +38,16 @@ public:
             yError() << "Could not open input port";
             return false;
         }
-        yInfo() << "Opening output port...";
-        output_port.setWriteType(AE::tag);
-        if(!output_port.open(getName() + "/AE:o")) {
-            yError() << "Could not open input port";
+        yInfo() << "Opening output tones port...";
+        output_port_tones.setWriteType(AE::tag);
+        if(!output_port_tones.open(getName() + "/tones:o")) {
+            yError() << "Could not open output port";
+            return false;
+        }
+        yInfo() << "Opening output soundsource port...";
+        output_port_soundsource.setWriteType(AE::tag);
+        if(!output_port_soundsource.open(getName() + "/soundsource:o")) {
+            yError() << "Could not open output port";
             return false;
         }
 
@@ -80,8 +87,10 @@ public:
         yInfo() << "Stopping the module...";
         yInfo() << "Closing input port...";
         input_port.close();
-        yInfo() << "Closing output port...";
-        output_port.close();
+        yInfo() << "Closing output tones port...";
+        output_port_tones.close();
+        yInfo() << "Closing output soundsource port...";
+        output_port_soundsource.close();
         yInfo() << "Module has been closed!";
     }
 
@@ -101,7 +110,8 @@ public:
     void run()
     {
         Stamp yarpstamp;
-        deque<AE> out_queue;
+        deque<AE> out_queue_tones;
+        deque<AE> out_queue_soundsource;
         AE out_event;
         int address = 0;
 
@@ -126,9 +136,9 @@ public:
 
             //after processing the packet output the results
             //(only if there is something to output
-            if(out_queue.size()) {
-                output_port.write(out_queue, yarpstamp);
-                out_queue.clear();
+            if(out_queue_tones.size()) {
+                output_port_tones.write(out_queue_tones, yarpstamp);
+                out_queue_tones.clear();
             }
         }
     }
