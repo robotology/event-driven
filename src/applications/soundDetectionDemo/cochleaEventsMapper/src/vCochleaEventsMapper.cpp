@@ -163,7 +163,7 @@ int main(int argc, char * argv[])
     yarp::os::ResourceFinder rf;
     rf.setVerbose( false );
     rf.setDefaultContext( "eventdriven" );
-    rf.setDefaultConfigFile( "soundDetectionAndLocalization.ini" );
+    rf.setDefaultConfigFile( "vCochleaEventsMapper.ini" );
     rf.configure( argc, argv );
 
     /* create the module */
