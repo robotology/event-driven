@@ -20,6 +20,8 @@ private:
 
     bool is_debug_flag;
     int example_parameter;
+    int number_tones_output_neurons;
+    int number_sound_source_neurons;
 
 public:
 
@@ -60,6 +62,16 @@ public:
         example_parameter = rf.check("example_parameter", 
                                     Value(default_example_parameter)).asInt();
         yInfo() << "Setting example_parameter parameter to: " << example_parameter;
+
+        int default_number_tones_output_neurons = 6;
+        number_tones_output_neurons = rf.check("number_tones_output_neurons",
+                                    Value(default_number_tones_output_neurons)).asInt();
+        yInfot() << "Setting number_tones_output_neurons parameter to: " << number_tones_output_neurons;
+
+        int default_number_sound_source_neurons = 6;
+        number_sound_source_neurons = rf.check("number_sound_source_neurons",
+                                    Value(default_number_sound_source_neurons)).asInt();
+        yInfot() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
 
         //do any other set-up required here
 
@@ -127,9 +139,24 @@ public:
                 //pushing to the output q
 
                 // Get the real AER address
+                address = qi._coded_data;
 
                 if (is_debug_flag == true) {
                     yDebug() << "Event received and decoded address: " << address;
+                }
+
+                // Copy the address to the raw int32
+                out_event._coded_data = address;
+                // Copy the timestamp --> Is it necessary to pre-process?!!!!!!
+                out_event.stamp = qi.stamp;
+
+                // Add the event to its output queue
+                if ((address >= 0) && (address < number_tones_output_neurons)) {
+                    out_queue_tones.push_back(out_event);
+                } else if ((address >= number_tones_output_neurons) && (address < (number_tones_output_neurons + number_sound_source_neurons))) {
+                    out_queue_soundsource.push_back(out_event);
+                } else {
+                    yWarning() << "Received address is out of the addresses range!"
                 }
                 
             }
@@ -139,6 +166,11 @@ public:
             if(out_queue_tones.size()) {
                 output_port_tones.write(out_queue_tones, yarpstamp);
                 out_queue_tones.clear();
+            }
+            
+            if(out_queue_soundsource.size()) {
+                output_port_soundsource.write(out_queue_soundsource, yarpstamp);
+                out_queue_soundsource.clear();
             }
         }
     }
