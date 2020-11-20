@@ -7,6 +7,7 @@
 
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
+#include "event-driven/vDraw.h"
 using namespace ev;
 using namespace yarp::os;
 
@@ -19,6 +20,10 @@ private:
 
     bool is_debug_flag;
     int example_parameter;
+
+    int address;
+
+    cv::Mat imagedebug = cv::Mat::zeros(cv::Size(300,300), CV_8UC1);
 
 public:
 
@@ -92,7 +97,11 @@ public:
         //add any synchronous operations here, visualisation, debug out prints
 
         // Try to print here the spikegram, the histogram, the mean activity, the heatmap...
+        cv::Vec3b aqua {151, 174, 6};
+        cv::circle(imagedebug, cv::Point(address, 50), 2, aqua, cv::FILLED);
 
+        cv::imshow("imagedani", imagedebug);
+        cv::waitKey(10);
 
         return Thread::isRunning();
     }
@@ -103,14 +112,14 @@ public:
         Stamp yarpstamp;
         deque<AE> out_queue;
         AE out_event;
-        int address = 0;
+        //int address = 0;
 
         while(true) {
 
             const vector<CochleaEvent> * q = input_port.read(yarpstamp);
             if(!q || Thread::isStopping()) return;
 
-            //do asynchronous processing here
+            //do asynchronous processing here('imagedani', imagedebug);
             for(auto &qi : *q) {
 
                 //here you could try modifying the data of the event before
