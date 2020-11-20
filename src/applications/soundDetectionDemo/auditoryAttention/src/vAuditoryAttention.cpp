@@ -20,6 +20,12 @@ private:
     bool is_debug_flag;
     double example_parameter;
 
+    int number_sound_source_neurons;
+
+    int soundsource_short_term_memory_size;
+    int soundsource_short_term_memory[soundsource_short_term_memory_size];
+
+
 public:
 
     vAuditoryAttention() {}
@@ -40,7 +46,7 @@ public:
         yInfo() << "Opening output port...";
         output_port.setWriteType(AE::tag);
         if(!output_port.open(getName() + "/AE:o")) {
-            yError() << "Could not open input port";
+            yError() << "Could not open output port";
             return false;
         }
 
@@ -53,6 +59,16 @@ public:
         example_parameter = rf.check("example_parameter",
                                      Value(default_value)).asDouble();
         yInfo() << "Setting example_parameter parameter to: " << example_parameter;
+
+        int default_number_sound_source_neurons = 6;
+        number_sound_source_neurons = rf.check("number_sound_source_neurons",
+                                    Value(default_number_sound_source_neurons)).asInt();
+        yInfot() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
+
+        int default_soundsource_short_term_memory_size = 6;
+        soundsource_short_term_memory_size = rf.check("soundsource_short_term_memory_size",
+                                    Value(default_number_sound_source_neurons)).asInt();
+        yInfot() << "Setting soundsource_short_term_memory_size parameter to: " << soundsource_short_term_memory_size;
 
         //do any other set-up required here
 
@@ -105,16 +121,15 @@ public:
         AE out_event;
         int address = 0;
 
-        static int pure_tones_short_term_memory[4];
-
-        for (int i = 0; i < 4; i++) {
-            pure_tones_short_term_memory[i] = 0;
-        }
-
         while(true) {
 
             const vector<AE> * q = input_port.read(yarpstamp);
             if(!q || Thread::isStopping()) return;
+
+            // Initialize the buffer
+            for(int i = 0; i < soundsource_short_term_memory_size; i++){
+                soundsource_short_term_memory[i] = 0;
+            }
 
             //do asynchronous processing here
             for(auto &qi : *q) {
@@ -131,7 +146,23 @@ public:
                 // If it is an event from sound source localization
                 // then count and check the winer
 
-                out_queue.push_back(out_event);   
+                // Get the real AER address
+                address = qi._coded_data;
+
+                if (is_debug_flag == true) {
+                    yDebug() << "Event received and decoded address: " << address;
+                }
+
+                // If the received event is valid
+                if ((address >= 0) && (address < number_sound_source_neurons)) {
+                    // Add the new event into the buffer
+                    soundsource_short_term_memory[address] = soundsource_short_term_memory[address] + 1;
+                } else {
+                    // Otherwise
+                    yWarning() << "Not recognized event detected...";
+                    address = -1;
+                }
+ 
             }
 
             //after processing the packet output the results
