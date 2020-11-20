@@ -62,7 +62,7 @@ public:
         int default_number_tones_output_neurons = 6;
         number_tones_output_neurons = rf.check("number_tones_output_neurons",
                                     Value(default_number_tones_output_neurons)).asInt();
-        yInfot() << "Setting number_tones_output_neurons parameter to: " << number_tones_output_neurons;
+        yInfo() << "Setting number_tones_output_neurons parameter to: " << number_tones_output_neurons;
 
         int default_pure_tones_short_term_memory_size = 100;
         pure_tones_short_term_memory_size = rf.check("pure_tones_short_term_memory_size", 
