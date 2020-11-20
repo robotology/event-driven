@@ -342,6 +342,8 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     const static int circle_radius = 1;
     const static double ts_to_axis = (double)Xlimit * 3 / max_window;
 
+    long num_events = 0;
+
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
     ev::vQueue::const_reverse_iterator qi;
@@ -358,6 +360,7 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         // Calculate the efective event address
         int event_address = 0;
         event_address = aep->getAddress();
+        num_events++;
 
         // Check if it is a event from NAS
         if (event_address >= 0 && event_address < CochleaEvent::nas_addrresses_offset) {
@@ -365,17 +368,19 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             int x = Xlimit - dt;
             int y = Ylimit - ((event_address + circle_radius) * circle_radius * 2);
 
-            // If the address does not fit within the image, draw it at 0
-            if (y < 0) {
-                y = 0;
-            }
-
             // Set the event color depending on the polarity
             cv::Vec3b c;
             if(aep->polarity)
                 c = violet;
             else
                 c = aqua;
+
+            // If the address does not fit within the image, draw it at 0
+            if (y < 0) {
+                y = 2;
+                x = 10;
+                c = lime;
+            }
 
             // Draw the circle
             cv::circle(image, cv::Point(x, y), circle_radius/2, c, cv::FILLED);
@@ -388,9 +393,27 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
             cv::Vec3b c = orange;
 
-            cv::circle(image, cv::Point(x, y), circle_radius+1, c, cv::FILLED);
+            //cv::circle(image, cv::Point(x, y), circle_radius+1, c, cv::FILLED);
         }
     }
+    // Draw the plot information
+
+    float fontscale = 0.5;
+    float xoffset = 90;
+
+    cv::putText(image, "Freq. 0", cv::Point(5, Ylimit - 5),cv::FONT_HERSHEY_PLAIN, fontscale, black, 0.5);
+    cv::putText(image, "Freq. 31", cv::Point(5, (Ylimit / 2) + 10),cv::FONT_HERSHEY_PLAIN, fontscale, black, 0.5);
+
+    cv::putText(image, "Left cochlea", cv::Point((Xlimit / 2) + xoffset, Ylimit - 5),cv::FONT_HERSHEY_PLAIN, fontscale, black, 0.5);
+
+    cv::putText(image, "Freq. 0", cv::Point(5, (Ylimit / 2) -5),cv::FONT_HERSHEY_PLAIN, fontscale, black, 0.5);
+    cv::putText(image, "Freq. 31", cv::Point(5, 10),cv::FONT_HERSHEY_PLAIN, fontscale, black, 0.5);
+
+    cv::putText(image, "Right cochlea", cv::Point((Xlimit / 2) + xoffset, 10),cv::FONT_HERSHEY_PLAIN, fontscale, black, 0.5);
+
+    cv::putText(image, "num_ev: ", cv::Point((Xlimit / 2) + xoffset, (Ylimit / 2)),cv::FONT_HERSHEY_PLAIN, fontscale, black, 0.5);
+    std::string num_events_string = std::to_string(num_events);
+    cv::putText(image, num_events_string, cv::Point((Xlimit / 2) + xoffset + 35, (Ylimit / 2)),cv::FONT_HERSHEY_PLAIN, fontscale, black, 0.5);
 }
 
 
