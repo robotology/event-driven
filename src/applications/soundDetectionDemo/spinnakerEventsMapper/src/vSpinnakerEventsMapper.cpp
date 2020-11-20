@@ -71,7 +71,7 @@ public:
         int default_number_sound_source_neurons = 6;
         number_sound_source_neurons = rf.check("number_sound_source_neurons",
                                     Value(default_number_sound_source_neurons)).asInt();
-        yInfot() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
+        yInfo() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
 
         //do any other set-up required here
 
