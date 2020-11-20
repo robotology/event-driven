@@ -63,12 +63,12 @@ public:
         int default_number_sound_source_neurons = 6;
         number_sound_source_neurons = rf.check("number_sound_source_neurons",
                                     Value(default_number_sound_source_neurons)).asInt();
-        yInfot() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
+        yInfo() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
 
         int default_soundsource_short_term_memory_size = 6;
         soundsource_short_term_memory_size = rf.check("soundsource_short_term_memory_size",
                                     Value(default_number_sound_source_neurons)).asInt();
-        yInfot() << "Setting soundsource_short_term_memory_size parameter to: " << soundsource_short_term_memory_size;
+        yInfo() << "Setting soundsource_short_term_memory_size parameter to: " << soundsource_short_term_memory_size;
 
         //do any other set-up required here
 
