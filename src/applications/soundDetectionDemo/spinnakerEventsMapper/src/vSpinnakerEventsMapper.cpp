@@ -66,7 +66,7 @@ public:
         int default_number_tones_output_neurons = 6;
         number_tones_output_neurons = rf.check("number_tones_output_neurons",
                                     Value(default_number_tones_output_neurons)).asInt();
-        yInfot() << "Setting number_tones_output_neurons parameter to: " << number_tones_output_neurons;
+        yInfo() << "Setting number_tones_output_neurons parameter to: " << number_tones_output_neurons;
 
         int default_number_sound_source_neurons = 6;
         number_sound_source_neurons = rf.check("number_sound_source_neurons",
@@ -156,7 +156,7 @@ public:
                 } else if ((address >= number_tones_output_neurons) && (address < (number_tones_output_neurons + number_sound_source_neurons))) {
                     out_queue_soundsource.push_back(out_event);
                 } else {
-                    yWarning() << "Received address is out of the addresses range!"
+                    yWarning() << "Received address is out of the addresses range!";
                 }
                 
             }
