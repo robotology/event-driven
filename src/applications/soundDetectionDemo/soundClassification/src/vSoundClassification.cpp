@@ -22,7 +22,7 @@ private:
 
     int number_tones_output_neurons;
 
-    queue<int> pure_tones_short_term_memory;
+    deque<int> pure_tones_short_term_memory;
     int pure_tones_short_term_memory_size;
 
 public:
@@ -150,7 +150,7 @@ public:
 
         // Initialize the queue
         for(int i = 0; i < pure_tones_short_term_memory_size; i++) {
-            pure_tones_short_term_memory.push(0);
+            pure_tones_short_term_memory.push_back(0);
         }
 
         while(true) {
@@ -174,8 +174,8 @@ public:
                 // If the received event is valid
                 if ((address >= 0) && (address < number_tones_output_neurons)) {
                     // Add the new event into the buffer
-                    pure_tones_short_term_memory.push(address);
-                    pure_tones_short_term_memory.pop();
+                    pure_tones_short_term_memory.push_back(address);
+                    pure_tones_short_term_memory.pop_front();
                 } else {
                     // Otherwise
                     yWarning() << "Not recognized event detected...";
