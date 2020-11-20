@@ -20,6 +20,11 @@ private:
     bool is_debug_flag;
     int example_parameter;
 
+    int number_tones_output_neurons;
+
+    queue<int> pure_tones_short_term_memory;
+    int pure_tones_short_term_memory_size;
+
 public:
 
     vSoundClassification() {}
@@ -53,6 +58,16 @@ public:
         example_parameter = rf.check("example_parameter", 
                                     Value(default_example_parameter)).asInt();
         yInfo() << "Setting example_parameter parameter to: " << example_parameter;
+
+        int default_number_tones_output_neurons = 6;
+        number_tones_output_neurons = rf.check("number_tones_output_neurons",
+                                    Value(default_number_tones_output_neurons)).asInt();
+        yInfot() << "Setting number_tones_output_neurons parameter to: " << number_tones_output_neurons;
+
+        int default_pure_tones_short_term_memory_size = 100;
+        pure_tones_short_term_memory_size = rf.check("pure_tones_short_term_memory_size", 
+                                    Value(default_pure_tones_short_term_memory_size)).asInt();
+        yInfo() << "Setting pure_tones_short_term_memory_size parameter to: " << pure_tones_short_term_memory_size;
 
         //do any other set-up required here
 
@@ -93,6 +108,34 @@ public:
 
         // Try to print here the spikegram, the histogram, the mean activity, the heatmap...
 
+        // Create variables
+        int tones_histogram[number_tones_output_neurons];
+
+        // Init the histogram
+        for(int i = 0; i < number_tones_output_neurons; i++) {
+            tones_histogram[i] = 0;
+        }
+
+        // Count the elements
+        for(int i = 0; i < pure_tones_short_term_memory_size; i++){
+            int deque_address = pure_tones_short_term_memory[i];
+            tones_histogram[deque_address] = tones_histogram[deque_address] + 1;
+        }
+
+        // Look for the max value
+        int max_value = -1;
+        int pos_max_value = -1;
+
+        for(int i = 0; i < number_tones_output_neurons; i++){
+            int value = tones_histogram[i];
+            if(value > max_value){
+                max_value = value;
+                pos_max_value = i;
+            }
+        }
+
+        // Print the winer
+        yInfo() << "Winer neuron is: " << pos_max_value; 
 
         return Thread::isRunning();
     }
@@ -104,6 +147,11 @@ public:
         deque<AE> out_queue;
         AE out_event;
         int address = 0;
+
+        // Initialize the queue
+        for(int i = 0; i < pure_tones_short_term_memory_size; i++) {
+            pure_tones_short_term_memory.push(0);
+        }
 
         while(true) {
 
@@ -117,20 +165,17 @@ public:
                 //pushing to the output q
 
                 // Get the real AER address
+                address = qi._coded_data;
                 
                 if (is_debug_flag == true) {
                     yDebug() << "Event received and decoded address: " << address;
                 }
                 
                 // If the received event is valid
-                if (address >= 0) {
-                    // Copy the address to the raw int32
-                    out_event._coded_data = address;
-                    // Copy the timestamp --> Is it necessary to pre-process?!!!!!!
-                    out_event.stamp = qi.stamp;
-
-                    // Copy the output event into the output queue
-                    out_queue.push_back(out_event);   
+                if ((address >= 0) && (address < number_tones_output_neurons)) {
+                    // Add the new event into the buffer
+                    pure_tones_short_term_memory.push(address);
+                    pure_tones_short_term_memory.pop();
                 } else {
                     // Otherwise
                     yWarning() << "Not recognized event detected...";
