@@ -22,7 +22,7 @@ private:
 
     int number_sound_source_neurons;
 
-    int soundsource_short_term_memory_size;
+    static int soundsource_short_term_memory_size;
     int soundsource_short_term_memory[soundsource_short_term_memory_size];
 
 
