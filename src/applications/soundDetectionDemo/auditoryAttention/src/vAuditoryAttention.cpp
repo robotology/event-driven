@@ -22,8 +22,8 @@ private:
 
     int number_sound_source_neurons;
 
-    static int soundsource_short_term_memory_size;
-    int soundsource_short_term_memory[6];
+    int soundsource_short_term_memory_size;
+    //int soundsource_short_term_memory[6];
 
 
 public:
@@ -128,7 +128,7 @@ public:
 
             // Initialize the buffer
             for(int i = 0; i < soundsource_short_term_memory_size; i++){
-                soundsource_short_term_memory[i] = 0;
+                //soundsource_short_term_memory[i] = 0;
             }
 
             //do asynchronous processing here
@@ -156,7 +156,7 @@ public:
                 // If the received event is valid
                 if ((address >= 0) && (address < number_sound_source_neurons)) {
                     // Add the new event into the buffer
-                    soundsource_short_term_memory[address] = soundsource_short_term_memory[address] + 1;
+                    //soundsource_short_term_memory[address] = soundsource_short_term_memory[address] + 1;
                 } else {
                     // Otherwise
                     yWarning() << "Not recognized event detected...";
