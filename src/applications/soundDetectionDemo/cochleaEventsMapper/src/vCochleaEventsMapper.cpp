@@ -21,9 +21,8 @@ private:
     bool is_debug_flag;
     int example_parameter;
 
-    int address;
-
-    cv::Mat imagedebug = cv::Mat::zeros(cv::Size(300,300), CV_8UC1);
+    int mso_histogram[4][16];
+    cv::Mat image_mso_heatmap = cv::Mat::zeros(cv::Size(320,240), CV_8UC3);
 
 public:
 
@@ -60,6 +59,11 @@ public:
         yInfo() << "Setting example_parameter parameter to: " << example_parameter;
 
         //do any other set-up required here
+        for(int i = 0; i < 4; i++) {
+            for(int j = 0; j < 16; j++) {
+                mso_histogram[i][j] = 0;
+            }
+        }
 
         //start the asynchronous and synchronous threads
         yInfo() << "Starting the thread...";
@@ -93,15 +97,54 @@ public:
     //synchronous thread
     virtual bool updateModule()
     {
-
         //add any synchronous operations here, visualisation, debug out prints
 
         // Try to print here the spikegram, the histogram, the mean activity, the heatmap...
-        cv::Vec3b aqua {151, 174, 6};
-        cv::circle(imagedebug, cv::Point(address, 50), 2, aqua, cv::FILLED);
 
-        cv::imshow("imagedani", imagedebug);
+        //do any other set-up required here
+
+        //Calculate max and min val
+        float max = 0.0f;
+        float min = 100000.0f;
+
+        for(int i = 0; i < 4; i++) {
+            for(int j = 0; j < 16; j++) {
+                float val = (float)(mso_histogram[i][j]);
+                if(val > max){
+                    max = val;
+                }
+                if(val < min){
+                    min = val;
+                }
+            }
+        }
+
+        for(int i = 0; i < 4; i++) {
+            for(int j = 0; j < 16; j++) {
+                //if(mso_histogram[i][j] > 0){
+                cv::Rect rect(j*20, i*60, 20, 60);
+                float pixelValue = (float)(mso_histogram[i][j]);
+                float value = ((pixelValue - min) / (max - min));
+
+                int aR = 0;   int aG = 0; int aB=255;  // RGB for our 1st color (blue in this case).
+                int bR = 255; int bG = 0; int bB=0;    // RGB for our 2nd color (red in this case).
+
+                int r   = (float)(bR - aR) * value + aR;      // Evaluated as -255*value + 255.
+                int g = (float)(bG - aG) * value + aG;      // Evaluates as 0.
+                int b  = (float)(bB - aB) * value + aB;      // Evaluates as 255*value + 0.
+
+                cv::rectangle(image_mso_heatmap, rect, cv::Vec3b(b, g, r), -1);
+            }
+        }
+
+        cv::imshow("mso_heatmap", image_mso_heatmap);
         cv::waitKey(10);
+
+        for(int i = 0; i < 4; i++) {
+            for(int j = 0; j < 16; j++) {
+                mso_histogram[i][j] = 0;
+            }
+        }
 
         return Thread::isRunning();
     }
@@ -112,19 +155,34 @@ public:
         Stamp yarpstamp;
         deque<AE> out_queue;
         AE out_event;
-        //int address = 0;
+        int address = 0;
+        for(int i = 0; i < 4; i++) {
+            for(int j = 0; j < 16; j++) {
+                mso_histogram[i][j] = 0;
+            }
+        }
 
         while(true) {
 
             const vector<CochleaEvent> * q = input_port.read(yarpstamp);
             if(!q || Thread::isStopping()) return;
 
-            //do asynchronous processing here('imagedani', imagedebug);
+            //do asynchronous processing here
             for(auto &qi : *q) {
 
                 //here you could try modifying the data of the event before
                 //pushing to the output q
+                ////////////////
+                if(qi.auditory_model == 1){
+                    if(qi.xso_type == 0){
+                        int ch = qi.freq_chnn;
+                        ch = ch - 13;
+                        int ne = qi.neuron_id;
+                        mso_histogram[ch][ne] = mso_histogram[ch][ne] + 1;
+                    }
+                }
 
+                ////////////////
                 // Get the real AER address
                 address = qi.getAddress();
 
