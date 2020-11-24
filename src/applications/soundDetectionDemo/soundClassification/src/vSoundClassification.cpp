@@ -22,12 +22,12 @@ private:
     int example_parameter;
 
     int number_tones_output_neurons;
-    const char *tones_output_neurons_names = {"261 Hz", "349 Hz", "523 Hz", "698 Hz", "1046 Hz", "1396 Hz"}
+    const char *tones_output_neurons_names[6] = {"261 Hz", "349 Hz", "523 Hz", "698 Hz", "1046 Hz", "1396 Hz"};
 
     deque<int> pure_tones_short_term_memory;
     int pure_tones_short_term_memory_size;
 
-    cv::Mat image_tones_classification = cv::Mat::zeros(cv::Size(320, 240), CV_8Uc3);
+    cv::Mat image_tones_classification = cv::Mat::zeros(cv::Size(320, 240), CV_8UC3);
 
 public:
 
@@ -144,18 +144,19 @@ public:
         
         for(int i = 0; i < number_tones_output_neurons; i++){
             float center_pos = margin + (i * slot_size) + (slot_size / 2.0);
-            if(i == pos_max_value){
+
+            // By default, the circle is red
+            cv::Vec3b c = cv::Vec3b(0, 0, 255);
+
+            if(i == pos_max_value) {
                 // Is the winner --> draw with green
-                cv::Vec3b c = cv::Vec3b(0, 255, 0);
-            }else{
-                // If not --> draw with red
-                cv::Vec3b c = cv::Vec3b(0, 0, 255);
+                c = cv::Vec3b(0, 255, 0);
             }
             cv::circle(image_tones_classification, cv::Point(center_pos, image_tones_classification.rows/2), radius, c, cv::FILLED);
-            cv::putText(image_tones_classification, tones_output_neurons_names[i], cv::Point(margin + (i * slot_size), image_tones_classification.rows/2),cv::FONT_HERSHEY_PLAIN, 0.5, cv::Vec3b(0, 0, 0;, 0.5);
+            cv::putText(image_tones_classification, tones_output_neurons_names[i], cv::Point(margin + (i * slot_size) + 5, image_tones_classification.rows/2),cv::FONT_HERSHEY_PLAIN, 0.5, cv::Vec3b(0, 0, 0), 0.5);
         }
 
-        if(is_debug_flag == True){
+        if(is_debug_flag == true){
             // Print the winer
             yInfo() << "Winer neuron is: " << pos_max_value;
         }
