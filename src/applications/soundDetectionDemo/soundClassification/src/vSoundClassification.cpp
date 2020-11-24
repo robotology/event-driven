@@ -126,6 +126,7 @@ public:
 
         // Look for the max value
         int max_value = -1;
+        int min_value = 100000;
         int pos_max_value = -1;
 
         for(int i = 0; i < number_tones_output_neurons; i++){
@@ -133,6 +134,9 @@ public:
             if(value > max_value){
                 max_value = value;
                 pos_max_value = i;
+            }
+            if(value < min_value){
+                min_value = value;
             }
         }
         
@@ -152,9 +156,16 @@ public:
                 // Is the winner --> draw with green
                 c = cv::Vec3b(0, 255, 0);
             }
-            cv::circle(image_tones_classification, cv::Point(center_pos, image_tones_classification.rows/2), radius, c, cv::FILLED);
-            cv::putText(image_tones_classification, tones_output_neurons_names[i], cv::Point(margin + (i * slot_size) + 5, image_tones_classification.rows/2),cv::FONT_HERSHEY_PLAIN, 0.5, cv::Vec3b(0, 0, 0), 0.5);
+            cv::circle(image_tones_classification, cv::Point(center_pos, 5 * (image_tones_classification.rows/6)), radius, c, cv::FILLED);
+            cv::putText(image_tones_classification, tones_output_neurons_names[i], cv::Point(margin + (i * slot_size) + 5, 5 * (image_tones_classification.rows/6)),cv::FONT_HERSHEY_PLAIN, 0.5, cv::Vec3b(0, 0, 0), 0.5);
+
+            float normalized_histogram_value = (tones_histogram[i] - min_value) * 100.0 / (max_value - min_value);
+            cv::putText(image_tones_classification, std::to_string((int)normalized_histogram_value), cv::Point(margin + (i * slot_size) + 10, 4 * (image_tones_classification.rows/6)),cv::FONT_HERSHEY_PLAIN, 0.8, cv::Vec3b(255, 255, 255), 0.5);
+
         }
+
+        cv::putText(image_tones_classification, "Detected tone:", cv::Point(margin, image_tones_classification.rows/6),cv::FONT_HERSHEY_PLAIN, 1.1, cv::Vec3b(255, 255, 255), 0.5);
+        cv::putText(image_tones_classification, tones_output_neurons_names[pos_max_value], cv::Point(image_tones_classification.cols / 2, image_tones_classification.rows/6),cv::FONT_HERSHEY_PLAIN, 1.1, cv::Vec3b(255, 255, 255), 0.5);
 
         if(is_debug_flag == true){
             // Print the winer
