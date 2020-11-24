@@ -7,6 +7,7 @@
 
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
+#include "event-driven/vDraw.h"
 using namespace ev;
 using namespace yarp::os;
 
@@ -21,9 +22,12 @@ private:
     double example_parameter;
 
     int number_sound_source_neurons;
+    const char *sound_source_names[6] = {"90º L", "60º L", "30º L", "30º R", "60º R", "90º R"};
 
     int soundsource_short_term_memory_size;
-    //int soundsource_short_term_memory[6];
+    int soundsource_short_term_memory[512];
+
+    cv::Mat image_sound_localization = cv::Mat::zeros(cv::Size(320, 240), CV_8UC3);
 
 
 public:
@@ -71,6 +75,9 @@ public:
         yInfo() << "Setting soundsource_short_term_memory_size parameter to: " << soundsource_short_term_memory_size;
 
         //do any other set-up required here
+        for(int i = 0; i < soundsource_short_term_memory_size; i++){
+            soundsource_short_term_memory[i] = 0;
+        }
 
         //start the asynchronous and synchronous threads
         yInfo() << "Starting the thread...";
@@ -108,7 +115,47 @@ public:
         //add any synchronous operations here, visualisation, debug out prints
 
         // Try to print here the result of the pure tones classification and the sound source localization
+        int max = 0;
+        int pos_max = 0;
 
+        for(int i = 0; i < soundsource_short_term_memory_size; i++){
+            if(soundsource_short_term_memory[i] > max){
+                max = soundsource_short_term_memory[i];
+                pos_max = i;
+            }
+        }
+        
+        float margin = image_sound_localization.cols * 0.03;
+    
+        float slot_size = (image_sound_localization.cols - (margin * 2)) / number_sound_source_neurons;
+        
+        float radius = (slot_size / 2.0) * 0.8;
+        
+        for(int i = 0; i < number_sound_source_neurons; i++){
+            float center_pos = margin + (i * slot_size) + (slot_size / 2.0);
+
+            // By default, the circle is red
+            cv::Vec3b c = cv::Vec3b(0, 0, 255);
+
+            if(i == pos_max) {
+                // Is the winner --> draw with green
+                c = cv::Vec3b(0, 255, 0);
+            }
+            cv::circle(image_sound_localization, cv::Point(center_pos, image_sound_localization.rows/2), radius, c, cv::FILLED);
+            cv::putText(image_sound_localization, sound_source_names[i], cv::Point(margin + (i * slot_size) + 5, image_sound_localization.rows/2),cv::FONT_HERSHEY_PLAIN, 0.5, cv::Vec3b(0, 0, 0), 0.5);
+        }
+
+        if(is_debug_flag == true){
+            // Print the winer
+            yInfo() << "Winer neuron is: " << pos_max;
+        }
+
+        cv::imshow("tones_out_result", image_sound_localization);
+        cv::waitKey(10);
+
+        for(int i = 0; i < soundsource_short_term_memory_size; i++){
+            soundsource_short_term_memory[i] = 0;
+        }
 
         return Thread::isRunning();
     }
@@ -156,7 +203,7 @@ public:
                 // If the received event is valid
                 if ((address >= 0) && (address < number_sound_source_neurons)) {
                     // Add the new event into the buffer
-                    //soundsource_short_term_memory[address] = soundsource_short_term_memory[address] + 1;
+                    soundsource_short_term_memory[address] = soundsource_short_term_memory[address] + 1;
                 } else {
                     // Otherwise
                     yWarning() << "Not recognized event detected...";
