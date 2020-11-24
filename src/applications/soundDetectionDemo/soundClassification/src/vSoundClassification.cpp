@@ -7,6 +7,7 @@
 
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
+#include "event-driven/vDraw.h"
 using namespace ev;
 using namespace yarp::os;
 
@@ -21,9 +22,12 @@ private:
     int example_parameter;
 
     int number_tones_output_neurons;
+    const char *tones_output_neurons_names = {"261 Hz", "349 Hz", "523 Hz", "698 Hz", "1046 Hz", "1396 Hz"}
 
     deque<int> pure_tones_short_term_memory;
     int pure_tones_short_term_memory_size;
+
+    cv::Mat image_tones_classification = cv::Mat::zeros(cv::Size(320, 240), CV_8Uc3);
 
 public:
 
@@ -106,8 +110,6 @@ public:
 
         //add any synchronous operations here, visualisation, debug out prints
 
-        // Try to print here the spikegram, the histogram, the mean activity, the heatmap...
-
         // Create variables
         int tones_histogram[number_tones_output_neurons];
 
@@ -133,10 +135,34 @@ public:
                 pos_max_value = i;
             }
         }
+        
+        float margin = image_tones_classification.cols * 0.03;
+    
+        float slot_size = (image_tones_classification.cols - (margin * 2)) / number_tones_output_neurons;
+        
+        float radius = (slot_size / 2.0) * 0.8;
+        
+        for(int i = 0; i < number_tones_output_neurons; i++){
+            float center_pos = margin + (i * slot_size) + (slot_size / 2.0);
+            if(i == pos_max_value){
+                // Is the winner --> draw with green
+                cv::Vec3b c = cv::Vec3b(0, 255, 0);
+            }else{
+                // If not --> draw with red
+                cv::Vec3b c = cv::Vec3b(0, 0, 255);
+            }
+            cv::circle(image_tones_classification, cv::Point(center_pos, image_tones_classification.rows/2), radius, c, cv::FILLED);
+            cv::putText(image_tones_classification, tones_output_neurons_names[i], cv::Point(margin + (i * slot_size), image_tones_classification.rows/2),cv::FONT_HERSHEY_PLAIN, 0.5, cv::Vec3b(0, 0, 0;, 0.5);
+        }
 
-        // Print the winer
-        yInfo() << "Winer neuron is: " << pos_max_value; 
+        if(is_debug_flag == True){
+            // Print the winer
+            yInfo() << "Winer neuron is: " << pos_max_value;
+        }
 
+        cv::imshow("tones_out_result", image_tones_classification);
+        cv::waitKey(10);
+         
         return Thread::isRunning();
     }
 
