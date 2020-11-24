@@ -22,7 +22,7 @@ private:
     double example_parameter;
 
     int number_sound_source_neurons;
-    const char *sound_source_names[6] = {"90º L", "60º L", "30º L", "30º R", "60º R", "90º R"};
+    const char *sound_source_names[6] = {"90 L", "60 L", "30 L", "30 R", "60 R", "90 R"};
 
     int soundsource_short_term_memory_size;
     int soundsource_short_term_memory[512];
@@ -142,7 +142,7 @@ public:
                 c = cv::Vec3b(0, 255, 0);
             }
             cv::circle(image_sound_localization, cv::Point(center_pos, image_sound_localization.rows/2), radius, c, cv::FILLED);
-            cv::putText(image_sound_localization, sound_source_names[i], cv::Point(margin + (i * slot_size) + 5, image_sound_localization.rows/2),cv::FONT_HERSHEY_PLAIN, 0.5, cv::Vec3b(0, 0, 0), 0.5);
+            cv::putText(image_sound_localization, sound_source_names[i], cv::Point(margin + (i * slot_size) + 10, image_sound_localization.rows/2),cv::FONT_HERSHEY_PLAIN, 0.9, cv::Vec3b(0, 0, 0), 0.5);
         }
 
         if(is_debug_flag == true){
@@ -150,7 +150,7 @@ public:
             yInfo() << "Winer neuron is: " << pos_max;
         }
 
-        cv::imshow("tones_out_result", image_sound_localization);
+        cv::imshow("sound_source_result", image_sound_localization);
         cv::waitKey(10);
 
         for(int i = 0; i < soundsource_short_term_memory_size; i++){
