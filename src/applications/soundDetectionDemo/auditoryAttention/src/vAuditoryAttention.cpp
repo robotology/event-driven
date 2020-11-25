@@ -142,7 +142,7 @@ public:
                 c = cv::Vec3b(0, 255, 0);
             }
             cv::circle(image_sound_localization, cv::Point(center_pos, image_sound_localization.rows/2), radius, c, cv::FILLED);
-            cv::putText(image_sound_localization, sound_source_names[i], cv::Point(margin + (i * slot_size) + 10, image_sound_localization.rows/2),cv::FONT_HERSHEY_PLAIN, 0.9, cv::Vec3b(0, 0, 0), 0.5);
+
         }
 
         if(is_debug_flag == true){
@@ -168,7 +168,7 @@ public:
         
         float radius = (slot_angle / 2.0) * 0.8;
 
-        float semicircle_radius = 100.0;
+        float semicircle_radius = 150.0;
 
         float semicircle_x = image_sound_localization.cols / 2;
         float semicircle_y = image_sound_localization.rows - margin;
@@ -189,8 +189,13 @@ public:
 
         // Draw reference vertical line
         cv::Point p3(image_sound_localization.cols / 2, margin), p4(image_sound_localization.cols / 2, image_sound_localization.rows - margin);
-        cv::line(image_sound_localization, p3, p4, cv::Scalar(255, 255, 255), 2);
-        
+        //cv::line(image_sound_localization, p3, p4, cv::Scalar(255, 255, 255), 2);
+
+        // Draw text indicating the winner
+        char winner_text[64];
+        strcpy(winner_text, "Sound source placed at ");
+        strcat(winner_text, sound_source_names[pos_max]);
+        cv::putText(image_sound_localization, winner_text, cv::Point(margin , margin),cv::FONT_HERSHEY_PLAIN, 0.9, cv::Vec3b(255, 255, 255), 0.5);
         for(int i = 0; i < number_sound_source_neurons; i++){
             
             angle_tetta = 90.0;
@@ -217,7 +222,9 @@ public:
                 // Is the winner --> draw with green
                 c = cv::Vec3b(0, 255, 0);
             }
-            cv::circle(image_sound_localization, cv::Point(x, y), radius, c, cv::FILLED);
+            if(i < number_sound_source_neurons){
+                cv::circle(image_sound_localization, cv::Point(semicircle_x-x, semicircle_y-y), radius, c, cv::FILLED);
+            }
         }
 
         if(is_debug_flag == true){
