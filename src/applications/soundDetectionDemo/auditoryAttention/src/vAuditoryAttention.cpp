@@ -115,7 +115,7 @@ public:
         //add any synchronous operations here, visualisation, debug out prints
 
         // Try to print here the result of the pure tones classification and the sound source localization
-        int max = 0;
+        /*int max = 0;
         int pos_max = 0;
 
         for(int i = 0; i < soundsource_short_term_memory_size; i++){
@@ -143,6 +143,71 @@ public:
             }
             cv::circle(image_sound_localization, cv::Point(center_pos, image_sound_localization.rows/2), radius, c, cv::FILLED);
             cv::putText(image_sound_localization, sound_source_names[i], cv::Point(margin + (i * slot_size) + 10, image_sound_localization.rows/2),cv::FONT_HERSHEY_PLAIN, 0.9, cv::Vec3b(0, 0, 0), 0.5);
+        }
+
+        if(is_debug_flag == true){
+            // Print the winer
+            yInfo() << "Winer neuron is: " << pos_max;
+        }
+
+        cv::imshow("sound_source_result", image_sound_localization);
+        cv::waitKey(10);*/
+        int max = 0;
+        int pos_max = 0;
+
+        for(int i = 0; i < soundsource_short_term_memory_size; i++){
+            if(soundsource_short_term_memory[i] > max){
+                max = soundsource_short_term_memory[i];
+                pos_max = i;
+            }
+        }
+        
+        float margin = image_sound_localization.cols * 0.03;
+    
+        float slot_angle = 180.0 / number_sound_source_neurons;
+        
+        float radius = (slot_angle / 2.0) * 0.8;
+
+        float semicircle_radius = 100.0;
+
+        float semicircle_x = image_sound_localization.cols / 2;
+        float semicircle_y = image_sound_localization.rows - margin;
+
+        cv::Point pref(semicircle_x, semicircle_y);
+
+        float angle_betta = 0.0;
+        float angle_alfa = 0.0;
+        float angle_tetta = 0.0;
+        
+        float seg_ab = 0.0;
+        float seg_bc = 0.0;
+        float seg_ca = 0.0;
+
+        // Draw reference horizontal line
+        cv::Point p1(margin, image_sound_localization.rows - margin), p2(image_sound_localization.cols - margin, image_sound_localization.rows - margin);
+        cv::line(image, p1, p2, cv::Scalar(255, 255, 255), 2);
+
+        // Draw reference vertical line
+        cv::Point p3(image_sound_localization.cols / 2, margin), p4(image_sound_localization.cols / 2, image_sound_localization.rows - margin);
+        cv::line(image, p3, p4, cv::Scalar(255, 255, 255), 2);
+        
+        for(int i = 0; i < number_sound_source_neurons; i++){
+            
+            angle_tetta = 90.0;
+            angle_betta = i * slot_angle;
+            angle_alfa = 180.0 - angle_tetta - angle_betta;
+
+            seg_ab = distance;
+            float angle_betta_rads = angle_betta * (M_PI / 180.0);
+            seg_bc = seg_ab * cos(angle_betta_rads);
+            seg_ca = seg_ab * sin(angle_betta_rads);
+
+            float angle_betta_bisector = angle_betta + (slot_angle / 2.0);
+
+            float angle_betta_bisector_rads = angle_betta_bisector * (M_PI / 180.0);
+            float x = seg_ab * cos(angle_betta_bisector_rads);
+            float y = seg_ab * sin(angle_betta_bisector_rads);
+
         }
 
         if(is_debug_flag == true){
