@@ -195,7 +195,7 @@ public:
         char winner_text[64];
         strcpy(winner_text, "Sound source placed at ");
         strcat(winner_text, sound_source_names[pos_max]);
-        cv::putText(image_sound_localization, winner_text, cv::Point(margin , margin),cv::FONT_HERSHEY_PLAIN, 0.9, cv::Vec3b(255, 255, 255), 0.5);
+        cv::putText(image_sound_localization, winner_text, cv::Point(margin , margin*2),cv::FONT_HERSHEY_PLAIN, 1.0, cv::Vec3b(255, 255, 255), 0.5);
         for(int i = 0; i < number_sound_source_neurons; i++){
             
             angle_tetta = 90.0;
