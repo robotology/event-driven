@@ -185,11 +185,11 @@ public:
 
         // Draw reference horizontal line
         cv::Point p1(margin, image_sound_localization.rows - margin), p2(image_sound_localization.cols - margin, image_sound_localization.rows - margin);
-        cv::line(image, p1, p2, cv::Scalar(255, 255, 255), 2);
+        cv::line(image_sound_localization, p1, p2, cv::Scalar(255, 255, 255), 2);
 
         // Draw reference vertical line
         cv::Point p3(image_sound_localization.cols / 2, margin), p4(image_sound_localization.cols / 2, image_sound_localization.rows - margin);
-        cv::line(image, p3, p4, cv::Scalar(255, 255, 255), 2);
+        cv::line(image_sound_localization, p3, p4, cv::Scalar(255, 255, 255), 2);
         
         for(int i = 0; i < number_sound_source_neurons; i++){
             
@@ -197,10 +197,13 @@ public:
             angle_betta = i * slot_angle;
             angle_alfa = 180.0 - angle_tetta - angle_betta;
 
-            seg_ab = distance;
+            seg_ab = semicircle_radius;
             float angle_betta_rads = angle_betta * (M_PI / 180.0);
             seg_bc = seg_ab * cos(angle_betta_rads);
             seg_ca = seg_ab * sin(angle_betta_rads);
+
+            cv::Point pdest(semicircle_x - seg_bc, semicircle_y - seg_ca);
+            cv::line(image_sound_localization, pref, pdest, cv::Scalar(255, 255, 255), 2);
 
             float angle_betta_bisector = angle_betta + (slot_angle / 2.0);
 
@@ -208,6 +211,13 @@ public:
             float x = seg_ab * cos(angle_betta_bisector_rads);
             float y = seg_ab * sin(angle_betta_bisector_rads);
 
+            // By default, the circle is red
+            cv::Vec3b c = cv::Vec3b(0, 0, 255);
+            if(i == pos_max) {
+                // Is the winner --> draw with green
+                c = cv::Vec3b(0, 255, 0);
+            }
+            cv::circle(image_sound_localization, cv::Point(x, y), radius, c, cv::FILLED);
         }
 
         if(is_debug_flag == true){
