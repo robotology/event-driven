@@ -159,18 +159,25 @@ public:
             cv::circle(image_tones_classification, cv::Point(center_pos, 5 * (image_tones_classification.rows/6)), radius, c, cv::FILLED);
             cv::putText(image_tones_classification, tones_output_neurons_names[i], cv::Point(margin + (i * slot_size) + 5, 5 * (image_tones_classification.rows/6)),cv::FONT_HERSHEY_PLAIN, 0.5, cv::Vec3b(0, 0, 0), 0.5);
 
+            float normalized_histogram_value = (tones_histogram[i] - min_value) * 100.0 / (max_value - min_value);
+
             float rec_x_top_left = margin + (i * slot_size) + 10;
             float rec_y_top_left = 4 * (image_tones_classification.rows/6) - normalized_histogram_value;
-            cv::Rect rect(rec_x_top_left, rec_y_top_left, normalized_histogram_value, radius);
-            cv::rectangle(image_tones_classification, rect, c)
+            cv::Point p1(rec_x_top_left, rec_y_top_left);
 
-            float normalized_histogram_value = (tones_histogram[i] - min_value) * 100.0 / (max_value - min_value);
+            float rec_x_bottom_right = rec_x_top_left + (radius * 2);
+            float rec_y_bottom_right = 4 * (image_tones_classification.rows/6);
+            cv::Point p2(rec_x_bottom_right, rec_y_bottom_right);
+
+            cv::rectangle(image_tones_classification, p1, p2, c);
+
             cv::putText(image_tones_classification, std::to_string((int)normalized_histogram_value), cv::Point(margin + (i * slot_size) + 10, 4 * (image_tones_classification.rows/6)),cv::FONT_HERSHEY_PLAIN, 0.8, cv::Vec3b(255, 255, 255), 0.5);
 
         }
-
-        cv::putText(image_tones_classification, "Detected tone:", cv::Point(margin, margin),cv::FONT_HERSHEY_PLAIN, 1.0, cv::Vec3b(255, 255, 255), 0.5);
-        cv::putText(image_tones_classification, tones_output_neurons_names[pos_max_value], cv::Point(image_tones_classification.cols / 2, image_tones_classification.rows/6),cv::FONT_HERSHEY_PLAIN, 1.1, cv::Vec3b(255, 255, 255), 0.5);
+        char winner_text[64];
+        strcpy(winner_text, "Detected tone: ");
+        strcat(winner_text, tones_output_neurons_names[pos_max_value]);
+        cv::putText(image_tones_classification, winner_text, cv::Point(margin, margin * 2),cv::FONT_HERSHEY_PLAIN, 1.0, cv::Vec3b(255, 255, 255), 0.5);
 
         if(is_debug_flag == true){
             // Print the winer
