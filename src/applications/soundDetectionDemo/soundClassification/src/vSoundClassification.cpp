@@ -340,7 +340,7 @@ int main(int argc, char * argv[])
     rf.setDefaultConfigFile( "vSoundClassification.ini" );
     rf.configure( argc, argv );
 
-    /* create the module */
+    // Create the module
     vSoundClassification instance;
     return instance.runModule(rf);
 }
