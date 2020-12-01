@@ -1,20 +1,19 @@
 import yarp
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
 import threading
+import cv2
 
 
-class ExampleModule(yarp.RFModule, threading.Thread):
+class ExampleModule(yarp.RFModule):
 
     def __init__(self):
         yarp.RFModule.__init__(self)
-        threading.Thread.__init__(self)
         self.image = np.zeros((240, 304))
         self.image_buf = np.zeros((240, 304))
-        self.im = plt.imshow(self.image, cmap='gist_gray_r', vmin=0, vmax=1)
         self.input_port = yarp.BufferedPortBottle()
         self.rpc_port = yarp.RpcServer()
+        cv2.namedWindow("events", cv2.WINDOW_NORMAL)
         self.mutex = threading.Lock()
 
     def configure(self, rf):
@@ -39,7 +38,8 @@ class ExampleModule(yarp.RFModule, threading.Thread):
 
         # do any other set-up required here
         # start the asynchronous and synchronous threads
-        self.start()
+        threading.Thread(target=self.run).start()
+
         return True
 
     def respond(self, command, reply):
@@ -61,23 +61,20 @@ class ExampleModule(yarp.RFModule, threading.Thread):
         # closing ports
         self.input_port.close()
         self.rpc_port.close()
+        cv2.destroyAllWindows()
         return True
 
     def updateModule(self):
         # synchronous update called every get period seconds.
 
         # Put visualization, debug prints, etc... here
-        self.mutex.acquire()
-        self.im.set_data(self.image)
-        self.mutex.release()
-        plt.draw()
-        plt.pause(1e-3)
+        cv2.imshow("events", self.image)
+        cv2.waitKey(10)
         return True
 
     def run(self):
         # asynchronous thread runs as fast as it can
-
-        while self.is_alive():
+        while not self.isStopping():
             reads = max(1, self.input_port.getPendingReads())  # Make sure that we try to read at least one packet
 
             if reads > 10:
@@ -89,6 +86,8 @@ class ExampleModule(yarp.RFModule, threading.Thread):
                 bot = self.input_port.read()
                 # Data in the bottle is organized as <event_type> (<timestamp 1> <event 1> .... <timestamp n> <event n>)
                 vType = bot.get(0).asString()
+                if vType != "AE":
+                    continue
                 event_bottle = np.array(bot.get(1).toString().split(' ')).astype(int).reshape(-1, 2)
                 timestamps = event_bottle[:, 0]
                 events = event_bottle[:, 1]
