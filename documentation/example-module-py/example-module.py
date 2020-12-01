@@ -78,7 +78,7 @@ class ExampleModule(yarp.RFModule):
             reads = max(1, self.input_port.getPendingReads())  # Make sure that we try to read at least one packet
 
             if reads > 10:
-                print("WARNING ", reads)
+                print("WARNING! The size of input port buffer is ", reads, " elements long. This may cause lags.")
 
             self.image_buf.fill(0.5)
 
