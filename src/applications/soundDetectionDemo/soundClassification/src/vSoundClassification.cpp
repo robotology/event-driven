@@ -193,6 +193,11 @@ public:
         float radius = (slot_size / 2.0) * 0.8;
 
         // ----------------------------------------------------------------------------
+        //                          CLEAR IMAGE
+        // Remove all the previous plot
+        image_tones_classification = cv::Mat::zeros(cv::Size(320, 240), CV_8UC3);
+
+        // ----------------------------------------------------------------------------
         //                          WINNER TEXT DRAW
         // First, plot the text indicating the winner neuron
         char winner_text[64];
