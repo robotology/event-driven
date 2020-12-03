@@ -199,10 +199,13 @@ class DataManager:
                 b_ts = b[1]
                 ev = np.array(b[2].split(' '), dtype=np.uint32)
                 ev = ev.reshape(int(len(ev)/2), 2)
-                ts, audio_model, ch, xso_type, neuron_id, freq_ch, pol = self.decode_cochleaEvents(ev)[0]
-                AE_to_save.append(np.array([ts, audio_model, ch, xso_type, neuron_id, freq_ch, pol]))       # SELECT WHAT TO SAVE
+                decoded_data = self.decode_cochleaEvents(ev)
+                num_decoded_data = int(len(decoded_data))
+                for index in range(0, num_decoded_data):
+					ts, audio_model, ch, xso_type, neuron_id, freq_ch, pol = decoded_data[index]
+					AE_to_save.append(np.array([ts, audio_model, ch, xso_type, neuron_id, freq_ch, pol]))       # SELECT WHAT TO SAVE
         AE_to_save = np.array(AE_to_save)       # * 80e-9  # 80ns to normalize w.r.t. the clock
-    # Time unwrapping must be done in the code! Sum 2^30 everytime there's a jump
+		# Time unwrapping must be done in the code! Sum 2^30 everytime there's a jump
         np.savetxt(os.path.join(AE_file_path, 'decoded_events.txt'), AE_to_save, delimiter=',', fmt=['%f', '%d', '%d', '%d', '%d', '%d', '%d'])         # SPECIFY THE FORMAT OF THE DATA
 
 
