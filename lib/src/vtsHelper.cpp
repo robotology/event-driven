@@ -17,11 +17,18 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef WIN32 
+#include <unistd.h>
+#else
+#define EXPORT//warning, positional define. This should be define before including the vCodec.h
+#endif
+
 #include "event-driven/vtsHelper.h"
 
 #include <sstream>
-#include <unistd.h>
+
 #include <limits>
+
 
 namespace ev {
 

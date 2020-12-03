@@ -49,6 +49,7 @@ set(folder_header
   include/event-driven/vPort.h
   include/event-driven/vCollectSend.h
   include/event-driven/all.h
+  include/event-driven/api.h
 )
 
 if(OpenCV_FOUND)

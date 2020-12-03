@@ -20,6 +20,7 @@
 #define __VCODEC__
 
 #include "event-driven/vtsHelper.h"
+#include <event-driven/api.h>
 #include <memory>
 #include <deque>
 #include <math.h>
@@ -100,7 +101,7 @@ public:
 };
 
 /// \brief an event with a pixel location, camera number and polarity
-class AddressEvent : public vEvent
+class EV_API AddressEvent : public vEvent
 {
 public:
     static const std::string tag;
@@ -138,7 +139,7 @@ public:
 using AE = AddressEvent;
 
 /// \brief an event with a taxel location, body-part and polarity
-class SkinEvent : public vEvent
+class EV_API SkinEvent : public vEvent
 {
 public:
     static const std::string tag;
@@ -176,7 +177,7 @@ public:
 };
 
 /// \brief an event with a taxel location, body-part and polarity
-class SkinSample : public SkinEvent
+class EV_API SkinSample : public SkinEvent
 {
 public:
     static const std::string tag;
@@ -248,7 +249,7 @@ public:
 };
 
 /// \brief a LabelledAE with parameters that define a 2D gaussian
-class GaussianAE : public LabelledAE
+class EV_API GaussianAE : public LabelledAE
 {
 public:
     static const std::string tag;
@@ -275,7 +276,7 @@ public:
 };
 
 /// \brief an event with a pixel location, camera number and polarity
-class IMUevent : public vEvent
+class EV_API IMUevent : public vEvent
 {
 public:
     static const std::string tag;
