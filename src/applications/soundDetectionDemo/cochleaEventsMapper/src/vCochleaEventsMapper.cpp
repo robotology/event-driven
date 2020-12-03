@@ -8,17 +8,23 @@
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
 #include "event-driven/vDraw.h"
+
 using namespace ev;
 using namespace yarp::os;
 
 class vCochleaEventsMapper : public RFModule, public Thread {
 
 private:
-
-    vReadPort< vector<CochleaEvent> > input_port;
+    // Input port: type CochleaEvent
+    vReadPort< vector< CochleaEvent > > input_port;
+    // Output port: type AE
     vWritePort output_port;
 
+    // Debug flag
+    // If activated, the module shows info about the classification in the terminal
     bool is_debug_flag;
+
+    // Dummy parameter
     int example_parameter;
 
     int mso_histogram[4][16];
@@ -106,12 +112,16 @@ public:
         //Calculate max and min val
         float max = 0.0f;
         float min = 100000.0f;
+        int max_position_i = 0;
+        int max_position_j = 0;
 
         for(int i = 0; i < 4; i++) {
             for(int j = 0; j < 16; j++) {
                 float val = (float)(mso_histogram[i][j]);
                 if(val > max){
                     max = val;
+                    max_position_i = i;
+                    max_position_j = j;
                 }
                 if(val < min){
                     min = val;
@@ -132,6 +142,12 @@ public:
                 int r   = (float)(bR - aR) * value + aR;      // Evaluated as -255*value + 255.
                 int g = (float)(bG - aG) * value + aG;      // Evaluates as 0.
                 int b  = (float)(bB - aB) * value + aB;      // Evaluates as 255*value + 0.
+
+                if((i == max_position_i) && (j == max_position_j)){
+                    r = 0;
+                    g = 255;
+                    b = 0;
+                }
 
                 cv::rectangle(image_mso_heatmap, rect, cv::Vec3b(b, g, r), -1);
             }
