@@ -165,7 +165,7 @@ public:
         // ----------------------------------------------------------------------------
         //                          CLEAR IMAGE
         // Remove all the previous plot
-        image_tones_classification = cv::Mat::zeros(cv::Size(320, 240), CV_8UC3);
+        image_sound_localization = cv::Mat::zeros(cv::Size(320, 240), CV_8UC3);
         
         float margin = image_sound_localization.cols * 0.03;
     
