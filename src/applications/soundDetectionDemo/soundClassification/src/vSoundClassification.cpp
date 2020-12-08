@@ -59,7 +59,7 @@ public:
     {
         yInfo() << "Configuring the module...";
 
-        //set the module name used to name ports
+        // Set the module name used to name ports
         setName((rf.check("name", Value("/vSoundClassification")).asString()).c_str());
 
         // Open input port
@@ -133,7 +133,7 @@ public:
         yInfo() << "Module has been closed!";
     }
 
-    //synchronous thread
+    // Synchronous thread
     virtual bool updateModule()
     {
 
