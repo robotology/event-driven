@@ -8,6 +8,7 @@
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
 #include "event-driven/vDraw.h"
+#include <limits.h>
 
 using namespace ev;
 using namespace yarp::os;
@@ -27,7 +28,15 @@ private:
     // Dummy parameter
     int example_parameter;
 
+    // Matrix of coincidence counters from MSO
+    // ----------------------------------------------------------------------------
+    // WARNING!! This matrix should have the same dimensions as the MSO model
+    // used in the VHDL model
+    // ----------------------------------------------------------------------------
     int mso_histogram[4][16];
+    int mso_start_freq_channel = 13;
+
+    // Visualizer output image
     cv::Mat image_mso_heatmap = cv::Mat::zeros(cv::Size(320,240), CV_8UC3);
 
 public:
@@ -38,60 +47,70 @@ public:
     {
         yInfo() << "Configuring the module...";
 
-        //set the module name used to name ports
+        // Set the module name used to name ports
         setName((rf.check("name", Value("/vCochleaEventsMapper")).asString()).c_str());
 
-        //open io ports
+        // Open input port
         yInfo() << "Opening input port...";
         if(!input_port.open(getName() + "/CochleaEvent:i")) {
             yError() << "Could not open input port";
             return false;
         }
+        // Open output port
         yInfo() << "Opening output port...";
         output_port.setWriteType(AE::tag);
         if(!output_port.open(getName() + "/AE:o")) {
-            yError() << "Could not open input port";
+            yError() << "Could not open output port";
             return false;
         }
 
-        //read flags and parameters
+        // Read flags and parameters
+        
+        // Debug flag: flase by default
         is_debug_flag = rf.check("is_debug_flag") &&
                 rf.check("is_debug_flag", Value(true)).asBool();
         yInfo() << "Flag is_debug_flat is: " << is_debug_flag;
 
+        // Dummy parameter: 32 by default
         int default_example_parameter = 32;
         example_parameter = rf.check("example_parameter", 
                                     Value(default_example_parameter)).asInt();
         yInfo() << "Setting example_parameter parameter to: " << example_parameter;
 
-        //do any other set-up required here
+        // Initialize the mso coincidence counters to zero
+        // ----------------------------------------------------------------------------
+        // WARNING!! This values should match with the ones used before
+        // ----------------------------------------------------------------------------
         for(int i = 0; i < 4; i++) {
             for(int j = 0; j < 16; j++) {
                 mso_histogram[i][j] = 0;
             }
         }
 
-        //start the asynchronous and synchronous threads
+        // Do any other set-up required here
+
+        // Start the asynchronous and synchronous threads
         yInfo() << "Starting the thread...";
         return Thread::start();
     }
 
     virtual double getPeriod()
     {
-        return 1.0; //period of synchrnous thread
+        // Period of synchrnous thread (in seconds)
+        return 1.0;
     }
 
     bool interruptModule()
     {
-        //if the module is asked to stop ask the asynchrnous thread to stop
+        // If the module is asked to stop ask the asynchrnous thread to stop
         yInfo() << "Interrupting the module: stopping thread...";
         return Thread::stop();
     }
 
     void onStop()
     {
-        //when the asynchrnous thread is asked to stop, close ports and do
-        //other clean up
+        // When the asynchrnous thread is asked to stop, close ports and do
+        // other clean up
         yInfo() << "Stopping the module...";
         yInfo() << "Closing input port...";
         input_port.close();
@@ -100,18 +119,20 @@ public:
         yInfo() << "Module has been closed!";
     }
 
-    //synchronous thread
+    // Synchronous thread
     virtual bool updateModule()
     {
-        //add any synchronous operations here, visualisation, debug out prints
+        // Add any synchronous operations here, visualisation, debug out prints
 
-        // Try to print here the spikegram, the histogram, the mean activity, the heatmap...
+        // Do any other set-up required here
 
-        //do any other set-up required here
-
-        //Calculate max and min val
+        // Calculate max and min val (for normalization) and the position of the 
+        // max value for using another color
+        // ----------------------------------------------------------------------------
+        // NOTE: The normalization is used also for generate the color code for the heatmap
+        // ----------------------------------------------------------------------------
         float max = 0.0f;
-        float min = 100000.0f;
+        float min = FLT_MAX;
         int max_position_i = 0;
         int max_position_j = 0;
 
@@ -129,33 +150,41 @@ public:
             }
         }
 
+        // ----------------------------------------------------------------------------
+        //                          COLOR GRADIENT ESTIMATION
+        // Calculate the color based on the normalized value
         for(int i = 0; i < 4; i++) {
             for(int j = 0; j < 16; j++) {
-                //if(mso_histogram[i][j] > 0){
-                cv::Rect rect(j*20, i*60, 20, 60);
+                
                 float pixelValue = (float)(mso_histogram[i][j]);
                 float value = ((pixelValue - min) / (max - min));
 
-                int aR = 0;   int aG = 0; int aB=255;  // RGB for our 1st color (blue in this case).
-                int bR = 255; int bG = 0; int bB=0;    // RGB for our 2nd color (red in this case).
+                int aR = 0;   int aG = 0; int aB=255;     // RGB for our 1st color (blue in this case).
+                int bR = 255; int bG = 0; int bB=0;       // RGB for our 2nd color (red in this case).
 
-                int r   = (float)(bR - aR) * value + aR;      // Evaluated as -255*value + 255.
-                int g = (float)(bG - aG) * value + aG;      // Evaluates as 0.
-                int b  = (float)(bB - aB) * value + aB;      // Evaluates as 255*value + 0.
+                int r = (float)(bR - aR) * value + aR;    // Evaluated as -255*value + 255.
+                int g = (float)(bG - aG) * value + aG;    // Evaluates as 0.
+                int b = (float)(bB - aB) * value + aB;    // Evaluates as 255*value + 0.
 
+                // If the current rectangle is the winner, use the color green
                 if((i == max_position_i) && (j == max_position_j)){
                     r = 0;
                     g = 255;
                     b = 0;
                 }
-
+                // ----------------------------------------------------------------------------
+                //                          RECTANGLE DRAW
+                // Draw the rectangle
+                cv::Rect rect(j*20, i*60, 20, 60);
                 cv::rectangle(image_mso_heatmap, rect, cv::Vec3b(b, g, r), -1);
             }
         }
 
+        // Show the image
         cv::imshow("mso_heatmap", image_mso_heatmap);
         cv::waitKey(10);
 
+        // Clean the mso matrix values before the next update
         for(int i = 0; i < 4; i++) {
             for(int j = 0; j < 16; j++) {
                 mso_histogram[i][j] = 0;
@@ -165,43 +194,41 @@ public:
         return Thread::isRunning();
     }
 
-    //asynchronous thread run forever
+    // Asynchronous thread run forever
     void run()
     {
+        // YARP timestamp
         Stamp yarpstamp;
+        
+        // Output queue: type AE
         deque<AE> out_queue;
+
+        // Output event: type AE
         AE out_event;
+
+        // Raw address received from the input port
         int address = 0;
+
+        // Initialize the first time the mso matrix values
         for(int i = 0; i < 4; i++) {
             for(int j = 0; j < 16; j++) {
                 mso_histogram[i][j] = 0;
             }
         }
 
+        // Forever...
         while(true) {
 
             const vector<CochleaEvent> * q = input_port.read(yarpstamp);
             if(!q || Thread::isStopping()) return;
 
-            //do asynchronous processing here
+            // Do asynchronous processing here
             for(auto &qi : *q) {
 
-                //here you could try modifying the data of the event before
-                //pushing to the output q
-                ////////////////
-                if(qi.auditory_model == 1){
-                    if(qi.xso_type == 0){
-                        int ch = qi.freq_chnn;
-                        ch = ch - 13;
-                        int ne = qi.neuron_id;
-                        mso_histogram[ch][ne] = mso_histogram[ch][ne] + 1;
-                    }
-                }
-
-                ////////////////
                 // Get the real AER address
                 address = qi.getAddress();
 
+                // If debug flag enabled, print it out
                 if (is_debug_flag == true) {
                     yDebug() << "Event received and decoded address: " << address;
                 }
@@ -220,11 +247,25 @@ public:
                     yWarning() << "Not recognized event detected...";
                     address = -1;
                 }
-                
+
+                // Sum up the event to the MSO matrix values only if the incoming
+                // event is from MSO
+                if(qi.auditory_model == 1){
+                    if(qi.xso_type == 0){
+                        // Get the freq channel id
+                        int ch = qi.freq_chnn;
+                        // Substract the MSO start channel to start the IDs in zero
+                        ch = ch - mso_start_freq_channel;
+                        // Get the neuron ID
+                        int ne = qi.neuron_id;
+                        // Increment the MSO matrix values in one
+                        mso_histogram[ch][ne] = mso_histogram[ch][ne] + 1;
+                    }
+                }
             }
 
-            //after processing the packet output the results
-            //(only if there is something to output
+            // After processing the packet output the results
+            // (only if there is something to output
             if(out_queue.size()) {
                 output_port.write(out_queue, yarpstamp);
                 out_queue.clear();
@@ -235,21 +276,21 @@ public:
 
 int main(int argc, char * argv[])
 {
-    /* initialize yarp network */
+    // Initialize yarp network
     yarp::os::Network yarp;
     if(!yarp.checkNetwork(2)) {
         std::cout << "Could not connect to YARP" << std::endl;
         return false;
     }
 
-    /* prepare and configure the resource finder */
+    // Prepare and configure the resource finder
     yarp::os::ResourceFinder rf;
     rf.setVerbose( false );
     rf.setDefaultContext( "eventdriven" );
     rf.setDefaultConfigFile( "vCochleaEventsMapper.ini" );
     rf.configure( argc, argv );
 
-    /* create the module */
+    // Create the module
     vCochleaEventsMapper instance;
     return instance.runModule(rf);
 }
