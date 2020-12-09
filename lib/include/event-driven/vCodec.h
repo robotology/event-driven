@@ -214,6 +214,7 @@ public:
     // MSO fixed values
     static const int mso_start_freq_channel = 13;
     static const int mso_end_freq_channel = 16;
+    static const int mso_num_freq_channels = mso_end_freq_channel - mso_start_freq_channel + 1;
     static const int mso_num_neurons_per_channel = 16;
     static const int mso_addresses_offset = (mso_end_freq_channel - mso_start_freq_channel + 1) * mso_num_neurons_per_channel;
 
