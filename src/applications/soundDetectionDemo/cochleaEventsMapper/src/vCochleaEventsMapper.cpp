@@ -232,19 +232,16 @@ public:
         float margin = image_nas_histogram.cols * 0.03;
 
         // Calculate max and min val (for normalization) 
-        float max = 0.0f;
-        float min = FLT_MAX;
-        int max_position_i = 0;
+        float max_nas = 0.0f;
+        float min_nas = 100000.0f;
 
         for(int i = 0; i < CochleaEvent::nas_addrresses_offset; i++) {
-                float val = (float)(nas_histogram[i]);
-                if(val > max){
-                    max = val;
-                    max_position_i = i;
-                }
-                if(val < min){
-                    min = val;
-                }
+            float val = (float)(nas_histogram[i]);
+            if(val > max_nas){
+                max_nas = val;
+            }
+            if(val < min_nas){
+                min_nas = val;
             }
         }
 
@@ -252,7 +249,7 @@ public:
         //                          HISTOGRAM DRAW
         for(int i = 0; i < CochleaEvent::nas_addrresses_offset; i++) {
             // First, get the normalized value of the neuron activity
-            float normalized_histogram_value = (nas_histogram[i] - min) * 100.0 / (max - min);
+            float normalized_histogram_value = (nas_histogram[i] - min_nas) * 100.0 / (max_nas - min_nas);
             
             // Define left top point
             float rec_x_top_left = i * bar_width;
@@ -269,6 +266,14 @@ public:
             // Create the rectangle
             cv::Vec3b c = cv::Vec3b(255, 255, 255);
             cv::rectangle(image_nas_histogram, p1, p2, c);
+        }
+        // Show the image
+        cv::imshow("nas_histogram", image_nas_histogram);
+        cv::waitKey(10);
+
+        // Clear the NAS histogram
+        for(int i = 0; i < CochleaEvent::nas_addrresses_offset; i++) {
+            nas_histogram[i] = 0;
         }
 
         // Do any other set-up required here
@@ -336,6 +341,9 @@ public:
                         // Increment the MSO matrix values in one
                         mso_histogram[ch][ne] = mso_histogram[ch][ne] + 1;
                     }
+                }
+                if(qi.auditory_model == 0){
+                    nas_histogram[address] = nas_histogram[address] + 1;
                 }
             }
 
