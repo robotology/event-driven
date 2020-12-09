@@ -25,9 +25,6 @@ private:
     // If activated, the module shows info about the classification in the terminal
     bool is_debug_flag;
 
-    // Dummy parameter
-    int example_parameter;
-
     // Number to tones to be classified
     // ----------------------------------------------------------------------------
     // WARNING!! This number must be the same as the number of output neurons used
@@ -48,8 +45,13 @@ private:
     // Max. length of the deque for the short term memory
     int pure_tones_short_term_memory_size;
 
+    // Period
+    double update_period;
+
     // Visualizer output image
-    cv::Mat image_tones_classification = cv::Mat::zeros(cv::Size(320, 240), CV_8UC3);
+    int image_tones_classification_width = 320;
+    int image_tones_classification_height = 240;
+    cv::Mat image_tones_classification = cv::Mat::zeros(cv::Size(image_tones_classification_width, image_tones_classification_height), CV_8UC3);
 
 public:
 
@@ -83,25 +85,30 @@ public:
                 rf.check("is_debug_flag", Value(true)).asBool();
         yInfo() << "Flag is_debug_flat is: " << is_debug_flag;
 
-        // Dummy parameter: 32 by default
-        int default_example_parameter = 32;
-        example_parameter = rf.check("example_parameter", 
-                                    Value(default_example_parameter)).asInt();
-        yInfo() << "Setting example_parameter parameter to: " << example_parameter;
-
          // Number of tones to classify: 6 by default
         int default_number_tones_output_neurons = 6;
         number_tones_output_neurons = rf.check("number_tones_output_neurons",
                                     Value(default_number_tones_output_neurons)).asInt();
         yInfo() << "Setting number_tones_output_neurons parameter to: " << number_tones_output_neurons;
 
-        // Short term memory size: 100 by default
-        int default_pure_tones_short_term_memory_size = 100;
+        // Short term memory size: 1000 by default
+        int default_pure_tones_short_term_memory_size = 1000;
         pure_tones_short_term_memory_size = rf.check("pure_tones_short_term_memory_size", 
                                     Value(default_pure_tones_short_term_memory_size)).asInt();
         yInfo() << "Setting pure_tones_short_term_memory_size parameter to: " << pure_tones_short_term_memory_size;
 
+        // Period value: 1 sec by default
+        double default_update_period = 1.0;
+        update_period = rf.check("update_period",
+                                    Value(default_update_period)).asDouble();
+        yInfo() << "Setting update_period parameter to: " << update_period;
+
         // Do any other set-up required here
+
+        // Initialize the short term memory deque
+        for(int i = 0; i < pure_tones_short_term_memory_size; i++) {
+            pure_tones_short_term_memory.push_back(0);
+        }
 
         // Start the asynchronous and synchronous threads
         yInfo() << "Starting the thread...";
@@ -111,7 +118,7 @@ public:
     virtual double getPeriod()
     {
         // Period of synchrnous thread (in seconds)
-        return 1.0;
+        return update_period;
     }
 
     bool interruptModule()
@@ -140,7 +147,7 @@ public:
         // Add any synchronous operations here, visualisation, debug out prints
 
         // Create variables
-        int tones_histogram[number_tones_output_neurons];
+        int tones_histogram[512];
 
         // Init the histogram
         for(int i = 0; i < number_tones_output_neurons; i++) {
@@ -195,7 +202,7 @@ public:
         // ----------------------------------------------------------------------------
         //                          CLEAR IMAGE
         // Remove all the previous plot
-        image_tones_classification = cv::Mat::zeros(cv::Size(320, 240), CV_8UC3);
+        image_tones_classification = cv::Mat::zeros(cv::Size(image_tones_classification_width, image_tones_classification_height), CV_8UC3);
 
         // ----------------------------------------------------------------------------
         //                          WINNER TEXT DRAW
