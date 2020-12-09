@@ -8,6 +8,8 @@
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
 #include "event-driven/vDraw.h"
+#include <limits.h>
+
 using namespace ev;
 using namespace yarp::os;
 
@@ -15,20 +17,44 @@ class vAuditoryAttention : public RFModule, public Thread {
 
 private:
 
+    // Input port: type AE
     vReadPort< vector<AE> > input_port;
+    
+    // Output port: type AE
     vWritePort output_port;
 
+    // Debug flag
+    // If activated, the module shows info about the classification in the terminal
     bool is_debug_flag;
-    double example_parameter;
 
+    // Number of sound source positions
     int number_sound_source_neurons;
-    const char *sound_source_names[6] = {"90 L", "60 L", "30 L", "30 R", "60 R", "90 R"};
+    // ----------------------------------------------------------------------------
+    // WARNING!! This number must be the same as the number of output neurons used
+    // in SpiNNaker sound sources population
+    // ----------------------------------------------------------------------------
 
-    int soundsource_short_term_memory_size;
+    // Positions' names
+    // ----------------------------------------------------------------------------
+    // WARNING!! This number must be the same as the number of output neurons used
+    // in SpiNNaker sound sources population
+    // ----------------------------------------------------------------------------
+    const char *sound_source_names[8] = {"90 L", "70 L", "50 L", "30L", "30 R", "50 R", "70 R", "90 R"};
+
+    // Temporal histogram of the sound source neurons
+    // ----------------------------------------------------------------------------
+    // WARNING!! This number must be the same as the number of output neurons used
+    // in SpiNNaker sound sources population
+    // ----------------------------------------------------------------------------
     int soundsource_short_term_memory[512];
 
-    cv::Mat image_sound_localization = cv::Mat::zeros(cv::Size(320, 240), CV_8UC3);
+    // Period
+    double update_period;
 
+    // Visualizer output image
+    int image_sound_localization_width = 320;
+    int image_sound_localization_height = 240;
+    cv::Mat image_sound_localization = cv::Mat::zeros(cv::Size(image_sound_localization_width, image_sound_localization_height), CV_8UC3);
 
 public:
 
@@ -38,15 +64,16 @@ public:
     {
         yInfo() << "Configuring the module...";
 
-        //set the module name used to name ports
+        // Set the module name used to name ports
         setName((rf.check("name", Value("/vAuditoryAttention")).asString()).c_str());
 
-        //open io ports
+        // Open input port
         yInfo() << "Opening input port...";
         if(!input_port.open(getName() + "/AE:i")) {
             yError() << "Could not open input port";
             return false;
         }
+        // Open output port
         yInfo() << "Opening output port...";
         output_port.setWriteType(AE::tag);
         if(!output_port.open(getName() + "/AE:o")) {
@@ -54,52 +81,54 @@ public:
             return false;
         }
 
-        //read flags and parameters
+        // Read flags and parameters
+
+        // Debug flag: false by default
         is_debug_flag = rf.check("is_debug_flag") &&
                 rf.check("is_debug_flag", Value(true)).asBool();
         yInfo() << "Flag is_debug_flag is: " << is_debug_flag;
 
-        double default_value = 0.1;
-        example_parameter = rf.check("example_parameter",
-                                     Value(default_value)).asDouble();
-        yInfo() << "Setting example_parameter parameter to: " << example_parameter;
-
-        int default_number_sound_source_neurons = 6;
+        // Number of sound source positions to classify: 8 by default
+        int default_number_sound_source_neurons = 8;
         number_sound_source_neurons = rf.check("number_sound_source_neurons",
                                     Value(default_number_sound_source_neurons)).asInt();
         yInfo() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
 
-        int default_soundsource_short_term_memory_size = 6;
-        soundsource_short_term_memory_size = rf.check("soundsource_short_term_memory_size",
-                                    Value(default_number_sound_source_neurons)).asInt();
-        yInfo() << "Setting soundsource_short_term_memory_size parameter to: " << soundsource_short_term_memory_size;
+        // Period value: 1 sec by default
+        double default_update_period = 1.0;
+        update_period = rf.check("update_period",
+                                    Value(default_update_period)).asDouble();
+        yInfo() << "Setting update_period parameter to: " << update_period;
 
-        //do any other set-up required here
-        for(int i = 0; i < soundsource_short_term_memory_size; i++){
+        // Do any other set-up required here
+
+        // Set the histogram to zero
+        for(int i = 0; i < number_sound_source_neurons; i++){
             soundsource_short_term_memory[i] = 0;
         }
 
-        //start the asynchronous and synchronous threads
+        // Start the asynchronous and synchronous threads
         yInfo() << "Starting the thread...";
         return Thread::start();
     }
 
     virtual double getPeriod()
     {
-        return 1.0; //period of synchrnous thread
+        // Period of synchrnous thread (in seconds)
+        return update_period;
     }
 
     bool interruptModule()
     {
-        //if the module is asked to stop ask the asynchrnous thread to stop
+        // If the module is asked to stop ask the asynchrnous thread to stop
         yInfo() << "Interrupting the module: stopping thread...";
         return Thread::stop();
     }
 
     void onStop()
     {
-        //when the asynchrnous thread is asked to stop, close ports and do
-        //other clean up
+        // When the asynchrnous thread is asked to stop, close ports and do
+        // other clean up
         yInfo() << "Stopping the module...";
         yInfo() << "Closing input port...";
         input_port.close();
@@ -108,54 +137,15 @@ public:
         yInfo() << "Module has been closed!";
     }
 
-    //synchronous thread
+    // Synchronous thread
     virtual bool updateModule()
     {
 
-        //add any synchronous operations here, visualisation, debug out prints
-
-        // Try to print here the result of the pure tones classification and the sound source localization
-        /*int max = 0;
-        int pos_max = 0;
-
-        for(int i = 0; i < soundsource_short_term_memory_size; i++){
-            if(soundsource_short_term_memory[i] > max){
-                max = soundsource_short_term_memory[i];
-                pos_max = i;
-            }
-        }
-        
-        float margin = image_sound_localization.cols * 0.03;
-    
-        float slot_size = (image_sound_localization.cols - (margin * 2)) / number_sound_source_neurons;
-        
-        float radius = (slot_size / 2.0) * 0.8;
-        
-        for(int i = 0; i < number_sound_source_neurons; i++){
-            float center_pos = margin + (i * slot_size) + (slot_size / 2.0);
-
-            // By default, the circle is red
-            cv::Vec3b c = cv::Vec3b(0, 0, 255);
-
-            if(i == pos_max) {
-                // Is the winner --> draw with green
-                c = cv::Vec3b(0, 255, 0);
-            }
-            cv::circle(image_sound_localization, cv::Point(center_pos, image_sound_localization.rows/2), radius, c, cv::FILLED);
-
-        }
-
-        if(is_debug_flag == true){
-            // Print the winer
-            yInfo() << "Winer neuron is: " << pos_max;
-        }
-
-        cv::imshow("sound_source_result", image_sound_localization);
-        cv::waitKey(10);*/
+        // Find the maximum value inside the short term memory
         int max = 0;
         int pos_max = 0;
 
-        for(int i = 0; i < soundsource_short_term_memory_size; i++){
+        for(int i = 0; i < number_sound_source_neurons; i++){
             if(soundsource_short_term_memory[i] > max){
                 max = soundsource_short_term_memory[i];
                 pos_max = i;
@@ -165,28 +155,36 @@ public:
         // ----------------------------------------------------------------------------
         //                          CLEAR IMAGE
         // Remove all the previous plot
-        image_sound_localization = cv::Mat::zeros(cv::Size(320, 240), CV_8UC3);
-        
+        image_sound_localization = cv::Mat::zeros(cv::Size(image_sound_localization_width, image_sound_localization_height), CV_8UC3);
+
+        // Define the image settings
+
+        // Horizontal and vertical margins: set to 3% of the image height
         float margin = image_sound_localization.cols * 0.03;
-    
+
+        // The image is divided by angles (one angle for each localization)
+        // ----------------------------------------------------------------------------
+        // NOTE: We took into account the horizontal line as reference: 180 degrees
+        // ----------------------------------------------------------------------------
         float slot_angle = 180.0 / number_sound_source_neurons;
         
+        // The circle's radius for each position is defined as the 80% of the half of a slice
+        // This way, we are sure there is some space between two consecutive circles
         float radius = (slot_angle / 2.0) * 0.8;
 
+        // ----------------------------------------------------------------------------
+        //                          REFERENCE SEMICIRCLE DRAW
+        // Radius of the semicircle
         float semicircle_radius = 150.0;
 
+        // The center of the semicircle will be placed at the center of the image (x-axis)
+        // at the bottom
         float semicircle_x = image_sound_localization.cols / 2;
         float semicircle_y = image_sound_localization.rows - margin;
 
+        // Draw a small circle to mark the center of the semicircle. This will be the
+        // reference point
         cv::Point pref(semicircle_x, semicircle_y);
-
-        float angle_betta = 0.0;
-        float angle_alfa = 0.0;
-        float angle_tetta = 0.0;
-        
-        float seg_ab = 0.0;
-        float seg_bc = 0.0;
-        float seg_ca = 0.0;
 
         // Draw reference horizontal line
         cv::Point p1(margin, image_sound_localization.rows - margin), p2(image_sound_localization.cols - margin, image_sound_localization.rows - margin);
@@ -194,13 +192,26 @@ public:
 
         // Draw reference vertical line
         cv::Point p3(image_sound_localization.cols / 2, margin), p4(image_sound_localization.cols / 2, image_sound_localization.rows - margin);
-        //cv::line(image_sound_localization, p3, p4, cv::Scalar(255, 255, 255), 2);
 
+        // ----------------------------------------------------------------------------
+        //                          WINNER TEXT DRAW
         // Draw text indicating the winner
         char winner_text[64];
         strcpy(winner_text, "Sound source placed at ");
         strcat(winner_text, sound_source_names[pos_max]);
+
         cv::putText(image_sound_localization, winner_text, cv::Point(margin , margin*2),cv::FONT_HERSHEY_PLAIN, 1.0, cv::Vec3b(255, 255, 255), 0.5);
+        
+        // ----------------------------------------------------------------------------
+        //                          LOCALIZATIONS DRAW
+        float angle_betta = 0.0;
+        float angle_alfa = 0.0;
+        float angle_tetta = 0.0;
+        
+        float seg_ab = 0.0;
+        float seg_bc = 0.0;
+        float seg_ca = 0.0;
+        
         for(int i = 0; i < number_sound_source_neurons; i++){
             
             angle_tetta = 90.0;
@@ -240,49 +251,41 @@ public:
         cv::imshow("sound_source_result", image_sound_localization);
         cv::waitKey(10);
 
-        for(int i = 0; i < soundsource_short_term_memory_size; i++){
+        for(int i = 0; i < number_sound_source_neurons; i++){
             soundsource_short_term_memory[i] = 0;
         }
 
         return Thread::isRunning();
     }
 
-    //asynchronous thread run forever
+    // Asynchronous thread run forever
     void run()
     {
+        // YARP timestamp
         Stamp yarpstamp;
+
+        // Output queue: type AE
         deque<AE> out_queue;
+
+        // Output event: type AE
         AE out_event;
+
+        // Raw address received from the input port
         int address = 0;
 
+        // Forever...
         while(true) {
 
             const vector<AE> * q = input_port.read(yarpstamp);
             if(!q || Thread::isStopping()) return;
 
-            // Initialize the buffer
-            for(int i = 0; i < soundsource_short_term_memory_size; i++){
-                //soundsource_short_term_memory[i] = 0;
-            }
-
-            //do asynchronous processing here
+            // Do asynchronous processing here
             for(auto &qi : *q) {
-
-                //here you could try modifying the data of the event before
-                //pushing to the output q
-
-                // First, check from which SpiNNaker sub-network is the event coming from
-
-                // If it is an event from pure tones classification
-                // then count and check the winer
-
-
-                // If it is an event from sound source localization
-                // then count and check the winer
 
                 // Get the real AER address
                 address = qi._coded_data;
 
+                // If debug flag enabled, print it out
                 if (is_debug_flag == true) {
                     yDebug() << "Event received and decoded address: " << address;
                 }
@@ -296,11 +299,10 @@ public:
                     yWarning() << "Not recognized event detected...";
                     address = -1;
                 }
- 
             }
 
-            //after processing the packet output the results
-            //(only if there is something to output
+            // After processing the packet output the results
+            // (only if there is something to output
             if(out_queue.size()) {
                 output_port.write(out_queue, yarpstamp);
                 out_queue.clear();
@@ -311,21 +313,21 @@ public:
 
 int main(int argc, char * argv[])
 {
-    /* initialize yarp network */
+    // Initialize yarp network
     yarp::os::Network yarp;
     if(!yarp.checkNetwork(2)) {
         std::cout << "Could not connect to YARP" << std::endl;
         return false;
     }
 
-    /* prepare and configure the resource finder */
+    // Prepare and configure the resource finder
     yarp::os::ResourceFinder rf;
     rf.setVerbose( false );
     rf.setDefaultContext( "eventdriven" );
     rf.setDefaultConfigFile( "vAuditoryAttention.ini" );
     rf.configure( argc, argv );
 
-    /* create the module */
+    // Create the module
     vAuditoryAttention instance;
     return instance.runModule(rf);
 }
