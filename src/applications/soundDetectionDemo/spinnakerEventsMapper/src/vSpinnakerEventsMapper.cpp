@@ -82,14 +82,14 @@ public:
                 rf.check("is_debug_flag", Value(true)).asBool();
         yInfo() << "Flag is_debug_flat is: " << is_debug_flag;
 
-        // Number of tones to classify: 6 by default
-        int default_number_tones_output_neurons = 6;
+        // Number of tones to classify: 5 by default
+        int default_number_tones_output_neurons = 5;
         number_tones_output_neurons = rf.check("number_tones_output_neurons",
                                     Value(default_number_tones_output_neurons)).asInt();
         yInfo() << "Setting number_tones_output_neurons parameter to: " << number_tones_output_neurons;
 
-        // Number of positions to classify: 8 by default
-        int default_number_sound_source_neurons = 8;
+        // Number of positions to classify: 9 by default
+        int default_number_sound_source_neurons = 9;
         number_sound_source_neurons = rf.check("number_sound_source_neurons",
                                     Value(default_number_sound_source_neurons)).asInt();
         yInfo() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
