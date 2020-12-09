@@ -39,7 +39,7 @@ private:
     // WARNING!! This number must be the same as the number of output neurons used
     // in SpiNNaker sound sources population
     // ----------------------------------------------------------------------------
-    const char *sound_source_names[8] = {"90 L", "70 L", "50 L", "30L", "30 R", "50 R", "70 R", "90 R"};
+    const char *sound_source_names[9] = {"90 L", "70 L", "50 L", "30L", "0 C", "30 R", "50 R", "70 R", "90 R"};
 
     // Temporal histogram of the sound source neurons
     // ----------------------------------------------------------------------------
@@ -88,8 +88,8 @@ public:
                 rf.check("is_debug_flag", Value(true)).asBool();
         yInfo() << "Flag is_debug_flag is: " << is_debug_flag;
 
-        // Number of sound source positions to classify: 8 by default
-        int default_number_sound_source_neurons = 8;
+        // Number of sound source positions to classify: 9 by default
+        int default_number_sound_source_neurons = 9;
         number_sound_source_neurons = rf.check("number_sound_source_neurons",
                                     Value(default_number_sound_source_neurons)).asInt();
         yInfo() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
