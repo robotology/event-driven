@@ -33,25 +33,25 @@
 
   <module>
     <name> vCochleaEventsMapper </name>
-    <parameters></parameters>
+    <parameters> --is_debug_flag false --period 1.0 </parameters>
     <node> localhost </node>
   </module>
 
   <module>
     <name> vSpinnakerEventsMapper </name>
-    <parameters></parameters>
+    <parameters> --is_debug_flag false --number_tones_output_neurons 6 --number_sound_source_neurons 8 --period 1.0</parameters>
     <node> localhost </node>
   </module>
 
   <module>
     <name> vSoundClassification </name>
-    <parameters></parameters>
+    <parameters> --is_debug_flag false --number_tones_output_neurons 6 --pure_tones_short_term_memory_size 1000 --period 1.0</parameters>
     <node> localhost </node>
   </module>
 
   <module>
     <name> vAuditoryAttention </name>
-    <parameters></parameters>
+    <parameters> --is_debug_flag false --number_sound_source_neurons 8 --period 1.0 </parameters>
     <node> localhost </node>
   </module>
 
