@@ -385,16 +385,7 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             // Draw the circle
             cv::circle(image, cv::Point(x, y), circle_radius/2, c, cv::FILLED);
         }
-        // Check if the event is from MSO
-        if (event_address >= CochleaEvent::nas_addrresses_offset && event_address < (CochleaEvent::nas_addrresses_offset + CochleaEvent::mso_addresses_offset)) {
-            // Set x and y values
-            int x = (Xlimit / CochleaEvent::mso_num_neurons_per_channel) * (CochleaEvent::mso_num_neurons_per_channel - (int)aep->neuron_id);
-            int y = (Ylimit / 2) + 1;
-
-            cv::Vec3b c = orange;
-
-            //cv::circle(image, cv::Point(x, y), circle_radius+1, c, cv::FILLED);
-        }
+    
     }
     // Draw the plot information
 
