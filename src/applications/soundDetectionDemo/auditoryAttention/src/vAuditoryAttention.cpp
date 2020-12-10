@@ -197,8 +197,13 @@ public:
         //                          WINNER TEXT DRAW
         // Draw text indicating the winner
         char winner_text[64];
-        strcpy(winner_text, "Sound source placed at ");
-        strcat(winner_text, sound_source_names[pos_max]);
+        strcpy(winner_text, "Sound source placed at [");
+        float range_start = pos_max * slot_angle;
+        strcat(winner_text, std::to_string(range_start));
+        strcat(winner_text, ", ");
+        float range_end = (pos_max + 1) * slot_angle;
+        strcat(winner_text, std::to_string(range_end));
+        strcat(winner_text, "]");
 
         cv::putText(image_sound_localization, winner_text, cv::Point(margin , margin*2),cv::FONT_HERSHEY_PLAIN, 1.0, cv::Vec3b(255, 255, 255), 0.5);
         
