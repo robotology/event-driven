@@ -25,6 +25,13 @@ private:
     // If activated, the module shows info about the classification in the terminal
     bool is_debug_flag;
 
+    // SpiNNaker flag
+    // ----------------------------------------------------------------------------
+    // NOTE: If activated, the output events has one dimension, that are raw address 
+    // If not, the output events are the raw events from the MSO model (2-dimension)
+    // ----------------------------------------------------------------------------
+    bool with_spinnaker;
+
     // Period
     double update_period;
 
@@ -79,6 +86,12 @@ public:
         is_debug_flag = rf.check("is_debug_flag") &&
                 rf.check("is_debug_flag", Value(true)).asBool();
         yInfo() << "Flag is_debug_flat is: " << is_debug_flag;
+
+        // SpiNNaker flag: false by default
+        bool default_with_spinnaker = false;
+        with_spinnaker = rf.check("with_spinnaker") &&
+                rf.check("with_spinnaker", Value(default_with_spinnaker)).asBool();
+        yInfo() << "Flag with_spinnaker is: " << with_spinnaker;
 
         // Period value: 1 sec by default
         double default_update_period = 1.0;
@@ -313,19 +326,33 @@ public:
                     yDebug() << "Event received and decoded address: " << address;
                 }
                 
-                // If the received event is valid
-                if (address >= 0 && address < CochleaEvent::max_num_addresses) {
-                    // Copy the address to the raw int32
-                    out_event._coded_data = address;
-                    // Copy the timestamp --> Is it necessary to pre-process?!!!!!!
-                    out_event.stamp = qi.stamp;
+                // Check if SpiNNaker is available
+                if(with_spinnaker == true){
+                    // If the received event is valid
+                    if (address >= 0 && address < CochleaEvent::max_num_addresses) {
+                        // Copy the address to the raw int32
+                        out_event._coded_data = address;
+                        // Copy the timestamp --> Is it necessary to pre-process?!!!!!!
+                        out_event.stamp = qi.stamp;
 
-                    // Copy the output event into the output queue
-                    out_queue.push_back(out_event);   
+                        // Copy the output event into the output queue
+                        out_queue.push_back(out_event);   
+                    } else {
+                        // Otherwise
+                        yWarning() << "Not recognized event detected...";
+                        address = -1;
+                    }
                 } else {
-                    // Otherwise
-                    yWarning() << "Not recognized event detected...";
-                    address = -1;
+                    if(qi.auditory_model == 1){
+                        if(qi.xso_type == 0){
+                            // Copy the neurond ID
+                            out_event._coded_data = qi.neuron_id;
+                            // Copy the timestamp --> Is it necessary to pre-process?!!!!!!
+                            out_event.stamp = qi.stamp;
+                            // Copy the output event into the output queue
+                            out_queue.push_back(out_event); 
+                        }
+                    }
                 }
 
                 // Sum up the event to the MSO matrix values only if the incoming
