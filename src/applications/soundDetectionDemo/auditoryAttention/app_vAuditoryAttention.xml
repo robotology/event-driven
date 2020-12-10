@@ -33,13 +33,13 @@
 
   <module>
     <name> vCochleaEventsMapper </name>
-    <parameters> --is_debug_flag false --update_period 1.0 </parameters>
+    <parameters> --is_debug_flag false --with_spinnaker false --update_period 1.0 </parameters>
     <node> localhost </node>
   </module>
 
   <module>
     <name> vSpinnakerEventsMapper </name>
-    <parameters> --is_debug_flag false --number_tones_output_neurons 5 --number_sound_source_neurons 9 --update_period 1.0</parameters>
+    <parameters> --is_debug_flag false --number_tones_output_neurons 5 --number_sound_source_neurons 16 --update_period 1.0</parameters>
     <node> localhost </node>
   </module>
 
@@ -51,7 +51,7 @@
 
   <module>
     <name> vAuditoryAttention </name>
-    <parameters> --is_debug_flag false --number_sound_source_neurons 9 --update_period 1.0 </parameters>
+    <parameters> --is_debug_flag false --number_sound_source_neurons 16 --update_period 1.0 </parameters>
     <node> localhost </node>
   </module>
 
@@ -127,6 +127,15 @@
 	-->
   <connection>
     <from>/vSpinnakerEventsMapper/soundsource:o</from>
+    <to>/vAuditoryAttention/AE:i</to>
+    <protocol>fast_tcp</protocol>
+  </connection>
+
+  <!--
+	From vCochleaEventsMapper to vAuditoryAttention module
+	-->
+  <connection>
+    <from>/vCochleaEventsMapper/AE:o</from>
     <to>/vAuditoryAttention/AE:i</to>
     <protocol>fast_tcp</protocol>
   </connection>
