@@ -34,13 +34,6 @@ private:
     // in SpiNNaker sound sources population
     // ----------------------------------------------------------------------------
 
-    // Positions' names
-    // ----------------------------------------------------------------------------
-    // WARNING!! This number must be the same as the number of output neurons used
-    // in SpiNNaker sound sources population
-    // ----------------------------------------------------------------------------
-    const char *sound_source_names[9] = {"90 L", "70 L", "50 L", "30L", "0 C", "30 R", "50 R", "70 R", "90 R"};
-
     // Temporal histogram of the sound source neurons
     // ----------------------------------------------------------------------------
     // WARNING!! This number must be the same as the number of output neurons used
