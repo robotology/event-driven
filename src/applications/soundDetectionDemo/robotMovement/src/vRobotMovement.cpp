@@ -263,6 +263,15 @@ public:
     virtual bool updateModule()
     {
         // Add any synchronous operations here, visualisation, debug out prints
+        double position_to_move = 0.0;
+
+        double joint_range = joint_max_limit - joint_min_limit;
+
+        double slot = joint_range / number_sound_source_neurons;
+
+        position_to_move = (joint_desired_position * slot) + (slot / 2.0);
+
+        joint_position_control->positionMove(joint_id, position_to_move);
 
         // Do any other set-up required here
 
