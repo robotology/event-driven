@@ -36,7 +36,7 @@ private:
     PolyDriver joint_driver;
 
     // Limits of the joint
-    IControllimits *joint_limits;
+    IControlLimits *joint_limits;
 
     // Enconder of the joint
     IEncoders *joint_enconder;
