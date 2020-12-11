@@ -44,6 +44,18 @@ private:
     // Period
     double update_period;
 
+    // TS
+    unsigned int ts;
+
+    // YARP timestamp
+    Stamp yarpstamp;
+
+    // Output queue: type AE
+    deque<AE> out_queue;
+
+    // Output event: type AE
+    AE out_event;
+
     // Visualizer output image
     int image_sound_localization_width = 320;
     int image_sound_localization_height = 240;
@@ -255,6 +267,13 @@ public:
         cv::imshow("sound_source_result", image_sound_localization);
         cv::waitKey(10);
 
+        // Copy the neurond ID
+        out_event._coded_data = pos_max;
+        // Copy the timestamp --> Is it necessary to pre-process?!!!!!!
+        out_event.stamp = ts;
+        // Copy the output event into the output queue
+        out_queue.push_back(out_event); 
+
         for(int i = 0; i < number_sound_source_neurons; i++){
             soundsource_short_term_memory[i] = 0;
         }
@@ -265,15 +284,6 @@ public:
     // Asynchronous thread run forever
     void run()
     {
-        // YARP timestamp
-        Stamp yarpstamp;
-
-        // Output queue: type AE
-        deque<AE> out_queue;
-
-        // Output event: type AE
-        AE out_event;
-
         // Raw address received from the input port
         int address = 0;
 
@@ -288,6 +298,7 @@ public:
 
                 // Get the real AER address
                 address = qi._coded_data;
+                ts = qi.stamp;
 
                 // If debug flag enabled, print it out
                 if (is_debug_flag == true) {
