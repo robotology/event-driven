@@ -34,6 +34,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include
 
 target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_OS
                                               YARP::YARP_init
+                                              YARP::YARP_dev
+                                              YARP::YARP_math
+                                              YARP::YARP_sig
                                               ev::event-driven)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
