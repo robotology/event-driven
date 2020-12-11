@@ -49,9 +49,9 @@ if(ENABLE_view_cochlea)
     add_subdirectory(cochlea)
 endif(ENABLE_view_cochlea)
 
-if(ENABLE_soundDetection)
+if(ENABLE_soundDetectionDemo)
     add_subdirectory(soundDetectionDemo)
-endif(ENABLE_soundDetection)
+endif(ENABLE_soundDetectionDemo)
 
 if(ENABLE_dualCamTransform)
     add_subdirectory(dualCamTransform)
