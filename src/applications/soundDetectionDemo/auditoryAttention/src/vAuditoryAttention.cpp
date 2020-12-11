@@ -44,9 +44,6 @@ private:
     // Period
     double update_period;
 
-    // TS
-    unsigned int ts;
-
     // YARP timestamp
     Stamp yarpstamp;
 
@@ -268,9 +265,9 @@ public:
         cv::waitKey(10);
 
         // Copy the neurond ID
-        out_event._coded_data = pos_max;
+        out_event._coded_data = qi.neuron_id;
         // Copy the timestamp --> Is it necessary to pre-process?!!!!!!
-        out_event.stamp = ts;
+        out_event.stamp = qi.stamp;
         // Copy the output event into the output queue
         out_queue.push_back(out_event); 
 
@@ -298,7 +295,6 @@ public:
 
                 // Get the real AER address
                 address = qi._coded_data;
-                ts = qi.stamp;
 
                 // If debug flag enabled, print it out
                 if (is_debug_flag == true) {
