@@ -125,7 +125,7 @@ public:
         yInfo() << "Flag is_simulation is: " << is_simulation;
 
         // Number of sound source positions to classify: 9 by default
-        int default_number_sound_source_neurons = 9;
+        int default_number_sound_source_neurons = 16;
         number_sound_source_neurons = rf.check("number_sound_source_neurons",
                                     Value(default_number_sound_source_neurons)).asInt();
         yInfo() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
@@ -269,7 +269,10 @@ public:
 
         double slot = joint_range / number_sound_source_neurons;
 
-        position_to_move = (joint_desired_position * slot) + (slot / 2.0);
+        position_to_move = (joint_desired_position * slot) + (slot / 2.0) + joint_min_limit;
+
+        yInfo() << "Read joint_desired_position: " << joint_desired_position;
+        yInfo() << "Position to move: " << position_to_move;
 
         joint_position_control->positionMove(joint_id, position_to_move);
 
@@ -292,8 +295,8 @@ public:
 
             // Do asynchronous processing here
             for(auto &qi : *q) {
-                
-                
+
+                yInfo() << "Received event: " << qi._coded_data;
                 joint_desired_position = qi._coded_data;
 
             }
