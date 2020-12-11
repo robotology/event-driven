@@ -55,6 +55,12 @@
     <node> localhost </node>
   </module>
 
+  <module>
+    <name> vRobotMovement </name>
+    <parameters> --is_debug_flag false --is_simulation true --number_sound_source_neurons 16 --body_part "head" --joint_id 2 --joint_speed 30 --update_period 0.5 </parameters>
+    <node></node>
+  </module>
+
   <!-- ...............................................................
   ............................ Connections ...........................
   ............................................................... -->
@@ -137,6 +143,15 @@
   <connection>
     <from>/vCochleaEventsMapper/AE:o</from>
     <to>/vAuditoryAttention/AE:i</to>
+    <protocol>fast_tcp</protocol>
+  </connection>
+
+  <!--
+  From vAuditoryAttention to vRobotMovement module
+  -->
+  <connection>
+    <from>/vAuditoryAttention/AE:o</from>
+    <to>/vRobotMovement/AE:i</to>
     <protocol>fast_tcp</protocol>
   </connection>
 
