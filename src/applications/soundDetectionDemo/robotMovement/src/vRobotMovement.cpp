@@ -220,9 +220,12 @@ public:
         
         // Get joint range of movement
         joint_range = joint_max_limit + abs(joint_min_limit);
+        yWarning() << "Joint range: " << joint_range;
 
         // Calculate the joint step accordint to its range and the number of neurons
         joint_step = joint_range / number_sound_source_neurons;
+        yWarning() << "Joint step: " << joint_step;
+        
         half_joint_step = joint_step / 2.0;
 
         // Set the joint's control mode
