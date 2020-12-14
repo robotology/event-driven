@@ -71,9 +71,18 @@ private:
 
     // Joint max limit
     double joint_max_limit;
+    double joint_max_limit_reduced;
 
     // Joint min limit
     double joint_min_limit;
+    double joint_min_limit_reduced;
+
+    // Joint range
+    double joint_range;
+
+    // Joint steep
+    double joint_step;
+    double half_joint_step;
 
     // Joint initial position
     double joint_initial_position;
@@ -203,6 +212,19 @@ public:
         // Show the joint limits
         yWarning() << "Joint min limit: " << joint_min_limit << " - joint max limit: " << joint_max_limit;
 
+        // Calculate the reduced limits, being those a 95% of the real limits
+        joint_max_limit_reduced = joint_max_limit * 0.95;
+        joint_min_limit_reduced = joint_min_limit * 0.95;
+        // Show the joint limits reduced
+        yWarning() << "Joint min limit reduced: " << joint_min_limit_reduced << " - joint max limit reduced: " << joint_max_limit_reduced;
+        
+        // Get joint range of movement
+        joint_range = joint_max_limit + abs(joint_min_limit);
+
+        // Calculate the joint step accordint to its range and the number of neurons
+        joint_step = joint_range / number_sound_source_neurons;
+        half_joint_step = joint_step / 2.0;
+
         // Set the joint's control mode
         joint_control_mode->setControlMode(joint_id, VOCAB_CM_POSITION);
 
@@ -219,12 +241,12 @@ public:
         Time::delay(3);
 
         // Check the speed is not too high
-        if(joint_speed > 30) {
+        if(joint_speed > 40) {
             yWarning() << "The joint speed is too high! The new value is 30!";
-            joint_position_control->setRefSpeed(joint_id, 30);
+            joint_position_control->setRefSpeed(joint_id, 40);
         } else if(joint_speed <= 0) {
             yWarning() << "The joint speed is too low! The new value is 10!";
-            joint_position_control->setRefSpeed(joint_id, 10);
+            joint_position_control->setRefSpeed(joint_id, 0);
         } else {
             joint_position_control->setRefSpeed(joint_id, joint_speed);
         }
@@ -263,17 +285,30 @@ public:
     virtual bool updateModule()
     {
         // Add any synchronous operations here, visualisation, debug out prints
+
+        // Position to send to the motor control
         double position_to_move = 0.0;
 
-        double joint_range = joint_max_limit - joint_min_limit;
+        // It is calculated according to the winner neuron and the joint step, which depends on
+        // the number of neurons of the sound source localization (180.0 / n_neurons).
+        // We add half of the step to center the position, and we substract 90.0 to move
+        // from the [0, 180] range to [-90, 90] range.
+        position_to_move = (joint_desired_position * joint_step) + half_joint_step - 90.0;
 
-        double slot = joint_range / number_sound_source_neurons;
+        // However, we cannot move the iCub head to -90.0 degrees due to the phisical limits.
+        // Then, we check if the position_to_move exceed the joint limits
+        if(position_to_move > joint_max_limit_reduced){
+            position_to_move = joint_max_limit_reduced;
+        }
+        if(position_to_move < joint_min_limit_reduced){
+            position_to_move = joint_min_limit_reduced;
+        }
 
-        position_to_move = (joint_desired_position * slot) + (slot / 2.0) + joint_min_limit;
-
+        // Show the desired position and the real position
         yInfo() << "Read joint_desired_position: " << joint_desired_position;
         yInfo() << "Position to move: " << position_to_move;
 
+        // Send the position to the joint controller
         joint_position_control->positionMove(joint_id, position_to_move);
 
         // Do any other set-up required here
