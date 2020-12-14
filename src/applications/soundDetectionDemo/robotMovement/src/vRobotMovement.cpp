@@ -210,22 +210,22 @@ public:
         // Compute joint limits
         joint_limits->getLimits(joint_id, &joint_min_limit, &joint_max_limit);
         // Show the joint limits
-        yWarning() << "Joint min limit: " << joint_min_limit << " - joint max limit: " << joint_max_limit;
+        yInfo() << "Joint min limit: " << joint_min_limit << " - joint max limit: " << joint_max_limit;
 
         // Calculate the reduced limits, being those a 95% of the real limits
         joint_max_limit_reduced = joint_max_limit * 0.95;
         joint_min_limit_reduced = joint_min_limit * 0.95;
         // Show the joint limits reduced
-        yWarning() << "Joint min limit reduced: " << joint_min_limit_reduced << " - joint max limit reduced: " << joint_max_limit_reduced;
+        yInfo() << "Joint min limit reduced: " << joint_min_limit_reduced << " - joint max limit reduced: " << joint_max_limit_reduced;
         
         // Get joint range of movement
         joint_range = joint_max_limit + abs(joint_min_limit);
-        yWarning() << "Joint range: " << joint_range;
+        yInfo() << "Joint range: " << joint_range;
 
         // Calculate the joint step accordint to its range and the number of neurons
-        joint_step = joint_range / number_sound_source_neurons;
-        yWarning() << "Joint step: " << joint_step;
-        
+        joint_step = 180.0 / number_sound_source_neurons; //joint_range / number_sound_source_neurons;
+        yInfo() << "Joint step: " << joint_step;
+
         half_joint_step = joint_step / 2.0;
 
         // Set the joint's control mode
@@ -308,9 +308,12 @@ public:
         }
 
         // Show the desired position and the real position
-        yInfo() << "Read joint_desired_position: " << joint_desired_position;
-        yInfo() << "Position to move: " << position_to_move;
-
+        if(is_debug_flag == true) {
+            yDebug() << "---------------------------------------------" 
+            yDebug() << "Read joint_desired_position: " << joint_desired_position;
+            yDebug() << "Position to move: " << position_to_move;
+            yDebug() << "---------------------------------------------"
+        }
         // Send the position to the joint controller
         joint_position_control->positionMove(joint_id, position_to_move);
 
@@ -333,8 +336,9 @@ public:
 
             // Do asynchronous processing here
             for(auto &qi : *q) {
-
-                yInfo() << "Received event: " << qi._coded_data;
+                if(is_debug_flag == true) {
+                    yInfo() << "Received event: " << qi._coded_data;
+                }
                 joint_desired_position = qi._coded_data;
 
             }
