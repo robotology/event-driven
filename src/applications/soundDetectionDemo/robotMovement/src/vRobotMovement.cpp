@@ -309,10 +309,10 @@ public:
 
         // Show the desired position and the real position
         if(is_debug_flag == true) {
-            yDebug() << "---------------------------------------------" 
+            yDebug() << "---------------------------------------------";
             yDebug() << "Read joint_desired_position: " << joint_desired_position;
             yDebug() << "Position to move: " << position_to_move;
-            yDebug() << "---------------------------------------------"
+            yDebug() << "---------------------------------------------";
         }
         // Send the position to the joint controller
         joint_position_control->positionMove(joint_id, position_to_move);
