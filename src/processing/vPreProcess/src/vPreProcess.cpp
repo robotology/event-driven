@@ -86,6 +86,29 @@ vPreProcess::~vPreProcess() {
 bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
     setName((rf.check("name", yarp::os::Value("/vPreProcess")).asString()).c_str());
 
+    if(rf.check("h") || rf.check("help")) {
+        yInfo() << "--height <int>: image size";
+        yInfo() << "--width <int>: image size";
+        yInfo() << "--filter_spatial <bool>: use the spatial filter";
+        yInfo() << "--filter_temporal <bool>: use the temporal filter";
+        yInfo() << "--undistort <bool>: correct for lens distortion";
+        yInfo() << "--flipx <bool>: flip the image horizontally";
+        yInfo() << "--flipy <bool>: flip the image vertically";
+        yInfo() << "--precheck <bool>: check packets and events for corruption";
+        yInfo() << "--split_stereo <bool>: 2 streams based on left/right";
+        yInfo() << "--split_polarities <bool>: 2 streams based on polarities";
+        yInfo() << "--combined_stereo <bool>: combine left/right "
+                   "(can be used together with split_stereo)";
+        yInfo() << "--local_stamp <bool>: overwrite the packet stamp with one"
+                   "immediately as the packet arrives";
+        yInfo() << "--corners <bool>: open a separate port for corners only."
+                   "All events still exist in regular vision stream.";
+        yInfo() << "--sf_time <double>: spatial filter time window (sec)";
+        yInfo() << "--sf_size <int>: spatial filter (half) size (pixels)";
+        yInfo() << "--tf_time <double>: temporal filter time window (sec)";
+        return false;
+    }
+
     res.height = rf.check("height", Value(240)).asInt();
     res.width = rf.check("width", Value(304)).asInt();
 
