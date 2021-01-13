@@ -9,6 +9,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_OS
                                               MetavisionSDK::core 
                                               MetavisionSDK::driver)
 
-
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
-
