@@ -12,7 +12,8 @@ private:
     vWritePort output_port;
     Metavision::Camera cam; // create the camera
     Stamp yarpstamp;
-    int counter{0};
+    int counter_packets{0};
+    int counter_events{0};
     static constexpr double period{1.0};
 
     static constexpr void switch_buffer(int &buf_i) {buf_i = (buf_i + 1) % 2;};
@@ -41,10 +42,11 @@ public:
         //set the module name used to name ports
         setName((rf.check("name", Value("/atis3")).asString()).c_str());
 
-        if(!output_port.open(getName() + "/AE:o")) {
+        if(!output_port.open(getName("/AE:o"))) {
             yError() << "Could not open output port";
             return false;
         }
+        yarp::os::Network::connect(getName("/AE:o"), "/vPreProcess/AE:i", "fast_tcp");
 
         if(rf.check("file")) {
             cam = Metavision::Camera::from_file(rf.find("file").asString());
@@ -86,8 +88,9 @@ public:
     //synchronous thread
     bool updateModule() override
     {
-        yInfo() << counter / period << "packets sent per second";
-        counter = 0;
+        yInfo() << counter_packets / period << "packets and"
+                << (counter_events * 0.001) / period << "k events sent per second";
+        counter_packets = counter_events = 0;
 
         if(!cam.is_running())
             Thread::stop();
@@ -99,13 +102,16 @@ public:
 
         // this loop allows us to get access to each event received in this callback
         AE ae;
+
         m.lock();
         for (const Metavision::EventCD *ev = begin; ev != end; ++ev) {
             ae.x = ev->x;
             ae.y = ev->y;
             ae.polarity = ev->p;
             ae.stamp = ev->t;
+
             buffer[b_sel].push_back(ae);
+
         }
         m.unlock();
 
@@ -123,8 +129,9 @@ public:
             if (!current_buffer.empty()) {
                 yarpstamp.update();
                 output_port.write(current_buffer, yarpstamp);
+                counter_packets++;
+                counter_events += current_buffer.size();
                 current_buffer.clear();
-                counter++;
             }
         }
 
