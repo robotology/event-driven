@@ -330,6 +330,15 @@ public:
         return _internal_write(envelope);
     }
 
+    bool write(const vector<int32_t> &q, Stamp &envelope, size_t n_to_write)
+    {
+        n_to_write = std::min(n_to_write, q.size());
+        internal_storage.setExternalData((const char *)q.data(),
+                                         n_to_write * sizeof(int32_t));
+        return _internal_write(envelope);
+    }
+
+
     bool write(const deque<int32_t> &q, Stamp &envelope)
     {
         internal_storage.setInternalData(q);
@@ -396,7 +405,7 @@ public:
         working_queue = nullptr;
         p_time = 0;
 
-        setPriority(99, SCHED_FIFO);
+        //setPriority(0, SCHED_FIFO);
 
         dataavailable.wait(); //init counter to 0
     }
