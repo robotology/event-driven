@@ -37,6 +37,10 @@ public:
             return false;
         }
 
+        if((int)round(vtsHelper::vtsscaler) != 1000000)
+            yWarning() << "USB ATIS Gen 3 typically has a clock period of 1 ms. You may need to compile event-driven "
+                          "with a cmake parameter VLIB_CLOCK_PERIOD_NS=1000 for correct time scaling.";
+
         if(!yarp::os::Network::checkNetwork(2.0)) {
             std::cout << "Could not connect to YARP" << std::endl;
             return false;
