@@ -60,6 +60,9 @@ vPreProcess::vPreProcess() : name("/vPreProcess") {
     out_port_aps_right.setWriteType(AE::tag);
     out_port_imu_samples.setWriteType(IMUevent::tag);
     out_port_audio.setWriteType(AE::tag);
+    out_port_crn_left.setWriteType(AE::tag);
+    out_port_crn_right.setWriteType(AE::tag);
+    out_port_crn_stereo.setWriteType(AE::tag);
 }
 
 
@@ -74,10 +77,37 @@ vPreProcess::~vPreProcess() {
     out_port_aps_right.close();
     out_port_imu_samples.close();
     out_port_audio.close();
+    out_port_crn_left.close();
+    out_port_crn_right.close();
+    out_port_crn_stereo.close();
+
 }
 
 bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
     setName((rf.check("name", yarp::os::Value("/vPreProcess")).asString()).c_str());
+
+    if(rf.check("h") || rf.check("help")) {
+        yInfo() << "--height <int>: image size";
+        yInfo() << "--width <int>: image size";
+        yInfo() << "--filter_spatial <bool>: use the spatial filter";
+        yInfo() << "--filter_temporal <bool>: use the temporal filter";
+        yInfo() << "--undistort <bool>: correct for lens distortion";
+        yInfo() << "--flipx <bool>: flip the image horizontally";
+        yInfo() << "--flipy <bool>: flip the image vertically";
+        yInfo() << "--precheck <bool>: check packets and events for corruption";
+        yInfo() << "--split_stereo <bool>: 2 streams based on left/right";
+        yInfo() << "--split_polarities <bool>: 2 streams based on polarities";
+        yInfo() << "--combined_stereo <bool>: combine left/right "
+                   "(can be used together with split_stereo)";
+        yInfo() << "--local_stamp <bool>: overwrite the packet stamp with one"
+                   "immediately as the packet arrives";
+        yInfo() << "--corners <bool>: open a separate port for corners only."
+                   "All events still exist in regular vision stream.";
+        yInfo() << "--sf_time <double>: spatial filter time window (sec)";
+        yInfo() << "--sf_size <int>: spatial filter (half) size (pixels)";
+        yInfo() << "--tf_time <double>: temporal filter time window (sec)";
+        return false;
+    }
 
     res.height = rf.check("height", Value(240)).asInt();
     res.width = rf.check("width", Value(304)).asInt();
@@ -102,6 +132,8 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
                       rf.check("combined_stereo", Value(true)).asBool();
     use_local_stamp = rf.check("local_stamp") &&
                       rf.check("local_stamp", Value(true)).asBool();
+    corners = rf.check("corners") &&
+              rf.check("corners", Value(true)).asBool();
 
     if(!split_stereo) combined_stereo = true;
 
@@ -184,6 +216,12 @@ bool vPreProcess::threadInit() {
             return false;
         if(!out_port_aps_right.open(getName() + "/aps_right:o"))
             return false;
+        if(corners) {
+            if(!out_port_crn_left.open(getName() + "/corners/left/AE:o"))
+                return false;
+            if(!out_port_crn_right.open(getName() + "/corners/right/AE:o"))
+                return false;
+        }
     }
     if(combined_stereo) {
         if(split_polarities) {
@@ -195,8 +233,13 @@ bool vPreProcess::threadInit() {
             if(!outPortCamStereo.open(getName() + "/AE:o"))
                 return false;
         }
+        if(corners) {
+            if(!out_port_crn_stereo.open(getName() + "/corners/AE:o"))
+                return false;
+        }
         if(!out_port_aps_stereo.open(getName() + "/APS:o"))
             return false;
+
     }
 
     if(!out_port_imu_samples.open(getName() + "/imu_samples:o"))
@@ -292,6 +335,7 @@ void vPreProcess::run() {
         std::deque<AE> qleft_aps, qright_aps, qstereo_aps;
         std::deque<int32_t> qimusamples;
         std::deque<int32_t> qaudio;
+        std::deque<AE> qleft_corners, qright_corners, qstereo_corners;
 
         const std::vector<int32_t> *q = inPort.read(zynq_stamp);
         if(!q) break;
@@ -383,6 +427,8 @@ void vPreProcess::run() {
                         } else {
                             qright.push_back(v);
                         }
+                        if(corners && v.corner)
+                            qright_corners.push_back(v);
                     } else {
                         if(v.type)
                             qleft_aps.push_back(v);
@@ -395,6 +441,8 @@ void vPreProcess::run() {
                         } else {
                             qleft.push_back(v);
                         }
+                        if(corners && v.corner)
+                            qleft_corners.push_back(v);
                     }
                 }
                 if(combined_stereo) {
@@ -409,6 +457,8 @@ void vPreProcess::run() {
                     } else {
                         qstereo.push_back(v);
                     }
+                    if(corners && v.corner)
+                        qstereo_corners.push_back(v);
                 }
             }
         }
@@ -494,6 +544,15 @@ void vPreProcess::run() {
         }
         if(qaudio.size()) {
             out_port_audio.write(qaudio, zynq_stamp);
+        }
+        if(qleft_corners.size()) {
+            out_port_crn_left.write(qleft_corners, zynq_stamp);
+        }
+        if(qright_corners.size()) {
+            out_port_crn_right.write(qright_corners, zynq_stamp);
+        }
+        if(qstereo_corners.size()) {
+            out_port_crn_stereo.write(qstereo_corners, zynq_stamp);
         }
     }
 }

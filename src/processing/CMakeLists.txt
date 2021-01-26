@@ -6,6 +6,8 @@ option(ENABLE_vFlow "Build optical flow module" OFF)
 option(ENABLE_vSkinInterface "Build basic skin pre-processing" OFF)
 option(ENABLE_vCorner "Build corner detection module" OFF)
 option(ENABLE_DualCamTransform "Build Frame->ATIS geometric transform" OFF)
+option(ENABLE_vHexviewer "Enable a hexadecimal raw-event viewer" ON)
+option(ENABLE_esim "Build a video to events simulator" ON)
 
 if(OpenCV_FOUND)
     if(ENABLE_vFramer)
@@ -15,8 +17,13 @@ if(OpenCV_FOUND)
     if(ENABLE_vPreProcess)
         add_subdirectory(vPreProcess)
     endif()
+
+    if(ENABLE_esim)
+        add_subdirectory(esim-yarp)
+    endif()
+
 else()
-    message("Warning: OpenCV not found. Skipping vFramer, vUndistortCam")
+    message("Warning: OpenCV not found. Skipping vFramer, vPreProcess")
 endif()
 
 if(ENABLE_vCircle)
@@ -53,6 +60,10 @@ endif()
 
 if(ENABLE_DualCamTransform)
     add_subdirectory(DualCamTransform)
+endif()
+
+if(ENABLE_vHexviewer)
+    add_subdirectory(vHexviewer)
 endif()
 
 

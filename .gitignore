@@ -19,6 +19,7 @@ build-x86_64/
 build-ubuntu/
 wsl-build/
 build-pc104/
+debug/
 
 *.autosave
 .idea/
