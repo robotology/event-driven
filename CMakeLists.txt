@@ -60,6 +60,9 @@ set(EVENTDRIVEN_LIBRARY event-driven)
 
 option(ADD_DOCS_TO_IDE "Add apps/documentation to IDE" OFF)
 
+find_package(MetavisionSDK COMPONENTS core driver QUIET)
+set_package_properties(MetavisionSDK PROPERTIES TYPE OPTIONAL)
+
 find_package(OpenCV)
 set_package_properties(OpenCV PROPERTIES TYPE OPTIONAL)
 
