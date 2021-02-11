@@ -1,5 +1,9 @@
-#include <metavision/sdk/driver/camera.h>
-#include <metavision/sdk/base/events/event_cd.h>
+//#include <metavision/sdk/driver/camera.h>
+//#include <metavision/sdk/base/events/event_cd.h>
+
+#include <prophesee_driver/prophesee_driver.h>
+#include <prophesee_core/events/event_cd.h>
+
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
 using namespace ev;
@@ -10,7 +14,7 @@ class atis3Bridge : public RFModule, public Thread {
 private:
 
     vWritePort output_port;
-    Metavision::Camera cam; // create the camera
+    Prophesee::Camera cam; // create the camera
     Stamp yarpstamp;
     int counter_packets{0};
     int counter_events{0};
@@ -61,12 +65,12 @@ public:
         buffer.emplace_back(vector<int32_t>(buffer_size, 0));
 
         if(rf.check("file")) {
-            cam = Metavision::Camera::from_file(rf.find("file").asString());
+            cam = Prophesee::Camera::from_file(rf.find("file").asString());
         } else {
-            cam = Metavision::Camera::from_first_available();
+            cam = Prophesee::Camera::from_first_available();
         }
 
-        cam.cd().add_callback([this](const Metavision::EventCD *ev_begin, const Metavision::EventCD *ev_end) {
+        cam.cd().add_callback([this](const Prophesee::EventCD *ev_begin, const Prophesee::EventCD *ev_end) {
             this->fill_buffer(ev_begin, ev_end);
         });
 
@@ -108,7 +112,7 @@ public:
         return Thread::isRunning();
     }
 
-    void fill_buffer(const Metavision::EventCD *begin, const Metavision::EventCD *end) {
+    void fill_buffer(const Prophesee::EventCD *begin, const Prophesee::EventCD *end) {
 
         // this loop allows us to get access to each event received in this callback
         static AE ae;
@@ -123,7 +127,7 @@ public:
         }
 
         //fill up the buffer that will be sent over the port in the other thread
-        for (const Metavision::EventCD *ev = begin; ev != end; ++ev) {
+        for (const Prophesee::EventCD *ev = begin; ev != end; ++ev) {
 
             ae.x = ev->x; ae.y = ev->y; ae.polarity = ev->p;
             buffer[b_sel][buffer_used++] = ev->t;
