@@ -212,56 +212,6 @@ class cochleaHelper {
         // CochleaEvent values
         static const int max_num_addresses = nas_addrresses_offset + mso_addresses_offset + lso_addresses_offset;
 
-        int getAddress(const CochleaEvent &v) const
-        {
-            int address = 0;
-
-            // Check if the event is coming from either the NAS or the SOC
-            if ((int) v.auditory_model == 0) {
-                // It is a NAS event
-
-                // Take the frequency channel id
-                address = (int) v.freq_chnn;
-                // Shift left 1 position and add the polarity
-                address = (address << 1) + (int) v.polarity;
-                // Add an offset if it is from the right channel
-                address = address + ((int) v.channel << 6);
-
-            } else if ((int) v.auditory_model == 1) {
-                // It is a SOC event
-
-                // In this case, always add the NAS max address value
-                address = address + nas_addrresses_offset;
-
-                if ((int) v.xso_type == 0) {
-                    // It is a MSO event
-
-                    // Calculate the neuron address
-                    address = address + (int) v.neuron_id + (((int) v.freq_chnn - mso_start_freq_channel) *
-                                                        mso_num_neurons_per_channel);
-
-                } else if ((int) v.xso_type == 1) {
-                    // It is a LSO event
-
-                    // Add the MSO offset
-                    address = address + mso_addresses_offset;
-
-                    // Calculate the neuron address
-                    address = address + (int) v.neuron_id + (((int) v.freq_chnn - lso_start_freq_channel) *
-                                                        lso_num_neurons_per_channel);
-
-                } else {
-                    // XSO type not recognized
-                    address = -1;
-                }
-
-            } else {
-                // Auditory model not recognized
-                address = -1;
-            }
-
-            return address;
-        }
 };
 
 }

@@ -358,7 +358,7 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         auto aep = is_event<CochleaEvent>(*qi);
 
         // Calculate the efective event address
-        int event_address = cochleaHelper.getAddress(aep);
+        int event_address = aep->getAddress();
         num_events++;
 
         // Check if it is a event from NAS
