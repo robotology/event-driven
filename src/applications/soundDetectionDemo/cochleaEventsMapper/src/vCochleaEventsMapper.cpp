@@ -1,9 +1,20 @@
-//
-// Created by Daniel Gutierrez-Galan
-// dgutierrez@atc.us.es
-// University of Seville
-// 09/Nov/2020
-//
+/*
+ *   Copyright (C) 2020 Event-driven Perception for Robotics
+ *   Author: dgutierrez@atc.us.es
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
@@ -84,13 +95,12 @@ public:
         
         // Debug flag: flase by default
         is_debug_flag = rf.check("is_debug_flag") &&
-                rf.check("is_debug_flag", Value(true)).asBool();
+                rf.check("is_debug_flag", Value(false)).asBool();
         yInfo() << "Flag is_debug_flat is: " << is_debug_flag;
 
         // SpiNNaker flag: false by default
-        bool default_with_spinnaker = false;
         with_spinnaker = rf.check("with_spinnaker") &&
-                rf.check("with_spinnaker", Value(default_with_spinnaker)).asBool();
+                rf.check("with_spinnaker", Value(false)).asBool();
         yInfo() << "Flag with_spinnaker is: " << with_spinnaker;
 
         // Period value: 1 sec by default
@@ -217,7 +227,6 @@ public:
 
         // Show the image
         cv::imshow("mso_heatmap", image_mso_heatmap);
-        cv::waitKey(10);
 
         // Clean the mso matrix values before the next update
         for(int i = 0; i < CochleaEvent::mso_num_freq_channels; i++) {
@@ -282,6 +291,8 @@ public:
         }
         // Show the image
         cv::imshow("nas_histogram", image_nas_histogram);
+
+        // waitKey function call for both mso_heatmap and nas_histogram plots
         cv::waitKey(10);
 
         // Clear the NAS histogram
