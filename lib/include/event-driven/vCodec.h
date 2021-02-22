@@ -236,6 +236,7 @@ public:
     virtual int getChannel() const;
     virtual void setChannel(const int channel);
     
+    int getAddress() const
 };
 
 /// \brief an AddressEvent with a velocity in visual space
