@@ -111,24 +111,24 @@ namespace ev {
             // It is a SOC event
 
             // In this case, always add the NAS max address value
-            address = address + nas_addrresses_offset;
+            address = address + cochleaHelper::nas_addrresses_offset;
 
             if ((int) xso_type == 0) {
                 // It is a MSO event
 
                 // Calculate the neuron address
-                address = address + (int) neuron_id + (((int) freq_chnn - mso_start_freq_channel) *
-                                                    mso_num_neurons_per_channel);
+                address = address + (int) neuron_id + (((int) freq_chnn - cochleaHelper::mso_start_freq_channel) *
+                                                    cochleaHelper::mso_num_neurons_per_channel);
 
             } else if ((int) xso_type == 1) {
                 // It is a LSO event
 
                 // Add the MSO offset
-                address = address + mso_addresses_offset;
+                address = address + cochleaHelper::mso_addresses_offset;
 
                 // Calculate the neuron address
-                address = address + (int) neuron_id + (((int) freq_chnn - lso_start_freq_channel) *
-                                                    lso_num_neurons_per_channel);
+                address = address + (int) neuron_id + (((int) freq_chnn - cochleaHelper::lso_start_freq_channel) *
+                                                    cochleaHelper::lso_num_neurons_per_channel);
 
             } else {
                 // XSO type not recognized
