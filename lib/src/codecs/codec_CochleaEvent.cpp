@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2019 Event-driven Perception for Robotics
+ *   Copyright (C) 2020 Event-driven Perception for Robotics
  *   Author: dgutierrez@atc.us.es
  *
  *   This program is free software: you can redistribute it and/or modify
