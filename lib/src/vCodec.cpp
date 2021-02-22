@@ -33,7 +33,7 @@ event<> createEvent(const std::string &type)
     if(type == SkinSample::tag)
         return make_event<SkinSample>();
     if(type == CochleaEvent::tag)
-		return make_event<CochleaEvent>();
+        return make_event<CochleaEvent>();
 	if(type == LabelledAE::tag)
         return make_event<LabelledAE>();
     if(type == FlowEvent::tag)
