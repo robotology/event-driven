@@ -51,7 +51,7 @@ private:
     // WARNING!! This matrix should have the same dimensions as the MSO model
     // used in the VHDL model
     // ----------------------------------------------------------------------------
-    int mso_histogram[CochleaEvent::mso_num_freq_channels][CochleaEvent::mso_num_neurons_per_channel];
+    int mso_histogram[cochleaHelper::mso_num_freq_channels][cochleaHelper::mso_num_neurons_per_channel];
 
     // Visualizer output image
     int image_mso_heatmap_width = 320;
@@ -59,7 +59,7 @@ private:
     cv::Mat image_mso_heatmap = cv::Mat::zeros(cv::Size(image_mso_heatmap_width,image_mso_heatmap_height), CV_8UC3);
 
     // Array of freq. channels activity
-    int nas_histogram[CochleaEvent::nas_addrresses_offset];
+    int nas_histogram[cochleaHelper::nas_addrresses_offset];
 
     // Visualizer output image NAS 
     int image_nas_histogram_width = 320;
@@ -113,8 +113,8 @@ public:
         // ----------------------------------------------------------------------------
         // WARNING!! This values should match with the ones used before
         // ----------------------------------------------------------------------------
-        for(int i = 0; i < CochleaEvent::mso_num_freq_channels; i++) {
-            for(int j = 0; j < CochleaEvent::mso_num_neurons_per_channel; j++) {
+        for(int i = 0; i < cochleaHelper::mso_num_freq_channels; i++) {
+            for(int j = 0; j < cochleaHelper::mso_num_neurons_per_channel; j++) {
                 mso_histogram[i][j] = 0;
             }
         }
@@ -123,7 +123,7 @@ public:
         // ----------------------------------------------------------------------------
         // WARNING!! This values should match with the ones used before
         // ----------------------------------------------------------------------------
-        for(int i = 0; i < CochleaEvent::nas_addrresses_offset; i++) {
+        for(int i = 0; i < cochleaHelper::nas_addrresses_offset; i++) {
             nas_histogram[i] = 0;
         }
 
@@ -168,8 +168,8 @@ public:
         //                          HEATMAP DRAW SECTION
         // ----------------------------------------------------------------------------
         // Define the image settings
-        float rectangle_width = ((float)(image_mso_heatmap_width)) / CochleaEvent::mso_num_neurons_per_channel;
-        float rectangle_height = ((float)(image_mso_heatmap_height)) / CochleaEvent::mso_num_freq_channels;
+        float rectangle_width = ((float)(image_mso_heatmap_width)) / cochleaHelper::mso_num_neurons_per_channel;
+        float rectangle_height = ((float)(image_mso_heatmap_height)) / cochleaHelper::mso_num_freq_channels;
 
         // Calculate max and min val (for normalization) and the position of the 
         // max value for using another color
@@ -181,8 +181,8 @@ public:
         int max_position_i = 0;
         int max_position_j = 0;
 
-        for(int i = 0; i < CochleaEvent::mso_num_freq_channels; i++) {
-            for(int j = 0; j < CochleaEvent::mso_num_neurons_per_channel; j++) {
+        for(int i = 0; i < cochleaHelper::mso_num_freq_channels; i++) {
+            for(int j = 0; j < cochleaHelper::mso_num_neurons_per_channel; j++) {
                 float val = (float)(mso_histogram[i][j]);
                 if(val > max){
                     max = val;
@@ -198,8 +198,8 @@ public:
         // ----------------------------------------------------------------------------
         //                          COLOR GRADIENT ESTIMATION
         // Calculate the color based on the normalized value
-        for(int i = 0; i < CochleaEvent::mso_num_freq_channels; i++) {
-            for(int j = 0; j < CochleaEvent::mso_num_neurons_per_channel; j++) {
+        for(int i = 0; i < cochleaHelper::mso_num_freq_channels; i++) {
+            for(int j = 0; j < cochleaHelper::mso_num_neurons_per_channel; j++) {
                 
                 float pixelValue = (float)(mso_histogram[i][j]);
                 float value = ((pixelValue - min) / (max - min));
@@ -229,8 +229,8 @@ public:
         cv::imshow("mso_heatmap", image_mso_heatmap);
 
         // Clean the mso matrix values before the next update
-        for(int i = 0; i < CochleaEvent::mso_num_freq_channels; i++) {
-            for(int j = 0; j < CochleaEvent::mso_num_neurons_per_channel; j++) {
+        for(int i = 0; i < cochleaHelper::mso_num_freq_channels; i++) {
+            for(int j = 0; j < cochleaHelper::mso_num_neurons_per_channel; j++) {
                 mso_histogram[i][j] = 0;
             }
         }
@@ -247,7 +247,7 @@ public:
         // ----------------------------------------------------------------------------
         //                          IMAGE SETTING
         // Define the image settings
-        float bar_width = ((float)(image_nas_histogram_width)) / CochleaEvent::nas_addrresses_offset;
+        float bar_width = ((float)(image_nas_histogram_width)) / cochleaHelper::nas_addrresses_offset;
         float bar_height = 0.0f;
 
         // Horizontal and vertical margins: set to 3% of the image height
@@ -257,7 +257,7 @@ public:
         float max_nas = 0.0f;
         float min_nas = 100000.0f;
 
-        for(int i = 0; i < CochleaEvent::nas_addrresses_offset; i++) {
+        for(int i = 0; i < cochleaHelper::nas_addrresses_offset; i++) {
             float val = (float)(nas_histogram[i]);
             if(val > max_nas){
                 max_nas = val;
@@ -269,7 +269,7 @@ public:
 
         // ----------------------------------------------------------------------------
         //                          HISTOGRAM DRAW
-        for(int i = 0; i < CochleaEvent::nas_addrresses_offset; i++) {
+        for(int i = 0; i < cochleaHelper::nas_addrresses_offset; i++) {
             // First, get the normalized value of the neuron activity
             float normalized_histogram_value = (nas_histogram[i] - min_nas) * 100.0 / (max_nas - min_nas);
             
@@ -296,7 +296,7 @@ public:
         cv::waitKey(10);
 
         // Clear the NAS histogram
-        for(int i = 0; i < CochleaEvent::nas_addrresses_offset; i++) {
+        for(int i = 0; i < cochleaHelper::nas_addrresses_offset; i++) {
             nas_histogram[i] = 0;
         }
 
@@ -330,7 +330,7 @@ public:
             for(auto &qi : *q) {
 
                 // Get the real AER address
-                address = qi.getAddress();
+                address = cochleaHelper.getAddress(qi);
 
                 // If debug flag enabled, print it out
                 if (is_debug_flag == true) {
@@ -340,7 +340,7 @@ public:
                 // Check if SpiNNaker is available
                 if(with_spinnaker == true){
                     // If the received event is valid
-                    if (address >= 0 && address < CochleaEvent::max_num_addresses) {
+                    if (address >= 0 && address < cochleaHelper::max_num_addresses) {
                         // Copy the address to the raw int32
                         out_event._coded_data = address;
                         // Copy the timestamp --> Is it necessary to pre-process?!!!!!!
@@ -373,7 +373,7 @@ public:
                         // Get the freq channel id
                         int ch = qi.freq_chnn;
                         // Substract the MSO start channel to start the IDs in zero
-                        ch = ch - CochleaEvent::mso_start_freq_channel;
+                        ch = ch - cochleaHelper::mso_start_freq_channel;
                         // Get the neuron ID
                         int ne = qi.neuron_id;
                         // Increment the MSO matrix values in one

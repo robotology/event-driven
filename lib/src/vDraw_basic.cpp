@@ -358,11 +358,11 @@ void cochleaDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         auto aep = is_event<CochleaEvent>(*qi);
 
         // Calculate the efective event address
-        int event_address = aep->getAddress();
+        int event_address = cochleaHelper.getAddress(aep);
         num_events++;
 
         // Check if it is a event from NAS
-        if (event_address >= 0 && event_address < CochleaEvent::nas_addrresses_offset) {
+        if (event_address >= 0 && event_address < cochleaHelper::nas_addrresses_offset) {
             // Set the x and y value of the point to draw
             int x = Xlimit - dt;
             int y = Ylimit - ((event_address + circle_radius) * circle_radius * 2);
