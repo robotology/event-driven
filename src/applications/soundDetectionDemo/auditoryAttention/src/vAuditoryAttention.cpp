@@ -283,7 +283,14 @@ public:
         // Copy the timestamp --> Is it necessary to pre-process?!!!!!!
         out_event.stamp = ts;
         // Copy the output event into the output queue
-        out_queue.push_back(out_event); 
+        out_queue.push_back(out_event);
+
+        // After processing the packet output the results
+        // (only if there is something to output
+        if(out_queue.size()) {
+            output_port.write(out_queue, yarpstamp);
+            out_queue.clear();
+        }
 
         for(int i = 0; i < number_sound_source_neurons; i++){
             soundsource_short_term_memory[i] = 0;
@@ -329,10 +336,10 @@ public:
 
             // After processing the packet output the results
             // (only if there is something to output
-            if(out_queue.size()) {
+            /*if(out_queue.size()) {
                 output_port.write(out_queue, yarpstamp);
                 out_queue.clear();
-            }
+            }*/
         }
     }
 };
