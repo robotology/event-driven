@@ -75,6 +75,13 @@ public:
             cam = Camera::from_first_available();
         }
 
+        Biases &bias = cam.biases();
+        yInfo() << "Default Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
+        bias.set_contrast_sensitivity(rf.check("sensitivity", Value((int)bias.get_contrast_sensitivity())).asInt());
+        bias.set_contrast_sensitivity_to_polarity(rf.check("polarity", Value((int)bias.get_contrast_sensitivity_to_polarity())).asInt());
+        yInfo() << "        Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
+        
+
         cam.cd().add_callback([this](const EventCD *ev_begin, const EventCD *ev_end) {
             this->fill_buffer(ev_begin, ev_end);
         });
