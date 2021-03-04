@@ -1,8 +1,11 @@
-//#include <metavision/sdk/driver/camera.h>
-//#include <metavision/sdk/base/events/event_cd.h>
 
-#include <prophesee_driver/prophesee_driver.h>
-#include <prophesee_core/events/event_cd.h>
+#if defined MetavisionSDK_FOUND
+    #include <metavision/sdk/driver/camera.h>
+    #include <metavision/sdk/base/events/event_cd.h>
+#else
+    #include <prophesee_driver/prophesee_driver.h>
+    #include <prophesee_core/events/event_cd.h>
+#endif
 
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
