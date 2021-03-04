@@ -2,9 +2,11 @@
 #if defined MetavisionSDK_FOUND
     #include <metavision/sdk/driver/camera.h>
     #include <metavision/sdk/base/events/event_cd.h>
+    using namespace Metavision;
 #else
     #include <prophesee_driver/prophesee_driver.h>
     #include <prophesee_core/events/event_cd.h>
+    using namespace Prophesee;
 #endif
 
 #include <yarp/os/all.h>
@@ -17,7 +19,7 @@ class atis3Bridge : public RFModule, public Thread {
 private:
 
     vWritePort output_port;
-    Prophesee::Camera cam; // create the camera
+    Camera cam; // create the camera
     Stamp yarpstamp;
     int counter_packets{0};
     int counter_events{0};
@@ -65,17 +67,20 @@ public:
 
         buffer_size = rf.check("buffer_size", Value(1000000)).asInt();
         buffer.emplace_back(vector<int32_t>(buffer_size, 0));
-        buffer.emplace_back(vector<int32_t>(buffer_size, 0));
+        buffer.emplace_back(vector<int32_t>(buffer_size, 0));        
 
         if(rf.check("file")) {
-            cam = Prophesee::Camera::from_file(rf.find("file").asString());
+            cam = Camera::from_file(rf.find("file").asString());
         } else {
-            cam = Prophesee::Camera::from_first_available();
+            cam = Camera::from_first_available();
         }
 
-        cam.cd().add_callback([this](const Prophesee::EventCD *ev_begin, const Prophesee::EventCD *ev_end) {
+        cam.cd().add_callback([this](const EventCD *ev_begin, const EventCD *ev_end) {
             this->fill_buffer(ev_begin, ev_end);
         });
+
+        const Geometry &geo = cam.geometry();
+        yInfo() << "[" << geo.width() << "x" << geo.height() << "]";
 
         if(!cam.start()) {
             yError() << "Could not start the camera";
@@ -115,7 +120,7 @@ public:
         return Thread::isRunning();
     }
 
-    void fill_buffer(const Prophesee::EventCD *begin, const Prophesee::EventCD *end) {
+    void fill_buffer(const EventCD *begin, const EventCD *end) {
 
         // this loop allows us to get access to each event received in this callback
         static AE ae;
@@ -130,7 +135,7 @@ public:
         }
 
         //fill up the buffer that will be sent over the port in the other thread
-        for (const Prophesee::EventCD *ev = begin; ev != end; ++ev) {
+        for (const EventCD *ev = begin; ev != end; ++ev) {
 
             ae.x = ev->x; ae.y = ev->y; ae.polarity = ev->p;
             buffer[b_sel][buffer_used++] = ev->t;
