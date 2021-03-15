@@ -76,11 +76,16 @@ public:
         }
 
         Biases &bias = cam.biases();
+#if defined MetavisionSDK_FOUND
+        //it seems like the ability ot set the camera sensitivity "easily" has been removed, and relegated to
+        //setting the entire biases file. perhaps if the HAL is included and setup correctly then
+        // the flag I_HL_BIASES_FACILITY_AVAILABLE is set and we can use the "constrast sensitivity".
+#else
         yInfo() << "Default Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
         bias.set_contrast_sensitivity(rf.check("sensitivity", Value((int)bias.get_contrast_sensitivity())).asInt());
         bias.set_contrast_sensitivity_to_polarity(rf.check("polarity", Value((int)bias.get_contrast_sensitivity_to_polarity())).asInt());
         yInfo() << "        Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
-        
+#endif  
 
         cam.cd().add_callback([this](const EventCD *ev_begin, const EventCD *ev_end) {
             this->fill_buffer(ev_begin, ev_end);
