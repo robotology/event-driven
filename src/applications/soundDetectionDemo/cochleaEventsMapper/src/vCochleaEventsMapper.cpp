@@ -95,12 +95,12 @@ public:
         
         // Debug flag: flase by default
         is_debug_flag = rf.check("is_debug_flag") &&
-                rf.check("is_debug_flag", Value(false)).asBool();
+                rf.check("is_debug_flag", Value(true)).asBool();
         yInfo() << "Flag is_debug_flat is: " << is_debug_flag;
 
         // SpiNNaker flag: false by default
         with_spinnaker = rf.check("with_spinnaker") &&
-                rf.check("with_spinnaker", Value(false)).asBool();
+                rf.check("with_spinnaker", Value(true)).asBool();
         yInfo() << "Flag with_spinnaker is: " << with_spinnaker;
 
         // Period value: 1 sec by default
