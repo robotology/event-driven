@@ -18,6 +18,7 @@
  */
 
 #include "event-driven/vtsHelper.h"
+#include "event-driven/vCodec.h"
 
 #include <sstream>
 #include <unistd.h>
@@ -128,5 +129,60 @@ benchmark::~benchmark()
         process_file.close();
 }
 
+
+int cochleaHelper::getAddress(const CochleaEvent &ce)
+{
+    int address = 0;
+
+    // Check if the event is coming from either the NAS or the SOC
+    if ((int)ce.auditory_model == 0)
+    {
+        // It is a NAS event
+
+        // Take the frequency channel id
+        address = (int)ce.freq_chnn;
+        // Shift left 1 position and add the polarity
+        address = (address << 1) + (int)ce.polarity;
+        // Add an offset if it is from the right channel
+        address = address + ((int)ce.channel << 6);
+    }
+    else if ((int)ce.auditory_model == 1)
+    {
+        // It is a SOC event
+
+        // In this case, always add the NAS max address value
+        address = address + cochleaHelper::nas_addrresses_offset;
+
+        if ((int)ce.xso_type == 0)
+        {
+            // It is a MSO event
+
+            // Calculate the neuron address
+            address = address + (int)ce.neuron_id + (((int)ce.freq_chnn - cochleaHelper::mso_start_freq_channel) * cochleaHelper::mso_num_neurons_per_channel);
+        }
+        else if ((int)ce.xso_type == 1)
+        {
+            // It is a LSO event
+
+            // Add the MSO offset
+            address = address + cochleaHelper::mso_addresses_offset;
+
+            // Calculate the neuron address
+            address = address + (int)ce.neuron_id + (((int)ce.freq_chnn - cochleaHelper::lso_start_freq_channel) * cochleaHelper::lso_num_neurons_per_channel);
+        }
+        else
+        {
+            // XSO type not recognized
+            address = -1;
+        }
+    }
+    else
+    {
+        // Auditory model not recognized
+        address = -1;
+    }
+
+    return address;
+}
 
 }

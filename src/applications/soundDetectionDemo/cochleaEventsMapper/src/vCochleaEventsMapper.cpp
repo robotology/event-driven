@@ -330,7 +330,7 @@ public:
             for(auto &qi : *q) {
 
                 // Get the real AER address
-                address = qi.getAddress();
+                address = cochleaHelper::getAddress(qi);
 
                 // If debug flag enabled, print it out
                 if (is_debug_flag == true) {

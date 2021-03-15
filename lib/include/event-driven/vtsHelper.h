@@ -185,6 +185,7 @@ public:
 
 };
 
+class CochleaEvent;
 class cochleaHelper {
     private:
 
@@ -212,6 +213,7 @@ class cochleaHelper {
         // CochleaEvent values
         static const int max_num_addresses = nas_addrresses_offset + mso_addresses_offset + lso_addresses_offset;
 
+        static int getAddress(const CochleaEvent &ce);
 };
 
 }
