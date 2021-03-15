@@ -28,7 +28,8 @@ set(folder_source
   src/codecs/codec_SkinEvent.cpp
   src/codecs/codec_SkinSample.cpp
   src/codecs/codec_CochleaEvent.cpp
-  src/codecs/codec_vEvent.cpp)
+  src/codecs/codec_vEvent.cpp
+  src/codecs/codec_NeuronEvent.cpp)
 
 if(OpenCV_FOUND)
     list(APPEND folder_source src/vIPT.cpp

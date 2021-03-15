@@ -96,7 +96,7 @@ public:
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
     virtual int getChannel() const;
-    virtual void setChannel();
+    virtual void setChannel(const int channel);
 };
 
 /// \brief an event with a pixel location, camera number and polarity
@@ -136,6 +136,27 @@ public:
     virtual void setChannel(const int channel);
 };
 using AE = AddressEvent;
+
+/// \brief an event with a neuron ID
+class neuronEvent : public vEvent
+{
+public:
+    static const std::string tag;
+    unsigned int id;
+
+    neuronEvent();
+    neuronEvent(const vEvent &v);
+    neuronEvent(const neuronEvent &v);
+
+    virtual event<> clone();
+    virtual void encode(yarp::os::Bottle &b) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
+    virtual void decode(const int32_t *&data);
+    virtual yarp::os::Property getContent() const;
+    virtual std::string getType() const;
+
+};
 
 /// \brief an event with a taxel location, body-part and polarity
 class SkinEvent : public vEvent
