@@ -80,6 +80,7 @@ vPreProcess::~vPreProcess() {
     out_port_crn_left.close();
     out_port_crn_right.close();
     out_port_crn_stereo.close();
+    rate_port.close();
 
 }
 
@@ -134,6 +135,8 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
                       rf.check("local_stamp", Value(true)).asBool();
     corners = rf.check("corners") &&
               rf.check("corners", Value(true)).asBool();
+    vis = rf.check("vis") &&
+          rf.check("vis", Value(true)).asBool();
 
     if(!split_stereo) combined_stereo = true;
 
@@ -189,6 +192,12 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
             calibrator.showMapProjections(3.0);
         else
             yWarning() << "Could not correctly configure the cameras";
+    }
+
+    if(vis) {
+        cv::namedWindow("Event Rate", cv::WINDOW_NORMAL);
+        cv::resizeWindow("Event Rate", cv::Size(480, 360));
+        cv::moveWindow("Event Rate", 580, 62);
     }
 
     return Thread::start();
@@ -252,12 +261,34 @@ bool vPreProcess::threadInit() {
         return false;
     if(!inPort.open(getName() + "/AE:i"))
         return false;
+    if(!rate_port.open(getName("/rate:o")))
+        return false;
 
     return true;
 }
 
 double vPreProcess::getPeriod() {
-    return 2.0;
+    return 0.2;
+}
+
+void vPreProcess::visualise_rate()
+{
+    const static int s = 10;
+    cv::Mat canvas = cv::Mat::zeros(20*s, 40*s, CV_8UC1);
+    for(auto i = 1; i < plot_rates.size(); i++) {
+        cv::line(canvas, cv::Point((i-1)*s, plot_rates[i-1]*s), cv::Point(i*s, plot_rates[i]*s), CV_RGB(255, 255, 255), 2);
+    }
+    cv::line(canvas, cv::Point(0, 5*s), cv::Point(canvas.cols-1, 5*s), CV_RGB(128, 128, 128));
+    cv::line(canvas, cv::Point(0, 10*s), cv::Point(canvas.cols-1, 10*s), CV_RGB(128, 128, 128));
+    cv::line(canvas, cv::Point(0, 15*s), cv::Point(canvas.cols-1, 15*s), CV_RGB(128, 128, 128));
+    cv::flip(canvas, canvas, 0);
+    cv::putText(canvas, "15M events/s", cv::Point(5, 5*s), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255, 255, 255), 1);
+    cv::putText(canvas, "10M events/s", cv::Point(5, 10*s), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255, 255, 255), 1);
+    cv::putText(canvas, " 5M events/s", cv::Point(5, 15*s), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255, 255, 255), 1);
+    cv::resize(canvas, canvas, cv::Size(480, 360));
+
+    cv::imshow("Event Rate", canvas);
+    cv::waitKey(1);
 }
 
 bool vPreProcess::updateModule() {
@@ -270,6 +301,15 @@ bool vPreProcess::updateModule() {
         yInfo() << "Using" << v_total << "/" << (v_total + v_dropped)
                 << "(" << pc << "%)" << "of events. Maximum rate:"
                 << max_rate << "events / second.";
+        auto &temp = rate_port.prepare();
+        temp.resize(1);
+        temp[0] = 0.000001 * ((double)v_total + (double)v_dropped) / getPeriod();
+        rate_port.write();
+    }
+    if(vis) {
+        plot_rates.push_back(0.000001 * ((double)v_total + (double)v_dropped) / getPeriod());
+        while (plot_rates.size() > 40) plot_rates.pop_front();
+        visualise_rate();
     }
     v_total = 0;
     v_dropped = 0;
