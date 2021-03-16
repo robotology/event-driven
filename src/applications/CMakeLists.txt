@@ -4,6 +4,7 @@ option(ENABLE_reptest "Build representation tester" OFF)
 option(ENABLE_vergence "Build vergence control demo" OFF)
 option(ENABLE_calibrate "Build camera calibration" OFF)
 option(ENABLE_view "Build basic viewer" ON)
+option(ENABLE_soundDetectionDemo "Build sound source detection demo" OFF)
 option(ENABLE_corner "Build corner detector" OFF)
 option(ENABLE_dualCamTransform "Build event to frame transform" OFF)
 
@@ -42,6 +43,10 @@ endif(ENABLE_calibrate)
 if(ENABLE_view)
     add_subdirectory(view)
 endif(ENABLE_view)
+
+if(ENABLE_soundDetectionDemo)
+    add_subdirectory(soundDetectionDemo)
+endif(ENABLE_soundDetectionDemo)
 
 if(ENABLE_dualCamTransform)
     add_subdirectory(dualCamTransform)

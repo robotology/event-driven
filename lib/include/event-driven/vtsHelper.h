@@ -185,6 +185,36 @@ public:
 
 };
 
+class CochleaEvent;
+class cochleaHelper {
+    private:
+
+    public:
+        // NAS fixed values
+        static const int nas_num_frequency_channels = 32;
+        static const int nas_mono_stereo = 2;
+        static const int nas_polarity_type = 2;
+        static const int nas_addrresses_offset = nas_num_frequency_channels * nas_mono_stereo * nas_polarity_type; 
+        // [0, 127] --> 128 addresses for 32-ch stereo NAS with meged polarity
+
+        // MSO fixed values
+        static const int mso_start_freq_channel = 13;
+        static const int mso_end_freq_channel = 16;
+        static const int mso_num_freq_channels = mso_end_freq_channel - mso_start_freq_channel + 1;
+        static const int mso_num_neurons_per_channel = 16;
+        static const int mso_addresses_offset = (mso_end_freq_channel - mso_start_freq_channel + 1) * mso_num_neurons_per_channel;
+
+        // LSO fixed values
+        static const int lso_start_freq_channel = 5;
+        static const int lso_end_freq_channel = 8;
+        static const int lso_num_neurons_per_channel = 1;
+        static const int lso_addresses_offset = (lso_end_freq_channel - lso_start_freq_channel + 1) * lso_num_neurons_per_channel;
+
+        // CochleaEvent values
+        static const int max_num_addresses = nas_addrresses_offset + mso_addresses_offset + lso_addresses_offset;
+
+        static int getAddress(const CochleaEvent &ce);
+};
 
 }
 

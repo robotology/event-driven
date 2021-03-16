@@ -83,7 +83,7 @@ int vEvent::getChannel() const
     return -1;
 }
 
-void vEvent::setChannel()
+void vEvent::setChannel(const int channel)
 {
 
 }
