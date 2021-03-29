@@ -5,6 +5,7 @@ CMakeLists.txt.user.*
 *.autosave
 *.orig
 *.swp
+.vscode
 
 # ignore all temporary files
 *~
