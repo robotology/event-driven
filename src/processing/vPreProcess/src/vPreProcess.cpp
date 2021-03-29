@@ -196,7 +196,7 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
 
     if(vis) {
         cv::namedWindow("Event Rate", cv::WINDOW_NORMAL);
-        cv::resizeWindow("Event Rate", cv::Size(480, 360));
+        cv::resizeWindow("Event Rate", 480, 360);
         cv::moveWindow("Event Rate", 580, 62);
     }
 
