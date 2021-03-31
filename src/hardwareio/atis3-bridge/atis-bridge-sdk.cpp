@@ -11,6 +11,9 @@
 
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
+#include <opencv2/opencv.hpp>
+#include <yarp/cv/Cv.h>
+
 using namespace ev;
 using namespace yarp::os;
 
@@ -18,9 +21,12 @@ class atis3Bridge : public RFModule, public Thread {
 
 private:
 
-    vWritePort output_port;
-    Camera cam; // create the camera
     Stamp yarpstamp;
+    vWritePort output_port;
+    Stamp graystamp;
+    yarp::os::BufferedPort< yarp::sig::FlexImage > grayscale_port;
+    Camera cam; // create the camera
+    
     int counter_packets{0};
     int counter_events{0};
     static constexpr double period{1.0};
@@ -63,6 +69,12 @@ public:
             yError() << "Could not open output port";
             return false;
         }
+
+        if(!grayscale_port.open(getName("img:o"))) {
+            yError() << "Could not open image port";
+            return false;
+        } 
+
         //yarp::os::Network::connect(getName("/AE:o"), "/vPreProcess/AE:i", "fast_tcp");
 
         buffer_size = rf.check("buffer_size", Value(1000000)).asInt();
@@ -81,10 +93,23 @@ public:
         //setting the entire biases file. perhaps if the HAL is included and setup correctly then
         // the flag I_HL_BIASES_FACILITY_AVAILABLE is set and we can use the "constrast sensitivity".
 #else
+        int bias_pol = 0;
+        if(rf.check("polarity"))
+            bias_pol = rf.find("polarity").asInt();
+        if(rf.check("p"))
+            bias_pol = rf.find("p").asInt();
+        
+        int bias_sens = 0;
+        if (rf.check("sensitivity"))
+            bias_sens = rf.find("sensitivity").asInt();
+        if(rf.check("s"))
+            bias_sens = rf.find("s").asInt();
+
         yInfo() << "Default Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
-        bias.set_contrast_sensitivity(rf.check("sensitivity", Value((int)bias.get_contrast_sensitivity())).asInt());
-        bias.set_contrast_sensitivity_to_polarity(rf.check("polarity", Value((int)bias.get_contrast_sensitivity_to_polarity())).asInt());
+        if(bias_sens) bias.set_contrast_sensitivity(bias_sens);
+        if(bias_pol) bias.set_contrast_sensitivity_to_polarity(bias_pol);
         yInfo() << "        Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
+        cam.set_exposure_frame_callback(10, [this](timestamp ts, const cv::Mat &image){this->frameToPort(ts, image);});
 #endif  
 
         cam.cd().add_callback([this](const EventCD *ev_begin, const EventCD *ev_end) {
@@ -157,6 +182,28 @@ public:
 
         m.unlock();
 
+    }
+
+    //using ExposureFrameCallback = std::function<void(Prophesee::timestamp, const cv::Mat &)>;
+    void frameToPort(timestamp ts, const cv::Mat &image)
+    {
+        static double val1 = log(1000);
+        static double val2 = log(100000);
+        cv::Mat work, mask, output; 
+        image.convertTo(work, CV_32F);
+        cv::log(work, work);
+
+        mask = work < val1; work.setTo(val1, mask);
+        mask = work > val2; work.setTo(val2, mask);
+        work -= val1;
+        
+        work.convertTo(output, CV_8U, 255.0/(val2-val1));
+        output = 255 - output;
+
+        grayscale_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelMono>(output));
+        graystamp.update();
+        grayscale_port.setEnvelope(graystamp);
+        grayscale_port.write();
     }
 
     //asynchronous thread run forever
