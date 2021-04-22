@@ -58,6 +58,7 @@ private:
     BufferedPort< FlexImage > image_port;
     vIPT unwarp;
     bool calib_configured;
+    cv::Size render_size;
 
     bool updateQs();
 
@@ -72,11 +73,11 @@ private:
 
 public:
 
-    channelInstance(string channel_name);
+    channelInstance(string channel_name, cv::Size render_size = cv::Size(-1, -1));
     bool addFrameDrawer(unsigned int width, unsigned int height);
     bool addDrawer(string drawer_name, unsigned int width,
                    unsigned int height, unsigned int window_size, double isoWindow, bool flip);
-
+    
     bool threadInit();
     void run();
     void threadRelease();
@@ -153,6 +154,7 @@ public:
     virtual void draw(cv::Mat &image, const ev::vQueue &eSet, int vTime);
     virtual std::string getDrawType();
     virtual std::string getEventType();
+    virtual void resetImage(cv::Mat &image);
 
 };
 
