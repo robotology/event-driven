@@ -188,7 +188,10 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
 
     if(undistort) {
 
-        if(calibrator.configure("camera", "atis_calib.ini", 1))
+        calibContext = rf.check("calibContext", yarp::os::Value("camera")).asString().c_str();
+        calibFile = rf.check("calibFile", yarp::os::Value("atis_calib.ini")).asString().c_str();
+
+        if(calibrator.configure(calibContext, calibFile, 1))
             calibrator.showMapProjections(3.0);
         else
             yWarning() << "Could not correctly configure the cameras";
