@@ -33,8 +33,10 @@ vIPT::vIPT()
     size_shared = Size(0, 0);
 }
 
-bool vIPT::importIntrinsics(int cam, Bottle &parameters)
+bool vIPT::importIntrinsics(const ResourceFinder &rf, int cam, Bottle &parameters)
 {
+    bool verbose = false;
+
     if(parameters.isNull()) {
         yWarning() << "Could not find camera" << cam <<"parameters";
         return false;
@@ -48,6 +50,8 @@ bool vIPT::importIntrinsics(int cam, Bottle &parameters)
                  << parameters.toString();
         return false;
     }
+    else
+        verbose = true;
 
     size_cam[cam].height = parameters.find("h").asInt();
     size_cam[cam].width = parameters.find("w").asInt();
@@ -65,6 +69,35 @@ bool vIPT::importIntrinsics(int cam, Bottle &parameters)
     dist_coeff[cam].at<double>(0, 1) = parameters.find("k2").asDouble();
     dist_coeff[cam].at<double>(0, 2) = parameters.find("p1").asDouble();
     dist_coeff[cam].at<double>(0, 3) = parameters.find("p2").asDouble();
+
+    ResourceFinder &_rf=const_cast<ResourceFinder&>(rf);
+
+    if (!_rf.isConfigured())
+        return false;
+
+    string message=_rf.findFile("from");
+
+    std::string type;
+    if (cam == 0)
+        type="CAMERA_CALIBRATION_LEFT";
+    else
+        type="CAMERA_CALIBRATION_RIGHT";
+
+    message+=": intrinsic parameters for "+type;
+
+    if (verbose){
+        yInfo("%s found:",message.c_str());
+        yInfo("w  = %d", size_cam[cam].width);
+        yInfo("h  = %d", size_cam[cam].height);
+        yInfo("fx = %g",cam_matrix[cam].at<double>(0, 0));
+        yInfo("fy = %g",cam_matrix[cam].at<double>(1, 1));
+        yInfo("cx = %g",cam_matrix[cam].at<double>(0, 2));
+        yInfo("cy = %g",cam_matrix[cam].at<double>(1, 2));
+        yInfo("k1 = %g",dist_coeff[cam].at<double>(0, 0));
+        yInfo("k2 = %g",dist_coeff[cam].at<double>(0, 1));
+        yInfo("p1 = %g",dist_coeff[cam].at<double>(0, 2));
+        yInfo("p2 = %g",dist_coeff[cam].at<double>(0, 3));
+    }
 
     return true;
 }
@@ -171,8 +204,8 @@ bool vIPT::configure(const string calibContext, const string calibFile, int size
     calibfinder.configure(0, 0);
 
     //import intrinsics
-    bool valid_cam1 = importIntrinsics(0, calibfinder.findGroup("CAMERA_CALIBRATION_LEFT"));
-    bool valid_cam2 = importIntrinsics(1, calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT"));
+    bool valid_cam1 = importIntrinsics(calibfinder, 0, calibfinder.findGroup("CAMERA_CALIBRATION_LEFT"));
+    bool valid_cam2 = importIntrinsics(calibfinder, 1, calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT"));
     bool valid_stereo = importStereo(calibfinder.findGroup("STEREO_DISPARITY"));
 
     if(!valid_cam1 && !valid_cam2)
