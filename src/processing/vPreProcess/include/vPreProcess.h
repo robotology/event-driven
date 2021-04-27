@@ -78,8 +78,6 @@ private:
     //given the camera parameters provided
     bool undistort;
     ev::vIPT calibrator;
-    std::string calibContext;
-    std::string calibFile;
 
     //output
     bool split_stereo;
