@@ -42,8 +42,8 @@ private:
     cv::Mat mat_reverse_map[2];
     cv::Mat mat_forward_map[2];
 
-    bool importIntrinsics(const yarp::os::ResourceFinder &rf, int cam, yarp::os::Bottle &parameters);
-    bool importStereo(yarp::os::Bottle &parameters);
+    bool importIntrinsics(int cam, yarp::os::Bottle &parameters, bool verbose=false);
+    bool importStereo(yarp::os::Bottle &parameters, bool verbose=false);
     bool computeForwardReverseMaps(int cam);
 
 
