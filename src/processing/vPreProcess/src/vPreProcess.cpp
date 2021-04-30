@@ -107,6 +107,7 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
         yInfo() << "--sf_time <double>: spatial filter time window (sec)";
         yInfo() << "--sf_size <int>: spatial filter (half) size (pixels)";
         yInfo() << "--tf_time <double>: temporal filter time window (sec)";
+        yInfo() << "--camera_calibration_file <path>: calibration file to use for undistort";
         return false;
     }
 
@@ -188,13 +189,14 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
 
     if(undistort) {
 
-        std::string calibContext = rf.check("calibContext", yarp::os::Value("camera")).asString();
-        std::string calibFile = rf.check("calibFile", yarp::os::Value("atis_calib.ini")).asString();
-
-        if(calibrator.configure(calibContext.c_str(), calibFile.c_str(), 1))
-            calibrator.showMapProjections(3.0);
-        else
-            yWarning() << "Could not correctly configure the cameras";
+        std::string calib_file_path = rf.check("camera_calibration_file", Value("")).asString();
+        if(calibrator.configure(calib_file_path, 1)) {
+            calibrator.printValidCalibrationValues();
+            //calibrator.showMapProjections(3.0);
+        } else {
+            yError() << "Could not correctly configure the cameras";
+            return false;
+        }
     }
 
     if(vis) {

@@ -113,9 +113,10 @@ string channelInstance::getName()
     return channel_name;
 }
 
-bool channelInstance::addFrameDrawer(unsigned int width, unsigned int height)
+bool channelInstance::addFrameDrawer(unsigned int width, unsigned int height, 
+    const std::string &calibration_file)
 {
-    calib_configured = unwarp.configure("camera", "stefi_calib.ini");
+    calib_configured = unwarp.configure(calibration_file);
     if(!calib_configured)
         yWarning() << "Calibration was not configured";
 

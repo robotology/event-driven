@@ -33,7 +33,7 @@ vIPT::vIPT()
     size_shared = Size(0, 0);
 }
 
-bool vIPT::importIntrinsics(int cam, Bottle &parameters, bool verbose)
+bool vIPT::importIntrinsics(int cam, Bottle &parameters)
 {
 
     if(parameters.isNull()) {
@@ -67,15 +67,10 @@ bool vIPT::importIntrinsics(int cam, Bottle &parameters, bool verbose)
     dist_coeff[cam].at<double>(0, 2) = parameters.find("p1").asDouble();
     dist_coeff[cam].at<double>(0, 3) = parameters.find("p2").asDouble();
 
-    if (verbose){
-        for (long unsigned int i=0; i < parameters.size(); i++)
-            yInfo()<<parameters.get(i).toString();
-    }
-
     return true;
 }
 
-bool vIPT::importStereo(Bottle &parameters, bool verbose)
+bool vIPT::importStereo(Bottle &parameters)
 {
 
     Bottle *HN = parameters.find("HN").asList();
@@ -93,10 +88,6 @@ bool vIPT::importStereo(Bottle &parameters, bool verbose)
             stereo_translation.at<double>(row) = HN->get(row * 4 + 3).asDouble();
         }
 
-        if (verbose){
-            for (long unsigned int i=0; i < parameters.size(); i++)
-                yInfo()<<parameters.get(i).toString();
-        }
     }
 
     return true;
@@ -171,21 +162,18 @@ const cv::Mat& vIPT::getQ(){
     return Q;
 }
 
-bool vIPT::configure(const string calibContext, const string calibFile, int size_scaler)
+bool vIPT::configure(const string &calib_file_path, int size_scaler)
 
 {
     ResourceFinder calibfinder;
-    calibfinder.setVerbose();
-    calibfinder.setDefaultContext(calibContext);
-    calibfinder.setDefaultConfigFile(calibFile);
+    calibfinder.setDefault("from", calib_file_path);
     calibfinder.configure(0, 0);
 
-    yInfo()<<"Calibration file path: " << calibfinder.findFile("from");
 
     //import intrinsics
-    bool valid_cam1 = importIntrinsics(0, calibfinder.findGroup("CAMERA_CALIBRATION_LEFT"), true);
-    bool valid_cam2 = importIntrinsics(1, calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT"), true);
-    bool valid_stereo = importStereo(calibfinder.findGroup("STEREO_DISPARITY"), true);
+    bool valid_cam1 = importIntrinsics(0, calibfinder.findGroup("CAMERA_CALIBRATION_LEFT"));
+    bool valid_cam2 = importIntrinsics(1, calibfinder.findGroup("CAMERA_CALIBRATION_RIGHT"));
+    bool valid_stereo = importStereo(calibfinder.findGroup("STEREO_DISPARITY"));
 
     if(!valid_cam1 && !valid_cam2)
         return false;
@@ -367,6 +355,35 @@ bool vIPT::showMapProjections(double seconds)
     cv::destroyAllWindows();
 
     return true;
+}
+
+void vIPT::printValidCalibrationValues()
+{
+    yInfo() << "Printing non-empty intrinsic and extrinsic parameters:";
+    std::stringstream ss;
+    for(auto i : {0, 1}) {
+        if(!size_cam[i].empty()) {
+            ss << "size_cam[" << i << "]" << std::endl;
+            ss << size_cam[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+        if(!cam_matrix[i].empty()) {
+            ss << "cam_matrix[" << i << "]" << std::endl;
+            ss << cam_matrix[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+        if(!dist_coeff[i].empty()) {
+            ss << "dist_coeff[" << i << "]" << std::endl;
+            ss << dist_coeff[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+    }
+
+    if(!stereo_translation.empty()) {
+        ss << "stereo_translation" << std::endl;
+        ss << stereo_translation << std::endl; yInfo() << ss.str(); ss.str("");
+    }
+    if(!stereo_rotation.empty()) {
+        ss << "stereo_rotation" << std::endl;
+        ss << stereo_rotation << std::endl; yInfo() << ss.str(); ss.str("");
+    }
 }
 
 bool vIPT::sparseForwardTransform(int cam, int &y, int &x)

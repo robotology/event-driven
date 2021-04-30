@@ -73,7 +73,8 @@ private:
 public:
 
     channelInstance(string channel_name);
-    bool addFrameDrawer(unsigned int width, unsigned int height);
+    bool addFrameDrawer(unsigned int width, unsigned int height, 
+                        const std::string &calibration_file = "");
     bool addDrawer(string drawer_name, unsigned int width,
                    unsigned int height, unsigned int window_size, double isoWindow, bool flip);
 

@@ -42,8 +42,8 @@ private:
     cv::Mat mat_reverse_map[2];
     cv::Mat mat_forward_map[2];
 
-    bool importIntrinsics(int cam, yarp::os::Bottle &parameters, bool verbose=false);
-    bool importStereo(yarp::os::Bottle &parameters, bool verbose=false);
+    bool importIntrinsics(int cam, yarp::os::Bottle &parameters);
+    bool importStereo(yarp::os::Bottle &parameters);
     bool computeForwardReverseMaps(int cam);
 
 
@@ -51,12 +51,12 @@ public:
 
     vIPT();
 
-
     const cv::Mat& getQ();
     void setProjectedImageSize(int height, int width);
-    bool configure(const std::string calibContext, const std::string calibFile, int size_scaler = 2);
+    bool configure(const std::string &calib_file_path, int size_scaler = 2);
     bool showMapProjections(double seconds = 0);
     void showMonoProjections(int cam, double seconds);
+    void printValidCalibrationValues();
 
     bool sparseForwardTransform(int cam, int &y, int &x);
     bool sparseReverseTransform(int cam, int &y, int &x);
