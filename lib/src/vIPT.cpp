@@ -35,6 +35,7 @@ vIPT::vIPT()
 
 bool vIPT::importIntrinsics(int cam, Bottle &parameters)
 {
+
     if(parameters.isNull()) {
         yWarning() << "Could not find camera" << cam <<"parameters";
         return false;
@@ -161,14 +162,13 @@ const cv::Mat& vIPT::getQ(){
     return Q;
 }
 
-bool vIPT::configure(const string calibContext, const string calibFile, int size_scaler)
+bool vIPT::configure(const string &calib_file_path, int size_scaler)
 
 {
     ResourceFinder calibfinder;
-    calibfinder.setVerbose();
-    calibfinder.setDefaultContext(calibContext);
-    calibfinder.setDefaultConfigFile(calibFile);
+    calibfinder.setDefault("from", calib_file_path);
     calibfinder.configure(0, 0);
+
 
     //import intrinsics
     bool valid_cam1 = importIntrinsics(0, calibfinder.findGroup("CAMERA_CALIBRATION_LEFT"));
@@ -355,6 +355,35 @@ bool vIPT::showMapProjections(double seconds)
     cv::destroyAllWindows();
 
     return true;
+}
+
+void vIPT::printValidCalibrationValues()
+{
+    yInfo() << "Printing non-empty intrinsic and extrinsic parameters:";
+    std::stringstream ss;
+    for(auto i : {0, 1}) {
+        if(!size_cam[i].empty()) {
+            ss << "size_cam[" << i << "]" << std::endl;
+            ss << size_cam[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+        if(!cam_matrix[i].empty()) {
+            ss << "cam_matrix[" << i << "]" << std::endl;
+            ss << cam_matrix[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+        if(!dist_coeff[i].empty()) {
+            ss << "dist_coeff[" << i << "]" << std::endl;
+            ss << dist_coeff[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+    }
+
+    if(!stereo_translation.empty()) {
+        ss << "stereo_translation" << std::endl;
+        ss << stereo_translation << std::endl; yInfo() << ss.str(); ss.str("");
+    }
+    if(!stereo_rotation.empty()) {
+        ss << "stereo_rotation" << std::endl;
+        ss << stereo_rotation << std::endl; yInfo() << ss.str(); ss.str("");
+    }
 }
 
 bool vIPT::sparseForwardTransform(int cam, int &y, int &x)
