@@ -1,4 +1,4 @@
-#RGB-Event system calibration
+# RGB-Event system calibration
 
 This is a guideline to calibrate a stereo system, in this case a RGB camera and an event-driven sensor. 
 The calibration follows the classic procedure detecting a predefined pattern moved in front of the cameras.
@@ -17,7 +17,7 @@ The algorithm will find the pattern in different positions of the board and will
 
 ### How to use the video
 
-The pattern used to calibrate both cameras is a video of a checkerboard flashing at around 60 Hz. 
+The pattern used to calibrate both cameras is a video of a [checkerboard](https://github.com/robotology/event-driven/blob/camera-calibration-supervisor/documentation/stereocalibration/video_checkboard.mp4) flashing at around 60 Hz. 
 Depending on the device you are using you will need to set the screen luminosity and the refresh rate (if allowed). 
 If the refresh rate of the screen is enough to generate the events pattern, the video paused representing the checkerboard, already works for the calibration. 
 Otherwise, you need to show the video to the cameras setting the video in loop.
