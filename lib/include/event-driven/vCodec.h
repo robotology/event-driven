@@ -376,7 +376,7 @@ template <class T> size_t countEvents(const T &q) { return q.size(); }
 template <typename T> inline int countTime(const T &q, int &p_time)
 {
     if(!p_time) p_time = q.front().stamp;
-    int dt = q.back().stamp - q.front().stamp;
+    int dt = q.back().stamp - p_time;
     p_time = q.back().stamp;
     if(dt < 0) dt += vtsHelper::max_stamp;
     return dt;
@@ -385,7 +385,7 @@ template <typename T> inline int countTime(const T &q, int &p_time)
 template <> inline int countTime<vQueue> (const vQueue &q, int &p_time)
 {
     if(!p_time) p_time = q.front()->stamp;
-    int dt = q.back()->stamp - q.front()->stamp;
+    int dt = q.back()->stamp - p_time;
     p_time = q.back()->stamp;
     if(dt < 0) dt += vtsHelper::max_stamp;
     return dt;
