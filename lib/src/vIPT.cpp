@@ -30,6 +30,8 @@ namespace ev {
 
 vIPT::vIPT()
 {
+    size_cam[0] = Size(-1, -1);
+    size_cam[1] = Size(-1, -1);
     size_shared = Size(0, 0);
 }
 
@@ -362,7 +364,7 @@ void vIPT::printValidCalibrationValues()
     yInfo() << "Printing non-empty intrinsic and extrinsic parameters:";
     std::stringstream ss;
     for(auto i : {0, 1}) {
-        if(!size_cam[i].empty()) {
+        if(size_cam[i].width > 0) {
             ss << "size_cam[" << i << "]" << std::endl;
             ss << size_cam[i] << std::endl; yInfo() << ss.str(); ss.str("");
         }
