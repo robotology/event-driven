@@ -38,10 +38,10 @@ class atis3Bridge : public RFModule, public Thread {
 private:
 
     yarp::os::Port output_port;
-    Camera cam; // create the camera
     Stamp yarpstamp;
     Stamp graystamp;
     yarp::os::BufferedPort< yarp::sig::FlexImage > grayscale_port;
+
     Camera cam; // create the camera
     
     int counter_packets{0};
@@ -86,7 +86,7 @@ public:
             return false;
         }
 
-        if(!grayscale_port.open(getName("img:o"))) {
+        if(!grayscale_port.open(getName("/img:o"))) {
             yError() << "Could not open image port";
             return false;
         } 
