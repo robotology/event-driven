@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2017 Event-driven Perception for Robotics
+ *   Copyright (C) 2021 Event-driven Perception for Robotics
  *   Author: arren.glover@iit.it
  *
  *   This program is free software: you can redistribute it and/or modify
