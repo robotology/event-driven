@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2021 Event-driven Perception for Robotics
+ *   Copyright (C) 2019 Event-driven Perception for Robotics
  *   Author: arren.glover@iit.it
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #define VIPT_H
 
 #include <opencv2/opencv.hpp>
-#include <yarp/os/Bottle.h>
+#include <yarp/os/all.h>
 
 namespace ev {
 
@@ -51,12 +51,12 @@ public:
 
     vIPT();
 
-
     const cv::Mat& getQ();
     void setProjectedImageSize(int height, int width);
-    bool configure(const std::string calibContext, const std::string calibFile, int size_scaler = 2);
+    bool configure(const std::string &calib_file_path, int size_scaler = 2);
     bool showMapProjections(double seconds = 0);
     void showMonoProjections(int cam, double seconds);
+    void printValidCalibrationValues();
 
     bool sparseForwardTransform(int cam, int &y, int &x);
     bool sparseReverseTransform(int cam, int &y, int &x);

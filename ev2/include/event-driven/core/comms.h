@@ -121,16 +121,17 @@ private:
     std::vector<T> buffer;
     double _duration{0};
 
-public:
-    packet(void)
-    {
-        buffer.resize(initial_buffer_size);
-    }
-
     bool invalidPacket(const std::string &msg)
     {
         yError() << "Invalid Packet:" << msg;
         return false;
+    }
+
+public:
+
+    packet(void)
+    {
+        buffer.resize(initial_buffer_size);
     }
 
     bool read(yarp::os::ConnectionReader &reader) override
@@ -195,6 +196,12 @@ public:
         return buffer[index];
     }
 
+    void size(int elements)
+    {
+        if(buffer.size() < elements)
+            buffer.resize(elements);
+    }
+
     size_t size(void)
     {
         return n_elements;
@@ -208,6 +215,10 @@ public:
     double duration(void) const
     {
         return _duration;
+    }
+
+    T* data() {
+        return buffer.data();
     }
 
 };
@@ -232,6 +243,9 @@ public:
     using yarp::os::BufferedPort< ev::packet<T> >::prepare;
     using yarp::os::BufferedPort< ev::packet<T> >::getPendingReads;
     using yarp::os::BufferedPort< ev::packet<T> >::read;
+    using yarp::os::BufferedPort< ev::packet<T> >::unprepare;
+    using yarp::os::BufferedPort< ev::packet<T> >::setEnvelope;
+    using yarp::os::BufferedPort< ev::packet<T> >::close;
 };
 
 template <typename T> class window : public yarp::os::Thread

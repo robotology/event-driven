@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="yarpmanifest.xsl"?>
+
+<module>
+    <name>zynqGrabber</name>
+    <doxygen-group>hardwareIO</doxygen-group>
+    <description>Interfaces to DVS or ATIS sensors connected with zynq-based boards</description>
+    <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
+    <version>1.0</version>
+
+    <description-long>
+      Reads/writes events as well as programs biases for event-based chips connected using a zynq-board interface.
+    </description-long>
+
+    <arguments>
+        <param desc="Modules name"> name </param>
+        <param desc="Check for errors in data stream"> errorcheck </param>
+        <param desc="Output verbose information"> verbose </param>
+        <param desc="Only write bias values then close"> biaswrite </param>
+        <param desc="Check timestamp values are ordered"> jumpcheck </param>
+        <param desc="Use current bias values"> iBias </param>
+        <param desc="Name of vision controller device"> collerDevice </param>
+        <param desc="Bias values for left camera"> ATIS_BIAS_LEFT </param>
+        <param desc="Bias values for right camera"> ATIS_BIAS_RIGHT </param>
+        <param desc="Name of device to read data from"> dataDevice </param>
+        <param desc="Chunk size to read from device"> readPacketSize </param>
+        <param desc="Size of internal buffer for events that need to be sent"> bufferSize </param>
+        <param desc="Maximum size events in the bottles"> maxBottleSize </param>
+    </arguments>
+
+    <authors>
+        <author email="chiara.bartolozzi@iit.it"> Chiara Bartolozzi </author>
+        <author email="arren.glover@iit.it"> Arren Glover </author>
+    </authors>
+
+     <data>
+
+     <input>
+     <type>vBottle</type>
+     <port>/zynqGrabber/vBottle:i</port>
+     <description>
+     Accepts events to be sent to the hardware device (i.e. SpiNNaker)
+     </description>
+     </input>
+
+     <output>
+     <type>vBottle</type>
+     <port>/zynqGrabber/vBottle:o</port>
+     <description>
+     The events from the camera (or other device) are published on this port
+     </description>
+     </output>
+
+     <output>
+     <type>yarp::os::Bottle</type>
+     <port>/zynqGrabber/eventCount:o</port>
+     <description>
+     Outputs the number of events read by the zynqGrabber
+     </description>
+     </output>
+
+    </data>
+
+    <services>
+      <server>
+        <port>/zynqGrabber/rpc</port>
+        <description>
+            Start stop the device
+            Set the bias values for a camera
+        </description>
+      </server>
+    </services>
+</module>
