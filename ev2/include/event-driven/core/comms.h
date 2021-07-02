@@ -27,6 +27,8 @@
 #include <vector>
 #include <deque>
 #include <list>
+#include <cstring>
+#include <unistd.h>
 
 namespace ev {
 
@@ -196,12 +198,6 @@ public:
         return buffer[index];
     }
 
-    void size(int elements)
-    {
-        if(buffer.size() < elements)
-            buffer.resize(elements);
-    }
-
     size_t size(void)
     {
         return n_elements;
@@ -217,8 +213,47 @@ public:
         return _duration;
     }
 
-    T* data() {
-        return buffer.data();
+    int fillFromDevice(const int fd, const int max_dma_pool_size, const int max_packet_size)
+    {
+        if(buffer.size() * sizeof(T) < max_packet_size)
+            buffer.resize(max_packet_size / sizeof(T) + (max_packet_size % sizeof(T) ? 1 : 0));
+
+        int r = max_dma_pool_size;
+        unsigned int n_bytes_read = 0;
+        while(r >= max_dma_pool_size && n_bytes_read < max_packet_size) {
+            r = ::read(fd, (char *)buffer.data() + n_bytes_read, max_packet_size - n_bytes_read);
+            if(r < 0)
+                yInfo() << "[READ ]" << std::strerror(errno);
+            else
+                n_bytes_read += r;
+        }
+
+        if(n_bytes_read % sizeof(T))
+            yError() << "[READ ] partial read. bad fault. get help.";
+
+        n_elements = n_bytes_read / sizeof(T);
+
+        return n_bytes_read;
+    }
+
+    int pushToDevice(int fd) const
+    {
+        
+        //move to bytes space
+        size_t bytes_to_write = n_elements * sizeof(T);
+        size_t written = 0;
+        while(written < bytes_to_write) {
+
+            int r = ::write(fd, (char *)buffer.data() + written, bytes_to_write - written);
+
+            if(r > 0) { //success!
+                written += r;
+            } else if(r < 0 && errno != EAGAIN) { //error!
+                yError() << "[WRITE]" << std::strerror(errno);
+                break;
+            }
+        }
+        return written;
     }
 
 };
@@ -246,6 +281,7 @@ public:
     using yarp::os::BufferedPort< ev::packet<T> >::unprepare;
     using yarp::os::BufferedPort< ev::packet<T> >::setEnvelope;
     using yarp::os::BufferedPort< ev::packet<T> >::close;
+    using yarp::os::BufferedPort< ev::packet<T> >::interrupt;
 };
 
 template <typename T> class window : public yarp::os::Thread

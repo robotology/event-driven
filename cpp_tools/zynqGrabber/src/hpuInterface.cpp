@@ -36,8 +36,6 @@ using std::vector;
 /******************************************************************************/
 //device2yarp
 /******************************************************************************/
-const std::string device2yarp::generic_data::tag = "AE";
-
 device2yarp::device2yarp()
 {
     fd = -1;
@@ -68,53 +66,44 @@ void  device2yarp::run() {
     }  
 
     unsigned int event_count = 0;
-    unsigned int prev_ts = 0;
+    unsigned int packet_count = 0;
+
+    double tic = yarp::os::Time::now();
 
     while(!isStopping()) {
 
-        ev::packet<generic_data>& packet = output_port.prepare();
-        packet.size(max_packet_size);
-        
-        THIS COMPILE ERROR IS TO REMIND ME THAT PACKETS HAVE NO WAY TO 
-        UPDATE THE INTERNAL n_elements COUNTER IF THEY ARE EXTERNALLY
-        FILLED.
+        ev::packet<AE>& packet = output_port.prepare();
 
-        int r = max_dma_pool_size;
-        unsigned int n_bytes_read = 0;
-        while(r >= (int)max_dma_pool_size && n_bytes_read < max_packet_size) {
-            r = read(fd, packet.data() + n_bytes_read, max_packet_size - n_bytes_read);
-            if(r < 0)
-                yInfo() << "[READ ]" << std::strerror(errno);
-            else
-                n_bytes_read += r;
-        }
+        int n_bytes_read = packet.fillFromDevice(fd, max_dma_pool_size, max_packet_size);
+        packet.duration(yarp::os::Time::now() - tic);
+        tic += packet.duration();
 
         if(n_bytes_read == 0) {
             output_port.unprepare();
             continue;
         }
 
-        unsigned int first_ts = *(unsigned int *)packet.data();
-        if(prev_ts > first_ts)
-            yInfo() << "Timestamp wrap:" << prev_ts << "->" << first_ts;
-        prev_ts = first_ts;
-
         yarp_stamp.update();
         output_port.setEnvelope(yarp_stamp);
         output_port.write();
 
+        //report statistics to yarp
         event_count += n_bytes_read / 8;
-
+        packet_count += 1;
         static double prev_ts = yarp::os::Time::now();
         double update_period = yarp::os::Time::now() - prev_ts;
+        
         if(update_period > 5.0) {
 
             yInfo() << "[READ ]"
                     << (int)(event_count/(1000.0*update_period))
-                    << "k events/s";
+                    << "k events/s over"
+                    << packet_count
+                    << "packets";
 
             prev_ts += update_period;
             event_count = 0;
+            packet_count = 0;
         }
     }
 
@@ -131,13 +120,11 @@ void device2yarp::onStop()
 yarp2device::yarp2device()
 {
     fd = -1;
-    total_events = 0;
 }
 
 bool yarp2device::open(std::string module_name, int fd)
 {
     this->fd = fd;
-    input_port.setStrict();
     return input_port.open(module_name + "/AE:i");
 }
 
@@ -149,43 +136,15 @@ void yarp2device::onStop()
 
 void yarp2device::run()
 {
+    int total_events = 0;
 
     while(true) {
 
-        Bottle *yarp_bottle = input_port.read(true); //blocking read
-        //std::cout << ".";
-        if(!yarp_bottle) return; //when interrupt is called returns null
+        const packet<AE>* packet = input_port.read(true); //blocking read
+        if(!packet) return; //when interrupt is called returns null
 
-        Bottle *data_bottle = yarp_bottle->get(1).asList();
-
-        size_t data_size = data_bottle->size();
-        if(data_size > data_copy.size())
-            data_copy.resize(data_size, 0);
-
-        //copy to internal data (needed to modify the contents)
-        //we can remove data_copy and just use data_bottle when the
-        //mask is done in the FPGA
-        for(size_t i = 0; i < data_size; i += 1)
-            data_copy[i] = data_bottle->get(i).asInt();
-
-
-        //move to bytes space
-        char * buffer = (char *)data_copy.data();
-        size_t bytes_to_write = data_size * sizeof(int);
-        size_t written = 0;
-        while(written < bytes_to_write) {
-
-            int ret = write(fd, buffer + written, bytes_to_write - written);
-
-            if(ret > 0) { //success!
-                written += ret;
-            } else if(ret < 0 && errno != EAGAIN) { //error!
-                perror("Error writing to device: ");
-                return;
-            }
-        }
-
-        total_events += written / (2.0 * sizeof(int));
+        int written = packet->pushToDevice(fd);
+        total_events += written / sizeof(AE);
 
         static double previous_time = yarp::os::Time::now();
         double dt = yarp::os::Time::now() - previous_time;

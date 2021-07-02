@@ -33,13 +33,8 @@ class device2yarp : public yarp::os::Thread {
 private:
 
     //data buffer thread
-    int fd;
-    typedef struct generic_data {
-        const static std::string tag;
-        char byte;
-    } generic_data;
-    
-    ev::BufferedPort<generic_data> output_port;
+    int fd; 
+    ev::BufferedPort<ev::AE> output_port;
     yarp::os::Stamp yarp_stamp;
 
     //parameters
@@ -60,21 +55,17 @@ public:
 /******************************************************************************/
 //yarp2device
 /******************************************************************************/
-class yarp2device : public Thread
+class yarp2device : public yarp::os::Thread
 {
 protected:
 
     int fd;
-    bool valid;
-    yarp::os::BufferedPort<Bottle> input_port;
-    std::vector<int> data_copy;
-
-    unsigned int total_events;
+    ev::BufferedPort<ev::AE> input_port;
 
 public:
 
     yarp2device();
-    bool open(string module_name, int fd);
+    bool open(std::string module_name, int fd);
     void run();
     void onStop();
 
@@ -100,10 +91,10 @@ public:
 
     hpuInterface();
 
-    bool configureDevice(string device_name, bool spinnaker = false,
+    bool configureDevice(std::string device_name, bool spinnaker = false,
                          bool loopback = false);
-    bool openReadPort(string module_name, unsigned int packet_size);
-    bool openWritePort(string module_name);
+    bool openReadPort(std::string module_name, unsigned int packet_size);
+    bool openWritePort(std::string module_name);
     void start();
     void stop();
 

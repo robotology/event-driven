@@ -1,4 +1,4 @@
-#add_subdirectory(zynqGrabber)
+add_subdirectory(zynqGrabber)
 #add_subdirectory(chronocamGrabber)
 #add_subdirectory(binaryDumper)
 #add_subdirectory(qadIMUcal)
