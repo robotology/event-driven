@@ -34,11 +34,6 @@ endif()
 
 option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
 
-# option(BUILD_TESTING "Create tests using CMake" OFF)
-# if(BUILD_TESTING)
-#     enable_testing()
-# endif()
-
 include(AddInstallRPATHSupport)
 add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
                           LIB_DIRS "${CMAKE_INSTALL_FULL_LIBDIR}"
@@ -55,10 +50,23 @@ endif()
 set(CONTEXT_DIR event-driven)
 set(EVENTDRIVEN_LIBRARY event-driven)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fno-strict-aliasing -std=c++11 -fPIC")
-#set(EVENTDRIVENLIBS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libraries/include)
+find_package(OpenCV)
+set_package_properties(OpenCV PROPERTIES TYPE OPTIONAL)
 
-option(ADD_DOCS_TO_IDE "Add apps/documentation to IDE" OFF)
+if(OpenCV_FOUND)
+    set(OpenCV_dep OpenCV)
+    find_package(YARP COMPONENTS os sig math dev cv REQUIRED)
+else()
+    set(OpenCV_dep "")
+    find_package(YARP COMPONENTS os sig math dev REQUIRED)
+endif()
+yarp_configure_external_installation(event-driven)
+
+
+feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES)
+if(OpenCV_FOUND)
+    message(STATUS "Found OpenCV: (found version ${OpenCV_VERSION})")
+endif()
 
 find_package(MetavisionSDK COMPONENTS core driver QUIET)
 set_package_properties(MetavisionSDK PROPERTIES TYPE OPTIONAL)
@@ -66,37 +74,8 @@ set_package_properties(MetavisionSDK PROPERTIES TYPE OPTIONAL)
 find_package(prophesee_core QUIET)
 set_package_properties(prophesee_core PROPERTIES TYPE OPTIONAL)
 
-find_package(OpenCV)
-set_package_properties(OpenCV PROPERTIES TYPE OPTIONAL)
-
-if(OpenCV_FOUND)
-    set(OpenCV_dep OpenCV)
-    find_package(YARP COMPONENTS OS sig math dev cv REQUIRED)
-else()
-    set(OpenCV_dep "")
-    find_package(YARP COMPONENTS OS sig math dev REQUIRED)
-endif()
-yarp_configure_external_installation(event-driven)
-
-
-
-feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES)
-if(OpenCV_FOUND)
-    message(STATUS "Found OpenCV: (found version ${OpenCV_VERSION})")
-endif()
-add_subdirectory(lib)
-add_subdirectory(src)
-# add_subdirectory(bindings)
-# if(BUILD_TESTING)
-#     add_subdirectory(test)
-# endif()
-
-if(ADD_DOCS_TO_IDE)
-    file(GLOB tutorialfiles documentation/*.md
-                            documentation/application_instructions/*.md)
-    add_custom_target(project_documentation SOURCES README.md ${tutorialfiles})
-endif(ADD_DOCS_TO_IDE)
-
+add_subdirectory(ev2)
+add_subdirectory(cpp_tools)
 
 include(InstallBasicPackageFiles)
 install_basic_package_files(${PROJECT_NAME}
@@ -105,7 +84,7 @@ install_basic_package_files(${PROJECT_NAME}
                             COMPATIBILITY SameMajorVersion
                             LOWERCASE_FILENAMES
                             NAMESPACE ev::
-                            DEPENDENCIES "YARP COMPONENTS OS sig"
+                            DEPENDENCIES "YARP COMPONENTS os sig"
                                          ${OpenCV_dep}
                             INCLUDE_CONTENT "yarp_configure_external_installation(event-driven NO_PATH_D)")
 
