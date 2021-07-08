@@ -21,22 +21,26 @@ set( folder_header
   #include/event-driven/core/vPort.h
 )
 
-# if(OpenCV_FOUND)
+if(OpenCV_FOUND)
 
-# list( APPEND folder_source 
-#   include/event-driven/vis/vIPT.cpp
-#   include/event-driven/vis/vDraw_basic.cpp
-#   include/event-driven/vis/vDraw_ISO.cpp
-#   #src/vDraw_skin.cpp
-# )
+  list( APPEND folder_source 
+    src/vis/filters.cpp
+    src/vis/IPT.cpp
+    #include/event-driven/vis/vDraw_basic.cpp
+    #include/event-driven/vis/vDraw_ISO.cpp
+    #src/vDraw_skin.cpp
+  )
 
-# list( APPEND folder_header 
-#   include/event-driven/vis.h
-#   include/event-driven/vis/IPT.h              
-#   include/event-driven/vis/vDraw.h
-#   #include/event-driven/vDrawSkin.h
-# )
-# endif()
+  list( APPEND folder_header 
+    include/event-driven/vis.h
+    include/event-driven/vis/filters.h
+    include/event-driven/vis/IPT.h              
+    #include/event-driven/vis/vDraw.h
+    #include/event-driven/vDrawSkin.h
+  )
+
+endif()
+
 # include_directories(algorithms)
 
 

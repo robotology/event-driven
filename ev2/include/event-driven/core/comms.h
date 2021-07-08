@@ -29,6 +29,7 @@
 #include <list>
 #include <cstring>
 #include <unistd.h>
+//#include <type_traits>
 
 namespace ev {
 
@@ -118,12 +119,12 @@ template <typename T> class packet : public yarp::os::Portable {
 
 private:
     //TODO: this buffer size should be set by a compile time variable (cmake)
-    static const unsigned int initial_buffer_size{1000000};
+    static const unsigned int initial_buffer_size{1048576};
     unsigned int n_elements{0};
     std::vector<T> buffer;
-    double _duration{0};
+    double _duration{0.0};
 
-    bool invalidPacket(const std::string &msg)
+    bool invalidPacket(const std::string &msg) const
     {
         yError() << "Invalid Packet:" << msg;
         return false;
@@ -135,6 +136,18 @@ public:
     {
         buffer.resize(initial_buffer_size);
     }
+
+    // template<class Q = T>
+    // typename std::enable_if<std::is_same<Q, int32_t>::value, bool>::type someFunc(std::string s)
+    // {
+    //     return true;
+    // }
+
+    // template<class Q = T>
+    // typename std::enable_if<!std::is_same<Q, int32_t>::value, bool>::type someFunc(std::string s)
+    // {
+    //     return Q::tag == s;
+    // }
 
     bool read(yarp::os::ConnectionReader &reader) override
     {
@@ -156,6 +169,11 @@ public:
 
     bool write(yarp::os::ConnectionWriter &writer) const override
     {
+        if(!(_duration > 0.0)) {
+            yError() << "ev::packet::write() : no duration";
+            return true;
+        }
+
         writer.appendInt32(BOTTLE_TAG_LIST);
         writer.appendInt32(3);
         writer.appendInt32(BOTTLE_TAG_STRING);
@@ -172,6 +190,7 @@ public:
     void clear(void)
     {
         n_elements = 0;
+        _duration = 0.0;
     }
 
     void push_back(const T &element)
@@ -190,7 +209,7 @@ public:
 
     typename std::vector<T>::iterator end()
     {
-        return buffer.begin() + n_elements;
+        return buffer.begin() + n_elements; //is this dynamic?
     }
 
     T& operator[](std::size_t index)
@@ -198,7 +217,7 @@ public:
         return buffer[index];
     }
 
-    size_t size(void)
+    size_t size(void) const
     {
         return n_elements;
     }
@@ -213,14 +232,14 @@ public:
         return _duration;
     }
 
-    int fillFromDevice(const int fd, const int max_dma_pool_size, const int max_packet_size)
+    int fillFromDevice(const int fd, const int min_packet_size, const int max_packet_size)
     {
         if(buffer.size() * sizeof(T) < max_packet_size)
             buffer.resize(max_packet_size / sizeof(T) + (max_packet_size % sizeof(T) ? 1 : 0));
 
-        int r = max_dma_pool_size;
+        int r = min_packet_size;
         unsigned int n_bytes_read = 0;
-        while(r >= max_dma_pool_size && n_bytes_read < max_packet_size) {
+        while(r >= min_packet_size && n_bytes_read < max_packet_size) {
             r = ::read(fd, (char *)buffer.data() + n_bytes_read, max_packet_size - n_bytes_read);
             if(r < 0)
                 yInfo() << "[READ ]" << std::strerror(errno);
@@ -265,21 +284,32 @@ public:
 
     BufferedPort()
     {
-        this->setStrict();
+        yarp::os::BufferedPort< ev::packet<T> >::setStrict();
     }
 
     void write()
     {
-        this->waitForWrite(); //needed if we want to use "external block"
-        this->writeStrict();
+        //we don't really want packets to "build up" in the outgoing thread.
+        //if that happens we want to address the problem elsewhere. but we do
+        //want to use a secondary thread to send the data (and limit buffer
+        //swapping to 2). This code should do that.
+        yarp::os::BufferedPort< ev::packet<T> >::waitForWrite(); 
+        yarp::os::BufferedPort< ev::packet<T> >::writeStrict();
+    }
+
+    ev::packet<T>& prepare() 
+    {
+        auto &p = yarp::os::BufferedPort< ev::packet<T> >::prepare();
+        p.clear();
+        return p;
     }
 
     using yarp::os::BufferedPort< ev::packet<T> >::open;
-    using yarp::os::BufferedPort< ev::packet<T> >::prepare;
     using yarp::os::BufferedPort< ev::packet<T> >::getPendingReads;
     using yarp::os::BufferedPort< ev::packet<T> >::read;
     using yarp::os::BufferedPort< ev::packet<T> >::unprepare;
     using yarp::os::BufferedPort< ev::packet<T> >::setEnvelope;
+    using yarp::os::BufferedPort< ev::packet<T> >::getEnvelope;
     using yarp::os::BufferedPort< ev::packet<T> >::close;
     using yarp::os::BufferedPort< ev::packet<T> >::interrupt;
 };

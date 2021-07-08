@@ -20,7 +20,7 @@
 #define __VFILTER__
 
 #include <opencv2/opencv.hpp>
-#include "event-driven/utilities.h"
+#include "event-driven/core.h"
 
 namespace ev {
 
@@ -53,7 +53,7 @@ public:
     void use_temporal_filter(int t_param);
 
     /// \brief filter using spatial coincidence
-    void use_spatial_filter(int t_param, unsigned int s_param);
+    void use_spatial_filter(int t_param, unsigned int s_param = 1);
 
     /// \brief classifies the event as noise or signal
     /// \returns false if the event is noise

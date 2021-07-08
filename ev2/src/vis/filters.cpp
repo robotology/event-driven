@@ -34,13 +34,13 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "event-driven/filters.h"
+#include "event-driven/vis/filters.h"
 
 namespace ev {
 
 
 vNoiseFilter::vNoiseFilter() : x_sfilter(false), x_tfilter(false), t_sfilter(0),
-    s_sfilter(0), t_tfilter(0) {}
+    s_sfilter(1), t_tfilter(0) {}
 
 void vNoiseFilter::initialise(unsigned int width, unsigned int height)
 {
