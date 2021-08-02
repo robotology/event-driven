@@ -479,6 +479,8 @@ public:
             port.getEnvelope(yarp_stamp);
             T *next_queue = new T;
             internal_storage.decodePacket(*next_queue);
+            if(countEvents<T>(*next_queue) <= 0)
+                continue;
 
             m.lock();
 

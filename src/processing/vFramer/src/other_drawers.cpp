@@ -213,10 +213,15 @@ std::string blackDraw::getEventType()
     return AddressEvent::tag;
 }
 
+void blackDraw::resetImage(cv::Mat &image)
+{
+    if (image.empty())
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+    image.setTo(0);
+}
+
 void blackDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
-    image = cv::Scalar(255, 255, 255);
-
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
 
@@ -237,20 +242,8 @@ void blackDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             x = Xlimit - 1 - x;
         }
 
-        image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+        image.at<cv::Vec3b>(y, x) = white;
     }
-    /*
-    cv::Mat kernel = (cv::Mat_<float>(3,3) <<
-        1,  1, 1,
-        1, -8, 1,
-        1,  1, 1);
-
-    imgLaplacian = Mat::zeros(img.size());
-    filter2D(img, imgLaplacian, kernel);
-
-    cv::GaussianBlur(image, temp, cv::Size(3,3), 3);
-    cv::addWeighted(temp, 1.5, image, -0.5, 0, image);
-    */
 }
 
 

@@ -1,7 +1,19 @@
-#include <metavision/sdk/driver/camera.h>
-#include <metavision/sdk/base/events/event_cd.h>
+
+#if defined MetavisionSDK_FOUND
+    #include <metavision/sdk/driver/camera.h>
+    #include <metavision/sdk/base/events/event_cd.h>
+    using namespace Metavision;
+#else
+    #include <prophesee_driver/prophesee_driver.h>
+    #include <prophesee_core/events/event_cd.h>
+    using namespace Prophesee;
+#endif
+
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
+#include <opencv2/opencv.hpp>
+#include <yarp/cv/Cv.h>
+
 using namespace ev;
 using namespace yarp::os;
 
@@ -9,9 +21,12 @@ class atis3Bridge : public RFModule, public Thread {
 
 private:
 
-    vWritePort output_port;
-    Metavision::Camera cam; // create the camera
     Stamp yarpstamp;
+    vWritePort output_port;
+    Stamp graystamp;
+    yarp::os::BufferedPort< yarp::sig::FlexImage > grayscale_port;
+    Camera cam; // create the camera
+    
     int counter_packets{0};
     int counter_events{0};
     static constexpr double period{1.0};
@@ -54,21 +69,55 @@ public:
             yError() << "Could not open output port";
             return false;
         }
+
+        if(!grayscale_port.open(getName("img:o"))) {
+            yError() << "Could not open image port";
+            return false;
+        } 
+
         //yarp::os::Network::connect(getName("/AE:o"), "/vPreProcess/AE:i", "fast_tcp");
 
         buffer_size = rf.check("buffer_size", Value(1000000)).asInt();
         buffer.emplace_back(vector<int32_t>(buffer_size, 0));
-        buffer.emplace_back(vector<int32_t>(buffer_size, 0));
+        buffer.emplace_back(vector<int32_t>(buffer_size, 0));        
 
         if(rf.check("file")) {
-            cam = Metavision::Camera::from_file(rf.find("file").asString());
+            cam = Camera::from_file(rf.find("file").asString());
         } else {
-            cam = Metavision::Camera::from_first_available();
+            cam = Camera::from_first_available();
         }
 
-        cam.cd().add_callback([this](const Metavision::EventCD *ev_begin, const Metavision::EventCD *ev_end) {
+        Biases &bias = cam.biases();
+#if defined MetavisionSDK_FOUND
+        //it seems like the ability ot set the camera sensitivity "easily" has been removed, and relegated to
+        //setting the entire biases file. perhaps if the HAL is included and setup correctly then
+        // the flag I_HL_BIASES_FACILITY_AVAILABLE is set and we can use the "constrast sensitivity".
+#else
+        int bias_pol = 0;
+        if(rf.check("polarity"))
+            bias_pol = rf.find("polarity").asInt();
+        if(rf.check("p"))
+            bias_pol = rf.find("p").asInt();
+        
+        int bias_sens = 0;
+        if (rf.check("sensitivity"))
+            bias_sens = rf.find("sensitivity").asInt();
+        if(rf.check("s"))
+            bias_sens = rf.find("s").asInt();
+
+        yInfo() << "Default Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
+        if(bias_sens) bias.set_contrast_sensitivity(bias_sens);
+        if(bias_pol) bias.set_contrast_sensitivity_to_polarity(bias_pol);
+        yInfo() << "        Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
+        cam.set_exposure_frame_callback(10, [this](timestamp ts, const cv::Mat &image){this->frameToPort(ts, image);});
+#endif  
+
+        cam.cd().add_callback([this](const EventCD *ev_begin, const EventCD *ev_end) {
             this->fill_buffer(ev_begin, ev_end);
         });
+
+        const Geometry &geo = cam.geometry();
+        yInfo() << "[" << geo.width() << "x" << geo.height() << "]";
 
         if(!cam.start()) {
             yError() << "Could not start the camera";
@@ -108,7 +157,7 @@ public:
         return Thread::isRunning();
     }
 
-    void fill_buffer(const Metavision::EventCD *begin, const Metavision::EventCD *end) {
+    void fill_buffer(const EventCD *begin, const EventCD *end) {
 
         // this loop allows us to get access to each event received in this callback
         static AE ae;
@@ -123,7 +172,7 @@ public:
         }
 
         //fill up the buffer that will be sent over the port in the other thread
-        for (const Metavision::EventCD *ev = begin; ev != end; ++ev) {
+        for (const EventCD *ev = begin; ev != end; ++ev) {
 
             ae.x = ev->x; ae.y = ev->y; ae.polarity = ev->p;
             buffer[b_sel][buffer_used++] = ev->t;
@@ -133,6 +182,28 @@ public:
 
         m.unlock();
 
+    }
+
+    //using ExposureFrameCallback = std::function<void(Prophesee::timestamp, const cv::Mat &)>;
+    void frameToPort(timestamp ts, const cv::Mat &image)
+    {
+        static double val1 = log(1000);
+        static double val2 = log(100000);
+        cv::Mat work, mask, output; 
+        image.convertTo(work, CV_32F);
+        cv::log(work, work);
+
+        mask = work < val1; work.setTo(val1, mask);
+        mask = work > val2; work.setTo(val2, mask);
+        work -= val1;
+        
+        work.convertTo(output, CV_8U, 255.0/(val2-val1));
+        output = 255 - output;
+
+        grayscale_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelMono>(output));
+        graystamp.update();
+        grayscale_port.setEnvelope(graystamp);
+        grayscale_port.write();
     }
 
     //asynchronous thread run forever

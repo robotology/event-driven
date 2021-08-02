@@ -101,11 +101,12 @@ vDraw * createDrawer(std::string tag)
 /*////////////////////////////////////////////////////////////////////////////*/
 //channelInstance
 /*////////////////////////////////////////////////////////////////////////////*/
-channelInstance::channelInstance(string channel_name) : RateThread(0.1)
+channelInstance::channelInstance(string channel_name, cv::Size render_size) : RateThread(0.1)
 {
     this->channel_name = channel_name;
     this->limit_time = 1.0 * vtsHelper::vtsscaler;
     calib_configured = false;
+    this->render_size = render_size;
 }
 
 string channelInstance::getName()
@@ -113,9 +114,10 @@ string channelInstance::getName()
     return channel_name;
 }
 
-bool channelInstance::addFrameDrawer(unsigned int width, unsigned int height)
+bool channelInstance::addFrameDrawer(unsigned int width, unsigned int height, 
+    const std::string &calibration_file)
 {
-    calib_configured = unwarp.configure("camera", "stefi_calib.ini");
+    calib_configured = unwarp.configure(calibration_file);
     if(!calib_configured)
         yWarning() << "Calibration was not configured";
 
@@ -234,15 +236,22 @@ void channelInstance::run()
         (*drawer_i)->draw(canvas, event_qs[(*drawer_i)->getEventType()], -1);
     }
 
-    if (canvas.type() == CV_8UC3) {
-        image_port.prepare().copy(yarp::cv::fromCvMat<PixelBgr>(canvas));
-    } else if (canvas.type() == CV_8UC1) {
-        image_port.prepare().copy(yarp::cv::fromCvMat<PixelMono>(canvas));
+    //here we want to rescale the image.
+    static cv::Mat resized;
+    if(render_size.width > 0) {
+        cv::resize(canvas, resized, render_size);
+    } else {
+        resized = canvas;
     }
-        ts.update();
-        image_port.setEnvelope(ts);
-        image_port.write();
 
+    if (canvas.type() == CV_8UC3) {
+        image_port.prepare().copy(yarp::cv::fromCvMat<PixelBgr>(resized));
+    } else if (canvas.type() == CV_8UC1) {
+        image_port.prepare().copy(yarp::cv::fromCvMat<PixelMono>(resized));
+    }
+    ts.update();
+    image_port.setEnvelope(ts);
+    image_port.write();
 }
 
 void channelInstance::threadRelease()
@@ -290,10 +299,18 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     int frameRate = rf.check("frameRate", Value(30)).asInt();
     double period = 1000.0 / frameRate;
 
-    //bool useTimeout =
-    //        rf.check("timeout") && rf.check("timeout", Value(true)).asBool();
     bool flip =
             rf.check("flip") && rf.check("flip", Value(true)).asBool();
+
+    cv::Size render_size = cv::Size(-1, -1);
+    if(rf.check("out_height") && rf.check("out_width"))
+    {
+        render_size = cv::Size(rf.find("out_width").asInt(), rf.find("out_height").asInt());
+    }
+
+    //bool useTimeout =
+    //        rf.check("timeout") && rf.check("timeout", Value(true)).asBool();
+    
     //bool forceRender =
     //        rf.check("forcerender") &&
     //        rf.check("forcerender", Value(true)).asBool();
@@ -330,7 +347,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
         string channel_name =
                 moduleName + displayList->get(i*2).asString();
 
-        channelInstance * new_ci = new channelInstance(channel_name);
+        channelInstance * new_ci = new channelInstance(channel_name, render_size);
         new_ci->setRate(period);
 
         Bottle * drawtypelist = displayList->get(i*2 + 1).asList();
