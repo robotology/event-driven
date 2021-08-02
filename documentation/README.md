@@ -22,6 +22,6 @@ You may have some hardware in front of you that you are unsure of how to use, if
 * Finally, once you are ready, you can [learn to write a basic processing module](example_module.md) which covers, reading and writing events, and understanding event timestamps. Your module probably needs a nice way of:
     * [TODO: visualising your output](), and
     * possibly needs to [TODO: correct for lens disortion or external other external calibration]()
-given you have [TOIMPROVE: calibrated your camera.](2calibration.md) or [calibrate the an iCub robot with the calibration-supervisor](READMEcalibration.md)
+given you have [calibrated your camera or stereo pair.](calibration/README.md) or [calibrate the an iCub robot with the calibration-supervisor](calibration/README.md)
 
 * You can also learn to [TODO: save and playback]() data for offline processing and experiment re-creation.
