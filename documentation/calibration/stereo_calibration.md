@@ -14,7 +14,7 @@ The following procedure is used to calibrate the event-camera intrinsic paramete
 
 ### The checkerboard pattern
 
-The calibration method described uses the stardard checkerboard pattern seen from multiple different viewpoints in front of the camera. However, a fiducial that can be simultaneously detected as a checkerboard from both the event- and RGB-camera is required to enable the stereo calibration. To do so we have provided a flashing video file, which flashes fast enough to be ignored by an RGB camera, and is tuned to the event visualisation method to produce also a reliable checkerboard image also from the event-camera. The [checkerboard video](video_checkerboard.mp4) should be played back on a portable screen, we suggest a tablet/pad or possibly a lightweight laptop/monitor. Depending on the screen type the video can be used in two ways:
+The calibration method described uses the stardard checkerboard pattern seen from multiple different viewpoints in front of the camera. However, a fiducial that can be simultaneously detected as a checkerboard from both the event- and RGB-camera is required to enable the stereo calibration. To do so we have provided a flashing video file, which flashes fast enough to be ignored by an RGB camera, and is tuned to the event visualisation method to produce also a reliable checkerboard image also from the event-camera. The [checkerboard video](video_checkboard.mp4) should be played back on a portable screen, we suggest a tablet/pad or possibly a lightweight laptop/monitor. Depending on the screen type the video can be used in two ways:
 
 * Use the screen refresh rate: set the screen refresh to 60 Hz and play and pause the video. The screen refresh rate itself may be detectable by the event-camera and RGB-camera without anything further required.
 * Use the video flash: some screens may not refresh in a compatible way, in which case the video must be played on repeat/loop to achieve the desired effect. 
@@ -33,7 +33,7 @@ The events from the event-camera must first be sent to the visualisation method 
 
 The calibration is performed by sending images from the RGB camera and the output of the `vFramerLite` to the stereo-calibration module found in `icub-main`, in this case, using the `YARP` framework. A `yarpmanager` application is available to automatically set-up the required applications and connections:
 
-* see (previous documentation)[../README.md] to set-up the software and run a `yarpserver`.
+* see (previous documentation)[/../README.md] to set-up the software and run a `yarpserver`.
 * open a `yarpmanager` (e.g. from command line)
 * in the GUI click open and search for the location you have saved the (application file)[stereoCalib.xml]
 * In the entities find `stereoCalib`, double-click, then click `run all` and `connect all`.
