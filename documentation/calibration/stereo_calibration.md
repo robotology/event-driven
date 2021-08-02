@@ -33,7 +33,7 @@ The events from the event-camera must first be sent to the visualisation method 
 
 The calibration is performed by sending images from the RGB camera and the output of the `vFramerLite` to the stereo-calibration module found in `icub-main`, in this case, using the `YARP` framework. A `yarpmanager` application is available to automatically set-up the required applications and connections:
 
-* see [previous documentation](/../README.md) to set-up the software and run a `yarpserver`.
+* see [documentation](../README.md) to set-up the software and run a `yarpserver`.
 * open a `yarpmanager` (e.g. from command line)
 * in the GUI click open and search for the location you have saved the (application file)[stereoCalib.xml]
 * In the entities find `stereoCalib`, double-click, then click `run all` and `connect all`.
