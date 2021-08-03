@@ -10,7 +10,7 @@
  * @authors: Leandro de Souza Rosa <leandro.desouzarosa@iit.it>
 */
 
-#include "IMUCalibDumper.h"
+#include "IMUCalibDumper.cpp"
 
 using namespace yarp::os;
 

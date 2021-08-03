@@ -6,7 +6,7 @@
 <!--MODULES-->
 <module>
     <name>vPreProcess</name>
-    <parameters> --width 304 --height 240 --split_stereo true --undistort false --filter_spatial true --filter_temporal true</parameters>
+    <parameters></parameters>
     <node>localhost</node>
 </module>
 

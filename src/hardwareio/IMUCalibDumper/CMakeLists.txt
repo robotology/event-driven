@@ -7,18 +7,14 @@
 
 # @authors: Leandro de Souza Rosa <leandro.desouzarosa@iit.it>
 
-project(IMUDataDumper)
-
-file(GLOB source src/*.cpp)
-file(GLOB header include/*.h)
+project(IMUCalibDumper)
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
 )
 
 add_executable(${PROJECT_NAME}
-    ${source}
-    ${header}
+    main.cpp IMUCalibDumper.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_OS
