@@ -9,13 +9,7 @@
 
 project(IMUCalibDumper)
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}/include
-)
-
-add_executable(${PROJECT_NAME}
-    main.cpp IMUCalibDumper.cpp
-)
+add_executable(${PROJECT_NAME} IMUCalibDumper.cpp)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_OS
                                               YARP::YARP_init

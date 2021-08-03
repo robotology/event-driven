@@ -7,7 +7,7 @@ option(ENABLE_view "Build basic viewer" ON)
 option(ENABLE_soundDetectionDemo "Build sound source detection demo" OFF)
 option(ENABLE_corner "Build corner detector" OFF)
 option(ENABLE_dualCamTransform "Build event to frame transform" OFF)
-option(ENABLE_IMUCalibDuper "Build IMU dumper for calibration" OFF)
+option(ENABLE_IMUcalibapp "Install IMU calibration dumper app" OFF)
 
 if(ENABLE_autosaccade)
     add_subdirectory(autosaccade)
@@ -57,7 +57,7 @@ if(ENABLE_corner)
     add_subdirectory(corner)
 endif(ENABLE_corner)
 
-if(ENABLE_IMUCalibDumper)
+if(ENABLE_IMUcalibapp)
     add_subdirectory(IMUCalibDumper)
 endif()
 

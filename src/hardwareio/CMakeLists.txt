@@ -3,7 +3,7 @@ option(ENABLE_chronocamgrabber "Build chronocamGrabber" OFF)
 option(ENABLE_binarydumper "Build binaryDumper" OFF)
 option(ENABLE_qadIMUcal "Build qadIMUcalibrator" OFF)
 option(ENABLE_atis3 "Build ATIS generation 3 bridge" OFF)
-option(ENABLE_IMUCalibDuper "Build IMU dumper for calibration" OFF)
+option(ENABLE_IMUCalibDumper "Build IMU dumper for calibration" OFF)
 
 if(ENABLE_zynqgrabber)
     add_subdirectory(zynqGrabber)
