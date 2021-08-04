@@ -69,7 +69,7 @@ public:
         gyrFileName = static_cast<std::string>(rf.check("gyrFileName", Value(std::string(std::getenv("HOME"))+"/results/IMUDataDump/gyr.mat")).asString());
         accFilePath = accFileName;
         gyrFilePath = gyrFileName;
-        
+
         //start the asynchronous and synchronous threads
         return Thread::start();
     }
@@ -81,7 +81,7 @@ public:
      */
     double getPeriod()
     {
-        return 1; //period of synchrnous thread
+        return 0.5; //period of synchrnous thread
     }
 
     /*!
@@ -146,10 +146,11 @@ public:
     {
         // Print data for making easy for the user to follow the calibration pattern
         std::cout << "Acc reding: ";
-        for(auto e : accData.back())
-           std::cout << e << ", ";
-        std::cout << "\n"; 
-        
+        if(accData.size() > 0){
+            for(auto e : accData.back())
+               std::cout << e << ", ";
+            std::cout << "\n"; 
+        }
         return Thread::isRunning();
     }
 
