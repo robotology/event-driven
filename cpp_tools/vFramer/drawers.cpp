@@ -64,6 +64,19 @@ bool greyDrawer::initialise(const std::string &name, int height, int width)
     return input.open(name + "/AE:i");
 }
 
+inline void draw_grey(const AE &v, cv::Mat &canvas) 
+{
+    auto &pixel = canvas.at<unsigned char>(v.y, v.x);
+    if (v.p) {
+        if (pixel + 50 > 255) pixel = 255;
+        else pixel += 50;
+    } else {
+        canvas.at<unsigned char>(v.y, v.x) = 0;
+        if (pixel - 50 < 0) pixel = 0;
+        else pixel -= 50;
+    }
+}
+
 void greyDrawer::updateImage()
 {
     ev::info inf = input.readSlidingWinT(0.1, true);
@@ -72,22 +85,7 @@ void greyDrawer::updateImage()
     canvas = 128;
     for (auto &v : input)
     {
-        auto &pixel = canvas.at<unsigned char>(v.y, v.x);
-        if (v.p)
-        {
-            if (pixel + 50 > 255)
-                pixel = 255;
-            else
-                pixel += 50;
-        }
-        else
-        {
-            canvas.at<unsigned char>(v.y, v.x) = 0;
-            if (pixel - 50 < 0)
-                pixel = 0;
-            else
-                pixel -= 50;
-        }
+        draw_grey(v, canvas);
     }
 
     cv::imshow("test image", canvas);
@@ -105,7 +103,7 @@ bool isoDrawer::initialise(const std::string &name, int height, int width)
 
 void isoDrawer::updateImage()
 {
-    ev::info inf = input.readSlidingWinT(0.1, true);
+    ev::info inf = input.readSlidingWinT(1.0, true);
     yInfo() << inf.count << "in" << inf.duration << "seconds";
 
     canvas = 128;

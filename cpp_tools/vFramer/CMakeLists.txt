@@ -2,7 +2,7 @@ project(vFramer)
 
 add_executable(${PROJECT_NAME} vFramer.cpp drawers.cpp drawers.h)
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS} ${EVENTDRIVEN_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_os
                                                YARP::YARP_init

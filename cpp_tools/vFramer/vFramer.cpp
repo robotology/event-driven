@@ -187,8 +187,8 @@ public:
         }
         publishers.front()->setPeriod(period);
 
-        if (!yarp::os::Network::connect("/atis3/AE:o", getName("/grey/AE:i"), "fast_tcp"))
-            yError() << "Did not conenct to source";
+        // if (!yarp::os::Network::connect("/atis3/AE:o", getName("/grey/AE:i"), "fast_tcp"))
+        //     yError() << "Did not conenct to source";
 
         //}
 
