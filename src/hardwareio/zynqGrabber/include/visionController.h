@@ -69,6 +69,7 @@ private:
     bool configureRegistersGen3();
 
     bool SetupVSCTRLinHSSAERmode();
+    bool enableGTP();
 
     //WRAPPERS?
     bool configureRegisters(); //new initDevice

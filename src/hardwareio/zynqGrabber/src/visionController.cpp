@@ -411,7 +411,7 @@ bool vVisionCtrl::configureRegistersGen1() {
 }
 
 bool vVisionCtrl::configureRegistersGen3() {
-    if (!SetupVSCTRLinHSSAERmode()) return false;
+    if (!enableGTP()) return false;
     if (!SisleySetup()) return false;
     if (!EnablePower()) return false;
     // Enable data transmission from VSCTRL
@@ -434,6 +434,30 @@ bool vVisionCtrl::SisleyTDROIDefinition(int x, int y, int width, int height) {
 	// Enable TD ROI and trigger trasnfer values to the shadow registers
  	WriteSisleyRegister(SISLEY_ROI_CTRL_REG, 0x0000002E);
 	WriteSisleyRegister(SISLEY_ROI_CTRL_REG, 0x0000000E);
+}
+
+bool vVisionCtrl::enableGTP()
+{
+    uint32_t data32;
+	// VSCTRL: Enable clock
+	data32=VSCTRL_ENABLE_CLK;
+	if (i2cWrite(VSCTRL_SISLEY_LDO_RSTN_REG1, (uint8_t *)&data32, 1) != 1) return false;
+
+    // Enable GTP
+    data32 = 0x24;
+	if (i2cWrite(VSCTRL_DSTCTRL_REG, (uint8_t *)&data32, 1) != 1) return false;
+
+    //align GTP between eye and zynq FPGA
+    data32 = 0x01;
+    if (i2cWrite(VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+    yarp::os::Time::delay(0.01);
+    data32 = 0x00;
+    if (i2cWrite(VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+
+    // VSCTRL: Flush Fifo
+	data32=VSCTRL_FLUSH_FIFO;
+	if (i2cWrite(VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+
 }
 
 bool vVisionCtrl::SetupVSCTRLinHSSAERmode() {
