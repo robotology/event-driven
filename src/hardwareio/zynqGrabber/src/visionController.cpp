@@ -203,7 +203,8 @@ bool vVisionCtrl::configureBiaseseGen3() {
             biasVal = 511 * (voltage / vref);
         }
         biasVal += header << 24;
-        if (WriteSisleyRegister(BIAS_LATCHOUT_OR_PU + i * 4, biasVal) != sizeof(biasVal)) {
+        std::cout << iBias << " " << biasName << " = " << biasVal <<std::endl;
+	if (WriteSisleyRegister(BIAS_LATCHOUT_OR_PU + i * 4, biasVal) != sizeof(biasVal)) {
             return false;
         }
     }
@@ -348,6 +349,7 @@ bool vVisionCtrl::configureRegisters()
         return configureRegistersGen1();
     else if (deviceType == "ATISGen3")
         return configureRegistersGen3();
+
 
     return false;
 }
@@ -504,8 +506,9 @@ bool vVisionCtrl::activateAPSShutter()
 bool vVisionCtrl::configureBiases(){
     if (this->deviceType == "ATIS")
         return configureBiasesGen1();
-    else if (this->deviceType == "ATISGen3")
-        return configureBiaseseGen3();
+    else if (this->deviceType == "ATISGen3"){
+	std::cout << "CONFIGURING BIASES GEN 3";
+        return configureBiaseseGen3();}
 }
 
 bool vVisionCtrl::configureBiasesGen1() {
