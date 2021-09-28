@@ -40,7 +40,7 @@ int main(int argc, char * argv[])
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("zynqGrabber.ini"); //overridden by --from parameter
-    rf.setDefaultContext("eventdriven");   //overridden by --context parameter
+    rf.setDefaultContext("event-driven");   //overridden by --context parameter
     rf.configure(argc, argv);
 
     zynqGrabberModule module;
@@ -268,8 +268,8 @@ bool zynqGrabberModule::close() {
 /* Called periodically every getPeriod() seconds */
 bool zynqGrabberModule::updateModule() {
 
-    if(!vsctrlMngRight.activateAPSShutter())
-        yWarning() << "Could not activate APS shutter";
+    //if(!vsctrlMngRight.activateAPSShutter())
+    //    yWarning() << "Could not activate APS shutter";
     return !isStopping();
 }
 

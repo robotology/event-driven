@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <yarp/os/all.h>
+#include <mutex>
 #include "event-driven/vCodec.h"
 #include "event-driven/vtsHelper.h"
 
@@ -329,6 +330,15 @@ public:
         return _internal_write(envelope);
     }
 
+    bool write(const vector<int32_t> &q, Stamp &envelope, size_t n_to_write)
+    {
+        n_to_write = std::min(n_to_write, q.size());
+        internal_storage.setExternalData((const char *)q.data(),
+                                         n_to_write * sizeof(int32_t));
+        return _internal_write(envelope);
+    }
+
+
     bool write(const deque<int32_t> &q, Stamp &envelope)
     {
         internal_storage.setInternalData(q);
@@ -370,8 +380,8 @@ protected:
     deque<int> n_q;
 
 
-    Mutex m;
-    Mutex read_mutex;
+    std::mutex m;
+    std::mutex read_mutex;
     Semaphore dataavailable;
 
     unsigned int qlimit;
@@ -395,7 +405,7 @@ public:
         working_queue = nullptr;
         p_time = 0;
 
-        setPriority(99, SCHED_FIFO);
+        //setPriority(0, SCHED_FIFO);
 
         dataavailable.wait(); //init counter to 0
     }
@@ -469,6 +479,8 @@ public:
             port.getEnvelope(yarp_stamp);
             T *next_queue = new T;
             internal_storage.decodePacket(*next_queue);
+            if(countEvents<T>(*next_queue) <= 0)
+                continue;
 
             m.lock();
 
@@ -576,6 +588,10 @@ public:
     double queryRate()
     {
         return event_rate * vtsHelper::vtsscaler;
+    }
+
+    int getInputCount(){
+        return port.getInputCount();
     }
 
     std::string delayStatString()

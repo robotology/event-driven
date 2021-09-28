@@ -60,9 +60,14 @@ set(EVENTDRIVEN_LIBRARY event-driven)
 
 option(ADD_DOCS_TO_IDE "Add apps/documentation to IDE" OFF)
 
+find_package(MetavisionSDK COMPONENTS core driver QUIET)
+set_package_properties(MetavisionSDK PROPERTIES TYPE OPTIONAL)
+
+find_package(prophesee_core QUIET)
+set_package_properties(prophesee_core PROPERTIES TYPE OPTIONAL)
+
 find_package(OpenCV)
 set_package_properties(OpenCV PROPERTIES TYPE OPTIONAL)
-
 
 if(OpenCV_FOUND)
     set(OpenCV_dep OpenCV)
@@ -76,7 +81,9 @@ yarp_configure_external_installation(event-driven)
 
 
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES)
-
+if(OpenCV_FOUND)
+    message(STATUS "Found OpenCV: (found version ${OpenCV_VERSION})")
+endif()
 add_subdirectory(lib)
 add_subdirectory(src)
 # add_subdirectory(bindings)

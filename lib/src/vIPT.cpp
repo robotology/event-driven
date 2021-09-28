@@ -30,11 +30,14 @@ namespace ev {
 
 vIPT::vIPT()
 {
+    size_cam[0] = Size(-1, -1);
+    size_cam[1] = Size(-1, -1);
     size_shared = Size(0, 0);
 }
 
 bool vIPT::importIntrinsics(int cam, Bottle &parameters)
 {
+
     if(parameters.isNull()) {
         yWarning() << "Could not find camera" << cam <<"parameters";
         return false;
@@ -161,14 +164,13 @@ const cv::Mat& vIPT::getQ(){
     return Q;
 }
 
-bool vIPT::configure(const string calibContext, const string calibFile, int size_scaler)
+bool vIPT::configure(const string &calib_file_path, int size_scaler)
 
 {
     ResourceFinder calibfinder;
-    calibfinder.setVerbose();
-    calibfinder.setDefaultContext(calibContext);
-    calibfinder.setDefaultConfigFile(calibFile);
+    calibfinder.setDefault("from", calib_file_path);
     calibfinder.configure(0, 0);
+
 
     //import intrinsics
     bool valid_cam1 = importIntrinsics(0, calibfinder.findGroup("CAMERA_CALIBRATION_LEFT"));
@@ -195,7 +197,7 @@ bool vIPT::configure(const string calibContext, const string calibFile, int size
         cv::stereoRectify(cam_matrix[0], dist_coeff[0], cam_matrix[1],
                 dist_coeff[1], size_cam[0], stereo_rotation, stereo_translation,
                 rotation[0], rotation[1], projection[0],projection[1], Q,
-                CV_CALIB_ZERO_DISPARITY, 1, size_shared);
+                CALIB_ZERO_DISPARITY, 1, size_shared);
 
     } else {
         if(valid_cam1)
@@ -357,6 +359,35 @@ bool vIPT::showMapProjections(double seconds)
     return true;
 }
 
+void vIPT::printValidCalibrationValues()
+{
+    yInfo() << "Printing non-empty intrinsic and extrinsic parameters:";
+    std::stringstream ss;
+    for(auto i : {0, 1}) {
+        if(size_cam[i].width > 0) {
+            ss << "size_cam[" << i << "]" << std::endl;
+            ss << size_cam[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+        if(!cam_matrix[i].empty()) {
+            ss << "cam_matrix[" << i << "]" << std::endl;
+            ss << cam_matrix[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+        if(!dist_coeff[i].empty()) {
+            ss << "dist_coeff[" << i << "]" << std::endl;
+            ss << dist_coeff[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+    }
+
+    if(!stereo_translation.empty()) {
+        ss << "stereo_translation" << std::endl;
+        ss << stereo_translation << std::endl; yInfo() << ss.str(); ss.str("");
+    }
+    if(!stereo_rotation.empty()) {
+        ss << "stereo_rotation" << std::endl;
+        ss << stereo_rotation << std::endl; yInfo() << ss.str(); ss.str("");
+    }
+}
+
 bool vIPT::sparseForwardTransform(int cam, int &y, int &x)
 {
     cv::Vec2i p(y, x);
@@ -402,7 +433,7 @@ bool vIPT::sparseProjectCam1ToCam0(int &y, int &x)
 bool vIPT::denseForwardTransform(int cam, cv::Mat &m)
 {
     cv::Mat remapped;
-    cv::remap(m, remapped, mat_reverse_map[cam], cv::noArray(), CV_INTER_LINEAR, BORDER_CONSTANT, CV_RGB(255, 255, 255));
+    cv::remap(m, remapped, mat_reverse_map[cam], cv::noArray(), INTER_LINEAR, BORDER_CONSTANT, CV_RGB(255, 255, 255));
     m = remapped;
     return true;
 }
@@ -410,7 +441,7 @@ bool vIPT::denseForwardTransform(int cam, cv::Mat &m)
 bool vIPT::denseReverseTransform(int cam, cv::Mat &m)
 {
     cv::Mat remapped;
-    cv::remap(m, remapped, mat_forward_map[cam], cv::noArray(), CV_INTER_LINEAR, BORDER_CONSTANT, CV_RGB(255, 255, 255));
+    cv::remap(m, remapped, mat_forward_map[cam], cv::noArray(), INTER_LINEAR, BORDER_CONSTANT, CV_RGB(255, 255, 255));
     m = remapped;
     return true;
 }

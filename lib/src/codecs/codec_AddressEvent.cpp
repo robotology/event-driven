@@ -48,7 +48,7 @@ namespace ev {
 const std::string AddressEvent::tag = "AE";
 
 AddressEvent::AddressEvent() : vEvent(), polarity(0), x(0), _xfill(0), y(0),
-    _yfill(0), channel(0), type(0), skin(0), _fill(0) {}
+    corner(0), channel(0), type(0), skin(0), _fill(0) {}
 
 AddressEvent::AddressEvent(const vEvent &v) : vEvent(v), _coded_data(0)
 {

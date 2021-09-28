@@ -213,10 +213,15 @@ std::string blackDraw::getEventType()
     return AddressEvent::tag;
 }
 
+void blackDraw::resetImage(cv::Mat &image)
+{
+    if (image.empty())
+        image = cv::Mat(Ylimit, Xlimit, CV_8UC3);
+    image.setTo(0);
+}
+
 void blackDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 {
-    image = cv::Scalar(255, 255, 255);
-
     if(eSet.empty()) return;
     if(vTime < 0) vTime = eSet.back()->stamp;
 
@@ -237,20 +242,8 @@ void blackDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
             x = Xlimit - 1 - x;
         }
 
-        image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+        image.at<cv::Vec3b>(y, x) = white;
     }
-    /*
-    cv::Mat kernel = (cv::Mat_<float>(3,3) <<
-        1,  1, 1,
-        1, -8, 1,
-        1,  1, 1);
-
-    imgLaplacian = Mat::zeros(img.size());
-    filter2D(img, imgLaplacian, kernel);
-
-    cv::GaussianBlur(image, temp, cv::Size(3,3), 3);
-    cv::addWeighted(temp, 1.5, image, -0.5, 0, image);
-    */
 }
 
 
@@ -486,11 +479,11 @@ void accDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
 
         if(!aep->polarity)
         {
-            cv::circle(image, centr, radius, pos, CV_FILLED);
+            cv::circle(image, centr, radius, pos, cv::FILLED);
         }
         else
         {
-            cv::circle(image, centr, radius, neg, CV_FILLED);
+            cv::circle(image, centr, radius, neg, cv::FILLED);
         }
 
     }
@@ -642,7 +635,7 @@ void rasterDrawHN::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
     for(auto i  = 0; i < lines.size(); i++) {
         int y = (lines[i] - neuron_min) * ((double)Ylimit / (1 + neuron_max - neuron_min));
         cv::line(image, cv::Point(0, y), cv::Point(Xlimit, y), aqua, 3);
-        cv::putText(image, texts[i], cv::Point(0, y), CV_FONT_HERSHEY_SIMPLEX, 1.0, black, 2);
+        cv::putText(image, texts[i], cv::Point(0, y), cv::FONT_HERSHEY_SIMPLEX, 1.0, black, 2);
     }
 
     for(auto qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
@@ -666,6 +659,6 @@ void rasterDrawHN::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
         }
 
         //image.at<cv::Vec3b>(y, x) = this->black;
-        cv::circle(image, cv::Point(x, y), 5, black, CV_FILLED);
+        cv::circle(image, cv::Point(x, y), 5, black, cv::FILLED);
     }
 }

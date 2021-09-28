@@ -6,7 +6,7 @@
 
 <module>
     <name> vPreProcess </name>
-    <parameters>--flipx --flipy --split_stereo </parameters>
+    <parameters> --split_stereo </parameters>
     <node> localhost </node>
 </module>
 
@@ -32,31 +32,31 @@
 <connection>
   <from>/zynqGrabber/AE:o</from>
   <to>/vPreProcess/AE:i</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vPreProcess/left:o</from>
   <to>/vFramer/left/AE:i</to>
-  <protocol> udp </protocol>
+  <protocol> fast_tcp </protocol>
 </connection>
 
 <connection>
   <from>/vPreProcess/right:o</from>
   <to>/vFramer/right/AE:i</to>
-  <protocol> udp </protocol>
+  <protocol> fast_tcp </protocol>
 </connection>
 
 <connection>
   <from>/vFramer/left/image:o</from>
   <to>/viewCh0</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 <connection>
   <from>/vFramer/right/image:o</from>
   <to>/viewCh1</to>
-  <protocol>udp</protocol>
+  <protocol>fast_tcp</protocol>
 </connection>
 
 

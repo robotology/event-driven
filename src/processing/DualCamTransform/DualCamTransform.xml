@@ -44,7 +44,7 @@
 
         <output>
             <type>yarp::sig::Image</type>
-            <port carrier="udp">/vMapping/img:o</port>
+            <port carrier="fast_tcp">/vMapping/img:o</port>
             <description>
                 Image overlapped with events
             </description>
@@ -52,7 +52,7 @@
 
          <output>
             <type>ev::vBottle</type>
-            <port carrier="udp">/vMapping/vBottle:o</port>
+            <port carrier="fast_tcp">/vMapping/vBottle:o</port>
             <description>
                 Transformed events
             </description>

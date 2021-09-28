@@ -196,7 +196,7 @@ void DualCamTransformModule::finalizeCalibration( yarp::sig::Matrix &homography,
     homography /= nIter;
     homography = homography.transposed();
     cv::destroyAllWindows();
-    cvWaitKey(1);
+    cv::waitKey(1);
     yInfo() << "Camera calibration is over after " << nIter << " steps";
     nIter = 0;
     yInfo() << "Saving calibration results to " << confFileName;
@@ -351,7 +351,7 @@ bool DualCamTransformModule::performCalibStep( yarp::sig::ImageOf<yarp::sig::Pix
         cv::Mat vCentersMat( vCenters );
         drawChessboardCorners( frameMat, boardSize, frameCentersMat, frameFound );
         drawChessboardCorners( vMat, boardSize, vCentersMat, eventFound );
-        cv::Mat h = findHomography( vCenters, frameCenters, CV_RANSAC );
+        cv::Mat h = findHomography( vCenters, frameCenters, cv::RANSAC );
         imshow( "img", frameMat );
         imshow( "vImg", vMat );
         cv::waitKey( 1000 );

@@ -96,7 +96,7 @@ public:
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
     virtual int getChannel() const;
-    virtual void setChannel();
+    virtual void setChannel(const int channel);
 };
 
 /// \brief an event with a pixel location, camera number and polarity
@@ -110,10 +110,10 @@ public:
         uint32_t _coded_data;
         struct {
             unsigned int polarity:1;
-            unsigned int _xfill:1;
             unsigned int x:10;
+            unsigned int _xfill:1;
             unsigned int y:9;
-            unsigned int _yfill:1;
+            unsigned int corner:1;
             unsigned int channel:1;
             unsigned int type:1;
             unsigned int skin:1;
@@ -136,6 +136,27 @@ public:
     virtual void setChannel(const int channel);
 };
 using AE = AddressEvent;
+
+/// \brief an event with a neuron ID
+class neuronEvent : public vEvent
+{
+public:
+    static const std::string tag;
+    unsigned int id;
+
+    neuronEvent();
+    neuronEvent(const vEvent &v);
+    neuronEvent(const neuronEvent &v);
+
+    virtual event<> clone();
+    virtual void encode(yarp::os::Bottle &b) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
+    virtual void decode(const int32_t *&data);
+    virtual yarp::os::Property getContent() const;
+    virtual std::string getType() const;
+
+};
 
 /// \brief an event with a taxel location, body-part and polarity
 class SkinEvent : public vEvent
@@ -196,6 +217,45 @@ public:
     virtual yarp::os::Property getContent() const;
     virtual std::string getType() const;
 
+};
+
+/// \brief an event with a frequency channel number, left/right, binaural cues info and polarity
+class CochleaEvent : public vEvent
+{
+public:
+    static const std::string tag;
+
+    union
+    {
+        uint32_t _cochleaei;
+        struct {
+            unsigned int polarity:1;
+            unsigned int freq_chnn:7;
+            unsigned int xso_type:1;
+            unsigned int auditory_model:1;
+            unsigned int _reserved1:2;
+            unsigned int neuron_id:7;
+            unsigned int sensor_id:3;
+            unsigned int channel:1;
+            unsigned int type:1;
+            unsigned int cochlea_sensor_id:3;
+            unsigned int _fill:5;
+        };
+    };
+
+    CochleaEvent();
+    CochleaEvent(const vEvent &v);
+    CochleaEvent(const CochleaEvent &v);
+
+    virtual event<> clone();
+    virtual void encode(yarp::os::Bottle &b) const;
+    virtual void encode(std::vector<int32_t> &b, unsigned int &pos) const;
+    virtual bool decode(const yarp::os::Bottle &packet, size_t &pos);
+    virtual void decode(const int32_t *&data);
+    virtual yarp::os::Property getContent() const;
+    virtual std::string getType() const;
+    virtual int getChannel() const;
+    virtual void setChannel(const int channel);
 };
 
 /// \brief an AddressEvent with a velocity in visual space
@@ -316,7 +376,7 @@ template <class T> size_t countEvents(const T &q) { return q.size(); }
 template <typename T> inline int countTime(const T &q, int &p_time)
 {
     if(!p_time) p_time = q.front().stamp;
-    int dt = q.back().stamp - q.front().stamp;
+    int dt = q.back().stamp - p_time;
     p_time = q.back().stamp;
     if(dt < 0) dt += vtsHelper::max_stamp;
     return dt;
@@ -325,7 +385,7 @@ template <typename T> inline int countTime(const T &q, int &p_time)
 template <> inline int countTime<vQueue> (const vQueue &q, int &p_time)
 {
     if(!p_time) p_time = q.front()->stamp;
-    int dt = q.back()->stamp - q.front()->stamp;
+    int dt = q.back()->stamp - p_time;
     p_time = q.back()->stamp;
     if(dt < 0) dt += vtsHelper::max_stamp;
     return dt;

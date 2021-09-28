@@ -5,10 +5,10 @@ set(VLIB_CODEC_TYPE ${VLIB_CODEC_DEFAULT} CACHE STRING "select codec type")
 set_property(CACHE VLIB_CODEC_TYPE PROPERTY STRINGS ${CodecTypes})
 
 #choose clock rate of FPGA
-set(VLIB_CLOCK_PERIOD_NS 80 CACHE INTEGER "event timestamp clock period (ns)")
+set(VLIB_CLOCK_PERIOD_NS 80 CACHE STRING "event timestamp clock period (ns)")
 
 #choose number of bits of the FPGA timer to use
-set(VLIB_TIMER_BITS 30 CACHE INTEGER "event timestamp maximum = 2^TIMERBITS")
+set(VLIB_TIMER_BITS 30 CACHE STRING "event timestamp maximum = 2^TIMERBITS")
 string(COMPARE GREATER ${VLIB_TIMER_BITS} 31 TOOMANYBITSINCOUNTER)
 if(TOOMANYBITSINCOUNTER)
   message( FATAL_ERROR "Maximum bits useable is 31 (VLIB_TIMER_BITS)")
@@ -27,7 +27,9 @@ set(folder_source
   src/codecs/codec_LabelledAE.cpp
   src/codecs/codec_SkinEvent.cpp
   src/codecs/codec_SkinSample.cpp
-  src/codecs/codec_vEvent.cpp)
+  src/codecs/codec_CochleaEvent.cpp
+  src/codecs/codec_vEvent.cpp
+  src/codecs/codec_NeuronEvent.cpp)
 
 if(OpenCV_FOUND)
     list(APPEND folder_source src/vIPT.cpp

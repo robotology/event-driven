@@ -53,6 +53,10 @@ private:
     ev::vWritePort out_port_aps_stereo;
     ev::vWritePort out_port_imu_samples;
     ev::vWritePort out_port_audio;
+    ev::vWritePort out_port_crn_left;
+    ev::vWritePort out_port_crn_right;
+    ev::vWritePort out_port_crn_stereo;
+    yarp::os::BufferedPort< yarp::sig::Vector > rate_port;
 
     //parameters
     std::string name;
@@ -80,12 +84,17 @@ private:
     bool split_polarities;
     bool combined_stereo;
     bool use_local_stamp;
+    bool corners;
 
     //timing stats
     std::deque<double> delays;
     std::deque<double> rates;
     std::deque<double> intervals;
     std::deque<double> proc_times;
+    
+    bool vis{false};
+    std::deque<double> plot_rates;
+    void visualise_rate();
 
 public:
 
