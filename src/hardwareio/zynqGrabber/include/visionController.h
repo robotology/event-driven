@@ -22,6 +22,7 @@
 
 #include <deviceRegisters.h>
 #include <yarp/os/Bottle.h>
+#include <yarp/os/ResourceFinder.h>
 
 #include <string>
 #include <stdio.h>
@@ -36,6 +37,76 @@ typedef struct fpgaStatus {
     bool apsFifoFull;
     bool tdFifoFull;
 } fpgaStatus_t;
+
+
+class visCtrlInterface
+{
+public:
+    enum channel_name {LEFT = 0, RIGHT = 1};
+    enum cam_type {DVS = 0x001, ATIS1 = 0x010, ATIS3 = 0x011};
+
+private:
+
+    static const int AUTO_INCREMENT = 0x80;
+    static const int I2C_LEFT = 0x10;
+    static const int I2C_RIGHT = 0x11;
+    static const int VCTRL_INFO = 0x00;
+
+    int fd{-1};
+    channel_name channel{LEFT};
+
+    static int extractCamType(int reg_value);
+    static void channelSelect(int fd, channel_name name);
+    static int i2cRead(int fd, unsigned char reg, unsigned char *data, 
+                       unsigned int size);
+
+public:
+
+    visCtrlInterface(int fd, channel_name channel);
+    static int openI2Cdevice(std::string path);
+    static void closeI2Cdevice(int fd);
+    static int readCameraType(int fd, channel_name name);
+    virtual bool configure(yarp::os::ResourceFinder rf);
+
+};
+
+class visCtrlATIS1 : public visCtrlInterface
+{
+private:
+public:
+    visCtrlATIS1(int fd, channel_name channel) : visCtrlInterface(fd, channel) {};
+    bool configure(yarp::os::ResourceFinder rf) override
+    {
+        return true;
+    }
+
+};
+
+class visCtrlATIS3 : public visCtrlInterface
+{
+private:
+public:
+    visCtrlATIS3(int fd, channel_name channel) : visCtrlInterface(fd, channel) {};
+    bool configure(yarp::os::ResourceFinder rf) override
+    {
+        return true;
+    }
+};
+
+class autoVisionController
+{
+private:
+    int fd;
+    visCtrlInterface * controls[2];
+    visCtrlInterface *createController(int fd, visCtrlInterface::channel_name channel);
+
+public:
+
+    autoVisionController();
+    ~autoVisionController();
+    void connect(std::string i2c_device);
+    void configure(yarp::os::ResourceFinder rf);
+};
 
 class vVisionCtrl
 {

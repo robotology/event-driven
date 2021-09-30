@@ -19,6 +19,7 @@
 
 #include "visionController.h"
 #include "deviceRegisters.h"
+#include <yarp/os/all.h>
 
 #include <iostream>
 
@@ -26,6 +27,115 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <iostream>
+
+// =================== visCtrlInterface =================== //
+
+int visCtrlInterface::extractCamType(int reg_value) 
+{
+    return (reg_value & 0x0000E000) >> 13;
+}
+
+void visCtrlInterface::channelSelect(int fd, channel_name name) 
+{
+    switch (name) 
+    {
+        case (LEFT): ioctl(fd, I2C_SLAVE, I2C_LEFT); break;
+        case (RIGHT): ioctl(fd, I2C_SLAVE, I2C_RIGHT); break;
+    }
+}
+
+int visCtrlInterface::i2cRead(int fd, unsigned char reg, unsigned char *data, 
+                              unsigned int size) 
+{
+    unsigned char addr = size > 1 ? reg | AUTO_INCREMENT : reg;
+    int ret = write(fd, &addr, 1);
+    if (ret < 0) return ret;
+    return read(fd, data, size);
+}
+
+visCtrlInterface::visCtrlInterface(int fd, channel_name channel) 
+{
+    this->fd = fd;
+    this->channel = channel;
+}
+
+int visCtrlInterface::openI2Cdevice(std::string path) 
+{
+    int fd = open(path.c_str(), O_RDWR);
+    if (fd < 0)
+        perror("Cannot open i2c device: ");
+    return fd;
+}
+
+void visCtrlInterface::closeI2Cdevice(int fd) 
+{
+    close(fd);
+}
+
+int visCtrlInterface::readCameraType(int fd, channel_name name) 
+{
+    channelSelect(fd, name);
+    int reg_value = 0;
+    i2cRead(fd, VCTRL_INFO, (unsigned char *)&reg_value, sizeof(reg_value));
+    return extractCamType(reg_value);
+}
+
+bool visCtrlInterface::configure(yarp::os::ResourceFinder rf) 
+{
+    yInfo() << "This module doesn't have a configure function";
+    return false;
+}
+
+// =================== autoVisionController =================== //
+visCtrlInterface *autoVisionController::createController(int fd, 
+                                       visCtrlInterface::channel_name channel) 
+{
+    visCtrlInterface *controller = nullptr;
+    int cam_type = visCtrlInterface::readCameraType(fd, channel);
+    switch (cam_type) {
+        case (visCtrlInterface::DVS):
+            yError() << "No device for DVS implemented";
+            break;
+        case (visCtrlInterface::ATIS1):
+            controller = new visCtrlATIS1(fd, channel);
+            break;
+        case (visCtrlInterface::ATIS3):
+            controller = new visCtrlATIS3(fd, channel);
+            break;
+        default:
+            yError() << "Unknown camera type" << cam_type;
+            break;
+    }
+    return controller;
+}
+autoVisionController::autoVisionController() 
+{
+    fd = -1;
+    controls[0] = nullptr;
+    controls[1] = nullptr;
+};
+
+autoVisionController::~autoVisionController() 
+{
+    for (auto c : controls)
+        if (c) delete c;
+    visCtrlInterface::closeI2Cdevice(fd);
+};
+
+void autoVisionController::connect(std::string i2c_device) 
+{
+    fd = visCtrlInterface::openI2Cdevice(i2c_device);
+    controls[0] = createController(fd, visCtrlInterface::LEFT);
+    controls[1] = createController(fd, visCtrlInterface::RIGHT);
+}
+
+void autoVisionController::configure(yarp::os::ResourceFinder rf) 
+{
+    for (auto c : controls)
+        if (c) c->configure(rf);
+}
+
+// =================== vVisionCtrl =================== //
 
 vVisionCtrl::vVisionCtrl(std::string deviceName, std::string deviceType, unsigned char i2cAddress)
 {
