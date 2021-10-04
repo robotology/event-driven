@@ -17,8 +17,11 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+
 #include "visionController.h"
 #include "deviceRegisters.h"
+#include "visCtrlATIS1.h"
+#include "visCtrlATIS3.h"
 #include <yarp/os/all.h>
 
 #include <iostream>
@@ -53,6 +56,25 @@ int visCtrlInterface::i2cRead(int fd, unsigned char reg, unsigned char *data,
     return read(fd, data, size);
 }
 
+int visCtrlInterface::i2cWrite(int fd, unsigned char reg, unsigned char *data, 
+                            unsigned int size)
+{
+
+    unsigned char *tmp = (unsigned char *) malloc ((size+1)*sizeof(unsigned char));
+
+    tmp[0] = size > 1 ? reg|AUTOINCR : reg;
+
+    for (unsigned int i = 0; i < size; i++)
+        tmp[1+i]=data[i];
+
+    int ret = write(fd, tmp, size+1);
+
+    free(tmp);
+
+    return (ret-1); // -1 because of one is the starting register
+
+}
+
 visCtrlInterface::visCtrlInterface(int fd, channel_name channel) 
 {
     this->fd = fd;
@@ -76,14 +98,66 @@ int visCtrlInterface::readCameraType(int fd, channel_name name)
 {
     channelSelect(fd, name);
     int reg_value = 0;
-    i2cRead(fd, VCTRL_INFO, (unsigned char *)&reg_value, sizeof(reg_value));
-    return extractCamType(reg_value);
+    if(i2cRead(fd, VCTRL_INFO, (unsigned char *)&reg_value, sizeof(reg_value)) 
+            != sizeof(reg_value))
+        return -1;
+    else
+        return extractCamType(reg_value);
 }
 
-bool visCtrlInterface::configure(yarp::os::ResourceFinder rf) 
+bool visCtrlInterface::activate(bool activate)
 {
-    yInfo() << "This module doesn't have a configure function";
+    yError() << "This controller doesn't have an activate function";
     return false;
+}
+
+bool visCtrlInterface::configure(yarp::os::ResourceFinder rf)
+{
+    yError() << "This controller doesn't have a configure function";
+    return false;
+}
+
+void visCtrlInterface::printConfiguration(int fd, channel_name name)
+{
+
+    channelSelect(fd, name);
+    switch (name) 
+    {
+        case (LEFT): yInfo() << "Configuration LEFT";  break;
+        case (RIGHT): yInfo() << "Configuration Right"; break;
+    }
+
+    // std::cout << "== Bias Values ==" << std::endl;
+    // std::cout << bias.toString() << std::endl;
+
+
+    std::cout << "== FPGA Register Values ==" << std::endl;
+    unsigned int regval = 0;
+    i2cRead(fd, VSCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Info: 0x%08X\n", regval);
+    i2cRead(fd, VSCTRL_STATUS_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Status: 0x%08X\n", regval);
+    i2cRead(fd, VSCTRL_SRC_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("Config: 0x%08X\n", regval);
+    i2cRead(fd, VSCTRL_SRC_DST_CTRL_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("DstCtrl: 0x%08X\n", regval);
+    i2cRead(fd, VSCTRL_PAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("PEAR-config: 0x%08X\n", regval);
+    i2cRead(fd, VSCTRL_HSSAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("HSSAER-config: 0x%08X\n", regval);
+    i2cRead(fd, VSCTRL_GTP_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("GTP-config: 0x%08X\n", regval);
+    i2cRead(fd, VSCTRL_BG_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("BG-config: 0x%08X\n", regval);
+    i2cRead(fd, VSCTRL_BG_PRESC_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("BG-prescaler: 0x%08X\n", regval);
+    i2cRead(fd, VSCTRL_BG_TIMINGS_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("BG-timings: 0x%08X\n", regval);
+    i2cRead(fd, VSCTRL_GPO_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("GPO: 0x%08X\n", regval);
+    i2cRead(fd, VSCTRL_GPI_ADDR, (unsigned char *)&regval, sizeof(regval));
+    printf("GPI: 0x%08X\n", regval);
+
 }
 
 // =================== autoVisionController =================== //
@@ -127,12 +201,17 @@ void autoVisionController::connect(std::string i2c_device)
     fd = visCtrlInterface::openI2Cdevice(i2c_device);
     controls[0] = createController(fd, visCtrlInterface::LEFT);
     controls[1] = createController(fd, visCtrlInterface::RIGHT);
+
+    //TODO put some info printed here about the status of connections
 }
 
-void autoVisionController::configure(yarp::os::ResourceFinder rf) 
+void autoVisionController::configureAndActivate(yarp::os::ResourceFinder rf) 
 {
-    for (auto c : controls)
-        if (c) c->configure(rf);
+    for (auto c : controls) {
+        if(!c) continue;
+        c->configure(rf);
+        c->activate();
+    }
 }
 
 // =================== vVisionCtrl =================== //

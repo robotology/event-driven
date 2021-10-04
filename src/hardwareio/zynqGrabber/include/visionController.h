@@ -17,8 +17,7 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __VVISCTRL__
-#define __VVISCTRL__
+#pragma once
 
 #include <deviceRegisters.h>
 #include <yarp/os/Bottle.h>
@@ -45,7 +44,7 @@ public:
     enum channel_name {LEFT = 0, RIGHT = 1};
     enum cam_type {DVS = 0x001, ATIS1 = 0x010, ATIS3 = 0x011};
 
-private:
+protected:
 
     static const int AUTO_INCREMENT = 0x80;
     static const int I2C_LEFT = 0x10;
@@ -59,6 +58,53 @@ private:
     static void channelSelect(int fd, channel_name name);
     static int i2cRead(int fd, unsigned char reg, unsigned char *data, 
                        unsigned int size);
+    static int i2cWrite(int fd, unsigned char reg, unsigned char *data, 
+                        unsigned int size);
+    static void printConfiguration(int fd, channel_name name);
+
+    static bool checkBiasDone(int fd)
+    {
+        unsigned char val;
+        int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+        return val & ST_BIAS_DONE_MSK > 0;
+    }
+    
+    static bool checkFifoFull(int fd)
+    {
+        unsigned char val;
+        int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+        return val & ST_TD_FIFO_FULL_MSK > 0;
+    }
+
+    static bool checkAPSFifoFull(int fd)
+    {
+        unsigned char val;
+        int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+        return val & ST_TD_FIFO_FULL_MSK > 0;
+    }
+
+    static bool checki2cTimeout(int fd)
+    {
+        unsigned char val;
+        int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+        return val & ST_I2C_TIMEOUT_MSK > 0;
+    }
+
+    static bool checkCRCError(int fd)
+    {
+        unsigned char val;
+        int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+        return val & ST_CRC_ERR_MSK > 0;
+    }
+
+    static bool clearStatusReg(int fd) 
+    {
+        unsigned char r = 0xFF;
+        if (i2cWrite(fd, VSCTRL_STATUS_ADDR, (unsigned char *)&r, sizeof(r)) == sizeof(r))
+            return true;
+        else
+            return false;
+    }
 
 public:
 
@@ -66,31 +112,9 @@ public:
     static int openI2Cdevice(std::string path);
     static void closeI2Cdevice(int fd);
     static int readCameraType(int fd, channel_name name);
-    virtual bool configure(yarp::os::ResourceFinder rf);
 
-};
-
-class visCtrlATIS1 : public visCtrlInterface
-{
-private:
-public:
-    visCtrlATIS1(int fd, channel_name channel) : visCtrlInterface(fd, channel) {};
-    bool configure(yarp::os::ResourceFinder rf) override
-    {
-        return true;
-    }
-
-};
-
-class visCtrlATIS3 : public visCtrlInterface
-{
-private:
-public:
-    visCtrlATIS3(int fd, channel_name channel) : visCtrlInterface(fd, channel) {};
-    bool configure(yarp::os::ResourceFinder rf) override
-    {
-        return true;
-    }
+    virtual bool activate(bool activate = true);
+    virtual bool configure(yarp::os::ResourceFinder rf) = 0;
 };
 
 class autoVisionController
@@ -105,7 +129,7 @@ public:
     autoVisionController();
     ~autoVisionController();
     void connect(std::string i2c_device);
-    void configure(yarp::os::ResourceFinder rf);
+    void configureAndActivate(yarp::os::ResourceFinder rf);
 };
 
 class vVisionCtrl
@@ -183,4 +207,3 @@ public:
 
 };
 
-#endif
