@@ -38,12 +38,18 @@ int visCtrlInterface::extractCamType(int reg_value)
     return (reg_value & 0x0000E000) >> 13;
 }
 
-void visCtrlInterface::channelSelect(int fd, channel_name name) 
+int visCtrlInterface::channelSelect(int fd, channel_name name) 
 {
     switch (name) 
     {
-        case (LEFT): ioctl(fd, I2C_SLAVE, I2C_LEFT); break;
-        case (RIGHT): ioctl(fd, I2C_SLAVE, I2C_RIGHT); break;
+        case (LEFT):
+            ioctl(fd, I2C_SLAVE, I2C_LEFT);
+            return I2C_LEFT;
+            break;
+        case (RIGHT): 
+            ioctl(fd, I2C_SLAVE, I2C_RIGHT);
+            return I2C_RIGHT;
+            break;
     }
 }
 
@@ -165,19 +171,24 @@ visCtrlInterface *autoVisionController::createController(int fd,
                                        visCtrlInterface::channel_name channel) 
 {
     visCtrlInterface *controller = nullptr;
+    yInfo() << "Creating controller attached to i2c address" 
+            << visCtrlInterface::getChannelI2CAddress(fd, channel);
     int cam_type = visCtrlInterface::readCameraType(fd, channel);
     switch (cam_type) {
         case (visCtrlInterface::DVS):
-            yError() << "No device for DVS implemented";
+            yInfo() << "DVS camera found!";
+            yError() << "No controller for DVS implemented";
             break;
         case (visCtrlInterface::ATIS1):
+            yInfo() << "ATIS1 camera found!";
             controller = new visCtrlATIS1(fd, channel);
             break;
         case (visCtrlInterface::ATIS3):
+            yInfo() << "ATIS3 camera found!";
             controller = new visCtrlATIS3(fd, channel);
             break;
         default:
-            yError() << "Unknown camera type" << cam_type;
+            yError() << "Error on camera type:" << cam_type;
             break;
     }
     return controller;
@@ -198,20 +209,27 @@ autoVisionController::~autoVisionController()
 
 void autoVisionController::connect(std::string i2c_device) 
 {
+    yInfo() << "Connecting to vision controller devices";
     fd = visCtrlInterface::openI2Cdevice(i2c_device);
+    yInfo() << "Found and opened" << i2c_device;
     controls[0] = createController(fd, visCtrlInterface::LEFT);
+    if(controls[0]) yInfo() << "Left camera found and connected";
     controls[1] = createController(fd, visCtrlInterface::RIGHT);
+    if(controls[1]) yInfo() << "Right camera found and connected";
 
     //TODO put some info printed here about the status of connections
 }
 
 void autoVisionController::configureAndActivate(yarp::os::ResourceFinder rf) 
 {
-    for (auto c : controls) {
-        if(!c) continue;
-        c->configure(rf);
-        c->activate();
-    }
+    yInfo() << "Configuring Left Camera";
+    controls[0]->configure(rf);
+    controls[0]->activate();
+
+    yInfo() << "Configuring Left Camera";
+    controls[1]->configure(rf);
+    controls[1]->activate();
+
 }
 
 // =================== vVisionCtrl =================== //

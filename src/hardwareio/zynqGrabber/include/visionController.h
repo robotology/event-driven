@@ -55,7 +55,7 @@ protected:
     channel_name channel{LEFT};
 
     static int extractCamType(int reg_value);
-    static void channelSelect(int fd, channel_name name);
+    static int channelSelect(int fd, channel_name name);
     static int i2cRead(int fd, unsigned char reg, unsigned char *data, 
                        unsigned int size);
     static int i2cWrite(int fd, unsigned char reg, unsigned char *data, 
@@ -111,6 +111,10 @@ public:
     visCtrlInterface(int fd, channel_name channel);
     static int openI2Cdevice(std::string path);
     static void closeI2Cdevice(int fd);
+    static int getChannelI2CAddress(int fd, channel_name channel)
+    {
+        return channelSelect(fd, channel);
+    }
     static int readCameraType(int fd, channel_name name);
 
     virtual bool activate(bool activate = true);
