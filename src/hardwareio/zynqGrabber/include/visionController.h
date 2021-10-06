@@ -42,7 +42,7 @@ class visCtrlInterface
 {
 public:
     enum channel_name {LEFT = 0, RIGHT = 1};
-    enum cam_type {DVS = 0x001, ATIS1 = 0x010, ATIS3 = 0x011};
+    enum cam_type {DVS = 1, ATIS1 = 2, ATIS3 = 3}; //correspond to FPGA values
 
 protected:
 

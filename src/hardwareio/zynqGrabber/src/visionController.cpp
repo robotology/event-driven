@@ -188,7 +188,7 @@ visCtrlInterface *autoVisionController::createController(int fd,
             controller = new visCtrlATIS3(fd, channel);
             break;
         default:
-            yError() << "Error on camera type:" << cam_type;
+            yInfo() << "No camera found" << cam_type;
             break;
     }
     return controller;
@@ -228,13 +228,17 @@ void autoVisionController::connect(std::string i2c_device)
 
 void autoVisionController::configureAndActivate(yarp::os::ResourceFinder rf) 
 {
-    yInfo() << "Configuring Left Camera";
-    controls[0]->configure(rf);
-    controls[0]->activate();
+    if(controls[0]) {
+        yInfo() << "Configuring Left Camera";
+        controls[0]->configure(rf);
+        controls[0]->activate();
+    }
 
-    yInfo() << "Configuring Left Camera";
-    controls[1]->configure(rf);
-    controls[1]->activate();
+    if(controls[1]) {
+        yInfo() << "Configuring Left Camera";
+        controls[1]->configure(rf);
+        controls[1]->activate();
+    }
 
 }
 
