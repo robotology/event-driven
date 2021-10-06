@@ -216,13 +216,22 @@ int visCtrlATIS3::setROIAXIS(int start, int size, xory_t coord, tdorem_t type)
 
 bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf) 
 {
+    yarp::os::Time::delay(0.01);
     if (!enableGTP()) return false;
+    yarp::os::Time::delay(0.01);
     if (!sisleySetup()) return false;
+    yarp::os::Time::delay(0.01);
     if (!activate()) return false;
+    yarp::os::Time::delay(0.01);
     // Enable data transmission from VSCTRL
     unsigned int data32=VSCTRL_ENABLE_GEN3;
     if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *) &data32, 1) != 1) return false;
     yInfo() << "ENABLED";
+    
+    //setup biases?
+    //region of interest?
+    //other options?
+
     return true;
 }
 
