@@ -62,6 +62,7 @@ class zynqGrabberModule : public yarp::os::RFModule {
     //HANDLES DEVICE CONFIGURATION
     vVisionCtrl vsctrlMngLeft;
     vVisionCtrl vsctrlMngRight;
+    autoVisionController visCtrlManager;
     vSkinCtrl   skctrlMng;
 
     hpuInterface hpu;
