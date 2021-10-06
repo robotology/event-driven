@@ -119,6 +119,10 @@ public:
 
     virtual bool activate(bool activate = true);
     virtual bool configure(yarp::os::ResourceFinder rf) = 0;
+    virtual bool printConfiguration()
+    {
+            printConfiguration(fd, channel);
+    }
 };
 
 class autoVisionController

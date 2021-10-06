@@ -214,6 +214,9 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     //open rateThread device2yarp
     if(rf.check("dataDevice")) {
 
+        yInfo() << "";
+        yInfo() << "===== HPU Controller =====";
+
         string data_device = rf.find("dataDevice").asString();
         bool use_spinnaker = rf.check("use_spinnaker") &&
                              rf.check("use_spinnaker", yarp::os::Value(true)).asBool();

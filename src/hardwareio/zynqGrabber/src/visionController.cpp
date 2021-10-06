@@ -209,21 +209,19 @@ autoVisionController::~autoVisionController()
 
 void autoVisionController::connect(std::string i2c_device) 
 {
-    yInfo() << "Connecting to vision controller devices";
+    yInfo() << "";
+    yInfo() << "===== Vision Controller =====";
     fd = visCtrlInterface::openI2Cdevice(i2c_device);
-    if(fd < 0) {
+    if(fd < 0) 
+    {
         yInfo() << "Could not open i2c device:" << i2c_device;
-        return;
     }
-    else { 
+    else 
+    { 
         yInfo() << "Found and opened" << i2c_device;
+        controls[0] = createController(fd, visCtrlInterface::LEFT);
+        controls[1] = createController(fd, visCtrlInterface::RIGHT);
     }
-    controls[0] = createController(fd, visCtrlInterface::LEFT);
-    if(controls[0]) yInfo() << "Left camera found and connected";
-    controls[1] = createController(fd, visCtrlInterface::RIGHT);
-    if(controls[1]) yInfo() << "Right camera found and connected";
-
-    //TODO put some info printed here about the status of connections
 }
 
 void autoVisionController::configureAndActivate(yarp::os::ResourceFinder rf) 
@@ -232,12 +230,14 @@ void autoVisionController::configureAndActivate(yarp::os::ResourceFinder rf)
         yInfo() << "Configuring Left Camera";
         controls[0]->configure(rf);
         controls[0]->activate();
+        controls[0]->printConfiguration();
     }
 
     if(controls[1]) {
-        yInfo() << "Configuring Left Camera";
+        yInfo() << "Configuring Right Camera";
         controls[1]->configure(rf);
         controls[1]->activate();
+        controls[1]->printConfiguration();
     }
 
 }
