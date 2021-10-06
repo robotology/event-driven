@@ -10,7 +10,7 @@ int visCtrlATIS3::readSisleyRegister(uint32_t sisley_reg_address, uint32_t *sisl
     uint8_t *tmp;
 
     // Data to be written in SISLEY_ADDRESS_REG
-    data32=READ_SISLEY_REG | (0xFFFFFF&sisley_reg_address);
+    data32=READ_SISLEY_REG | (0x00FFFFFF&sisley_reg_address);
     tmp = (uint8_t *)(&data32);
     i2cdata[0] = I2C_AUTOTINCRREGS | VSCTRL_SISLEY_ADDRESS_REG;
     i2cdata[1] = tmp[0];
@@ -54,7 +54,7 @@ int visCtrlATIS3::writeSisleyRegister(uint32_t sisley_reg_address, uint32_t sisl
     write(fd, i2cdata, 5);
 
     // Data to be written in SISLEY_ADDRESS_REG
-    data32=WRITE_SISLEY_REG | (0xFFFFFF&sisley_reg_address);
+    data32=WRITE_SISLEY_REG | (0x00FFFFFF&sisley_reg_address);
     tmp = (uint8_t *)(&data32);
     i2cdata[0] = I2C_AUTOTINCRREGS | VSCTRL_SISLEY_ADDRESS_REG;
     i2cdata[1] = tmp[0];
@@ -94,8 +94,30 @@ bool visCtrlATIS3::updateBiases(yarp::os::Bottle &bias) {
     }
 }
 
+bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf) 
+{
+    yInfo() << "enable GTP";
+    if (!enableGTP()) return false;
+    yInfo() << "enable sisley";
+    if (!sisleySetup()) return false;
+    yInfo() << "enable activate";
+    if (!activate()) return false;
+    yInfo() << "enable transmission";
+    // Enable data transmission from VSCTRL
+    unsigned int data32=VSCTRL_ENABLE_GEN3;
+    if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *) &data32, 1) != 1) return false;
+    yInfo() << "ENABLED";
+    
+    //setup biases?
+    //region of interest?
+    //other options?
+
+    return true;
+}
+
 bool visCtrlATIS3::activate(bool activate)
-{	
+{
+    if(!activate) return true;
     unsigned char value_8bit;
 
     // VSCTRL: Enable VDDA, VDDD and VDDC end keep out from reset MRRSTN
@@ -125,6 +147,64 @@ bool visCtrlATIS3::sisleySetup() {
     if (writeSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x1A) != 4) return false;
     usleep(1000);
     return true;
+}
+
+bool visCtrlATIS3::enableGTP()
+{
+    uint32_t data32;
+	// VSCTRL: Enable clock
+	data32=VSCTRL_ENABLE_CLK;
+	if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG1, (uint8_t *)&data32, 1) != 1) return false;
+
+    // Enable GTP
+    data32 = 0x24;
+	if (i2cWrite(fd, VSCTRL_DSTCTRL_REG, (uint8_t *)&data32, 1) != 1) return false;
+
+    //align GTP between eye and zynq FPGA
+    data32 = 0x01;
+    if (i2cWrite(fd, VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+    yarp::os::Time::delay(0.01);
+    data32 = 0x00;
+    if (i2cWrite(fd, VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+
+    // VSCTRL: Flush Fifo
+	data32=VSCTRL_FLUSH_FIFO;
+	if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+
+}
+
+bool visCtrlATIS3::enableHSSAER() {
+    uint32_t data32;
+	// VSCTRL: Enable clock
+	data32=VSCTRL_ENABLE_CLK;
+	if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG1, (uint8_t *)&data32, 1) != 1) return false;
+	// VSCTRL: Enable 4 HSSAER channels
+	data32=VSCTRL_ENABLE_ALLCHANNELS;
+	if (i2cWrite(fd, VSCTRL_HSSAER_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+	// VSCTRL: Select HSSAER as destination and Enable HSSAER
+	data32=(VSCTRL_DESTINATION_HSSAER<<4) | (VSCTRL_ENABLETXON_HSSAER<<0);
+	if (i2cWrite(fd, VSCTRL_DSTCTRL_REG, (uint8_t *)&data32, 1) != 1) return false;
+	// VSCTRL: Flush Fifo
+	data32=VSCTRL_FLUSH_FIFO;
+	if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+	return true;
+}
+
+
+
+bool visCtrlATIS3::setROI(int x, int y, int width, int height) {
+ // Set TD ROI of 400x400 starting from pixel (220,140)
+    if (setROIAXIS(x, width, X, TD)) {
+		printf("Error in defining TD X ROI\n");
+		return false;
+	}
+    if (setROIAXIS(y, height, Y, TD)) {
+		printf("Error in defining TD Y ROI\n");
+		return false;
+	}
+	// Enable TD ROI and trigger trasnfer values to the shadow registers
+ 	writeSisleyRegister(SISLEY_ROI_CTRL_REG, 0x0000002E);
+	writeSisleyRegister(SISLEY_ROI_CTRL_REG, 0x0000000E);
 }
 
 int visCtrlATIS3::setROIAXIS(int start, int size, xory_t coord, tdorem_t type)
@@ -214,79 +294,5 @@ int visCtrlATIS3::setROIAXIS(int start, int size, xory_t coord, tdorem_t type)
     return (0);
 }
 
-bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf) 
-{
-    yarp::os::Time::delay(0.01);
-    if (!enableGTP()) return false;
-    yarp::os::Time::delay(0.01);
-    if (!sisleySetup()) return false;
-    yarp::os::Time::delay(0.01);
-    if (!activate()) return false;
-    yarp::os::Time::delay(0.01);
-    // Enable data transmission from VSCTRL
-    unsigned int data32=VSCTRL_ENABLE_GEN3;
-    if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *) &data32, 1) != 1) return false;
-    yInfo() << "ENABLED";
-    
-    //setup biases?
-    //region of interest?
-    //other options?
 
-    return true;
-}
 
-bool visCtrlATIS3::setROI(int x, int y, int width, int height) {
- // Set TD ROI of 400x400 starting from pixel (220,140)
-    if (setROIAXIS(x, width, X, TD)) {
-		printf("Error in defining TD X ROI\n");
-		return false;
-	}
-    if (setROIAXIS(y, height, Y, TD)) {
-		printf("Error in defining TD Y ROI\n");
-		return false;
-	}
-	// Enable TD ROI and trigger trasnfer values to the shadow registers
- 	writeSisleyRegister(SISLEY_ROI_CTRL_REG, 0x0000002E);
-	writeSisleyRegister(SISLEY_ROI_CTRL_REG, 0x0000000E);
-}
-
-bool visCtrlATIS3::enableGTP()
-{
-    uint32_t data32;
-	// VSCTRL: Enable clock
-	data32=VSCTRL_ENABLE_CLK;
-	if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG1, (uint8_t *)&data32, 1) != 1) return false;
-
-    // Enable GTP
-    data32 = 0x24;
-	if (i2cWrite(fd, VSCTRL_DSTCTRL_REG, (uint8_t *)&data32, 1) != 1) return false;
-
-    //align GTP between eye and zynq FPGA
-    data32 = 0x01;
-    if (i2cWrite(fd, VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
-    yarp::os::Time::delay(0.01);
-    data32 = 0x00;
-    if (i2cWrite(fd, VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
-
-    // VSCTRL: Flush Fifo
-	data32=VSCTRL_FLUSH_FIFO;
-	if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1) != 1) return false;
-
-}
-
-bool visCtrlATIS3::enableHSSAER() {
-    uint32_t data32;
-	// VSCTRL: Enable clock
-	data32=VSCTRL_ENABLE_CLK;
-	if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG1, (uint8_t *)&data32, 1) != 1) return false;
-	// VSCTRL: Enable 4 HSSAER channels
-	data32=VSCTRL_ENABLE_ALLCHANNELS;
-	if (i2cWrite(fd, VSCTRL_HSSAER_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
-	// VSCTRL: Select HSSAER as destination and Enable HSSAER
-	data32=(VSCTRL_DESTINATION_HSSAER<<4) | (VSCTRL_ENABLETXON_HSSAER<<0);
-	if (i2cWrite(fd, VSCTRL_DSTCTRL_REG, (uint8_t *)&data32, 1) != 1) return false;
-	// VSCTRL: Flush Fifo
-	data32=VSCTRL_FLUSH_FIFO;
-	if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1) != 1) return false;
-	return true;
-}
