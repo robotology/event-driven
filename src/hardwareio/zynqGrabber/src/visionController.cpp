@@ -211,7 +211,13 @@ void autoVisionController::connect(std::string i2c_device)
 {
     yInfo() << "Connecting to vision controller devices";
     fd = visCtrlInterface::openI2Cdevice(i2c_device);
-    yInfo() << "Found and opened" << i2c_device;
+    if(fd < 0) {
+        yInfo() << "Could not open i2c device:" << i2c_device;
+        return;
+    }
+    else { 
+        yInfo() << "Found and opened" << i2c_device;
+    }
     controls[0] = createController(fd, visCtrlInterface::LEFT);
     if(controls[0]) yInfo() << "Left camera found and connected";
     controls[1] = createController(fd, visCtrlInterface::RIGHT);
