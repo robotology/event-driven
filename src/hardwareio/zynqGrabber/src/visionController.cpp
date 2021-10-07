@@ -51,6 +51,7 @@ int visCtrlInterface::channelSelect(int fd, channel_name name)
             return I2C_RIGHT;
             break;
     }
+    return -1;
 }
 
 int visCtrlInterface::i2cRead(int fd, unsigned char reg, unsigned char *data, 
@@ -171,20 +172,20 @@ visCtrlInterface *autoVisionController::createController(int fd,
                                        visCtrlInterface::channel_name channel) 
 {
     visCtrlInterface *controller = nullptr;
-    yInfo() << "Creating controller attached to i2c address" 
+    yInfo() << "Attempting to connect to i2c address" 
             << visCtrlInterface::getChannelI2CAddress(fd, channel);
     int cam_type = visCtrlInterface::readCameraType(fd, channel);
     switch (cam_type) {
         case (visCtrlInterface::DVS):
-            yInfo() << "DVS camera found!";
+            yInfo() << "DVS camera found";
             yError() << "No controller for DVS implemented";
             break;
         case (visCtrlInterface::ATIS1):
-            yInfo() << "ATIS1 camera found!";
+            yInfo() << "ATIS1 camera found";
             controller = new visCtrlATIS1(fd, channel);
             break;
         case (visCtrlInterface::ATIS3):
-            yInfo() << "ATIS3 camera found!";
+            yInfo() << "ATIS3 camera found";
             controller = new visCtrlATIS3(fd, channel);
             break;
         default:
@@ -226,18 +227,31 @@ void autoVisionController::connect(std::string i2c_device)
 
 void autoVisionController::configureAndActivate(yarp::os::ResourceFinder rf) 
 {
+    bool lefton = rf.check("visLeftOn") && 
+        rf.check("visLeftOn", yarp::os::Value(true)).asBool();
+    bool righton = rf.check("visRightOn") && 
+        rf.check("visRightOn", yarp::os::Value(true)).asBool();
+
     if(controls[0]) {
-        yInfo() << "Configuring Left Camera";
+        if (!lefton)
+            yWarning() << "Left camera connected but not using";
+        else
+            yInfo() << "Configuring Left Camera";
         controls[0]->configure(rf);
-        controls[0]->activate();
-        controls[0]->printConfiguration();
+        controls[0]->activate(lefton);
+        if(lefton) controls[0]->printConfiguration();
+        
     }
 
     if(controls[1]) {
-        yInfo() << "Configuring Right Camera";
+        if (!righton)
+            yWarning() << "Right camera connected but not using";
+        else
+            yInfo() << "Configuring Right Camera";
         controls[1]->configure(rf);
-        controls[1]->activate();
-        controls[1]->printConfiguration();
+        controls[1]->activate(righton);
+        if(righton)controls[1]->printConfiguration();
+        
     }
 
 }

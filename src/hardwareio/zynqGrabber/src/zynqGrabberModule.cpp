@@ -73,97 +73,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     visCtrlManager.connect(rf.find("i2cVision").asString());
     visCtrlManager.configureAndActivate(rf);
 
-    // if (rf.check("visCtrlLeft")) {
-
-    //     std::string visCtrlLeft = rf.find("visCtrlLeft").asString();
-
-    //     vsctrlMngLeft = vVisionCtrl(visCtrlLeft, deviceType, I2C_ADDRESS_LEFT);
-    //     vsctrlMngLeft.useCurrentBias(iBias);
-
-    //     //bias values
-    //     yarp::os::Bottle biaslistl = rf.findGroup("ATIS_BIAS_LEFT");
-
-    //     if (!vsctrlMngLeft.setBias(biaslistl)) {
-    //         std::cerr << "Bias file required to run zynqGrabber" << std::endl;
-    //         if (lwo)
-    //             logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl
-    //                       << std::endl;
-    //         return false;
-    //     }
-    //     std::cout << std::endl;
-    //     if (!vsctrlMngLeft.connect()) {
-    //         std::cerr << "Could not connect to vision controller left" << std::endl;
-    //         if (lwo) logwriter << "Could not connect to left camera" << std::endl;
-    //         return false;
-    //     }
-    //     vsctrlMngLeft.turnOnAPS(useAPS);
-    //     if (!vsctrlMngLeft.configure(verbose)) {
-    //         std::cerr << "Could not configure left camera" << std::endl;
-    //         if (lwo) logwriter << "Could not configure left camera" << std::endl;
-    //         return false;
-    //     }
-    //     if (!rf.check("visLeftOn", yarp::os::Value(true)).asBool()) {
-    //         yWarning() << "Left camera configured but initialised TURNED OFF";
-    //         vsctrlMngLeft.suspend();
-    //     }
-
-    //     if (rf.check("roi_x") && rf.check("roi_y") && rf.check("roi_width") && rf.check("roi_height")) {
-    //         int x = rf.find("roi_x").asInt();
-    //         int y = rf.find("roi_y").asInt();
-    //         int width = rf.find("roi_width").asInt();
-    //         int height = rf.find("roi_height").asInt();
-    //         vsctrlMngLeft.SisleyTDROIDefinition(x, y, width, height);
-    //     }
-    //     if (lwo) logwriter << "Connected to and configured left camera" << std::endl;
-
-    // }
-
-
-    // if (rf.check("visCtrlRight")) {
-
-    //     std::string visCtrlRight = rf.find("visCtrlRight").asString();
-    //     vsctrlMngRight = vVisionCtrl(visCtrlRight, deviceType, I2C_ADDRESS_RIGHT);
-    //     vsctrlMngRight.useCurrentBias(iBias);
-
-    //     //bias values
-    //     yarp::os::Bottle biaslistr = rf.findGroup("ATIS_BIAS_RIGHT");
-
-    //     if (!vsctrlMngRight.setBias(biaslistr)) {
-    //         std::cerr << "Bias file required to run zynqGrabber" << std::endl;
-    //         if (lwo)
-    //             logwriter << "Could not find bias files" << std::endl << "ZYNQGRABBER CLOSING" << std::endl
-    //                       << std::endl;
-    //         return false;
-    //     }
-    //     std::cout << std::endl;
-    //     if (!vsctrlMngRight.connect()) {
-    //         std::cerr << "Could not connect to vision controller Right" << std::endl;
-    //         if (lwo) logwriter << "Could not connect to Right camera" << std::endl;
-    //         return false;
-    //     }
-    //     vsctrlMngRight.turnOnAPS(useAPS);
-    //     if (!vsctrlMngRight.configure(verbose)) {
-    //         std::cerr << "Could not configure Right camera" << std::endl;
-    //         if (lwo) logwriter << "Could not configure Right camera" << std::endl;
-    //         return false;
-    //     }
-    //     if (!rf.check("visRightOn", yarp::os::Value(true)).asBool()) {
-    //         yWarning() << "Right camera configured but initialised TURNED OFF";
-    //         vsctrlMngRight.suspend();
-    //     }
-
-    //     if (rf.check("roi_x") && rf.check("roi_y") && rf.check("roi_width") && rf.check("roi_height")) {
-    //         int x = rf.find("roi_x").asInt();
-    //         int y = rf.find("roi_y").asInt();
-    //         int width = rf.find("roi_width").asInt();
-    //         int height = rf.find("roi_height").asInt();
-    //         vsctrlMngRight.SisleyTDROIDefinition(x, y, width, height);
-    //     }
-    //     if (lwo) logwriter << "Connected to and configured Right camera" << std::endl;
-
-    // }
-
     if(rf.check("skinCtrl")) {
+
+        yInfo() << "";
+        yInfo() << "===== Skin Controller =====";
 
         skctrlMng = vSkinCtrl(rf.find("skinCtrl").asString(), I2C_ADDRESS_AUX);
 

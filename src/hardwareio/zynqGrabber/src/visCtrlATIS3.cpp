@@ -17,11 +17,13 @@ int visCtrlATIS3::readSisleyRegister(uint32_t sisley_reg_address, uint32_t *sisl
     i2cdata[2] = tmp[1];
     i2cdata[3] = tmp[2];
     i2cdata[4] = tmp[3];
-    read(fd, i2cdata, 5);
+    if(read(fd, i2cdata, 5) != 5)
+        return -1;
 
     // Now the SISLEY_DATA_REG can be read
     i2cdata[0] = I2C_AUTOTINCRREGS | VSCTRL_SISLEY_DATA_REG;
-    write (fd, i2cdata, 1);
+    if(write (fd, i2cdata, 1) != 1)
+        return -1;
 
     if (read(fd, (char *)sisley_data, 4)!=4)
     {
@@ -51,7 +53,8 @@ int visCtrlATIS3::writeSisleyRegister(uint32_t sisley_reg_address, uint32_t sisl
     i2cdata[2] = tmp[1];
     i2cdata[3] = tmp[2];
     i2cdata[4] = tmp[3];
-    write(fd, i2cdata, 5);
+    if(write(fd, i2cdata, 5) != 5)
+        return -1;
 
     // Data to be written in SISLEY_ADDRESS_REG
     data32=WRITE_SISLEY_REG | (0x00FFFFFF&sisley_reg_address);
@@ -96,6 +99,12 @@ bool visCtrlATIS3::updateBiases(yarp::os::Bottle &bias) {
 
 bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf) 
 {
+
+    //these print statements seems necessary to have the code work. Inserting
+    //delays doesn't work either. Typically it means there is a memory bug
+    //somewhere and the prints change the way the code is compiled "avoiding"
+    //the bug by chance.
+
     yInfo() << "enable GTP";
     if (!enableGTP()) return false;
     yInfo() << "enable sisley";
@@ -107,9 +116,18 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
     unsigned int data32=VSCTRL_ENABLE_GEN3;
     if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *) &data32, 1) != 1) return false;
     yInfo() << "ENABLED";
+
+    yarp::os::Bottle &roi_definition = rf.findGroup("ATIS_ROI");
+    if(!roi_definition.isNull()) {
+        int x = roi_definition.find("x").asInt32();
+        int y = roi_definition.find("y").asInt32();
+        int width = roi_definition.find("width").asInt32();
+        int height = roi_definition.find("height").asInt32();
+        yInfo() << "ROI definition found [" << x << y << width << height << "]";
+        setROI(x, y, width, height);
+    }
     
     //setup biases?
-    //region of interest?
     //other options?
 
     return true;
@@ -171,6 +189,7 @@ bool visCtrlATIS3::enableGTP()
 	data32=VSCTRL_FLUSH_FIFO;
 	if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1) != 1) return false;
 
+    return true;
 }
 
 bool visCtrlATIS3::enableHSSAER() {
@@ -205,6 +224,7 @@ bool visCtrlATIS3::setROI(int x, int y, int width, int height) {
 	// Enable TD ROI and trigger trasnfer values to the shadow registers
  	writeSisleyRegister(SISLEY_ROI_CTRL_REG, 0x0000002E);
 	writeSisleyRegister(SISLEY_ROI_CTRL_REG, 0x0000000E);
+    return true;
 }
 
 int visCtrlATIS3::setROIAXIS(int start, int size, xory_t coord, tdorem_t type)

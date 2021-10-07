@@ -30,7 +30,7 @@ public:
         //however these two options never worked and need to be checked if
         //they were done correctly in anycase.
 
-        
+        return true;
     }
 
 };
