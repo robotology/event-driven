@@ -130,15 +130,10 @@ void visCtrlInterface::printConfiguration(int fd, channel_name name)
     channelSelect(fd, name);
     switch (name) 
     {
-        case (LEFT): yInfo() << "Configuration LEFT";  break;
-        case (RIGHT): yInfo() << "Configuration Right"; break;
+        case (LEFT): yInfo() <<  "== LEFT FPGA Register Values ==";  break;
+        case (RIGHT): yInfo() << "== RIGHT FPGA Register Values =="; break;
     }
 
-    // std::cout << "== Bias Values ==" << std::endl;
-    // std::cout << bias.toString() << std::endl;
-
-
-    std::cout << "== FPGA Register Values ==" << std::endl;
     unsigned int regval = 0;
     i2cRead(fd, VSCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Info: 0x%08X\n", regval);

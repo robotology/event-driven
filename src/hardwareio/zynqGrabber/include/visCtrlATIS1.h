@@ -1,5 +1,6 @@
 #pragma once
 #include "visionController.h"
+#include "yarp/os/all.h"
 
 class visCtrlATIS1 : public visCtrlInterface
 {
@@ -17,12 +18,19 @@ public:
     bool activate(bool activate = true) override;
     bool configure(yarp::os::ResourceFinder rf) override
     {
+        yInfo() << "Turning off camera";
         activate(false);
+        yInfo() << "Setting register values";
         setDefaultRegisterValues();
         std::string bias_group_name = channel == LEFT ? "ATIS1_BIAS_LEFT"
                                                       : "ATIS1_BIAS_RIGHT";
         if(rf.check(bias_group_name)) {
+            yInfo() << "Programming biases:" << bias_group_name;
+            yarp::os::Bottle bias = rf.findGroup(bias_group_name);
+            yInfo() << bias.toString();
             updateBiases(rf.findGroup(bias_group_name));
+        } else {
+            yInfo() << "No biases found:" << bias_group_name;
         }
 
         //we could set APS on here
