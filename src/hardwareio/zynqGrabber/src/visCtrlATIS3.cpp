@@ -3,6 +3,42 @@
 #include <unistd.h>
 #include <yarp/os/all.h>
 
+bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf) 
+{
+
+    //these print statements seems necessary to have the code work. Inserting
+    //delays doesn't work either. Typically it means there is a memory bug
+    //somewhere and the prints change the way the code is compiled "avoiding"
+    //the bug by chance.
+
+    yInfo() << "enable GTP";
+    if (!enableGTP()) return false;
+    yInfo() << "enable sisley";
+    if (!sisleySetup()) return false;
+    yInfo() << "enable activate";
+    if (!activate()) return false;
+    yInfo() << "enable transmission";
+    // Enable data transmission from VSCTRL
+    unsigned int data32=VSCTRL_ENABLE_GEN3;
+    if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *) &data32, 1) != 1) return false;
+    yInfo() << "ENABLED";
+
+    yarp::os::Bottle &roi_definition = rf.findGroup("ATIS_ROI");
+    if(!roi_definition.isNull()) {
+        int x = roi_definition.find("x").asInt32();
+        int y = roi_definition.find("y").asInt32();
+        int width = roi_definition.find("width").asInt32();
+        int height = roi_definition.find("height").asInt32();
+        yInfo() << "ROI definition found [" << x << y << width << height << "]";
+        setROI(x, y, width, height);
+    }
+    
+    //setup biases?
+    //other options?
+
+    return true;
+}
+
 int visCtrlATIS3::readSisleyRegister(uint32_t sisley_reg_address, uint32_t *sisley_data)
 {
     uint32_t data32;
@@ -97,41 +133,7 @@ bool visCtrlATIS3::updateBiases(yarp::os::Bottle &bias) {
     }
 }
 
-bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf) 
-{
 
-    //these print statements seems necessary to have the code work. Inserting
-    //delays doesn't work either. Typically it means there is a memory bug
-    //somewhere and the prints change the way the code is compiled "avoiding"
-    //the bug by chance.
-
-    yInfo() << "enable GTP";
-    if (!enableGTP()) return false;
-    yInfo() << "enable sisley";
-    if (!sisleySetup()) return false;
-    yInfo() << "enable activate";
-    if (!activate()) return false;
-    yInfo() << "enable transmission";
-    // Enable data transmission from VSCTRL
-    unsigned int data32=VSCTRL_ENABLE_GEN3;
-    if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *) &data32, 1) != 1) return false;
-    yInfo() << "ENABLED";
-
-    yarp::os::Bottle &roi_definition = rf.findGroup("ATIS_ROI");
-    if(!roi_definition.isNull()) {
-        int x = roi_definition.find("x").asInt32();
-        int y = roi_definition.find("y").asInt32();
-        int width = roi_definition.find("width").asInt32();
-        int height = roi_definition.find("height").asInt32();
-        yInfo() << "ROI definition found [" << x << y << width << height << "]";
-        setROI(x, y, width, height);
-    }
-    
-    //setup biases?
-    //other options?
-
-    return true;
-}
 
 bool visCtrlATIS3::activate(bool activate)
 {
