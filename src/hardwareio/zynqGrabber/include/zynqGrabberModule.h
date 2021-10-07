@@ -60,8 +60,9 @@ class zynqGrabberModule : public yarp::os::RFModule {
     yarp::os::Port handlerPort; // a port to handle messages
 
     //HANDLES DEVICE CONFIGURATION
-    vVisionCtrl vsctrlMngLeft;
-    vVisionCtrl vsctrlMngRight;
+    //vVisionCtrl vsctrlMngLeft;
+    //vVisionCtrl vsctrlMngRight;
+    autoVisionController visCtrlManager;
     vSkinCtrl   skctrlMng;
 
     hpuInterface hpu;

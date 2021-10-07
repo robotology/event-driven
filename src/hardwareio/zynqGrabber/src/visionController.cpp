@@ -17,8 +17,12 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+
 #include "visionController.h"
 #include "deviceRegisters.h"
+#include "visCtrlATIS1.h"
+#include "visCtrlATIS3.h"
+#include <yarp/os/all.h>
 
 #include <iostream>
 
@@ -27,65 +31,50 @@
 #include <sys/ioctl.h>
 #include <iostream>
 
-vVisionCtrl::vVisionCtrl(std::string deviceName, unsigned char i2cAddress)
+// =================== visCtrlInterface =================== //
+
+int visCtrlInterface::extractCamType(int reg_value) 
 {
-
-    fd = -1;
-    this->deviceName = deviceName;
-    this->I2CAddress = i2cAddress;
-
-    fpgaStat.biasDone      = false;
-    fpgaStat.tdFifoFull    = false;
-    fpgaStat.apsFifoFull   = false;
-    fpgaStat.i2cTimeout    = false;
-    fpgaStat.crcErr        = false;
-
-    iBias = false;
-    aps = false;
-
+    return (reg_value & 0x0000E000) >> 13;
 }
 
-bool vVisionCtrl::connect()
+int visCtrlInterface::channelSelect(int fd, channel_name name) 
 {
-
-    std::cout << "Connecting to " << deviceName << " for " << (int)I2CAddress << " device configuration" << std::endl;
-    fd = open(deviceName.c_str(), O_RDWR);
-    if (fd < 0) {
-        perror("Cannot open device: ");
-        return false;
+    switch (name) 
+    {
+        case (LEFT):
+            ioctl(fd, I2C_SLAVE, I2C_LEFT);
+            return I2C_LEFT;
+            break;
+        case (RIGHT): 
+            ioctl(fd, I2C_SLAVE, I2C_RIGHT);
+            return I2C_RIGHT;
+            break;
     }
-
-    if(!clearFpgaStatus("all")) {
-        std::cout << "Cannot write to " << deviceName << ":" << (int)I2CAddress << std::endl;
-        std::cout << "Check sensor has correct I2CAddress and is physically connected" << std::endl;
-        close(fd);
-        return false;
-    }
-
-    return true;
+    return -1;
 }
 
-void vVisionCtrl::disconnect(bool andturnoff)
+int visCtrlInterface::i2cRead(int fd, unsigned char reg, unsigned char *data, 
+                              unsigned int size) 
 {
-    if(fd > 0) {
-        if(andturnoff) suspend();
-        close(fd);
-    }
+    unsigned char addr = size > 1 ? reg | AUTO_INCREMENT : reg;
+    int ret = write(fd, &addr, 1);
+    if (ret < 0) return ret;
+    return read(fd, data, size);
 }
 
-int vVisionCtrl::i2cWrite(unsigned char reg, unsigned char *data, unsigned int size)
+int visCtrlInterface::i2cWrite(int fd, unsigned char reg, unsigned char *data, 
+                            unsigned int size)
 {
-
-    int ret = ioctl(fd, I2C_SLAVE, I2CAddress);
 
     unsigned char *tmp = (unsigned char *) malloc ((size+1)*sizeof(unsigned char));
 
-    tmp[0]= size>1 ? reg|AUTOINCR : reg;
+    tmp[0] = size > 1 ? reg|AUTOINCR : reg;
 
     for (unsigned int i = 0; i < size; i++)
         tmp[1+i]=data[i];
 
-    ret = write (fd, tmp, size+1);
+    int ret = write(fd, tmp, size+1);
 
     free(tmp);
 
@@ -93,371 +82,217 @@ int vVisionCtrl::i2cWrite(unsigned char reg, unsigned char *data, unsigned int s
 
 }
 
-int vVisionCtrl::i2cRead(unsigned char reg, unsigned char *data, unsigned int size)
+visCtrlInterface::visCtrlInterface(int fd, channel_name channel) 
 {
-
-    int ret = ioctl(fd, I2C_SLAVE, I2CAddress);
-    unsigned char addr =  size>1 ? reg|AUTOINCR : reg;
-
-    ret = write(fd, &addr, 1);
-    if (ret<0)
-        return ret;
-
-    ret = read(fd, data, size);
-
-    return ret;
-
+    this->fd = fd;
+    this->channel = channel;
 }
 
-bool vVisionCtrl::configure(bool verbose)
+int visCtrlInterface::openI2Cdevice(std::string path) 
 {
-    if(!configureRegisters())
-        return false;
-    std::cout << deviceName << ":" << (int)I2CAddress << " registers configured." << std::endl;
-    if(!configureBiases())
-        return false;
-    std::cout << deviceName << ":" << (int)I2CAddress << " biases configured." << std::endl;
-    if(verbose)
-        printConfiguration();
-    return true;
+    int fd = open(path.c_str(), O_RDWR);
+    if (fd < 0)
+        perror("Cannot open i2c device: ");
+    return fd;
 }
 
-bool vVisionCtrl::configureRegisters()
+void visCtrlInterface::closeI2Cdevice(int fd) 
 {
-
-    unsigned char valReg[4];
-
-    // --- configure BG Timings --- //
-    valReg[0] = BG_LAT;  // Latch Active Time
-    valReg[1] = BG_LS;  // Latch Setup
-    valReg[2] = BG_CAT;  // Clock Active Time
-    valReg[3] = BG_SHT;  // Setup Hold Time
-    if(i2cWrite(VSCTRL_BG_TIMINGS_ADDR, valReg, 4) < 0) return false;
-
-    // --- configure BG Levels --- //
-    valReg[0] = BG_CNFG;   // BGtype = 1 (ATIS), BG overwrite = 1, CK active level = 1, LATCH active level = 1
-    valReg[1] = 0x00;   // reserved
-    valReg[2] = BG_LATEND_SHCNT;   // LatchOut@end = 1, ShiftCount = 32
-    valReg[3] = BG_ROI;   // Choose if setting ROI or setting BG (0 -> BG, 1 -> ROI)
-    if(i2cWrite(VSCTRL_BG_CNFG_ADDR, valReg, 4) < 0) return false;
-
-    // --- configure BG Prescaler --- //
-    for (int i = 0; i < 4; i++)
-        valReg[i]  = (BG_PRESC >> (i*8)) & 0xFF;
-    if(i2cWrite(VSCTRL_BG_PRESC_ADDR, valReg, 4) < 0) return false;
-
-    // --- configure Source Config --- //
-    valReg[0] = AER_LVL;   // AER Ack and Req Levels (Ack active low, Req active high)
-    valReg[1] = ACK_SET_DEL;   // Ack Set Delay 20 ns
-    valReg[2] = ACK_SAM_DEL;   // Ack Sample Delay 30 ns
-    valReg[3] = ACK_REL_DEL;   // Ack Release Delay 50ns
-    if(i2cWrite(VSCTRL_SRC_CNFG_ADDR, valReg, 4) < 0) return false;
-
-    // --- configure Source Destination Control --- //
-    valReg[0] =  TD_APS_CTRL;  // TD loopback = 0, TD EN =1, APS loppback = 0, APS EN = 1, flush fifo = 0, ignore FIFO Full = 0
-    if(aps) {
-        std::cout << "APS events enabled";
-        valReg[0] |= APS_CTRL;
-    }
-    valReg[1] = SRC_CTRL;   // Flush FIFOs = 0, Ignore FIFO Full = 0, PAER En = 0, SAER En = 1, GTP En = 0, Sel DEST = 01 (HSSAER)
-    valReg[2] = 0;      // reserved
-    valReg[3] = 0;      // reserved
-    if(i2cWrite(VSCTRL_SRC_DST_CTRL_ADDR, valReg, 4) < 0) return false;
-
-    // --- configure HSSAER --- //
-    // --- this should be done only if we use HSSAER (with ATIS, SKIN, but not with SpiNNaker nor DVS)
-    valReg[0] =  CH_SAER_EN;     // enable ch0, ch1, ch2
-    valReg[1] = 0;          // reserved
-    valReg[2] = 0;          // reserved
-    valReg[3] = 0;          // reserved
-    if(i2cWrite(VSCTRL_HSSAER_CNFG_ADDR, valReg, 4) < 0) return false;
-
-    // --- configure GPO register --- //
-    valReg[0] = 0x00;// 0x2;
-    valReg[1] = 0x00; //0x4;
-    valReg[2] = 0x00;
-    valReg[3] = 0x00;
-    if(i2cWrite(VSCTRL_GPO_ADDR, valReg, 4) < 0) return false;
-
-    return true;
+    close(fd);
 }
 
-bool vVisionCtrl::setBias(yarp::os::Bottle bias)
+int visCtrlInterface::readCameraType(int fd, channel_name name) 
 {
-    if(bias.isNull())
-        return false;
-
-    this->bias = bias;
-    return true;
-}
-
-// --- change the value of a single bias --- //
-bool vVisionCtrl::setBias(std::string biasName, unsigned int biasValue)
-{
-    yarp::os::Bottle &vals = bias.findGroup(biasName);
-    if(vals.isNull()) return false;
-    vals.pop(); //remove the old value
-    vals.addInt(biasValue);
-    return true;
-}
-
-unsigned int vVisionCtrl::getBias(std::string biasName)
-{
-    yarp::os::Bottle &vals = bias.findGroup(biasName);
-    if(vals.isNull()) return -1;
-    return vals.get(3).asInt();
-}
-
-void vVisionCtrl::useCurrentBias(bool flag)
-{
-    iBias = flag;
-}
-
-void vVisionCtrl::turnOnAPS(bool flag)
-{
-    aps = flag;
-}
-
-bool vVisionCtrl::activateAPSShutter()
-{
-    unsigned char valReg[4];
-    valReg[0] = 0x00;
-    valReg[1] = 0x20;
-    valReg[2] = 0x00;
-    valReg[3] = 0x00;
-    if(i2cWrite(VSCTRL_GPO_ADDR, valReg, 4) < 0)
-        return false;
-    return true;
-}
-
-bool vVisionCtrl::configureBiases(){
-
-    clearFpgaStatus("biasDone");
-
-    suspend();
-
-    // send the first 4 bits (disabling the Latch)
-    if(!setLatchAtEnd(false)) return false;
-    if(!setShiftCount(ATIS_PDSHIFT)) return false;
-
-    unsigned int pds = ATIS_PDSTRENGTH; //paddrivestrength
-    if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&pds, sizeof(pds)) < 0)
-        return false;
-
-    // set the number of bits in each bias (ATIS is 32, DVS is 24)
-    if(!setShiftCount(ATIS_BIASSHIFT))
-        return false;
-
-    std::cout << "Programming " << bias.size()-1 << " biases:" << std::endl;
-    double vref, voltage;
-    int header;
-    size_t i;
-    for(i = 1; i < bias.size() - 1; i++) {
-        yarp::os::Bottle *biasdata = bias.get(i).asList();
-        vref = biasdata->get(1).asInt();
-        header = biasdata->get(2).asInt();
-        voltage = biasdata->get(3).asInt();
-        unsigned int biasVal = 0;
-        if(iBias)
-            biasVal = voltage;
-        else
-            biasVal = 255 * (voltage / vref);
-        biasVal += header << 21;
-        //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
-        if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
-            return false;
-    }
-    //set the latch true for the last bias
-    //i = bias.size()
-    if(!setLatchAtEnd(true)) return false;
-    yarp::os::Bottle *biasdata = bias.get(i).asList();
-    vref = biasdata->get(1).asInt();
-    header = biasdata->get(2).asInt();
-    voltage = biasdata->get(3).asInt();
-    unsigned int biasVal = 0;
-    if(iBias)
-        biasVal = voltage;
+    channelSelect(fd, name);
+    int reg_value = 0;
+    if(i2cRead(fd, VCTRL_INFO, (unsigned char *)&reg_value, sizeof(reg_value)) 
+            != sizeof(reg_value))
+        return -1;
     else
-        biasVal = 255 * (voltage / vref);
-    biasVal += header << 21;
-    //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
-    if(i2cWrite(VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
-        return false;
-
-    // --- checks --- //
-
-    getFpgaStatus();
-    int count = 0;
-    while (!fpgaStat.biasDone & (count <= 10000)){
-        count++;
-        getFpgaStatus();
-        if (fpgaStat.crcErr){
-            std::cout << "Bias write: failed programming, CRC Error " << fpgaStat.crcErr << std::endl;
-            clearFpgaStatus("crcErr");
-            return false;
-        }
-
-    }
-    if (count > 10000) {
-        std::cout << "Bias write: failed programming, Timeout "  << std::endl;
-        return false;
-    }
-
-    clearFpgaStatus("biasDone");
-    activate();
-
-    return true;
-
+        return extractCamType(reg_value);
 }
 
-bool vVisionCtrl::setShiftCount(uint8_t shiftCount){
-
-    unsigned int val;
-
-    if(i2cRead(VSCTRL_BG_CNFG_ADDR, (unsigned char *)&val, sizeof(val)) < 0)
-        return false;
-
-    val = (val & ~BG_SHIFT_COUNT_MSK) | ((shiftCount << 16) & BG_SHIFT_COUNT_MSK);
-    if(i2cWrite(VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), sizeof(int)) < 0)
-        return false;
-
-    return true;
-}
-
-bool vVisionCtrl::setLatchAtEnd(bool enable){
-
-    unsigned int val;
-
-    if(i2cRead(VSCTRL_BG_CNFG_ADDR, (unsigned char *)&val, sizeof(val)) < 0) return false;
-
-    if (enable == true) {
-        val |= BG_LATOUTEND_MSK;
-    } else {
-        val &= ~BG_LATOUTEND_MSK;
-    }
-
-    if(i2cWrite(VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), sizeof(int)) < 0)
-        return false;
-
-    return true;
-}
-
-bool vVisionCtrl::suspend()
+bool visCtrlInterface::activate(bool activate)
 {
-    return activate(false);
+    yError() << "This controller doesn't have an activate function";
+    return false;
 }
 
-
-bool vVisionCtrl::activate(bool active)
+bool visCtrlInterface::configure(yarp::os::ResourceFinder rf)
 {
-
-    unsigned int val;
-
-    //get current config state
-    if(i2cRead(VSCTRL_BG_CNFG_ADDR, (unsigned char *)&val, sizeof(val)) != sizeof(val))
-        return false;
-
-    //alter the correct bit
-    if(active)
-        val &= ~BG_PWRDWN_MSK;
-    else
-        val |= BG_PWRDWN_MSK;
-
-    //rewrite the new config status
-    return i2cWrite(VSCTRL_BG_CNFG_ADDR, (unsigned char *)(&val), sizeof(unsigned int));
+    yError() << "This controller doesn't have a configure function";
+    return false;
 }
 
-
-int vVisionCtrl::getFpgaStatus()
-{
-
+bool visCtrlInterface::checkBiasDone(int fd) {
     unsigned char val;
-    int ret = i2cRead(VSCTRL_STATUS_ADDR, &val, sizeof(val));
-
-    fpgaStat.biasDone      = val & ST_BIAS_DONE_MSK;
-    fpgaStat.tdFifoFull    = val & ST_TD_FIFO_FULL_MSK;
-    fpgaStat.apsFifoFull   = val & ST_APS_FIFO_FULL_MSK;
-    fpgaStat.i2cTimeout    = val & ST_I2C_TIMEOUT_MSK;
-    fpgaStat.crcErr        = val & ST_CRC_ERR_MSK;
-
-    return ret;
+    int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+    return (val & ST_BIAS_DONE_MSK) > 0;
 }
 
-bool vVisionCtrl::clearFpgaStatus(std::string clr)
-{
-    unsigned char clrStatus;
-    // --- to clear the value of one bit, write "1" to the bit --- //
-    if (clr == "biasDone") {
-        clrStatus = ST_BIAS_DONE_MSK;
-    } else if (clr == "tdFifoFull") {
-        clrStatus = ST_TD_FIFO_FULL_MSK;
-    } else if (clr == "apsFifoFull"){
-        clrStatus = ST_APS_FIFO_FULL_MSK;
-    } else if (clr == "i2cTimeOut") {
-        clrStatus = ST_I2C_TIMEOUT_MSK;
-    } else if (clr == "crcErr"){
-        clrStatus = ST_CRC_ERR_MSK;
-    } else { // clear all
-        clrStatus = 0xFF;
-    }
+bool visCtrlInterface::checkFifoFull(int fd) {
+    unsigned char val;
+    int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+    return (val & ST_TD_FIFO_FULL_MSK) > 0;
+}
 
-    if(i2cWrite(VSCTRL_STATUS_ADDR, (unsigned char *)&clrStatus, sizeof(clrStatus)) < 0)
+bool visCtrlInterface::checkAPSFifoFull(int fd) {
+    unsigned char val;
+    int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+    return (val & ST_TD_FIFO_FULL_MSK) > 0;
+}
+
+bool visCtrlInterface::checki2cTimeout(int fd) {
+    unsigned char val;
+    int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+    return (val & ST_I2C_TIMEOUT_MSK) > 0;
+}
+
+bool visCtrlInterface::checkCRCError(int fd) {
+    unsigned char val;
+    int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+    return (val & ST_CRC_ERR_MSK) > 0;
+}
+
+bool visCtrlInterface::clearStatusReg(int fd) {
+    unsigned char r = 0xFF;
+    if (i2cWrite(fd, VSCTRL_STATUS_ADDR, (unsigned char *)&r, sizeof(r)) == sizeof(r))
+        return true;
+    else
         return false;
-
-    return true;
 }
 
-void vVisionCtrl::printConfiguration()
+int visCtrlInterface::getChannelI2CAddress(int fd, channel_name channel) {
+    return channelSelect(fd, channel);
+}
+
+void visCtrlInterface::printConfiguration() {
+    printConfiguration(fd, channel);
+}
+
+void visCtrlInterface::printConfiguration(int fd, channel_name name)
 {
 
-    std::cout << "Configuration for control device: " << (unsigned int)I2CAddress << std::endl;
-
-    std::cout << "== Bias Values ==" << std::endl;
-    std::cout << bias.toString() << std::endl;
-
-    std::cout << "== Bias Hex Stream ==" << std::endl;
-    double vref, voltage;
-    int header;
-    printf("0x%02X\n", 3);
-    for(size_t i = 1; i < bias.size(); i++) {
-        yarp::os::Bottle *biasdata = bias.get(i).asList();
-        vref = biasdata->get(1).asInt();
-        header = biasdata->get(2).asInt();
-        voltage = biasdata->get(3).asInt();
-        unsigned int biasVal = 255 * (voltage / vref);
-        biasVal += header << 21;
-        printf("0x%08X\n", biasVal);
+    channelSelect(fd, name);
+    switch (name) 
+    {
+        case (LEFT): yInfo() <<  "== LEFT FPGA Register Values ==";  break;
+        case (RIGHT): yInfo() << "== RIGHT FPGA Register Values =="; break;
     }
 
-    std::cout << "== FPGA Register Values ==" << std::endl;
     unsigned int regval = 0;
-    i2cRead(VSCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Info: 0x%08X\n", regval);
-    i2cRead(VSCTRL_STATUS_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_STATUS_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Status: 0x%08X\n", regval);
-    i2cRead(VSCTRL_SRC_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_SRC_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("Config: 0x%08X\n", regval);
-    i2cRead(VSCTRL_SRC_DST_CTRL_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_SRC_DST_CTRL_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("DstCtrl: 0x%08X\n", regval);
-    i2cRead(VSCTRL_PAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_PAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("PEAR-config: 0x%08X\n", regval);
-    i2cRead(VSCTRL_HSSAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_HSSAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("HSSAER-config: 0x%08X\n", regval);
-    i2cRead(VSCTRL_GTP_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_GTP_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("GTP-config: 0x%08X\n", regval);
-    i2cRead(VSCTRL_BG_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_BG_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("BG-config: 0x%08X\n", regval);
-    i2cRead(VSCTRL_BG_PRESC_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_BG_PRESC_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("BG-prescaler: 0x%08X\n", regval);
-    i2cRead(VSCTRL_BG_TIMINGS_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_BG_TIMINGS_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("BG-timings: 0x%08X\n", regval);
-    i2cRead(VSCTRL_GPO_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_GPO_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("GPO: 0x%08X\n", regval);
-    i2cRead(VSCTRL_GPI_ADDR, (unsigned char *)&regval, sizeof(regval));
+    i2cRead(fd, VSCTRL_GPI_ADDR, (unsigned char *)&regval, sizeof(regval));
     printf("GPI: 0x%08X\n", regval);
 
 }
 
+// =================== autoVisionController =================== //
+visCtrlInterface *autoVisionController::createController(int fd, 
+                                       visCtrlInterface::channel_name channel) 
+{
+    visCtrlInterface *controller = nullptr;
+    yInfo() << "Attempting to connect to i2c address" 
+            << visCtrlInterface::getChannelI2CAddress(fd, channel);
+    int cam_type = visCtrlInterface::readCameraType(fd, channel);
+    switch (cam_type) {
+        case (visCtrlInterface::DVS):
+            yInfo() << "DVS camera found";
+            yError() << "No controller for DVS implemented";
+            break;
+        case (visCtrlInterface::ATIS1):
+            yInfo() << "ATIS1 camera found";
+            controller = new visCtrlATIS1(fd, channel);
+            break;
+        case (visCtrlInterface::ATIS3):
+            yInfo() << "ATIS3 camera found";
+            controller = new visCtrlATIS3(fd, channel);
+            break;
+        default:
+            yInfo() << "No camera found" << cam_type;
+            break;
+    }
+    return controller;
+}
+autoVisionController::autoVisionController() 
+{
+    fd = -1;
+    controls[0] = nullptr;
+    controls[1] = nullptr;
+};
 
+autoVisionController::~autoVisionController() 
+{
+    for (auto c : controls)
+        if (c) delete c;
+    visCtrlInterface::closeI2Cdevice(fd);
+};
 
+void autoVisionController::connect(std::string i2c_device) 
+{
+    yInfo() << "";
+    yInfo() << "===== Vision Controller =====";
+    fd = visCtrlInterface::openI2Cdevice(i2c_device);
+    if(fd < 0) 
+    {
+        yInfo() << "Could not open i2c device:" << i2c_device;
+    }
+    else 
+    { 
+        yInfo() << "Found and opened" << i2c_device;
+        controls[0] = createController(fd, visCtrlInterface::LEFT);
+        controls[1] = createController(fd, visCtrlInterface::RIGHT);
+    }
+}
 
+void autoVisionController::configureAndActivate(yarp::os::ResourceFinder rf) 
+{
+    bool lefton = rf.check("visLeftOn") && 
+        rf.check("visLeftOn", yarp::os::Value(true)).asBool();
+    bool righton = rf.check("visRightOn") && 
+        rf.check("visRightOn", yarp::os::Value(true)).asBool();
+
+    if(controls[0]) {
+        if (!lefton)
+            yWarning() << "Left camera connected but not using";
+        else
+            yInfo() << "Configuring Left Camera";
+        controls[0]->configure(rf);
+        controls[0]->activate(lefton);
+        if(lefton) controls[0]->printConfiguration();
+        
+    }
+
+    if(controls[1]) {
+        if (!righton)
+            yWarning() << "Right camera connected but not using";
+        else
+            yInfo() << "Configuring Right Camera";
+        controls[1]->configure(rf);
+        controls[1]->activate(righton);
+        if(righton)controls[1]->printConfiguration();
+        
+    }
+
+}
