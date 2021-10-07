@@ -17,11 +17,11 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __VVISCTRL__
-#define __VVISCTRL__
+#pragma once
 
 #include <deviceRegisters.h>
 #include <yarp/os/Bottle.h>
+#include <yarp/os/ResourceFinder.h>
 
 #include <string>
 #include <stdio.h>
@@ -37,60 +37,68 @@ typedef struct fpgaStatus {
     bool tdFifoFull;
 } fpgaStatus_t;
 
-class vVisionCtrl
+
+class visCtrlInterface
 {
-private:
+public:
+    enum channel_name {LEFT = 0, RIGHT = 1};
+    enum cam_type {DVS = 1, ATIS1 = 2, ATIS3 = 3}; //correspond to FPGA values
 
-    //PARAMETERS
-    std::string deviceName;
-    unsigned char I2CAddress;
+protected:
 
-    //INTERNAL VARIABLES
-    int fd;
-    yarp::os::Bottle bias;
-    fpgaStatus_t fpgaStat;
-    bool iBias;
-    bool aps;
+    static const int AUTO_INCREMENT = 0x80;
+    static const int I2C_LEFT = 0x10;
+    static const int I2C_RIGHT = 0x11;
+    static const int VCTRL_INFO = 0x00;
 
-    //INTERNAL FUNCTIONS
-    int i2cRead(unsigned char reg, unsigned char *data, unsigned int size);
-    int i2cWrite(unsigned char reg, unsigned char *data, unsigned int size);
+    int fd{-1};
+    channel_name channel{LEFT};
 
-    //WRAPPERS?
-    bool configureRegisters(); //new initDevice
+    static int extractCamType(int reg_value);
+    static int channelSelect(int fd, channel_name name);
+    static int i2cRead(int fd, unsigned char reg, unsigned char *data, 
+                       unsigned int size);
+    static int i2cWrite(int fd, unsigned char reg, unsigned char *data, 
+                        unsigned int size);
+    static void printConfiguration(int fd, channel_name name);
 
-    bool setLatchAtEnd(bool Enable);
-    bool setShiftCount(uint8_t shiftCount);
-
-    int getFpgaStatus();
-    bool clearFpgaStatus(std::string clr);
+    static bool checkBiasDone(int fd);  
+    static bool checkFifoFull(int fd);
+    static bool checkAPSFifoFull(int fd);
+    static bool checki2cTimeout(int fd);
+    static bool checkCRCError(int fd);
+    static bool clearStatusReg(int fd);
 
 public:
 
-    //REQUIRE: devicefilename, chiptype (eg DVS/ATIS), chipFPGAaddress (eg LEFT or RIGHT)
-    vVisionCtrl(std::string deviceName = "", unsigned char i2cAddress = 0);
+    visCtrlInterface(int fd, channel_name channel);
+    static int openI2Cdevice(std::string path);
+    static void closeI2Cdevice(int fd);
+    static int getChannelI2CAddress(int fd, channel_name channel);
+    static int readCameraType(int fd, channel_name name);
 
-    //SET/GET CONFIGURATION
-    bool setBias(std::string biasName, unsigned int biasValue);
-    bool setBias(yarp::os::Bottle bias);
-    unsigned int getBias(std::string biasName);
-    void useCurrentBias(bool flag = true);
-    void turnOnAPS(bool flag = true);
-    bool activateAPSShutter();
-
-    //CONNECTION
-    bool connect(void);
-    bool configure(bool verbose = false);
-    void disconnect(bool andturnoff = false);
-    bool activate(bool active = true);
-    bool suspend(void); //wraps activate(false);
-
-    //COMMANDS
-    bool configureBiases();
-
-    //DEBUG OUTPUTS
-    void printConfiguration(void); // bias file, void dumpRegisterValues();
-
+    virtual bool activate(bool activate = true);
+    virtual bool configure(yarp::os::ResourceFinder rf) = 0;
+    virtual void printConfiguration();
 };
 
-#endif
+class autoVisionController
+{
+private:
+    int fd;
+    visCtrlInterface * controls[2];
+    visCtrlInterface *createController(int fd, visCtrlInterface::channel_name channel);
+
+public:
+
+    autoVisionController();
+    ~autoVisionController();
+    void connect(std::string i2c_device);
+    void configureAndActivate(yarp::os::ResourceFinder rf);
+    void disconnect()
+    {
+        if(controls[0]) controls[0]->activate(false);
+        if(controls[1]) controls[1]->activate(false);
+    }
+};
+
