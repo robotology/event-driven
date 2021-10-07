@@ -142,7 +142,13 @@ bool visCtrlATIS1::updateBiases(yarp::os::Bottle &bias_list, bool voltage_biases
     double vref, voltage;
     int header;
     size_t i;
-    for(i = 1; i < bias_list.size() - 1; i++) {
+    for(i = 1; i < bias_list.size(); i++) {
+        
+        //for the very last element set the latch at end to true again
+        if(i == bias_list.size() - 1) 
+            if(!setLatchAtEnd(true)) 
+                return false;
+        //turn the bias value into the appropriate hex
         yarp::os::Bottle *biasdata = bias_list.get(i).asList();
         vref = biasdata->get(1).asInt();
         header = biasdata->get(2).asInt();
@@ -153,26 +159,27 @@ bool visCtrlATIS1::updateBiases(yarp::os::Bottle &bias_list, bool voltage_biases
          else
             biasVal = 255 * (voltage / vref);
         biasVal += header << 21;
-        printf("0x%08X\n", biasVal);
-        //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
+        printf("0x%08X ", biasVal);
         if(i2cWrite(fd, VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
             return false;
     }
-    //set the latch true for the last bias
-    if(!setLatchAtEnd(true)) return false;
-    yarp::os::Bottle *biasdata = bias_list.get(i).asList();
-    vref = biasdata->get(1).asInt();
-    header = biasdata->get(2).asInt();
-    voltage = biasdata->get(3).asInt();
-    unsigned int biasVal = 0;
-    if(!voltage_biases)
-        biasVal = voltage;
-    else
-        biasVal = 255 * (voltage / vref);
-    biasVal += header << 21;
-    //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
-    if(i2cWrite(fd, VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
-        return false;
+    printf("\n");
+
+    // //set the latch true for the last bias
+    // if(!setLatchAtEnd(true)) return false;
+    // yarp::os::Bottle *biasdata = bias_list.get(i).asList();
+    // vref = biasdata->get(1).asInt();
+    // header = biasdata->get(2).asInt();
+    // voltage = biasdata->get(3).asInt();
+    // unsigned int biasVal = 0;
+    // if(!voltage_biases)
+    //     biasVal = voltage;
+    // else
+    //     biasVal = 255 * (voltage / vref);
+    // biasVal += header << 21;
+    // //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
+    // if(i2cWrite(fd, VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
+    //     return false;
     
     yarp::os::Time::delay(0.05);
     if(!checkBiasDone(fd)) {
