@@ -254,7 +254,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             << (int)((version >> 4) & 0xF) << "." << (int)((version >> 0) & 0xF);
 
     //32 bit timestamp
-    uint32_t timestampswitch = 1;
+    uint32_t timestampswitch = TIMESTAMP32BIT;
     if(ioctl(fd, HPU_TS_MODE, &timestampswitch) < 0)
         { yError() << "Could not write timestamp mode"; return false; }
 
