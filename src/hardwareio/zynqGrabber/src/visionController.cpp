@@ -124,6 +124,52 @@ bool visCtrlInterface::configure(yarp::os::ResourceFinder rf)
     return false;
 }
 
+bool visCtrlInterface::checkBiasDone(int fd) {
+    unsigned char val;
+    int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+    return (val & ST_BIAS_DONE_MSK) > 0;
+}
+
+bool visCtrlInterface::checkFifoFull(int fd) {
+    unsigned char val;
+    int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+    return (val & ST_TD_FIFO_FULL_MSK) > 0;
+}
+
+bool visCtrlInterface::checkAPSFifoFull(int fd) {
+    unsigned char val;
+    int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+    return (val & ST_TD_FIFO_FULL_MSK) > 0;
+}
+
+bool visCtrlInterface::checki2cTimeout(int fd) {
+    unsigned char val;
+    int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+    return (val & ST_I2C_TIMEOUT_MSK) > 0;
+}
+
+bool visCtrlInterface::checkCRCError(int fd) {
+    unsigned char val;
+    int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
+    return (val & ST_CRC_ERR_MSK) > 0;
+}
+
+bool visCtrlInterface::clearStatusReg(int fd) {
+    unsigned char r = 0xFF;
+    if (i2cWrite(fd, VSCTRL_STATUS_ADDR, (unsigned char *)&r, sizeof(r)) == sizeof(r))
+        return true;
+    else
+        return false;
+}
+
+int visCtrlInterface::getChannelI2CAddress(int fd, channel_name channel) {
+    return channelSelect(fd, channel);
+}
+
+void visCtrlInterface::printConfiguration() {
+    printConfiguration(fd, channel);
+}
+
 void visCtrlInterface::printConfiguration(int fd, channel_name name)
 {
 

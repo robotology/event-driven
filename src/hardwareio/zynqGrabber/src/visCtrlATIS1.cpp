@@ -2,6 +2,28 @@
 #include "visionController.h"
 #include <yarp/os/all.h>
 
+bool visCtrlATIS1::configure(yarp::os::ResourceFinder rf) {
+    yInfo() << "Turning off camera";
+    activate(false);
+    yInfo() << "Setting register values";
+    setDefaultRegisterValues();
+    std::string bias_group_name = channel == LEFT ? "ATIS1_BIAS_LEFT"
+                                                  : "ATIS1_BIAS_RIGHT";
+    if (rf.check(bias_group_name)) {
+        yInfo() << "Programming biases:" << bias_group_name;
+        updateBiases(rf.findGroup(bias_group_name));
+    } else {
+        yError() << "No biases found:" << bias_group_name;
+    }
+
+    //we could set APS on here
+    //we could look to use current-based biases
+    //however these two options never worked and need to be checked if
+    //they were done correctly in anycase.
+
+    return true;
+}
+
 bool visCtrlATIS1::activate(bool activate) 
 {
     channelSelect(fd, channel);

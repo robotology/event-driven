@@ -17,6 +17,5 @@ public:
     visCtrlATIS3(int fd, channel_name channel) : visCtrlInterface(fd, channel) {};
     bool activate(bool activate = true) override;
     bool configure(yarp::os::ResourceFinder rf) override;
-    //bool updateBiases(yarp::os::Bottle &bias_list) override;
-    //int setROI(int start, int size, xory_t coord, tdorem_t type) override;
+
 };

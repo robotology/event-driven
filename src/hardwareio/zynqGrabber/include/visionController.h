@@ -62,67 +62,24 @@ protected:
                         unsigned int size);
     static void printConfiguration(int fd, channel_name name);
 
-    static bool checkBiasDone(int fd)
-    {
-        unsigned char val;
-        int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
-        return val & ST_BIAS_DONE_MSK > 0;
-    }
-    
-    static bool checkFifoFull(int fd)
-    {
-        unsigned char val;
-        int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
-        return val & ST_TD_FIFO_FULL_MSK > 0;
-    }
-
-    static bool checkAPSFifoFull(int fd)
-    {
-        unsigned char val;
-        int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
-        return val & ST_TD_FIFO_FULL_MSK > 0;
-    }
-
-    static bool checki2cTimeout(int fd)
-    {
-        unsigned char val;
-        int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
-        return val & ST_I2C_TIMEOUT_MSK > 0;
-    }
-
-    static bool checkCRCError(int fd)
-    {
-        unsigned char val;
-        int ret = i2cRead(fd, VSCTRL_STATUS_ADDR, &val, sizeof(val));
-        return val & ST_CRC_ERR_MSK > 0;
-    }
-
-    static bool clearStatusReg(int fd) 
-    {
-        unsigned char r = 0xFF;
-        if (i2cWrite(fd, VSCTRL_STATUS_ADDR, (unsigned char *)&r, sizeof(r)) == sizeof(r))
-            return true;
-        else
-            return false;
-    }
+    static bool checkBiasDone(int fd);  
+    static bool checkFifoFull(int fd);
+    static bool checkAPSFifoFull(int fd);
+    static bool checki2cTimeout(int fd);
+    static bool checkCRCError(int fd);
+    static bool clearStatusReg(int fd);
 
 public:
 
     visCtrlInterface(int fd, channel_name channel);
     static int openI2Cdevice(std::string path);
     static void closeI2Cdevice(int fd);
-    static int getChannelI2CAddress(int fd, channel_name channel)
-    {
-        return channelSelect(fd, channel);
-    }
+    static int getChannelI2CAddress(int fd, channel_name channel);
     static int readCameraType(int fd, channel_name name);
 
     virtual bool activate(bool activate = true);
     virtual bool configure(yarp::os::ResourceFinder rf) = 0;
-    virtual void printConfiguration()
-    {
-            printConfiguration(fd, channel);
-    }
+    virtual void printConfiguration();
 };
 
 class autoVisionController
