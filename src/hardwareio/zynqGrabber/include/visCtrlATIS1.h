@@ -26,11 +26,9 @@ public:
                                                       : "ATIS1_BIAS_RIGHT";
         if(rf.check(bias_group_name)) {
             yInfo() << "Programming biases:" << bias_group_name;
-            yarp::os::Bottle bias = rf.findGroup(bias_group_name);
-            yInfo() << bias.toString();
             updateBiases(rf.findGroup(bias_group_name));
         } else {
-            yInfo() << "No biases found:" << bias_group_name;
+            yError() << "No biases found:" << bias_group_name;
         }
 
         //we could set APS on here

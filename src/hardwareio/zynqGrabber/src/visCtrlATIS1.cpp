@@ -173,24 +173,18 @@ bool visCtrlATIS1::updateBiases(yarp::os::Bottle &bias_list, bool voltage_biases
     //std::cout << biasdata->get(0).asString() << " " << biasVal << std::endl;
     if(i2cWrite(fd, VSCTRL_BG_DATA_ADDR, (unsigned char *)&biasVal, sizeof(biasVal)) != sizeof(biasVal))
         return false;
-
-    int count = 0;
-    while (!checkBiasDone(fd) & (count <= 10000)){
-        count++;
-        if (checkCRCError(fd)){
-            yError() << "Bias write failed: CRC Error ";
-            clearStatusReg(fd);
-            return false;
-        }
-
+    
+    yarp::os::Time::delay(0.05);
+    if(!checkBiasDone(fd)) {
+        yarp::os::Time::delay(1.0);
+        if(!checkBiasDone(fd))
+            yError() << "Bias done flag not set!";
     }
-    if (count > 10000) {
-        yError() << "Bias write: failed programming, Timeout ";
-        return false;
-    }
+    if(checkCRCError(fd))
+        yError() << "CRC error occured during bias program";
 
     clearStatusReg(fd);
-    activate();
+
     return true;
 }
 
