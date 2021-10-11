@@ -61,7 +61,7 @@ bool greyDrawer::initialise(const std::string &name, int height, int width)
 {
     this->name = name;
     canvas = cv::Mat(height, width, CV_8UC1);
-    return input.open(name + "/AE:i");
+    return temp_input.open(name + "/AE:i");
 }
 
 inline void draw_grey(const AE &v, cv::Mat &canvas) 
@@ -79,7 +79,26 @@ inline void draw_grey(const AE &v, cv::Mat &canvas)
 
 void greyDrawer::updateImage()
 {
-    ev::info inf = input.readSlidingWinT(0.1, true);
+    int n = temp_input.getPendingReads();
+    if(n == 0) {
+        n = 1;
+        yWarning() << "no new packets?";
+    }
+    canvas = 128;
+    for(auto i = 0; i < n; i++) {
+        ev::packet<AE>* q = temp_input.read();
+        if(!q) return;
+        for (auto &v : *q) {
+            draw_grey(v, canvas);
+        }
+    }
+    cv::imshow("test image", canvas);
+    cv::waitKey(1);
+    return;
+
+    ev::info inf = input.readSlidingWinN(20000, true);
+    //ev::info inf = input.readAll(true);
+
     yInfo() << inf.count << "in" << inf.duration << "seconds";
 
     canvas = 128;
@@ -87,7 +106,6 @@ void greyDrawer::updateImage()
     {
         draw_grey(v, canvas);
     }
-
     cv::imshow("test image", canvas);
     cv::waitKey(1);
 }

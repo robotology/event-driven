@@ -55,6 +55,7 @@ public:
 class greyDrawer : public drawerInterface {
 protected:
     ev::window<ev::AE> input;
+    ev::BufferedPort<ev::AE> temp_input;
     void updateImage() override;
 public:
     bool initialise(const std::string &name, int height, int width) override;

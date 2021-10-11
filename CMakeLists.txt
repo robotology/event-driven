@@ -50,7 +50,7 @@ endif()
 set(CONTEXT_DIR event-driven)
 set(EVENTDRIVEN_LIBRARY event-driven)
 
-find_package(OpenCV)
+find_package(OpenCV )
 set_package_properties(OpenCV PROPERTIES TYPE OPTIONAL)
 
 if(OpenCV_FOUND)
