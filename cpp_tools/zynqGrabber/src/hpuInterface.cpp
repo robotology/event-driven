@@ -73,12 +73,22 @@ void  device2yarp::run() {
     while(!isStopping()) {
 
         ev::packet<AE>& packet = output_port.prepare();
+        packet.clear();
+        packet.size(max_packet_size / sizeof(AE) + (max_packet_size % sizeof(AE) ? 1 : 0));
 
-        int n_bytes_read = packet.fillFromDevice(fd, max_dma_pool_size, max_packet_size);
+        bool iswriting = true;
+        int r = 1;
+        while(iswriting && r > 0) {
+            r = packet.singleDeviceRead(fd);
+            iswriting = output_port.isWriting();
+        }
+
+        //int n_bytes_read = packet.fillFromDevice(fd, max_dma_pool_size, max_packet_size);
         packet.duration(yarp::os::Time::now() - tic);
         tic += packet.duration();
 
-        if(n_bytes_read == 0) {
+        if(packet.size() == 0) {
+            yError() << "0 size packet?";
             output_port.unprepare();
             continue;
         }
@@ -88,8 +98,8 @@ void  device2yarp::run() {
         output_port.write();
 
         //report statistics to yarp
-        event_count += n_bytes_read / 8;
-        packet_count += 1;
+        event_count += packet.size();
+        packet_count++;
         static double prev_ts = yarp::os::Time::now();
         double update_period = yarp::os::Time::now() - prev_ts;
         

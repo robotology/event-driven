@@ -222,6 +222,11 @@ public:
         return n_elements;
     }
 
+    void size(int n)
+    {
+        buffer.resize(n);
+    }
+
     void duration(const double &seconds)
     {
         _duration = seconds;
@@ -253,6 +258,26 @@ public:
         n_elements = n_bytes_read / sizeof(T);
 
         return n_bytes_read;
+    }
+
+
+
+    int singleDeviceRead(const int fd) 
+    {
+        int max_packet_size = buffer.size() * sizeof(T);
+        int n_bytes_read = this->size() * sizeof(T);
+        
+        int r = ::read(fd, (char *)buffer.data() + n_bytes_read, max_packet_size - n_bytes_read);
+        if(r < 0)
+            yInfo() << "[READ ]" << std::strerror(errno);
+        else 
+        {
+            if(r % sizeof(T))
+                yError() << "[READ ] partial read. bad fault. get help.";
+            else
+                n_elements += r / sizeof(T);
+        }
+        return r;
     }
 
     int pushToDevice(int fd) const
@@ -312,6 +337,7 @@ public:
     using yarp::os::BufferedPort< ev::packet<T> >::getEnvelope;
     using yarp::os::BufferedPort< ev::packet<T> >::close;
     using yarp::os::BufferedPort< ev::packet<T> >::interrupt;
+    using yarp::os::BufferedPort< ev::packet<T> >::isWriting;
 };
 
 template <typename T> class window : public yarp::os::Thread
