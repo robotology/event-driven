@@ -29,6 +29,7 @@
 #include <list>
 #include <cstring>
 #include <unistd.h>
+#include <mutex>
 //#include <type_traits>
 
 namespace ev {
@@ -260,23 +261,23 @@ public:
         return n_bytes_read;
     }
 
-
-
     int singleDeviceRead(const int fd) 
     {
         int max_packet_size = buffer.size() * sizeof(T);
         int n_bytes_read = this->size() * sizeof(T);
         
-        int r = ::read(fd, (char *)buffer.data() + n_bytes_read, max_packet_size - n_bytes_read);
-        if(r < 0)
-            yInfo() << "[READ ]" << std::strerror(errno);
-        else 
-        {
-            if(r % sizeof(T))
-                yError() << "[READ ] partial read. bad fault. get help.";
-            else
-                n_elements += r / sizeof(T);
+        int r = -1;
+        while(r < 0) 
+        { 
+            r = ::read(fd, (char *)buffer.data() + n_bytes_read, max_packet_size - n_bytes_read);
+            if(r < 0)
+                yInfo() << "[READ ]" << std::strerror(errno);
         }
+        if (r % sizeof(T))
+            yError() << "[READ ] partial read. bad fault. get help.";
+        else
+            n_elements += r / sizeof(T);
+
         return r;
     }
 

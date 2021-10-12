@@ -76,9 +76,9 @@ void  device2yarp::run() {
         packet.clear();
         packet.size(max_packet_size / sizeof(AE) + (max_packet_size % sizeof(AE) ? 1 : 0));
 
+        int r = -1;
         bool iswriting = true;
-        int r = 1;
-        while(iswriting && r > 0) {
+        while(iswriting && r != 0) {
             r = packet.singleDeviceRead(fd);
             iswriting = output_port.isWriting();
         }
