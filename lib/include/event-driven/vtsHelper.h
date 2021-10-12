@@ -24,6 +24,7 @@
 #include <fstream>
 #include <math.h>
 #include <vector>
+#include <array>
 
 namespace ev {
 
@@ -106,6 +107,67 @@ public:
 struct resolution {
     unsigned int width:10;
     unsigned int height:10;
+};
+
+class imuAdvHelper 
+{
+private:
+
+    static constexpr double sampleFreq = 512.0;
+    static constexpr double twoKpDef = 1.0;
+    static constexpr double twoKiDef = 0.0;
+    
+    enum
+    {
+        ACC_Y = 0, ACC_X = 1, ACC_Z = 2,
+        GYR_Y = 3, GYR_X = 4, GYR_Z = 5,
+        TEMP  = 6,
+        MAG_Y = 7, MAG_X = 8, MAG_Z = 9
+    };
+
+    double heading_q[4];
+    double imu_readings[10];
+    std::vector<double> accels;
+    std::array<double, 6> vels;
+
+    void updateHeading() 
+    {
+        //use actual calibration values to convert this
+        accels[0] = imu_readings[ACC_X] * 9.80665/16384.0;
+        accels[1] = -imu_readings[ACC_Y] * 9.80665/16384.0;
+        accels[2] = imu_readings[ACC_Z] * 9.80665/16384.0;
+
+        vels[3] = imu_readings[GYR_X] * (250.0 * M_PI / (2.0 * 180.0 * 16384.0));
+        vels[4] = -imu_readings[GYR_Y] * (250.0 * M_PI / (2.0 * 180.0 * 16384.0));
+        vels[5] = imu_readings[GYR_Z] * (250.0 * M_PI / (2.0 * 180.0 * 16384.0));
+
+        //update the AHRS
+
+        //extract the best values for accel and vel
+
+    }
+
+
+public:
+
+    imuAdvHelper() 
+    {
+        accels.resize(6, 0.0);
+        //vels.resize(6, 0.0);
+    }
+
+    bool loadIMUCalibrationFiles() {return true;}
+    template <typename T> void addIMUPacket(const std::vector<T> &packet) 
+    {
+        for(auto &v: packet) {
+            imu_readings[v.sensor] = v.value;
+            if(v.sensor == 9)
+                updateHeading();
+        }
+    }
+
+    const std::vector<double>& extractAcceleration() { return accels;}
+    const std::array<double, 6>& extractVelocity() {return vels;}
 };
 
 class imuHelper {
