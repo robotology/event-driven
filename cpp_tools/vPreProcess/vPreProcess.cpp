@@ -27,249 +27,35 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 
+#include "vision.h"
+#include "imu.h"
+#include "audio.h"
+#include "skin.h"
+
 using namespace ev;
 using namespace yarp::os;
 using std::string;
 
-class visionFunctions 
-{
-private:
-
-    //splitting options
-    bool output_stereo{false};
-    bool output_polarities{false};
-    bool output_corners{false};
-    
-    //processing - flipping
-    ev::resolution res{640, 480};
-    bool flipx{false};
-    bool flipy{false};
-
-    //processing - undistort/rectify
-    bool undistort{false};
-    ev::vIPT calibrator;
-
-    //processing - filter
-    bool apply_filter{false};
-    ev::vNoiseFilter filter_left;
-    ev::vNoiseFilter filter_right;
-    int v_total{0};
-    int v_dropped{0};
-    
-    //ports and packets
-    enum port_label { LEFT, RIGHT, LNEG, RNEG, LCOR, RCOR, STEREO};
-    ev::BufferedPort<AE> ports[7];
-    ev::packet<AE> *packets[7] = 
-        {nullptr,nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-
-public:
-
-    void stats(int &passed, int &dropped)
-    {
-        passed = v_total;
-        dropped = v_dropped;
-        v_total = 0;
-        v_dropped = 0;
-    }
-
-    void init_flips(bool x, bool y, resolution r)
-    {
-        flipx = x;
-        flipy = y;
-        res = r;
-    }
-
-    void init_splits(bool stereo = false, bool polarities = false, bool corners = false) 
-    {
-        output_stereo = stereo;
-        output_polarities = polarities;
-        output_corners = corners;
-    }
-
-    void init_filter(double T_temporal = 0, double T_spatial = 0) 
-    {
-        if(T_temporal > 0.0 || T_spatial > 0.0) {
-            filter_left.initialise(res.width, res.height);
-            filter_right.initialise(res.width, res.height);
-            apply_filter = true;
-        }
-
-        if (T_temporal > 0.0) {
-            filter_left.use_temporal_filter(ev::secondsToTicks(T_temporal));
-            filter_right.use_temporal_filter(ev::secondsToTicks(T_temporal));
-        }
-
-        if (T_spatial > 0.0) {
-            filter_left.use_spatial_filter(ev::secondsToTicks(T_spatial));
-            filter_right.use_spatial_filter(ev::secondsToTicks(T_spatial));
-        }
-    }
-
-    void init_undistort(std::string calibration_file_path) 
-    {
-        if (calibrator.configure(calibration_file_path)) {
-            calibrator.printValidCalibrationValues();
-            undistort = true;
-        } else {
-            yError() << "Could not correctly configure the cameras";
-        }
-    }
-
-    bool _openPort(const port_label label, const std::string name)
-    {
-        if (!ports[label].open(name)) {
-            yError() << "Could not open" << name;
-            return false;
-        }
-        packets[label] = &(ports[label].prepare());
-        return true;
-    }
-
-    bool open(string mname)
-    {
-        if (output_stereo)
-            if(!_openPort(STEREO, mname + "/stereo/AE:o"))
-                return false;
-        
-        if (output_polarities) {
-            if(!_openPort(LNEG, mname + "/left/neg/AE:o"))
-                return false;
-            if(!_openPort(RNEG, mname + "/right/neg/AE:o"))
-                return false;
-            if (!_openPort(LEFT, mname + "/left/pos/AE:o"))
-                return false;
-            if (!_openPort(RIGHT, mname + "/right/pos/AE:o"))
-                return false;
-        }
-
-        if (output_corners) {
-            if (!_openPort(LCOR, mname + "/left/corner/AE:o"))
-                return false;
-            if (!_openPort(RCOR, mname + "/right/corner/AE:o"))
-                return false;
-        }
-
-        if (!output_polarities) {
-            if (!_openPort(LEFT, mname + "/left/AE:o"))
-                return false;
-            if (!_openPort(RIGHT, mname + "/right/AE:o"))
-                return false;
-        }
-
-        return true;
-    }
-
-    void process(AE *datum)
-    {
-        //flipping
-        if (flipx) datum->x = res.width  - datum->x - 1;
-        if (flipy) datum->y = res.height - datum->y - 1;
-
-        //salt-n-pepper filter
-        if (apply_filter) {
-            if (datum->channel == ev::CAMERA_LEFT) {
-                if (!filter_left.check(datum->x, datum->y, datum->p, datum->ts)) {
-                    v_dropped++;
-                    return;
-                }
-            } else {
-                if (!filter_right.check(datum->x, datum->y, datum->p, datum->ts)) {
-                    v_dropped++;
-                    return;
-                }
-            }
-        }
-
-        v_total++;
-
-        //undistortion and rectification
-        if (undistort) {
-            int y = datum->y; int x = datum->x;
-            calibrator.sparseForwardTransform(datum->channel, y, x);
-            datum->y = y; datum->x = x;
-        }
-
-        //output to stereo combined stream
-        if (output_stereo) packets[STEREO]->push_back(*datum);
-
-        //output to corners stream
-        if (output_corners && datum->corner) {
-            if(datum->channel == ev::CAMERA_LEFT)
-                packets[LCOR]->push_back(*datum);
-            else
-                packets[RCOR]->push_back(*datum);
-        }
-
-        //output stereo split streams (splitting also by polarity if needed)
-        if (output_polarities && datum->p == 0) {
-            if (datum->channel == ev::CAMERA_LEFT)
-                packets[LNEG]->push_back(*datum);
-            else
-                packets[RNEG]->push_back(*datum);
-        } else {
-            if (datum->channel == ev::CAMERA_LEFT)
-                packets[LEFT]->push_back(*datum);
-            else
-                packets[RIGHT]->push_back(*datum);
-        }
-    }
-
-    void send(Stamp stamp, double duration)
-    {
-        for(int pl = LEFT; pl <= STEREO; pl++) {
-            if(packets[pl] && packets[pl]->size()) {
-                packets[pl]->duration(duration);
-                ports[pl].setEnvelope(stamp);
-                ports[pl].write();
-                packets[pl] = &(ports[pl].prepare());
-            }
-        }
-    }
-
-    void close()
-    {
-        for(int pl = LEFT; pl <= STEREO; pl++) {
-            packets[pl] = nullptr;
-            ports[pl].unprepare();
-            ports[pl].close();
-        }
-    }
-
-};
-
-// class IMUfunctions 
-// {
-// private:
-
-// public:
-
-
-
-// };
-
-
-
+const std::string raw::tag = "AE";
 class vPreProcess : public yarp::os::RFModule, public yarp::os::Thread
 {
 private:
 
-    typedef struct raw {
-        static const std::string tag;
-        int32_t ts;
-        int32_t data;
-    } raw;
-    
     //output port for the vBottle with the new events computed by the module
     ev::BufferedPort<raw> input;
     yarp::os::BufferedPort< yarp::sig::Vector > rate_port;
 
     bool flag_vision;
     visionFunctions vision;
-    
-    // ev::vWritePort outPortSkin;
-    // ev::vWritePort outPortSkinSamples;
-    // ev::vWritePort out_port_imu_samples;
-    // ev::vWritePort out_port_audio;
+
+    bool flag_imu;
+    imuFunctions imu;
+
+    bool flag_skin;
+    skinFunctions skin;
+
+    bool flag_audio;
+    audioFunctions audio;
     
     //pre-pre processing
     bool precheck;
@@ -283,55 +69,31 @@ private:
 
 public:
 
-    vPreProcess();
     ~vPreProcess();
 
-
     //inherited functions
-    virtual bool configure(yarp::os::ResourceFinder &rf);
-    double getPeriod();
-    bool interruptModule();
-    void onStop();
-    bool threadInit();
-    bool updateModule();
-    void run();
+    virtual bool configure(yarp::os::ResourceFinder &rf) override;
+    double getPeriod() override;
+    bool interruptModule() override;
+    void onStop() override;
+    bool updateModule() override;
+    void run() override;
 
 };
 
-vPreProcess::vPreProcess() {
 
-    
-    // outPortSkin.setWriteType(SkinEvent::tag);
-    // outPortSkinSamples.setWriteType(SkinSample::tag);
-    // out_port_imu_samples.setWriteType(IMUevent::tag);
-    // out_port_audio.setWriteType(CochleaEvent::tag);
-}
-
-
-vPreProcess::~vPreProcess() {
+vPreProcess::~vPreProcess() 
+{
     input.close();
     vision.close();
-
-    // outPortSkin.close();
-    // outPortSkinSamples.close();
-    // out_port_imu_samples.close();
-    // out_port_audio.close();
-
+    imu.close();
+    skin.close();
+    audio.close();
     rate_port.close();
-
 }
 
-bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
-
-    /* initialize yarp network */
-    yarp::os::Network yarp;
-    if(!yarp.checkNetwork(2)) {
-        yError() << "Could not find YARP";
-        return false;
-    }
-
-    setName((rf.check("name", yarp::os::Value("/vPreProcess")).asString()).c_str());
-
+bool vPreProcess::configure(yarp::os::ResourceFinder &rf) 
+{
     if(rf.check("h") || rf.check("help")) {
         yInfo() << "--local_stamp <bool>: overwrite the packet stamp with one"
                    "immediately as the packet arrives";
@@ -352,6 +114,15 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
         yInfo() << "============";
         return false;
     }
+
+    /* initialize yarp network */
+    yarp::os::Network yarp;
+    if(!yarp.checkNetwork(2)) {
+        yError() << "Could not find YARP";
+        return false;
+    }
+
+    setName((rf.check("name", yarp::os::Value("/vPreProcess")).asString()).c_str());
 
     // global flags
     use_local_stamp = rf.check("local_stamp") &&
@@ -376,11 +147,6 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
 
     bool output_corners = rf.check("corners") &&
               rf.check("corners", Value(true)).asBool();
-
-
-
-
-    
 
     // if(!split_stereo) combined_stereo = true;
 
@@ -418,45 +184,6 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
         return false;
     }
 
-    // apply_filter = filter_spatial || filter_temporal;
-    // if(apply_filter) {
-    //     filter_left.initialise(res.width, res.height);
-    //     filter_right.initialise(res.width, res.height);
-    // }
-    // if(filter_spatial) {
-    //     filter_left.use_spatial_filter(
-    //             rf.check("sf_time",
-    //                      Value(0.05)).asDouble() * vtsHelper::vtsscaler,
-    //             rf.check("sf_size",
-    //                      Value(1)).asInt());
-    //     filter_right.use_spatial_filter(
-    //             rf.check("sf_time",
-    //                      Value(0.05)).asDouble() * vtsHelper::vtsscaler,
-    //             rf.check("sf_size",
-    //                      Value(1)).asInt());
-    // }
-
-    // if(filter_temporal) {
-    //     filter_left.use_temporal_filter(
-    //             rf.check("tf_time",
-    //                      Value(0.1)).asDouble() * vtsHelper::vtsscaler);
-    //     filter_right.use_temporal_filter(
-    //             rf.check("tf_time",
-    //                      Value(0.1)).asDouble() * vtsHelper::vtsscaler);
-    // }
-
-    // if(undistort) {
-
-    //     std::string calib_file_path = rf.check("camera_calibration_file", Value("")).asString();
-    //     if(calibrator.configure(calib_file_path, 1)) {
-    //         calibrator.printValidCalibrationValues();
-    //         //calibrator.showMapProjections(3.0);
-    //     } else {
-    //         yError() << "Could not correctly configure the cameras";
-    //         return false;
-    //     }
-    // }
-
     if(flag_stats) {
         cv::namedWindow("Event Rate", cv::WINDOW_NORMAL);
         cv::resizeWindow("Event Rate", 480, 360);
@@ -465,25 +192,6 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
 
     return Thread::start();
 
-}
-
-bool vPreProcess::threadInit() {
-    return true;
-
-    // if(!out_port_imu_samples.open(getName() + "/imu_samples:o"))
-    //     return false;
-    // if(!out_port_audio.open(getName() + "/audio:o"))
-    //     return false;
-    // if(!outPortSkin.open(getName() + "/skin:o"))
-    //     return false;
-    // if(!outPortSkinSamples.open(getName() + "/skin_samples:o"))
-    //     return false;
-    // if(!inPort.open(getName() + "/AE:i"))
-    //     return false;
-    // if(!rate_port.open(getName("/rate:o")))
-    //     return false;
-
-    // return true;
 }
 
 double vPreProcess::getPeriod() {
@@ -563,21 +271,49 @@ void vPreProcess::run() {
 
         for(auto &v : *q) {
             if(IS_SKIN(v.data)) { //IS_SKIN
-                yWarning() << "skin not implemented";
-            } else if(IS_IMUSAMPLE(v.data)) {
-                yWarning() << "imu not implemented";
+                skin.process(&v);
+            } else if(IS_IMU(v.data)) {
+                imu.process((ev::IMUS *)&v);
             } else if(IS_AUDIO(v.data)) {
-                yWarning() << "audio not implemented";
+                audio.process((ev::earEvent *)&v);
             } else { //IS_VISION
-                vision.process((AE *)&v);
+                vision.process((ev::AE *)&v);
             }
         }
 
         vision.send(localstamp, q->duration());
+        audio.send(localstamp, q->duration());
+        imu.send(localstamp, q->duration());
+        skin.send(localstamp, q->duration());
     }
 }
 
+bool vPreProcess::interruptModule() 
+{
+    return Thread::stop();
+}
 
+void vPreProcess::onStop() 
+{
+    input.close();
+    vision.close();
+    imu.close();
+    skin.close();
+    audio.close();
+    rate_port.close();
+}
+
+int main(int argc, char *argv[]) {
+
+    /* prepare and configure the resource finder */
+    yarp::os::ResourceFinder rf;
+    rf.setDefaultContext("event-driven");
+    rf.setDefaultConfigFile("vPreProcess.ini");
+    rf.configure(argc, argv);
+
+    vPreProcess module;
+    return module.runModule(rf);
+}
 
 // void vPreProcess::run() {
 //     Stamp zynq_stamp;
@@ -809,28 +545,3 @@ void vPreProcess::run() {
 // }
 
 
-bool vPreProcess::interruptModule() {
-    return Thread::stop();
-}
-
-void vPreProcess::onStop() {
-    input.close();
-    vision.close();
-
-    // outPortSkin.close();
-    // outPortSkinSamples.close();
-}
-
-int main(int argc, char *argv[]) {
-
-    /* prepare and configure the resource finder */
-    yarp::os::ResourceFinder rf;
-    rf.setDefaultContext("event-driven");
-    rf.setDefaultConfigFile("vPreProcess.ini");
-    rf.configure(argc, argv);
-
-    vPreProcess module;
-    return module.runModule(rf);
-}
-
-const std::string vPreProcess::raw::tag = "AE";

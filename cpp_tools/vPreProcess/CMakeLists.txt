@@ -1,6 +1,6 @@
 project(vPreProcess)
 
-add_executable(${PROJECT_NAME} vPreProcess.cpp)
+add_executable(${PROJECT_NAME} vPreProcess.cpp vision.h skin.h imu.h audio.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
 

@@ -9,6 +9,7 @@ if(TOOMANYBITSINCOUNTER)
 endif()
 
 set( folder_source
+  src/core/codec.cpp
   src/core/comms.cpp
   #include/event-driven/core/vPort.cpp
   src/core/utilities.cpp
@@ -16,6 +17,7 @@ set( folder_source
 
 set( folder_header
   include/event-driven/core.h
+  include/event-driven/core/codec.h
   include/event-driven/core/utilities.h
   include/event-driven/core/comms.h
   #include/event-driven/core/vPort.h

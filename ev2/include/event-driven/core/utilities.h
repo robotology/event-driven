@@ -33,10 +33,10 @@ namespace ev {
 enum { CAMERA_LEFT = 0, CAMERA_RIGHT = 1 } ;
 
 #define IS_SKIN(x)      x&0x01000000
-#define IS_SAMPLE(x)    x&0x00804000
+#define IS_SKSAMPLE(x)  x&0x00804000
 #define IS_SSA(x)       x&0x00004000
 #define IS_SSV(x)       x&0x00800000
-#define IS_IMUSAMPLE(x) x&0x02000000
+#define IS_IMU(x)       x&0x02000000
 #define IS_AUDIO(x)     x&0x04000000
 
 /// the maximum value of the timestamp before a wrap occurs

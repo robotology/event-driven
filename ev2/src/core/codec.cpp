@@ -15,7 +15,15 @@
  *   You should have received a copy of the GNU Lesser General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include <string>
+#include <event-driven/core/codec.h>
 
-#include <event-driven/core/comms.h>
-
-
+const std::string ev::timeStamp::tag = "TS";
+const std::string ev::addressEvent::tag = "AE";
+const std::string ev::skinAE::tag = "SKE";
+const std::string ev::skinSample::tag = "SKS";
+const std::string ev::flowEvent::tag = "FLOW";
+const std::string ev::gaussianEvent::tag = "GAE";
+const std::string ev::IMUS::tag = "IMU";
+const std::string ev::neuronEvent::tag = "NEU";
+const std::string ev::earEvent::tag = "EAR";

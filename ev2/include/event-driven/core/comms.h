@@ -34,87 +34,12 @@
 
 namespace ev {
 
-typedef struct
+    typedef struct
 {
     unsigned int count;
     double duration;
 } info;
 
-typedef struct timeStamp {
-    static const std::string tag;
-    unsigned int ts:31;
-    unsigned int _fill:1;
-} timeStamp;
-using TS = timeStamp;
-
-typedef struct addressEvent : public timeStamp {
-    static const std::string tag;
-    unsigned int p:1;
-    unsigned int x:10;
-    unsigned int _xfill:1;
-    unsigned int y:9;
-    unsigned int corner:1;
-    unsigned int channel:1;
-    unsigned int type:1;
-    unsigned int skin:1;
-    unsigned int _fill:7;
-} addressEvent;
-using AE = addressEvent;
-
-typedef struct skinEvent {
-    static const std::string tag;
-    unsigned int polarity:1;
-    unsigned int taxel:10;
-    unsigned int _reserved1:2;
-    unsigned int cross_base:1;
-    unsigned int _sample:1;
-    unsigned int _error:1;
-    unsigned int body_part:3;
-    unsigned int _reserved2:3;
-    unsigned int side:1;
-    unsigned int type:1;
-    unsigned int skin:1;
-    unsigned int _fill:7;
-} skinEvent;
-
-typedef struct skinSample {
-    static const std::string tag;
-    unsigned int _ts:31;
-    unsigned int _fill1:1;
-    unsigned int value:16;
-    unsigned int _fill2:16;
-} skinSample;
-
-/// \brief an AddressEvent with a velocity in visual space
-typedef struct flowEvent {
-    static const std::string tag;
-    float vx;
-    float vy;
-} flowEvent;
-
-/// \brief a LabelledAE with parameters that define a 2D gaussian
-typedef struct gaussianEvent {
-    static const std::string tag;
-    float sigx;
-    float sigy;
-    float sigxy;
-} gaussianEvent;
-
-/// \brief an event with a pixel location, camera number and polarity
-typedef struct imuSample {
-    static const std::string tag;
-    int value:16;
-    unsigned int sensor:4;
-    unsigned int _r1:2;
-    unsigned int channel:1;
-    unsigned int type:1;
-    unsigned int _r2:8;
-} imuSample;
-
-typedef struct neuronEvent : public timeStamp {
-    static const std::string tag;
-    int id;
-} neuronEvent;
 
 template <typename T> class packet : public yarp::os::Portable {
 
