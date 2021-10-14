@@ -34,7 +34,6 @@ private:
     ev::BufferedPort<ev::skinSample> output_samples;
     ev::packet<ev::skinSample>* p_samples{nullptr};
 
-public:
     bool open_events(std::string mname)
     {
         std::string port_name = mname + "/skin/SKE:o";
@@ -55,6 +54,16 @@ public:
         }
         p_samples = &(output_samples.prepare());
         return true;
+    }
+
+public:
+
+    bool open(std::string mname)
+    {
+        if(!open_events(mname))
+            return false;
+        if(!open_samples(mname))
+            return false;
     }
 
     void process(raw *datum)

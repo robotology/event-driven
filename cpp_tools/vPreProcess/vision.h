@@ -65,16 +65,22 @@ public:
 
     void init_flips(bool x, bool y, ev::resolution r)
     {
-        flipx = x;
-        flipy = y;
         res = r;
+        yInfo() << "[VISION]: camera size" << r.width << "x" << r.height;
+        flipx = x;
+        if(flipx) yInfo() << "[VISION]: flip horizontal";
+        flipy = y;
+        if(flipy) yInfo() << "[VISION]: flip vertical";
     }
 
     void init_splits(bool stereo = false, bool polarities = false, bool corners = false) 
     {
         output_stereo = stereo;
+        if(output_stereo) yInfo() << "[VISION]: output stereo events";
         output_polarities = polarities;
+        if(output_polarities) yInfo() << "[VISION]: splitting polarities";
         output_corners = corners;
+        if(output_corners) yInfo() << "[VISION]: output corner seperately";
     }
 
     void init_filter(double T_temporal = 0, double T_spatial = 0) 
@@ -88,17 +94,20 @@ public:
         if (T_temporal > 0.0) {
             filter_left.use_temporal_filter(ev::secondsToTicks(T_temporal));
             filter_right.use_temporal_filter(ev::secondsToTicks(T_temporal));
+            yInfo() << "[VISION]: refractory filter - " << T_temporal << "secs";
         }
 
         if (T_spatial > 0.0) {
             filter_left.use_spatial_filter(ev::secondsToTicks(T_spatial));
             filter_right.use_spatial_filter(ev::secondsToTicks(T_spatial));
+            yInfo() << "[VISION]: pepper filter - " << T_temporal << "secs";
         }
     }
 
     void init_undistort(std::string calibration_file_path) 
     {
         if (calibrator.configure(calibration_file_path)) {
+            yInfo() << "[VISION]: undistort image";
             calibrator.printValidCalibrationValues();
             undistort = true;
         } else {

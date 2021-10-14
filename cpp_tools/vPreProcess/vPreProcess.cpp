@@ -112,6 +112,12 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
         yInfo() << "--filter_t <double>: temporal filter time window (sec)";
         yInfo() << "--camera_calibration_file <path>: calibration file to use for undistort";
         yInfo() << "============";
+        yInfo() << "--skin <bool>: open ports for skin";
+        yInfo() << "============";
+        yInfo() << "--imu <bool>: open ports for imu";
+        yInfo() << "============";
+        yInfo() << "--audio <bool>: open ports for audio";
+        yInfo() << "============";
         return false;
     }
 
@@ -148,36 +154,44 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
     bool output_corners = rf.check("corners") &&
               rf.check("corners", Value(true)).asBool();
 
-    // if(!split_stereo) combined_stereo = true;
+    flag_imu = rf.check("imu") &&
+               rf.check("imu", Value(true)).asBool();
+
+    flag_skin = rf.check("skin") &&
+                rf.check("skin", Value(true)).asBool();
+        
+    flag_audio = rf.check("audio") &&
+                 rf.check("audio", Value(true)).asBool();
 
     // if(precheck)
     //     yInfo() << "Performing precheck for event corruption";
-    // if(flipx)
-    //     yInfo() << "Flipping vision horizontally";
-    // if(flipy)
-    //     yInfo() << "Flipping vision vertically";
-    // if(filter_spatial)
-    //     yInfo() << "Applying spatial \"salt and pepper\" filter";
-    // if(filter_temporal)
-    //     yInfo() << "Applying temporal \"refractory\" filter";
-    // if(undistort)
-    //     yInfo() << "Applying camera undistortion";
-    // if(split_stereo)
-    //     yInfo() << "Splitting into left/right streams";
-    // if(split_polarities)
-    //     yInfo() << "Splitting into positive/negative streams";
-    // if(combined_stereo)
-    //     yInfo() << "Producing combined stereo output";
+
     flag_stats = true;
     flag_vision = true;
+
     if (flag_vision) {
         vision.init_splits(output_stereo, output_polarities, output_corners);
         vision.init_flips(flipx, flipy, {width, height});
         vision.init_filter(t_temporal, t_spatial);
         if(undistort)
             vision.init_undistort(rf.find("camera_calibration_file").asString());
-        vision.open(getName());
+        if(!vision.open(getName()))
+            return false;
     }
+
+    if (flag_skin)
+        if(!skin.open(getName()))
+            return false;
+
+    if (flag_imu)
+        if(!skin.open(getName()))
+            return false;
+    
+
+    if (flag_audio)
+        if(!skin.open(getName()))
+            return false;
+    
 
     if (!input.open(getName("/AE:i"))) {
         yError() << "Could not open" << getName("/AE:i");
