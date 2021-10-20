@@ -16,8 +16,7 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __VFILTER__
-#define __VFILTER__
+#pragma once
 
 #include <opencv2/opencv.hpp>
 #include "event-driven/core.h"
@@ -63,5 +62,3 @@ public:
 
 
 }
-
-#endif
