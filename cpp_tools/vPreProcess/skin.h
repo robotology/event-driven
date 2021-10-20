@@ -64,6 +64,7 @@ public:
             return false;
         if(!open_samples(mname))
             return false;
+        return true;
     }
 
     void process(raw *datum)
