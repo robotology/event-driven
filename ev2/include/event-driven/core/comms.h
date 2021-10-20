@@ -45,7 +45,8 @@ template <typename T> class packet : public yarp::os::Portable {
 
 private:
     //TODO: this buffer size should be set by a compile time variable (cmake)
-    static const unsigned int initial_buffer_size{1048576};
+    //static const unsigned int initial_buffer_size{1048576};
+    static const unsigned int initial_buffer_size{1048576/16};
     unsigned int n_elements{0};
     std::vector<T> buffer;
     double _duration{0.0};

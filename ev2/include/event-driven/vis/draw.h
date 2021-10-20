@@ -32,13 +32,14 @@ class pixelShifter {
     double CX, SX;
     double xshift;
     double yshift;
+    double ts_scaler;
 
    public:
 
     pixelShifter()
     {
         setRotation(20.0, 40.0);
-        setShift(0, 0);
+        setShift(0, 0, 1.0);
     }
     
     void setRotation(double pitch, double yaw) 
@@ -52,23 +53,24 @@ class pixelShifter {
         SX = sin(thetaX);
     }
 
-    void setShift(int xoffset, int yoffset) 
+    void setShift(int xoffset, int yoffset, double tsoffset) 
     {
         xshift = xoffset;
         yshift = yoffset;
+        ts_scaler = tsoffset;
     }
 
-    void pttr(int &x, int &y, int &z) {
+    void pttr(int &x, int &y, double &z) {
         // we want a negative rotation around the y axis (yaw)
         // a positive rotation around the x axis (pitch) (no roll)
         // the z should always be negative values.
         // the points need to be shifted across by negligble amount
         // the points need to be shifted up by (x = max, y = 0, ts = 0 rotation)
-
+        z = z*ts_scaler;
         int xmod = x*CY + z*SY + 0.5; // +0.5 rounds rather than floor
         int ymod = y*CX - SX*(-x*SY + z*CY) + 0.5;
-        int zmod = y*SX + CX*(-x*SY + z*CY) + 0.5;
-        x = xmod + xshift; y = ymod + yshift; z = zmod;
+        //int zmod = y*SX + CX*(-x*SY + z*CY) + 0.5;
+        x = xmod + xshift; y = ymod + yshift; //z = zmod;
     }
 };
 
@@ -83,11 +85,11 @@ pixelShifter drawISOBase(int height, int width, int period, cv::Mat &baseimage)
 
     //the following calculations make the assumption of a negative yaw and
     //a positive pitch
-    int x, y, z;
+    int x, y; double z;
     int maxx = 0, maxy = 0, miny = Ylimit, minx = Xlimit;
     for(int xi = 0; xi <= Xlimit; xi+=Xlimit) {
         for(int yi = 0; yi <= Ylimit; yi+=Ylimit) {
-            for(int zi = 0; zi <= Zlimit; zi+=Zlimit) {
+            for(double zi = 0; zi <= Zlimit; zi+=Zlimit) {
                 x = xi; y = yi; z = zi; pr.pttr(x, y, z);
                 maxx = std::max(maxx, x);
                 maxy = std::max(maxy, y);
@@ -100,7 +102,7 @@ pixelShifter drawISOBase(int height, int width, int period, cv::Mat &baseimage)
 
     int imagexshift = -minx + 10;
     int imageyshift = -miny + 10;
-    pr.setShift(imagexshift, imageyshift);
+    pr.setShift(imagexshift, imageyshift, ts_to_axis);
 
     int imagewidth = maxx + imagexshift + 10;
     int imageheight = maxy + imageyshift + 10;
@@ -140,32 +142,32 @@ pixelShifter drawISOBase(int height, int width, int period, cv::Mat &baseimage)
     }
 
     unsigned int tsi;
-    for(tsi = 0; tsi < (unsigned int)(Zlimit*0.3); tsi++) {
+    for(tsi = 0; tsi < (unsigned int)(period*0.3); tsi++) {
 
         x = Xlimit; y = Ylimit; z = tsi; pr.pttr(x, y, z);
         baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
 
-        if(tsi == (unsigned int)(Zlimit *0.15)) {
+        if(tsi == (unsigned int)(period *0.15)) {
             cv::putText(baseimage, std::string("t"), cv::Point(x, y+12),
                         cv::FONT_ITALIC, 0.5, invertedtextc, 1, 8, false);
         }
 
     }
 
-    for(int i = 0; i < 14; i++) {
+    // for(int i = 0; i < 14; i++) {
 
-        x = Xlimit-i/2; y = Ylimit; z = tsi-i; pr.pttr(x, y, z);
-        baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
+    //     x = Xlimit-i/2; y = Ylimit; z = tsi-i; pr.pttr(x, y, z);
+    //     baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
 
-        x = Xlimit+i/2; y = Ylimit; z = tsi-i; pr.pttr(x, y, z);
-        baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
-    }
+    //     x = Xlimit+i/2; y = Ylimit; z = tsi-i; pr.pttr(x, y, z);
+    //     baseimage.at<cv::Vec3b>(y, x) = invertedaxisc;
+    // }
 
     for(tsi = ev::vtsscaler / 10.0;
         tsi < (unsigned int)period;
         tsi += ev::vtsscaler / 10.0) {
 
-        int zc = tsi * ts_to_axis + 0.5;
+        int zc = tsi + 0.5;
 
         for(int xi = 0; xi < Xlimit; xi++) {
             x = xi; y = 0; z = zc; pr.pttr(x, y, z);
