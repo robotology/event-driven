@@ -16,14 +16,14 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef VIPT_H
-#define VIPT_H
+#pragma once
 
 #include <opencv2/opencv.hpp>
 #include <yarp/os/all.h>
 
 namespace ev {
 
+//event-based inverse pixel transform
 class vIPT {
 
 private:
@@ -71,5 +71,20 @@ public:
 
 };
 
+// def draw_axis(img, R, t, K):
+//     # unit is mm
+//     rotV, _ = cv2.Rodrigues(R)
+//     points = np.float32([[100, 0, 0], [0, 100, 0], [0, 0, 100], [0, 0, 0]]).reshape(-1, 3)
+//     axisPoints, _ = cv2.projectPoints(points, rotV, t, K, (0, 0, 0, 0))
+//     img = cv2.line(img, tuple(axisPoints[3].ravel()), tuple(axisPoints[0].ravel()), (255,0,0), 3)
+//     img = cv2.line(img, tuple(axisPoints[3].ravel()), tuple(axisPoints[1].ravel()), (0,255,0), 3)
+//     img = cv2.line(img, tuple(axisPoints[3].ravel()), tuple(axisPoints[2].ravel()), (0,0,255), 3)
+//     return img
+cv::Mat drawRefAxis();
+cv::Mat drawRefAxis(std::array<double, 4> q);
+cv::Mat drawRefAxis(std::array<float, 3> r);
+cv::Mat drawRefAxis(std::array<float, 3> r, cv::Mat K);
+
+
 }
-#endif //vitp_h
+

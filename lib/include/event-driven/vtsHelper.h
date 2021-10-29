@@ -115,6 +115,7 @@ private:
 
     static constexpr double beta = 0.1;
     static constexpr double g = 9.80665;
+    bool initialised{false};
     
     enum
     {
@@ -127,7 +128,7 @@ private:
     std::array<double, 10> imu_readings{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     std::array<double, 6> accels{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     std::array<double, 6> vels{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    std::array<double, 4> heading{0.0, 0.0, 0.0, 0.0};
+    std::array<double, 4> heading{1.0, 0.0, 0.0, 0.0};
 
     void updateAHRS(double gx, double gy, double gz, double &ax, double &ay, double &az, double dt, double beta) {
 
@@ -231,6 +232,10 @@ private:
         //update the AHRS
         updateAHRS(vels[3], vels[4], vels[5], accels[0], accels[1], accels[2], dt, beta);
 
+    }
+
+    void updateVelocity(double dt)
+    {
         //extract the best values for accel and vel
         vels[0] += accels[0] * dt * 0.5;
         vels[1] += accels[1] * dt * 0.5;
@@ -248,7 +253,12 @@ public:
         for(auto &v: packet) {
             imu_readings[v.sensor] = v.value;
             if(v.sensor == 9) {
-                updateHeading(vtsHelper::deltaS(v.stamp, tic));
+                double dt = vtsHelper::deltaS(v.stamp, tic);
+                // if(!initialised)
+                //     for(int i = 0; i < 1000; i++)
+                //         updateHeading(dt);
+                updateHeading(dt);
+                updateVelocity(dt);
                 tic = v.stamp;
             }
         }
