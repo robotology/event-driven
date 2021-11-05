@@ -130,6 +130,15 @@ private:
     std::array<double, 6> vels{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     std::array<double, 4> heading{1.0, 0.0, 0.0, 0.0};
 
+    struct {
+        std::array<double, 3> ab{0.0, 0.0, 0.0};
+        std::array<double, 3> ag{0.00059855, 0.00059855, 0.00059855};
+        std::array<double, 9> as{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+        std::array<double, 3> gb{0.0, 0.0, 0.0};
+        std::array<double, 3> gg{0.000010653, 0.000010653, 0.000010653};
+        std::array<double, 9> gs{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    } calib;
+
     void updateAHRS(double gx, double gy, double gz, double &ax, double &ay, double &az, double dt, double beta) {
 
         double &q0 = heading[0];
@@ -221,13 +230,22 @@ private:
     void updateHeading(double dt) 
     {
         //use actual calibration values to convert this
-        accels[0] = imu_readings[ACC_X] * g/16384.0;
-        accels[1] = -imu_readings[ACC_Y] * g/16384.0;
-        accels[2] = imu_readings[ACC_Z] * g/16384.0;
+        accels[0] = imu_readings[ACC_X]* calib.as[0] +
+                    imu_readings[ACC_Y]*-calib.as[1] +
+                    imu_readings[ACC_Z]* calib.as[2];
+        accels[0] = (accels[0] + calib.ab[0]) * calib.ag[0];
+        accels[1] = imu_readings[ACC_X]* calib.as[3] +
+                    imu_readings[ACC_Y]*-calib.as[4] +
+                    imu_readings[ACC_Z]* calib.as[5];
+        accels[1] = (accels[1] + calib.ab[1]) * calib.ag[1];
+        accels[2] = imu_readings[ACC_X]* calib.as[6] +
+                    imu_readings[ACC_Y]*-calib.as[7] +
+                    imu_readings[ACC_Z]* calib.as[8];
+        accels[2] = (accels[2] + calib.ab[2]) * calib.ag[2];
 
-        vels[3] = imu_readings[GYR_X] * (250.0 * M_PI / (2.0 * 180.0 * 16384.0));
-        vels[4] = -imu_readings[GYR_Y] * (250.0 * M_PI / (2.0 * 180.0 * 16384.0));
-        vels[5] = imu_readings[GYR_Z] * (250.0 * M_PI / (2.0 * 180.0 * 16384.0));
+        vels[3] = ( imu_readings[GYR_X] + calib.gb[0]) * calib.gg[0];
+        vels[4] = (-imu_readings[GYR_Y] + calib.gb[1]) * calib.gg[1];
+        vels[5] = ( imu_readings[GYR_Z] + calib.gb[2]) * calib.gg[2];
 
         //update the AHRS
         updateAHRS(vels[3], vels[4], vels[5], accels[0], accels[1], accels[2], dt, beta);
@@ -243,22 +261,83 @@ private:
 
     }
 
+    void performAnUpdate(double dt) 
+    {
+        static std::array<double, 4> pq = heading;
 
-public:
+        //if we aren't initialised do not update the velocity
+        if (!initialised) {
+            updateHeading(dt);
+            //test if heading is stable
+            double accum1 = 0.0, accum2 = 0.0;
+            for (size_t i = 0; i < heading.size(); i++) {
+                accum1 += std::fabs(heading[i] - pq[i]);
+                accum2 += std::fabs(-heading[i] - pq[i]);
+            }
+            pq = heading;
+            accum1 = std::min(accum1, accum2);
+            //yInfo() << accum1 << pq[0] << pq[1] << pq[2] << pq[3] << dt;
+            if (accum1 < 0.0001) {
+                initialised = true;
+                yInfo() << "IMU initialised";
+            }
+        } else {
+            updateHeading(dt);
+            updateVelocity(dt);
+        }
+    }
 
-    bool loadIMUCalibrationFiles() {return true;}
+   public:
+    bool loadIMUCalibrationFiles(std::string file_path) {
+        yarp::os::ResourceFinder calibfinder;
+        calibfinder.setDefault("from", file_path);
+        calibfinder.configure(0, 0);
+
+        yarp::os::Bottle* ab = calibfinder.find("ACC_BIAS").asList();
+        yarp::os::Bottle* ag = calibfinder.find("ACC_GAIN").asList();
+        yarp::os::Bottle* as = calibfinder.find("ACC_SKEW").asList();
+        yarp::os::Bottle* gb = calibfinder.find("GYR_BIAS").asList();
+        yarp::os::Bottle* gg = calibfinder.find("GYR_GAIN").asList();
+        yarp::os::Bottle* gs = calibfinder.find("GYR_SKEW").asList();
+
+        if(!ab) {yError() << "missing ACC_BIAS"; return false;}
+        if(!ag) {yError() << "missing ACC_GAIN"; return false;}
+        if(!as) {yError() << "missing ACC_SKEW"; return false;}
+        if(!gb) {yError() << "missing GYR_BIAS"; return false;}
+        if(!gg) {yError() << "missing GYR_GAIN"; return false;}
+        if(!gs) {yError() << "missing GYR_SKEW"; return false;}
+
+        yInfo() << "ACC_BIAS" << ab->toString();
+        yInfo() << "ACC_GAIN" << ag->toString();
+        yInfo() << "ACC_SKEW" << as->toString();
+        yInfo() << "GYR_BIAS" << gb->toString();
+        yInfo() << "GYR_GAIN" << gg->toString();
+        yInfo() << "GYR_SKEW" << gs->toString();
+
+        for(int i = 0; i < 3; i++) {
+            calib.ab[i] = ab->get(i).asDouble();
+            calib.ag[i] = ag->get(i).asDouble();
+            calib.gb[i] = gb->get(i).asDouble();
+            calib.gg[i] = gg->get(i).asDouble();
+        }
+
+        for (int i = 0; i < 9; i++) {
+            calib.as[i] = as->get(i).asDouble();
+            calib.gs[i] = gs->get(i).asDouble();
+        }
+
+        return true;
+    }
+
     template <typename T> void addIMUPacket(const std::vector<T> &packet) 
     {
         static int tic = packet.front().stamp;
+        
+        //update the current readings
         for(auto &v: packet) {
             imu_readings[v.sensor] = v.value;
             if(v.sensor == 9) {
-                double dt = vtsHelper::deltaS(v.stamp, tic);
-                // if(!initialised)
-                //     for(int i = 0; i < 1000; i++)
-                //         updateHeading(dt);
-                updateHeading(dt);
-                updateVelocity(dt);
+                performAnUpdate(vtsHelper::deltaS(v.stamp, tic));
                 tic = v.stamp;
             }
         }
