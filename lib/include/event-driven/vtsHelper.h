@@ -22,6 +22,7 @@
 
 #include <yarp/os/all.h>
 #include <fstream>
+#include <iostream>
 #include <math.h>
 #include <vector>
 #include <array>
@@ -113,8 +114,8 @@ class imuAdvHelper
 {
 private:
 
-    static constexpr double beta = 0.1;
-    static constexpr double g = 9.80665;
+    double beta{0.01};
+    double g{9.80665};
     bool initialised{false};
     
     enum
@@ -139,7 +140,7 @@ private:
         std::array<double, 9> gs{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
     } calib;
 
-    void updateAHRS(double gx, double gy, double gz, double &ax, double &ay, double &az, double dt, double beta) {
+    void updateAHRS(double gx, double gy, double gz, double ax, double ay, double az, double dt, double beta) {
 
         double &q0 = heading[0];
         double &q1 = heading[1];
@@ -149,7 +150,7 @@ private:
         float s0, s1, s2, s3;
         float qDot1, qDot2, qDot3, qDot4;
         float _2q0, _2q1, _2q2, _2q3, _4q0, _4q1, _4q2, _8q1, _8q2, q0q0, q1q1, q2q2, q3q3;
-        double axc = ax, ayc = ay, azc = az;
+        //double axc = ax, ayc = ay, azc = az;
 
         // Rate of change of quaternion from gyroscope
         qDot1 = 0.5f * (-q1 * gx - q2 * gy - q3 * gz);
@@ -210,12 +211,29 @@ private:
         q1 *= recipNorm;
         q2 *= recipNorm;
         q3 *= recipNorm;
-
-        //compensate the accelerometer
-        ax = axc - g * 2 * (q1 * q3 - q0 * q2);
-        ay = ayc - g * 2 * (q0 * q1 + q2 * q3);
-        az = azc - g * (q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3);
     }
+
+    void compensateAccelerometer()
+    {
+        double &q0 = heading[0];
+        double &q1 = heading[1];
+        double &q2 = heading[2];
+        double &q3 = heading[3];
+        //compensate the accelerometer
+        accels[0] -= g * 2 * (q1 * q3 - q0 * q2);
+        accels[1] -= g * 2 * (q0 * q1 + q2 * q3);
+        accels[2] -= g * (q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3);
+        // static double meanx = 0, meany = 0, meanz = 0;
+        // meanx = meanx*0.99 + accels[0] * 0.01;
+        // meany = meany*0.99 + accels[1] * 0.01;
+        // meanz = meanz*0.99 + accels[2] * 0.01;
+        // accels[0] -= meanx;
+        // accels[1] -= meany;
+        // accels[2] -= meanz;
+
+    }
+
+
 
     float invSqrt(float x) {
         float halfx = 0.5f * x;
@@ -227,26 +245,45 @@ private:
         return y;
     }
 
+    void applyCalibration()
+    {
+                //use actual calibration values to convert this
+        double a0 = ( imu_readings[0] - calib.ab[0]) * calib.ag[0];
+        double a1 = (imu_readings[1] - calib.ab[1]) * calib.ag[1];
+        double a2 = ( imu_readings[2] - calib.ab[2]) * calib.ag[2];
+        //accels[0] = a0; accels[1] = a1; accels[2] = a2;
+        accels[0] = a0 * calib.as[0] + 
+                    a1 * calib.as[1] +
+                    a2 * calib.as[2];
+        accels[1] = a0 * calib.as[3] + 
+                    a1 * calib.as[4] +
+                    a2 * calib.as[5];
+        accels[2] = a0 * calib.as[6] +
+                    a1 * calib.as[7] +
+                    a2 * calib.as[8];
+
+        double v0 = (imu_readings[3] - calib.gb[0]) * calib.gg[0];
+        double v1 = (imu_readings[4] - calib.gb[1]) * calib.gg[1];
+        double v2 = (imu_readings[5] - calib.gb[2]) * calib.gg[2];
+        vels[3] = v0 * calib.gs[0] +
+                  v1 * calib.gs[1] +
+                  v2 * calib.gs[2];
+        vels[4] = v0 * calib.gs[3] +
+                  v1 * calib.gs[4] +
+                  v2 * calib.gs[5];
+        vels[5] = v0 * calib.gs[6] +
+                  v1 * calib.gs[7] +
+                  v2 * calib.gs[8];
+        // for(auto &k : imu_readings) std::cout << k << " ";
+        // std::cout << " | ";
+        // for(auto &k : accels) std::cout << k << " ";
+        // std::cout << " | ";
+        // for(auto &k : vels) std::cout << k << " ";
+        // std::cout << std::endl;
+    }
+
     void updateHeading(double dt) 
     {
-        //use actual calibration values to convert this
-        accels[0] = imu_readings[ACC_X]* calib.as[0] +
-                    imu_readings[ACC_Y]*-calib.as[1] +
-                    imu_readings[ACC_Z]* calib.as[2];
-        accels[0] = (accels[0] + calib.ab[0]) * calib.ag[0];
-        accels[1] = imu_readings[ACC_X]* calib.as[3] +
-                    imu_readings[ACC_Y]*-calib.as[4] +
-                    imu_readings[ACC_Z]* calib.as[5];
-        accels[1] = (accels[1] + calib.ab[1]) * calib.ag[1];
-        accels[2] = imu_readings[ACC_X]* calib.as[6] +
-                    imu_readings[ACC_Y]*-calib.as[7] +
-                    imu_readings[ACC_Z]* calib.as[8];
-        accels[2] = (accels[2] + calib.ab[2]) * calib.ag[2];
-
-        vels[3] = ( imu_readings[GYR_X] + calib.gb[0]) * calib.gg[0];
-        vels[4] = (-imu_readings[GYR_Y] + calib.gb[1]) * calib.gg[1];
-        vels[5] = ( imu_readings[GYR_Z] + calib.gb[2]) * calib.gg[2];
-
         //update the AHRS
         updateAHRS(vels[3], vels[4], vels[5], accels[0], accels[1], accels[2], dt, beta);
 
@@ -255,39 +292,87 @@ private:
     void updateVelocity(double dt)
     {
         //extract the best values for accel and vel
-        vels[0] += accels[0] * dt * 0.5;
-        vels[1] += accels[1] * dt * 0.5;
-        vels[2] += accels[2] * dt * 0.5;
+        // std::cout << accels[0] <<" "<< accels[1] <<" "<< accels[2] << " "<< std::endl;
+        //if(std::fabs(accels[0]* dt) > 0.0005)
+            vels[0] += accels[0] * dt * 0.5;
+
+        //    else 
+        //vels[0] *= 0.999;
+        //if(std::fabs(accels[1]* dt) > 0.0005)
+            vels[1] += accels[1] * dt * 0.5;
+        //    else 
+      // vels[1] *= 0.999;
+       //if(std::fabs(accels[2]* dt) > 0.0005)
+            vels[2] += accels[2] * dt * 0.5;
+        //    else 
+      //  vels[2] *= 0.999;
+            
+            
+            
 
     }
 
     void performAnUpdate(double dt) 
     {
-        static std::array<double, 4> pq = heading;
-
+        //static std::array<double, 4> pq = heading;
+        static int j = 0;
         //if we aren't initialised do not update the velocity
         if (!initialised) {
-            updateHeading(dt);
-            //test if heading is stable
-            double accum1 = 0.0, accum2 = 0.0;
-            for (size_t i = 0; i < heading.size(); i++) {
-                accum1 += std::fabs(heading[i] - pq[i]);
-                accum2 += std::fabs(-heading[i] - pq[i]);
+            //applyCalibration();
+            for(int i = 0; i < 100; i++) {
+                applyCalibration();
+                updateAHRS(0, 0, 0, accels[0], accels[1], accels[2], 0.001, 0.5);
             }
-            pq = heading;
-            accum1 = std::min(accum1, accum2);
-            //yInfo() << accum1 << pq[0] << pq[1] << pq[2] << pq[3] << dt;
-            if (accum1 < 0.0001) {
-                initialised = true;
+            if(j++ > 100) {
                 yInfo() << "IMU initialised";
+                initialised = true;
             }
+            
+            
+            //vels[3] = 0.0; vels[4] = 0.0; vels[5] = 0.0;
+            //updateHeading(dt);
+            //test if heading is stable
+            // double accum1 = 0.0, accum2 = 0.0;
+            // for (size_t i = 0; i < heading.size(); i++) {
+            //     accum1 += std::fabs(heading[i] - pq[i]);
+            //     accum2 += std::fabs(-heading[i] - pq[i]);
+            // }
+            // pq = heading;
+            // accum1 = std::min(accum1, accum2);
+            // //yInfo() << accum1 << pq[0] << pq[1] << pq[2] << pq[3] << dt;
+            // if (accum1 < 0.00005) {
+            //     initialised = true;
+            //     
+            // }
         } else {
+            applyCalibration();
             updateHeading(dt);
+            //compensateAccelerometer();
             updateVelocity(dt);
+            //std::cout << std::endl;
         }
     }
 
    public:
+    std::array<double, 3> getGravityVector() {
+        double &q0 = heading[0];
+        double &q1 = heading[1];
+        double &q2 = heading[2];
+        double &q3 = heading[3];
+        return {g * 2 * (q1 * q3 - q0 * q2), g * 2 * (q0 * q1 + q2 * q3),
+                g * (q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3)};
+    }
+
+    void setBeta(double value)
+    {
+        beta = value;
+    }
+
+    void setGravity(double value)
+    {
+        g = value;
+    }
+
     bool loadIMUCalibrationFiles(std::string file_path) {
         yarp::os::ResourceFinder calibfinder;
         calibfinder.setDefault("from", file_path);
