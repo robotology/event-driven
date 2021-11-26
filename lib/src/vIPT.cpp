@@ -16,7 +16,7 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "event-driven/vIPT.h"
+#include "event-driven/vis/IPT.h"
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/all.h>
