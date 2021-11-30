@@ -475,6 +475,16 @@ cv::Mat drawRefAxis(std::array<double, 4> q){
     double qy = q[2];
     double qz = q[3];
 
+    // double kw = 0.0;
+    // double kx = 0;
+    // double ky = 1.0;
+    // double kz = 0;
+    // //rotate this quaternion by 90 degrees!!!
+    // qw = q[0] * kw - q[1] * kx - q[2] * ky - q[3] * kz;  // 1
+    // qx = q[0] * kx + q[1] * kw + q[2] * kz - q[3] * ky;  // i
+    // qy = q[0] * ky - q[1] * kz + q[2] * kw + q[3] * kx;  // j
+    // qz = q[0] * kz + q[1] * ky - q[2] * kx + q[3] * kw;  // k
+
     a = 2.0 * acos(qw);
     // quaternion normalised then w is less than 1, so term always positive.
     double s = sqrt(1-qw*qw);
@@ -508,15 +518,17 @@ cv::Mat drawRefAxis(std::array<float, 3> _r, cv::Mat K)
     static float _t[3] = {0.0f, 0.0f, 5.0f};
     cv::Mat t = cv::Mat(1, 3, CV_32F, _t);
 
+    //float temp = _r[0]; _r[0] = -_r[1]; _r[1] = temp;
+    //_r[0] += M_PI_2;
     cv::Mat r(1, 3, CV_32F, &_r);
 
     std::vector<cv::Point2f> projected_points;
     cv::projectPoints(points, r, t, K, cv::noArray(), projected_points);
 
     cv::Mat canvas(240, 320, CV_8UC3, cv::Scalar(0, 0, 0));
-    cv::line(canvas, projected_points[0], projected_points[1], cv::Scalar(0, 255, 255), 2);
-    cv::line(canvas, projected_points[0], projected_points[2], cv::Scalar(255, 0, 255), 2);
-    cv::line(canvas, projected_points[0], projected_points[3], cv::Scalar(255, 255, 0), 2);
+    cv::line(canvas, projected_points[0], projected_points[1], cv::Scalar(0, 0, 255), 2);
+    cv::line(canvas, projected_points[0], projected_points[2], cv::Scalar(255, 0, 0), 2);
+    cv::line(canvas, projected_points[0], projected_points[3], cv::Scalar(0, 255, 0), 2);
 
     return canvas;
 }
