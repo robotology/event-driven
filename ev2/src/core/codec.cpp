@@ -20,6 +20,7 @@
 
 const std::string ev::timeStamp::tag = "TS";
 const std::string ev::addressEvent::tag = "AE";
+const std::string ev::TAE::tag = "TAE";
 const std::string ev::skinAE::tag = "SKE";
 const std::string ev::skinSample::tag = "SKS";
 const std::string ev::flowEvent::tag = "FLOW";

@@ -49,7 +49,7 @@ private:
     static constexpr double period{1.0};
 
     std::mutex m;
-    std::vector< ev::packet<AE> > buffer;
+    std::vector< ev::packet<TAE> > buffer;
     int buffer_size{0};
     int buffer_used{0};
     int b_sel{0};
@@ -69,14 +69,25 @@ public:
             return false;
         }
 
-        if((int)round(ev::vtsscaler) != 1000000)
-            yWarning() << "USB ATIS Gen 3 typically has a clock period of 1 ms. You may need to compile event-driven "
-                          "with a cmake parameter VLIB_CLOCK_PERIOD_NS=1000 for correct time scaling.";
-
         if(!yarp::os::Network::checkNetwork(2.0)) {
             std::cout << "Could not connect to YARP" << std::endl;
             return false;
         }
+
+        try {
+            if (rf.check("file")) {
+                cam = Camera::from_file(rf.find("file").asString());
+            } else {
+                cam = Camera::from_first_available();
+            }
+        } catch(const std::exception& e) {
+            yError() << "No cameras connected";
+            return false;
+        }
+
+        if ((int)round(ev::vtsscaler) != 1000000)
+            yWarning() << "ATIS USB typically has a clock period of 1 ms. You may need to compile event-driven "
+                          "with a cmake parameter VLIB_CLOCK_PERIOD_NS=1000 for correct time scaling.";
 
         //set the module name used to name ports
         setName((rf.check("name", Value("/atis3")).asString()).c_str());
@@ -95,12 +106,6 @@ public:
 
         buffer.emplace_back();
         buffer.emplace_back();        
-
-        if(rf.check("file")) {
-            cam = Camera::from_file(rf.find("file").asString());
-        } else {
-            cam = Camera::from_first_available();
-        }
 
         Biases &bias = cam.biases();
 #if defined MetavisionSDK_FOUND
@@ -174,7 +179,7 @@ public:
 
     void fill_buffer(const EventCD *begin, const EventCD *end) {
 
-        AE tae;
+        TAE tae;
         // this loop allows us to get access to each event received in this callback
         m.lock();
         //fill up the buffer that will be sent over the port in the other thread
@@ -215,7 +220,7 @@ public:
         while(!Thread::isStopping()) {
 
             //if we have data to send, do so, otherwise we are just going to wait for 1 ms
-            ev::packet<AE> &current_buffer = buffer[b_sel];
+            ev::packet<TAE> &current_buffer = buffer[b_sel];
             if(current_buffer.size() > 0) {
 
                 //switch buffers so the callback can keep filling the second buffer while we are sending
