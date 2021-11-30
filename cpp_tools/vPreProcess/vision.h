@@ -160,7 +160,7 @@ public:
         return true;
     }
 
-    void process(ev::AE *datum)
+    void process(ev::AE *datum, double t)
     {
         if(!opened) return;
         //flipping
@@ -170,12 +170,12 @@ public:
         //salt-n-pepper filter
         if (apply_filter) {
             if (datum->channel == ev::CAMERA_LEFT) {
-                if (!filter_left.check(datum->x, datum->y, datum->p, datum->ts)) {
+                if (!filter_left.check(datum->x, datum->y, datum->p, t)) {
                     v_dropped++;
                     return;
                 }
             } else {
-                if (!filter_right.check(datum->x, datum->y, datum->p, datum->ts)) {
+                if (!filter_right.check(datum->x, datum->y, datum->p, t)) {
                     v_dropped++;
                     return;
                 }

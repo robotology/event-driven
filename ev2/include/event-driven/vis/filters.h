@@ -31,9 +31,9 @@ private:
     bool x_sfilter;
     bool x_tfilter;
 
-    int t_sfilter;
+    double t_sfilter;
     int s_sfilter;
-    int t_tfilter;
+    double t_tfilter;
 
     cv::Mat SAE;
     cv::Mat POL;
@@ -49,14 +49,14 @@ public:
     void initialise(unsigned int width, unsigned int height);
 
     /// \brief filter using temporal coincidence
-    void use_temporal_filter(int t_param);
+    void use_temporal_filter(double t_param);
 
     /// \brief filter using spatial coincidence
-    void use_spatial_filter(int t_param, unsigned int s_param = 1);
+    void use_spatial_filter(double t_param, unsigned int s_param = 1);
 
     /// \brief classifies the event as noise or signal
     /// \returns false if the event is noise
-    bool check(int x, int y, int p, int ts);
+    bool check(int x, int y, int p, double t);
 
 };
 

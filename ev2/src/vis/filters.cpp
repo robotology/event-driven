@@ -46,42 +46,39 @@ void vNoiseFilter::initialise(unsigned int width, unsigned int height)
 {
     res.height = height;
     res.width = width;
-    SAE = cv::Mat::zeros(height, width, CV_32S);
+    SAE = cv::Mat::zeros(height, width, CV_64F);
     POL = cv::Mat::zeros(height, width, CV_8U);
 }
 
-void vNoiseFilter::use_temporal_filter(int t_param)
+void vNoiseFilter::use_temporal_filter(double t_param)
 {
     x_tfilter = true;
     t_tfilter = t_param;
 }
 
-void vNoiseFilter::use_spatial_filter(int t_param, unsigned int s_param)
+void vNoiseFilter::use_spatial_filter(double t_param, unsigned int s_param)
 {
     x_sfilter = true;
     t_sfilter = t_param;
     s_sfilter = s_param;
 }
 
-bool vNoiseFilter::check(int x, int y, int p, int ts)
+bool vNoiseFilter::check(int x, int y, int p, double t)
 {
 
     auto add = true;
 
     if(x_tfilter) {
         if(p == POL.at<uint8_t>(y, x)) {
-            int dt = ts - SAE.at<uint32_t>(y, x);
-            if(dt < 0)
-                dt += ev::max_stamp;
-            if(dt < t_tfilter) {
-                SAE.at<uint32_t>(y, x) = ts;
+            if(t - SAE.at<double>(y, x) < t_tfilter) {
+                SAE.at<double>(y, x) = t;
                 return false;
             }
         }
     }
 
     POL.at<uint8_t>(y, x) = p;
-    SAE.at<uint32_t>(y, x) = ts;
+    SAE.at<double>(y, x) = t;
 
     if(x_sfilter) {
         add = false;
@@ -92,11 +89,7 @@ bool vNoiseFilter::check(int x, int y, int p, int ts)
 
         for(auto xi = xl; xi < xh; ++xi) {
             for(auto yi = yl; yi < yh; ++yi) {
-                int dt = ts - SAE.at<uint32_t>(yi, xi);
-                if(dt < 0) {
-                    dt += ev::max_stamp;
-                    SAE.at<uint32_t>(yi, xi) -= ev::max_stamp;
-                }
+                int dt = t - SAE.at<double>(yi, xi);
                 if(dt && dt < t_sfilter) {
                     add = true;
                     break;

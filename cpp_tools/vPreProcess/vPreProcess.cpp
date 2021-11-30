@@ -291,7 +291,7 @@ void vPreProcess::run() {
             } else if(IS_AUDIO(v.data)) {
                 audio.process((ev::earEvent *)&v);
             } else { //IS_VISION
-                vision.process((ev::AE *)&v);
+                vision.process((ev::AE *)&v, yarpstamp.getTime());
             }
         }
 
