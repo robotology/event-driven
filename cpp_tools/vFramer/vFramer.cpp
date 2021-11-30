@@ -180,7 +180,7 @@ public:
         //     }
         yInfo() << "Making publisher ...";
         publishers.push_back(new greyDrawer);
-        if (!publishers.front()->initialise(getName("/grey"), 360, 480))
+        if (!publishers.front()->initialise(getName("/grey"), height, width))
         {
             yError() << "Could not initialise publisher";
             return false;
