@@ -108,8 +108,8 @@ public:
         std::string moduleName = rf.check("name", Value("/vFramer")).asString();
         setName(moduleName.c_str());
 
-        int height = rf.check("height", Value(2048)).asInt();
-        int width = rf.check("width", Value(2048)).asInt();
+        int height = rf.check("height", Value(360)).asInt();
+        int width = rf.check("width", Value(480)).asInt();
 
         double eventWindow = rf.check("eventWindow", Value(0.1)).asDouble();
         eventWindow = ev::secondsToTicks(eventWindow);
@@ -179,7 +179,7 @@ public:
         //         }
         //     }
         yInfo() << "Making publisher ...";
-        publishers.push_back(new greyDrawer);
+        publishers.push_back(new isoDrawer);
         if (!publishers.front()->initialise(getName("/grey"), height, width))
         {
             yError() << "Could not initialise publisher";

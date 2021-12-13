@@ -115,35 +115,53 @@ void greyDrawer::updateImage()
 bool isoDrawer::initialise(const std::string &name, int height, int width)
 {
     this->name = name;
-    canvas = cv::Mat(height, width, CV_8UC1);
+    ps = ev::drawISOBase(height, width, time_window, base_image);
+    base_image.copyTo(canvas);
+
     return input.open(name + "/AE:i");
 }
 
 void isoDrawer::updateImage()
 {
-    ev::info inf = input.readSlidingWinT(1.0, true);
-    yInfo() << inf.count << "in" << inf.duration << "seconds";
+    ev::info inf = input.readSlidingWinT(time_window, true);
 
-    canvas = 128;
+    cv::Vec3b naqua = 0.05 * (cv::Vec3b(255, 255, 255) - aqua);
+    cv::Vec3b nviolet = 0.05 * (cv::Vec3b(255, 255, 255) - violet);
+    
+
+    canvas = cv::Vec3b(255, 255, 255);
+    double t = time_window;
+    double time_increment = time_window/(double)inf.count;
+    yInfo() << inf.count << "in" << inf.duration << "seconds";
     for (auto &v : input)
     {
-        auto &pixel = canvas.at<unsigned char>(v.y, v.x);
-        if (v.p)
-        {
-            if (pixel + 50 > 255)
-                pixel = 255;
-            else
-                pixel += 50;
-        }
+        int x = v.x;
+        int y = v.y;
+        double z = t;
+        t -= time_increment;
+        ps.pttr(x, y, z);
+        if(x < 0 || x >= canvas.cols || y < 0 || y >= canvas.rows)
+            continue;
+        if(v.p)
+            canvas.at<cv::Vec3b>(y, x) -= naqua;
         else
-        {
-            canvas.at<unsigned char>(v.y, v.x) = 0;
-            if (pixel - 50 < 0)
-                pixel = 0;
+            canvas.at<cv::Vec3b>(y, x) -= nviolet;
+
+        if (t < 0.05) {
+            int x = v.x;
+            int y = v.y;
+            double z = 0;
+            ps.pttr(x, y, z);
+            if (x < 0 || x >= canvas.cols || y < 0 || y >= canvas.rows)
+                continue;
+            if(v.p)
+                canvas.at<cv::Vec3b>(y, x) = aqua;
             else
-                pixel -= 50;
+                canvas.at<cv::Vec3b>(y, x) = violet;
         }
     }
+
+    canvas -= base_image;
 
     cv::imshow("test image", canvas);
     cv::waitKey(1);

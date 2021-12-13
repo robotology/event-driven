@@ -28,6 +28,7 @@
 #include <yarp/sig/all.h>
 #include <yarp/cv/Cv.h>
 #include <event-driven/core.h>
+#include <event-driven/vis.h>
 #include <map>
 #include <vector>
 #include <string>
@@ -63,8 +64,13 @@ public:
 
 class isoDrawer : public drawerInterface {
 protected:
+
+    static constexpr double time_window{1.0};
     ev::window<ev::AE> input;
+    ev::pixelShifter ps;
+    cv::Mat base_image;
     void updateImage() override;
+    
 public:
     bool initialise(const std::string &name, int height, int width) override;
 };
