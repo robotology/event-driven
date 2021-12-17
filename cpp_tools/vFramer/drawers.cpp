@@ -123,6 +123,7 @@ bool isoDrawer::initialise(const std::string &name, int height, int width)
 
 void isoDrawer::updateImage()
 {
+    cv::namedWindow(name, cv::WINDOW_NORMAL);
     ev::info inf = input.readSlidingWinT(time_window, true);
 
     cv::Vec3b naqua = 0.05 * (cv::Vec3b(255, 255, 255) - aqua);
@@ -163,7 +164,8 @@ void isoDrawer::updateImage()
 
     canvas -= base_image;
 
-    cv::imshow("test image", canvas);
+    
+    cv::imshow(name, canvas);
     cv::waitKey(1);
 }
 
