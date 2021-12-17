@@ -48,6 +48,7 @@ private:
     int counter_packets{0};
     int counter_events{0};
     static constexpr double period{1.0};
+    bool record_mode{false};
 
     std::mutex m;
     std::vector< ev::packet<AE> > buffer;
@@ -101,7 +102,10 @@ public:
         if(!grayscale_port.open(getName("/img:o"))) {
             yError() << "Could not open image port";
             return false;
-        } 
+        }
+
+        record_mode = rf.check("record_mode") && 
+                      rf.check("record_mode", Value(true)).asBool();
 
         //yarp::os::Network::connect(getName("/AE:o"), "/vPreProcess/AE:i", "fast_tcp");
 
@@ -142,7 +146,6 @@ public:
         if(bias_pol) {
             yWarning() << "polarity bias not implemented for VGA";
         }
-
 #else
         yInfo() << "Default Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
         if(bias_sens) bias.set_contrast_sensitivity(bias_sens);
@@ -236,6 +239,7 @@ public:
     //asynchronous thread run forever
     void run() override
     {
+        const static constexpr double packet_time = 0.004;
         double tic = yarp::os::Time::now();
         while(!Thread::isStopping()) {
 
@@ -256,10 +260,14 @@ public:
                 output_port.write(current_buffer);
                 counter_packets++;
                 counter_events += current_buffer.size();
+
+                if(record_mode && current_buffer.duration() < packet_time)
+                    Time::delay(packet_time - current_buffer.duration());
+
                 current_buffer.clear();
 
             } else {
-                Time::delay(0.001);
+                Time::delay(packet_time);
             }
         }
 
