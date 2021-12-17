@@ -48,6 +48,12 @@ void vNoiseFilter::initialise(unsigned int width, unsigned int height)
     res.width = width;
     SAE = cv::Mat::zeros(height, width, CV_64F);
     POL = cv::Mat::zeros(height, width, CV_8U);
+    initialised = true;
+}
+
+const bool& vNoiseFilter::active()
+{
+    return initialised;
 }
 
 void vNoiseFilter::use_temporal_filter(double t_param)

@@ -29,6 +29,7 @@
 #include <yarp/os/all.h>
 #include <vector>
 #include "event-driven/core.h"
+#include "event-driven/vis.h"
 #include <yarp/cv/Cv.h>
 #include <map>
 using namespace ev;
@@ -49,6 +50,8 @@ private:
     int counter_events{0};
     static constexpr double period{1.0};
     bool record_mode{false};
+
+    ev::vNoiseFilter nf;
 
     std::mutex m;
     std::vector< ev::packet<AE> > buffer;
@@ -161,6 +164,13 @@ public:
         const Geometry &geo = cam.geometry();
         yInfo() << "[" << geo.width() << "x" << geo.height() << "]";
 
+        double nf_param = rf.check("filter", Value(0.0)).asDouble();
+        if(nf_param > 0.0) 
+        {
+            nf.initialise(geo.width(), geo.height());
+            nf.use_temporal_filter(nf_param);
+        }
+
         if(!cam.start()) {
             yError() << "Could not start the camera";
             return false;
@@ -205,13 +215,22 @@ public:
         // this loop allows us to get access to each event received in this callback
         m.lock();
         //fill up the buffer that will be sent over the port in the other thread
-        for (const EventCD *ev = begin; ev != end; ++ev) {
-            //tae.ts = ev->t;
-             tae.x = ev->x; tae.y = ev->y; tae.p = ev->p;
-            buffer[b_sel].push_back(tae);
+        if (nf.active()) {
+            for (const EventCD *ev = begin; ev != end; ++ev) {
+                if(nf.check(ev->x, ev->y, ev->p, ev->t * 0.000001)) {
+                    //tae.ts = ev->t;
+                    tae.x = ev->x; tae.y = ev->y; tae.p = ev->p;
+                    buffer[b_sel].push_back(tae);
+                }
+            }
+        } else {
+            for (const EventCD *ev = begin; ev != end; ++ev) {
+                //tae.ts = ev->t;
+                tae.x = ev->x; tae.y = ev->y; tae.p = ev->p;
+                buffer[b_sel].push_back(tae);
+            }
         }
         m.unlock();
-
     }
 
     //using ExposureFrameCallback = std::function<void(Prophesee::timestamp, const cv::Mat &)>;

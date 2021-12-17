@@ -39,6 +39,7 @@ private:
     cv::Mat POL;
 
     resolution res;
+    bool initialised{false};
 
 public:
 
@@ -47,6 +48,8 @@ public:
 
     /// \brief initialise the sensor size and the filter parameters.
     void initialise(unsigned int width, unsigned int height);
+
+    const bool& active();
 
     /// \brief filter using temporal coincidence
     void use_temporal_filter(double t_param);
