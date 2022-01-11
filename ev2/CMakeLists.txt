@@ -15,6 +15,7 @@ set( folder_source
   src/core/utilities.cpp
 )
 
+set(public_header_files include/event-driven/core.h)
 set( folder_header
   include/event-driven/core.h
   include/event-driven/core/codec.h
@@ -33,7 +34,8 @@ if(OpenCV_FOUND)
     #include/event-driven/vis/vDraw_ISO.cpp
     #src/vDraw_skin.cpp
   )
-
+  
+  list( APPEND public_header_files include/event-driven/vis.h)
   list( APPEND folder_header 
     include/event-driven/vis.h
     include/event-driven/vis/filters.h
@@ -53,11 +55,11 @@ add_library(${EVENTDRIVEN_LIBRARY} ${folder_source} ${folder_header})
 add_library(ev::${EVENTDRIVEN_LIBRARY} ALIAS ${EVENTDRIVEN_LIBRARY})
 
 
-set_target_properties(${EVENTDRIVEN_LIBRARY} PROPERTIES PUBLIC_HEADER "${folder_header}"
+set_target_properties(${EVENTDRIVEN_LIBRARY} PROPERTIES PUBLIC_HEADER "${public_header_files}"
                                                           VERSION ${event-driven_VERSION}
                                                           SOVERSION 2)
 target_include_directories(${EVENTDRIVEN_LIBRARY} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-                                                           "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>") # FIXME INSTALL PATH
+                                                         "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>") # FIXME INSTALL PATH
 
 target_compile_definitions(${EVENTDRIVEN_LIBRARY} PRIVATE 
     CLOCK_PERIOD=${VLIB_CLOCK_PERIOD_NS}
@@ -81,3 +83,4 @@ install(TARGETS ${EVENTDRIVEN_LIBRARY}
         RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}"                            COMPONENT bin
         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${EVENTDRIVEN_LIBRARY}" COMPONENT dev)
 
+install(DIRECTORY "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
