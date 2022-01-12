@@ -266,6 +266,18 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     if(ioctl(fd, HPU_TX_INTERFACE, &tx_config) < 0)
         { yError() << "Could not write hpu tx config"; return false; }
 
+    //READ CTRL_REG status
+    hpu_regs_t hpu_regs = {0, 0, 0};
+    ioctl(fd, HPU_GEN_REG, &hpu_regs);
+    hpu_regs.data |= (1 << 13) | (1 << 14);
+    hpu_regs.rw = 1;
+    ioctl(fd, HPU_GEN_REG, &hpu_regs);
+
+    std::stringstream ss;
+    ss << "CTRL_REG: " << "0x" << std::hex << std::setw(8)
+       << std::setfill('0') << hpu_regs.data << std::endl;
+    yInfo() << ss.str();
+
     if(spinnaker) {
 
         yInfo() << "Configuring SpiNNaker";
