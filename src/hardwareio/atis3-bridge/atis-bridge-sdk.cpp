@@ -70,7 +70,7 @@ public:
             return false;
         }
 
-        if(!grayscale_port.open(getName("img:o"))) {
+        if(!grayscale_port.open(getName("/img:o"))) {
             yError() << "Could not open image port";
             return false;
         } 
@@ -88,23 +88,39 @@ public:
         }
 
         Biases &bias = cam.biases();
-#if defined MetavisionSDK_FOUND
-        //it seems like the ability ot set the camera sensitivity "easily" has been removed, and relegated to
-        //setting the entire biases file. perhaps if the HAL is included and setup correctly then
-        // the flag I_HL_BIASES_FACILITY_AVAILABLE is set and we can use the "constrast sensitivity".
-#else
         int bias_pol = 0;
         if(rf.check("polarity"))
             bias_pol = rf.find("polarity").asInt();
         if(rf.check("p"))
             bias_pol = rf.find("p").asInt();
+        if(bias_pol < 0) bias_pol = 1;
+        if(bias_pol > 99) bias_pol = 99;
         
         int bias_sens = 0;
         if (rf.check("sensitivity"))
             bias_sens = rf.find("sensitivity").asInt();
         if(rf.check("s"))
             bias_sens = rf.find("s").asInt();
+        if(bias_sens < 0) bias_sens = 1;
+        if(bias_sens > 99) bias_sens = 99;
 
+#if defined MetavisionSDK_FOUND
+        I_LL_Biases* bias_control = bias.get_facility();
+        std::map<std::string, int> bias_vals = bias_control->get_all_biases();
+        yInfo() << "Default Biases:" << bias_vals["bias_diff_off"] << bias_vals["bias_diff_on"] << "[diff_off diff_on]";
+        //for(auto i : bias_vals) yInfo() << i.first << i.second;
+        if(bias_sens) {
+            int diff_on  = (66 - 350) * 0.01 * bias_sens + 650 - 66;
+            int diff_off = (66 + 200) * 0.01 * bias_sens + 100 - 66;
+            bias_control->set("bias_diff_on", diff_on);
+            bias_control->set("bias_diff_off", diff_off);
+            bias_vals = bias_control->get_all_biases();
+            yInfo() << "        Biases:" << bias_vals["bias_diff_off"] << bias_vals["bias_diff_on"] << "[diff_off diff_on]";
+        }
+        if(bias_pol) {
+            yWarning() << "polarity bias not implemented for VGA";
+        }
+#else
         yInfo() << "Default Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
         if(bias_sens) bias.set_contrast_sensitivity(bias_sens);
         if(bias_pol) bias.set_contrast_sensitivity_to_polarity(bias_pol);
@@ -118,7 +134,7 @@ public:
 
         const Geometry &geo = cam.geometry();
         yInfo() << "[" << geo.width() << "x" << geo.height() << "]";
-
+        
         if(!cam.start()) {
             yError() << "Could not start the camera";
             return false;
@@ -173,11 +189,9 @@ public:
 
         //fill up the buffer that will be sent over the port in the other thread
         for (const EventCD *ev = begin; ev != end; ++ev) {
-
             ae.x = ev->x; ae.y = ev->y; ae.polarity = ev->p;
             buffer[b_sel][buffer_used++] = ev->t;
             buffer[b_sel][buffer_used++] = ae._coded_data;
-
         }
 
         m.unlock();
