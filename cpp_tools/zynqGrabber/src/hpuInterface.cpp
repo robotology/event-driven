@@ -267,12 +267,14 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
         { yError() << "Could not write hpu tx config"; return false; }
 
     //READ CTRL_REG status
+    unsigned int ts_flag = 0;
+    if(ioctl(fd, HPU_SET_RX_TS_EN, &ts_flag) < 0)
+        { yError() << "Could not disable timestamps (RX)"; return false; }
+    if(ioctl(fd, HPU_SET_TX_TS_EN, &ts_flag) < 0)
+        { yError() << "Could not disable timestamps (TX)"; return false; }
+
     hpu_regs_t hpu_regs = {0, 0, 0};
     ioctl(fd, HPU_GEN_REG, &hpu_regs);
-    hpu_regs.data |= (1 << 13) | (1 << 14);
-    hpu_regs.rw = 1;
-    ioctl(fd, HPU_GEN_REG, &hpu_regs);
-
     std::stringstream ss;
     ss << "CTRL_REG: " << "0x" << std::hex << std::setw(8)
        << std::setfill('0') << hpu_regs.data << std::endl;

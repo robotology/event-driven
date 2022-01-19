@@ -475,5 +475,7 @@ typedef enum {
 #define HPU_SPINN_RX_MASK   _IOW (MAGIC_NUM, 37, unsigned int *)
 #define HPU_GET_HW_STATUS   _IOR (MAGIC_NUM, 38, hpu_hw_status_t *)
 #define HPU_SPINN_KEYS_EN   _IOW (MAGIC_NUM, 39, spinn_keys_enable_t *)
+#define HPU_SET_RX_TS_EN    _IOW (MAGIC_NUM, 40, unsigned int *)
+#define HPU_SET_TX_TS_EN    _IOW (MAGIC_NUM, 41, unsigned int *)
 
 #endif
