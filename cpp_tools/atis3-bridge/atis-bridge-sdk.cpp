@@ -211,23 +211,27 @@ public:
 
     void fill_buffer(const EventCD *begin, const EventCD *end) {
 
-        AE tae;
+        AE ae;
         // this loop allows us to get access to each event received in this callback
         m.lock();
         //fill up the buffer that will be sent over the port in the other thread
         if (nf.active()) {
             for (const EventCD *ev = begin; ev != end; ++ev) {
                 if(nf.check(ev->x, ev->y, ev->p, ev->t * 0.000001)) {
-                    //tae.ts = ev->t;
-                    tae.x = ev->x; tae.y = ev->y; tae.p = ev->p;
-                    buffer[b_sel].push_back(tae);
+#if ENABLE_TS
+                    ae.ts = ev->t;
+#endif
+                    ae.x = ev->x; ae.y = ev->y; ae.p = ev->p;
+                    buffer[b_sel].push_back(ae);
                 }
             }
         } else {
             for (const EventCD *ev = begin; ev != end; ++ev) {
-                //tae.ts = ev->t;
-                tae.x = ev->x; tae.y = ev->y; tae.p = ev->p;
-                buffer[b_sel].push_back(tae);
+#if ENABLE_TS
+                ae.ts = ev->t;
+#endif
+                ae.x = ev->x; ae.y = ev->y; ae.p = ev->p;
+                buffer[b_sel].push_back(ae);
             }
         }
         m.unlock();

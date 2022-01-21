@@ -27,6 +27,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 
+#include "raw_datatype.h"
 #include "vision.h"
 #include "imu.h"
 #include "audio.h"
@@ -63,6 +64,8 @@ private:
     //output
     bool use_local_stamp;
     
+    double rate_t{0.0};
+    int rate_n{0};
     bool flag_stats{false};
     std::deque<double> plot_rates;
     void visualise_rate();
@@ -243,10 +246,11 @@ bool vPreProcess::updateModule() {
 
     if(passed) {
         auto pc = 100.0 * (double) passed / (double) (passed + dropped);
-        auto max_rate = 0;
+        int max_rate = this->getPeriod() * (double)rate_n / rate_t * 0.001;
+        rate_n = 0; rate_t = 0.0;
         yInfo() << "Using" << (int)(passed*0.001) << "k/" << int((passed + dropped)*0.001)
-                << "k(" << pc << "%)" << "of events. Maximum rate:"
-                << max_rate << "events / second.";
+                << "k(" << pc << "%)" << "of events."; 
+                //<< "Maximum rate:" << max_rate << "k events / second.";
         auto &temp = rate_port.prepare();
         temp.resize(1);
         temp[0] = 0.000001 * ((double)passed + (double)dropped) / getPeriod();
@@ -283,6 +287,7 @@ void vPreProcess::run() {
         if (use_local_stamp) localstamp.update();
         else localstamp = yarpstamp;
 
+        double tic = Time::now();
         for(auto &v : *q) {
             if(IS_SKIN(v.data)) { //IS_SKIN
                 skin.process(&v);
@@ -294,11 +299,14 @@ void vPreProcess::run() {
                 vision.process((ev::AE *)&v, yarpstamp.getTime());
             }
         }
+        rate_t += Time::now() - tic;
+        rate_n += q->size();
 
         vision.send(localstamp, q->duration());
         audio.send(localstamp, q->duration());
         imu.send(localstamp, q->duration());
         skin.send(localstamp, q->duration());
+
     }
 }
 

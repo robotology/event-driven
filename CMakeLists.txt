@@ -69,6 +69,24 @@ if(prophesee_core_FOUND)
 endif()
 
 #build the library
+
+
+#set options for the timing and encoding
+set(VLIB_ENABLE_TS OFF CACHE BOOL "events have individual timestamps")
+set(VLIB_CLOCK_PERIOD_NS 80 CACHE STRING "event timestamp clock period (ns)")
+set(VLIB_TIMER_BITS 30 CACHE STRING "event timestamp maximum = 2^TIMERBITS")
+string(COMPARE GREATER ${VLIB_TIMER_BITS} 31 TOOMANYBITSINCOUNTER)
+if(TOOMANYBITSINCOUNTER)
+  message( FATAL_ERROR "Maximum bits useable is 31 (VLIB_TIMER_BITS)")
+endif()
+if(${VLIB_ENABLE_TS})
+  message(STATUS "ON: individual event timestamps")
+  message(STATUS "EVENT CLOCK: ${VLIB_CLOCK_PERIOD_NS} ns")
+  message(STATUS "MAX TIMESTAMP: ${VLIB_TIMER_BITS}/32 bits")
+else()
+  message(STATUS "OFF: individual event timestamps")
+endif()
+
 add_subdirectory(ev2)
 
 #build additional tools

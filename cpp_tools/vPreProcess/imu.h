@@ -18,6 +18,7 @@
 #pragma once
 #include <string>
 #include <yarp/os/Log.h>
+#include "raw_datatype.h"
 
 class imuFunctions 
 {

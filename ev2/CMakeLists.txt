@@ -1,13 +1,3 @@
-#choose clock rate of FPGA
-set(VLIB_CLOCK_PERIOD_NS 80 CACHE STRING "event timestamp clock period (ns)")
-
-#choose number of bits of the FPGA timer to use
-set(VLIB_TIMER_BITS 30 CACHE STRING "event timestamp maximum = 2^TIMERBITS")
-string(COMPARE GREATER ${VLIB_TIMER_BITS} 31 TOOMANYBITSINCOUNTER)
-if(TOOMANYBITSINCOUNTER)
-  message( FATAL_ERROR "Maximum bits useable is 31 (VLIB_TIMER_BITS)")
-endif()
-
 set( folder_source
   src/core/codec.cpp
   src/core/comms.cpp
@@ -63,7 +53,8 @@ target_include_directories(${EVENTDRIVEN_LIBRARY} PUBLIC "$<BUILD_INTERFACE:${CM
 
 target_compile_definitions(${EVENTDRIVEN_LIBRARY} PRIVATE 
     CLOCK_PERIOD=${VLIB_CLOCK_PERIOD_NS}
-    TIMER_BITS=${VLIB_TIMER_BITS})
+    TIMER_BITS=${VLIB_TIMER_BITS}
+    $<$<BOOL:${VLIB_ENABLE_TS}>:ENABLE_TS=1>)
 
 target_compile_options(${EVENTDRIVEN_LIBRARY} PRIVATE -Wall)
 

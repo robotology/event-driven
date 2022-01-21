@@ -18,14 +18,20 @@
 #pragma once
 namespace ev {
 
+
 typedef struct timeStamp {
     static const std::string tag;
+#if ENABLE_TS
     unsigned int ts:31;
     unsigned int _fill:1;
+#else
+    static const unsigned int ts{0};
+    static const unsigned int _fill{0};
+#endif
 } timeStamp;
 using TS = timeStamp;
 
-typedef struct addressEvent {
+typedef struct addressEvent : public timeStamp{
     static const std::string tag;
     unsigned int p:1;
     unsigned int x:10;
@@ -38,11 +44,6 @@ typedef struct addressEvent {
     unsigned int _fill:7;
 } addressEvent;
 using AE = addressEvent;
-
-typedef struct TAE : public timeStamp, public addressEvent {
-    static const std::string tag;
-} TAE;
-
 
 typedef struct skinAE : public timeStamp {
     static const std::string tag;

@@ -28,6 +28,11 @@ namespace ev {
 unsigned int max_stamp = (1 << TIMER_BITS) - 1;
 double tsscaler = 0.000000001 * CLOCK_PERIOD;
 double vtsscaler = 1.0 / tsscaler;
+#if ENABLE_TS
+bool ts_status = true;
+#else
+bool ts_status = false;
+#endif
 
 benchmark::benchmark()
 {

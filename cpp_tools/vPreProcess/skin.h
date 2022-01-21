@@ -18,12 +18,8 @@
 #pragma once
 #include <string>
 #include <yarp/os/Log.h>
+#include "raw_datatype.h"
 
-typedef struct raw {
-    static const std::string tag;
-    int32_t ts;
-    int32_t data;
-} raw;
 
 class skinFunctions 
 {

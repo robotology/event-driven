@@ -45,6 +45,8 @@ extern unsigned int max_stamp;
 extern double tsscaler;
 /// a multiplier to convert seconds to an event timestamp
 extern double vtsscaler;
+/// a flag to read if individual event timestamps are enabled
+extern bool ts_status;
 
 static double ticksToSeconds(const unsigned int tick)
 {
