@@ -18,7 +18,6 @@
 #pragma once
 #include <string>
 #include <yarp/os/Log.h>
-#include "raw_datatype.h"
 
 
 class skinFunctions 
@@ -63,7 +62,7 @@ public:
         return true;
     }
 
-    void process(raw *datum)
+    void process(ev::encoded *datum)
     {
         static ev::skinSample ss;
         static bool expect_skin_value{false};

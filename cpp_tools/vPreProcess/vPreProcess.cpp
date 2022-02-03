@@ -27,7 +27,6 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 
-#include "raw_datatype.h"
 #include "vision.h"
 #include "imu.h"
 #include "audio.h"
@@ -37,13 +36,12 @@ using namespace ev;
 using namespace yarp::os;
 using std::string;
 
-const std::string raw::tag = "AE";
 class vPreProcess : public yarp::os::RFModule, public yarp::os::Thread
 {
 private:
 
     //output port for the vBottle with the new events computed by the module
-    ev::BufferedPort<raw> input;
+    ev::BufferedPort<ev::encoded> input;
     yarp::os::BufferedPort< yarp::sig::Vector > rate_port;
 
     bool flag_vision;
@@ -281,7 +279,7 @@ void vPreProcess::run() {
     Stamp localstamp;
     while (true) {
 
-        ev::packet<raw> *q = input.read(true);
+        ev::packet<encoded> *q = input.read(true);
         if(!q) break;
         input.getEnvelope(yarpstamp);
         if (use_local_stamp) localstamp.update();

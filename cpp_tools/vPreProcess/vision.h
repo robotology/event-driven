@@ -20,7 +20,6 @@
 #include <event-driven/core.h>
 #include <yarp/os/all.h>
 #include <string>
-#include "raw_datatype.h"
 
 class visionFunctions 
 {

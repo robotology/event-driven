@@ -31,7 +31,7 @@ typedef struct timeStamp {
 } timeStamp;
 using TS = timeStamp;
 
-typedef struct addressEvent : public timeStamp{
+typedef struct addressEvent : public timeStamp {
     static const std::string tag;
     unsigned int p:1;
     unsigned int x:10;
@@ -44,6 +44,11 @@ typedef struct addressEvent : public timeStamp{
     unsigned int _fill:7;
 } addressEvent;
 using AE = addressEvent;
+
+typedef struct encoded : public timeStamp {
+    static const std::string tag;
+    int32_t data;
+} encoded;
 
 typedef struct skinAE : public timeStamp {
     static const std::string tag;

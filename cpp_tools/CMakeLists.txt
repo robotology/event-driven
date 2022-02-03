@@ -1,9 +1,10 @@
 add_subdirectory(zynqGrabber)
-#add_subdirectory(chronocamGrabber)
+add_subdirectory(hexViewer)
+
 #add_subdirectory(binaryDumper)
 #add_subdirectory(qadIMUcal)
 #add_subdirectory(esim-yarp)
-#add_subdirectory(hexViewer)
+
 if(OpenCV_FOUND)
   add_subdirectory(vFramer)
   add_subdirectory(vPreProcess)
