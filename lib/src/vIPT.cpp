@@ -475,16 +475,6 @@ cv::Mat drawRefAxis(std::array<double, 4> q){
     double qy = q[2];
     double qz = q[3];
 
-    // double kw = 0.0;
-    // double kx = 0;
-    // double ky = 1.0;
-    // double kz = 0;
-    // //rotate this quaternion by 90 degrees!!!
-    // qw = q[0] * kw - q[1] * kx - q[2] * ky - q[3] * kz;  // 1
-    // qx = q[0] * kx + q[1] * kw + q[2] * kz - q[3] * ky;  // i
-    // qy = q[0] * ky - q[1] * kz + q[2] * kw + q[3] * kx;  // j
-    // qz = q[0] * kz + q[1] * ky - q[2] * kx + q[3] * kw;  // k
-
     a = 2.0 * acos(qw);
     // quaternion normalised then w is less than 1, so term always positive.
     double s = sqrt(1-qw*qw);
