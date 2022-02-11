@@ -223,17 +223,8 @@ private:
         accels[0] -= g * 2 * (q1 * q3 - q0 * q2);
         accels[1] -= g * 2 * (q0 * q1 + q2 * q3);
         accels[2] -= g * (q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3);
-        // static double meanx = 0, meany = 0, meanz = 0;
-        // meanx = meanx*0.99 + accels[0] * 0.01;
-        // meany = meany*0.99 + accels[1] * 0.01;
-        // meanz = meanz*0.99 + accels[2] * 0.01;
-        // accels[0] -= meanx;
-        // accels[1] -= meany;
-        // accels[2] -= meanz;
 
     }
-
-
 
     float invSqrt(float x) {
         float halfx = 0.5f * x;
@@ -249,7 +240,7 @@ private:
     {
                 //use actual calibration values to convert this
         double a0 = ( imu_readings[0] - calib.ab[0]) * calib.ag[0];
-        double a1 = (imu_readings[1] - calib.ab[1]) * calib.ag[1];
+        double a1 = ( imu_readings[1] - calib.ab[1]) * calib.ag[1];
         double a2 = ( imu_readings[2] - calib.ab[2]) * calib.ag[2];
         //accels[0] = a0; accels[1] = a1; accels[2] = a2;
         accels[0] = a0 * calib.as[0] + 
@@ -274,12 +265,6 @@ private:
         vels[5] = v0 * calib.gs[6] +
                   v1 * calib.gs[7] +
                   v2 * calib.gs[8];
-        // for(auto &k : imu_readings) std::cout << k << " ";
-        // std::cout << " | ";
-        // for(auto &k : accels) std::cout << k << " ";
-        // std::cout << " | ";
-        // for(auto &k : vels) std::cout << k << " ";
-        // std::cout << std::endl;
     }
 
     void updateHeading(double dt) 
@@ -289,27 +274,11 @@ private:
 
     }
 
-    void updateVelocity(double dt)
-    {
-        //extract the best values for accel and vel
-        // std::cout << accels[0] <<" "<< accels[1] <<" "<< accels[2] << " "<< std::endl;
-        //if(std::fabs(accels[0]* dt) > 0.0005)
-            vels[0] += accels[0] * dt * 0.5;
-
-        //    else 
-        //vels[0] *= 0.999;
-        //if(std::fabs(accels[1]* dt) > 0.0005)
-            vels[1] += accels[1] * dt * 0.5;
-        //    else 
-      // vels[1] *= 0.999;
-       //if(std::fabs(accels[2]* dt) > 0.0005)
-            vels[2] += accels[2] * dt * 0.5;
-        //    else 
-      //  vels[2] *= 0.999;
-            
-            
-            
-
+    void updateVelocity(double dt) {
+        // extract the best values for accel and vel
+        vels[0] += accels[0] * dt * 0.5;
+        vels[1] += accels[1] * dt * 0.5;
+        vels[2] += accels[2] * dt * 0.5;
     }
 
     void performAnUpdate(double dt) 
@@ -327,29 +296,11 @@ private:
                 yInfo() << "IMU initialised";
                 initialised = true;
             }
-            
-            
-            //vels[3] = 0.0; vels[4] = 0.0; vels[5] = 0.0;
-            //updateHeading(dt);
-            //test if heading is stable
-            // double accum1 = 0.0, accum2 = 0.0;
-            // for (size_t i = 0; i < heading.size(); i++) {
-            //     accum1 += std::fabs(heading[i] - pq[i]);
-            //     accum2 += std::fabs(-heading[i] - pq[i]);
-            // }
-            // pq = heading;
-            // accum1 = std::min(accum1, accum2);
-            // //yInfo() << accum1 << pq[0] << pq[1] << pq[2] << pq[3] << dt;
-            // if (accum1 < 0.00005) {
-            //     initialised = true;
-            //     
-            // }
         } else {
             applyCalibration();
             updateHeading(dt);
             //compensateAccelerometer();
             updateVelocity(dt);
-            //std::cout << std::endl;
         }
     }
 
