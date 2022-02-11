@@ -39,7 +39,6 @@ private:
     imuHelper imu_helper;
 
     ev::vtsHelper vtsHelper; // common for all LOGs
-    //fs::path accFilePath, gyrFilePath;
     std::vector<std::vector<double>> accData;
     std::vector<std::vector<double>> gyrData;
     std::ofstream acclog, gyrlog;
@@ -75,14 +74,6 @@ public:
         imu_state = std::vector<double>(10, 0);
 
         std::string prefix = rf.check("p", Value("")).asString();
-        //accFileName = static_cast<std::string>(rf.check("a", Value(std::string(std::getenv("HOME"))+"/results/IMUDataDump/acc.mat")).asString());
-        //gyrFileName = static_cast<std::string>(rf.check("g", Value(std::string(std::getenv("HOME"))+"/results/IMUDataDump/gyr.mat")).asString());        
-        // accFilePath = accFileName;
-        // gyrFilePath = gyrFileName;
-        // if (!fs::exists(accFilePath.parent_path())) {
-        //     yInfo() << "creating log file folder";
-        //     fs::create_directories(accFilePath.parent_path());
-        // }
         std::string accFileName = prefix + ".acc.mat";
         acclog.open(accFileName, std::ofstream::out | std::ofstream::trunc);
         if(!acclog.is_open()) {
