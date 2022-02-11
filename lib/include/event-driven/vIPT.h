@@ -16,14 +16,14 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef VIPT_H
-#define VIPT_H
+#pragma once
 
 #include <opencv2/opencv.hpp>
 #include <yarp/os/all.h>
 
 namespace ev {
 
+//event-based inverse pixel transform
 class vIPT {
 
 private:
@@ -71,5 +71,11 @@ public:
 
 };
 
+cv::Mat drawRefAxis();
+cv::Mat drawRefAxis(std::array<double, 4> q);
+cv::Mat drawRefAxis(std::array<float, 3> r);
+cv::Mat drawRefAxis(std::array<float, 3> r, cv::Mat K);
+
+
 }
-#endif //vitp_h
+

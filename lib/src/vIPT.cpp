@@ -459,4 +459,68 @@ bool vIPT::denseProjectCam1ToCam0(cv::Mat &m)
     return true;
 }
 
+cv::Mat drawRefAxis()
+{
+    std::array<float, 3> r = {0.1f, 0.1f, 0.1f};
+
+    return drawRefAxis(r);
+}
+
+cv::Mat drawRefAxis(std::array<double, 4> q){
+
+    double x = 1.0, y = 0.0, z = 0.0, a;
+
+    double qw = q[0];
+    double qx = q[1];
+    double qy = q[2];
+    double qz = q[3];
+
+    a = 2.0 * acos(qw);
+    // quaternion normalised then w is less than 1, so term always positive.
+    double s = sqrt(1-qw*qw);
+    // test to avoid divide by zero, s is always positive due to sqrt
+    if (s < 0.001) {
+        // if s close to zero then direction of axis not important
+        x = qx; // if it is important that axis is normalised then replace with x=1; y=z=0;
+        y = qy;
+        z = qz;
+    } else {
+        x = qx / s; // normalise axis
+        y = qy / s;
+        z = qz / s;
+    }
+
+    std::array<float, 3> r = {a*x, a*y, a*z};
+    return drawRefAxis(r);;
+}
+
+cv::Mat drawRefAxis(std::array<float, 3> r)
+{
+    static float _K[9] = {500.0f, 0.0f, 160.0f, 0.0f, 500.0f, 120.0f, 0.0f, 0.0f, 1.0f};
+    cv::Mat K = cv::Mat(3, 3, CV_32F, _K);
+
+    return drawRefAxis(r, K);
+}
+cv::Mat drawRefAxis(std::array<float, 3> _r, cv::Mat K)
+{
+    static float _points[12] = {0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1};
+    cv::Mat points = cv::Mat(4, 3, CV_32F, _points);
+    static float _t[3] = {0.0f, 0.0f, 5.0f};
+    cv::Mat t = cv::Mat(1, 3, CV_32F, _t);
+
+    //float temp = _r[0]; _r[0] = -_r[1]; _r[1] = temp;
+    //_r[0] += M_PI_2;
+    cv::Mat r(1, 3, CV_32F, &_r);
+
+    std::vector<cv::Point2f> projected_points;
+    cv::projectPoints(points, r, t, K, cv::noArray(), projected_points);
+
+    cv::Mat canvas(240, 320, CV_8UC3, cv::Scalar(0, 0, 0));
+    cv::line(canvas, projected_points[0], projected_points[1], cv::Scalar(0, 0, 255), 2);
+    cv::line(canvas, projected_points[0], projected_points[2], cv::Scalar(255, 0, 0), 2);
+    cv::line(canvas, projected_points[0], projected_points[3], cv::Scalar(0, 255, 0), 2);
+
+    return canvas;
+}
+
 } //namespace ev::
