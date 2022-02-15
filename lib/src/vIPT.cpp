@@ -490,7 +490,7 @@ cv::Mat drawRefAxis(std::array<double, 4> q){
         z = qz / s;
     }
 
-    std::array<float, 3> r = {a*x, a*y, a*z};
+    std::array<float, 3> r = {static_cast<float>(a*x), static_cast<float>(a*y), static_cast<float>(a*z)};
     return drawRefAxis(r);;
 }
 
