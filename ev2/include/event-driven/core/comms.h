@@ -264,6 +264,7 @@ public:
     using yarp::os::BufferedPort< ev::packet<T> >::getEnvelope;
     using yarp::os::BufferedPort< ev::packet<T> >::close;
     using yarp::os::BufferedPort< ev::packet<T> >::interrupt;
+    using yarp::os::BufferedPort< ev::packet<T> >::resume;
     using yarp::os::BufferedPort< ev::packet<T> >::isWriting;
 };
 
