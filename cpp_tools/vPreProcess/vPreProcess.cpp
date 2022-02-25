@@ -275,15 +275,13 @@ bool vPreProcess::updateModule() {
 
 void vPreProcess::run() {
 
-    Stamp yarpstamp;
     Stamp localstamp;
     while (true) {
 
         ev::packet<encoded> *q = input.read(true);
         if(!q) break;
-        input.getEnvelope(yarpstamp);
         if (use_local_stamp) localstamp.update();
-        else localstamp = yarpstamp;
+        else localstamp = q->envelope();
 
         double tic = Time::now();
         for(auto &v : *q) {
@@ -294,7 +292,7 @@ void vPreProcess::run() {
             } else if(IS_AUDIO(v.data)) {
                 audio.process((ev::earEvent *)&v);
             } else { //IS_VISION
-                vision.process((ev::AE *)&v, yarpstamp.getTime());
+                vision.process((ev::AE *)&v, q->envelope().getTime());
             }
         }
         rate_t += Time::now() - tic;

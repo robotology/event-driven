@@ -24,6 +24,7 @@
 #include <yarp/os/ConnectionWriter.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Semaphore.h>
+#include <yarp/os/Stamp.h>
 #include <vector>
 #include <deque>
 #include <list>
@@ -50,6 +51,7 @@ private:
     unsigned int n_elements{0};
     std::vector<T> buffer;
     double _duration{0.0};
+    yarp::os::Stamp e;
 
     bool invalidPacket(const std::string &msg) const
     {
@@ -164,6 +166,21 @@ public:
         return _duration;
     }
 
+    const double packetTime() const
+    {
+        return e.getTime();
+    }
+
+    const int packetID() const
+    {
+        return e.getCount();
+    }
+
+    inline yarp::os::Stamp& envelope()
+    {
+        return e;
+    }
+
     int fillFromDevice(const int fd, const int min_packet_size, const int max_packet_size)
     {
         if(buffer.size() * sizeof(T) < max_packet_size)
@@ -227,11 +244,14 @@ public:
         return written;
     }
 
+
 };
 
 /// vPortWrapper forces uses in a way to avoid
 template <typename T> class BufferedPort : protected yarp::os::BufferedPort< ev::packet<T> >
 {
+private:
+    ev::packet<T> *prepared = nullptr;
 public:
 
     BufferedPort()
@@ -245,23 +265,45 @@ public:
         //if that happens we want to address the problem elsewhere. but we do
         //want to use a secondary thread to send the data (and limit buffer
         //swapping to 2). This code should do that.
+        if(!prepared) 
+        {
+            yError() << "internal prepare state mismatch in ev::BufferedPort. "
+                        "Nothing written";
+            return;
+        }
+        yarp::os::BufferedPort< ev::packet<T> >::setEnvelope(prepared->envelope());
         yarp::os::BufferedPort< ev::packet<T> >::waitForWrite(); 
         yarp::os::BufferedPort< ev::packet<T> >::writeStrict();
+        prepared = nullptr;
     }
 
     ev::packet<T>& prepare() 
     {
         auto &p = yarp::os::BufferedPort< ev::packet<T> >::prepare();
         p.clear();
+        prepared = &p;
         return p;
+    }
+
+    bool unprepare()
+    {
+        prepared = nullptr;
+        return yarp::os::BufferedPort< ev::packet<T> >::unprepare();
+    }
+
+    ev::packet<T>* read(bool shouldWait = true) 
+    {
+        ev::packet<T>* result = yarp::os::BufferedPort<ev::packet<T> >::read(shouldWait);
+        if(result) yarp::os::BufferedPort< ev::packet<T> >::getEnvelope(result->envelope());
+        return result;
     }
 
     using yarp::os::BufferedPort< ev::packet<T> >::open;
     using yarp::os::BufferedPort< ev::packet<T> >::getPendingReads;
-    using yarp::os::BufferedPort< ev::packet<T> >::read;
-    using yarp::os::BufferedPort< ev::packet<T> >::unprepare;
-    using yarp::os::BufferedPort< ev::packet<T> >::setEnvelope;
-    using yarp::os::BufferedPort< ev::packet<T> >::getEnvelope;
+    //using yarp::os::BufferedPort< ev::packet<T> >::read;
+    //using yarp::os::BufferedPort< ev::packet<T> >::unprepare;
+    //using yarp::os::BufferedPort< ev::packet<T> >::setEnvelope;
+    //using yarp::os::BufferedPort< ev::packet<T> >::getEnvelope;
     using yarp::os::BufferedPort< ev::packet<T> >::close;
     using yarp::os::BufferedPort< ev::packet<T> >::interrupt;
     using yarp::os::BufferedPort< ev::packet<T> >::resume;
@@ -538,13 +580,14 @@ public:
                 m.unlock();
             }
 
-
+            
             bool read_success = port.read(*current_packet);
 
             if(!read_success && !isStopping()) {
                 yWarning() << "port read failure!";
                 break;
             }
+            port.getEnvelope(current_packet->envelope());
 
             m.lock();
             active.push_back(current_packet);

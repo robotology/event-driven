@@ -221,7 +221,7 @@ public:
         for(int pl = LEFT; pl <= STEREO; pl++) {
             if(packets[pl] && packets[pl]->size()) {
                 packets[pl]->duration(duration);
-                ports[pl].setEnvelope(stamp);
+                packets[pl]->envelope() = stamp;
                 ports[pl].write();
                 packets[pl] = &(ports[pl].prepare());
             }

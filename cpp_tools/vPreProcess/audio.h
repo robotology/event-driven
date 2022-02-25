@@ -46,7 +46,7 @@ public:
     {
         if(p && p->size()) {
             p->duration(duration);
-            output.setEnvelope(stamp);
+            p->envelope() = stamp;
             output.write();
             p = &(output.prepare());
         }

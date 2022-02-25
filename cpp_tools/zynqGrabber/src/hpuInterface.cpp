@@ -94,7 +94,7 @@ void  device2yarp::run() {
         }
 
         yarp_stamp.update();
-        output_port.setEnvelope(yarp_stamp);
+        packet.envelope() = yarp_stamp;
         output_port.write();
 
         //report statistics to yarp

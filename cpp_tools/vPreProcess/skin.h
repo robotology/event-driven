@@ -89,14 +89,14 @@ public:
     {
         if(p_events && p_events->size()) {
             p_events->duration(duration);
-            output_events.setEnvelope(stamp);
+            p_events->envelope() = stamp;
             output_events.write();
             p_events = &(output_events.prepare());
         }
 
         if (p_samples && p_samples->size()) {
             p_samples->duration(duration);
-            output_samples.setEnvelope(stamp);
+            p_samples->envelope() = stamp;
             output_samples.write();
             p_samples = &(output_samples.prepare());
         }
