@@ -553,6 +553,16 @@ public:
             delete *i;
     }
 
+    double getUnprocessedDelay(void) const
+    {
+        double delay = 0.0;
+        auto i = last_packet; i++;
+        for(; i != active.end(); i++)
+            delay += (*i)->duration();
+
+        return delay;
+    }
+
     double duration(void) const
     {
         return _duration;
