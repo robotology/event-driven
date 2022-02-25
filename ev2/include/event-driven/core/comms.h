@@ -335,6 +335,16 @@ public:
             final = last;
         }
 
+        double packetTime() 
+        {
+            return (*packet_it)->packetTime();
+        }
+
+        double packetID()
+        {
+            return (*packet_it)->packetID();
+        }
+
         T& operator*() const { return *m_ptr; }
         T* operator->() { return m_ptr; }
         iterator& operator++()
@@ -347,6 +357,16 @@ public:
 
             return *this;
         }
+
+        iterator& operator++(int k)
+        {
+            //TODO - check this is a good method (this += k?)
+            for(auto i = 0; i < k; i++)
+                this->operator++;
+
+            return *this;
+        }
+
         //Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
         friend bool operator== (const iterator& a, const iterator& b) { return a.m_ptr == b.m_ptr; };
         friend bool operator!= (const iterator& a, const iterator& b) { return a.m_ptr != b.m_ptr; };
