@@ -35,7 +35,7 @@
 
 namespace ev {
 
-    typedef struct
+typedef struct
 {
     unsigned int count;
     double duration;
@@ -361,8 +361,12 @@ public:
         iterator& operator++(int k)
         {
             //TODO - check this is a good method (this += k?)
-            for(auto i = 0; i < k; i++)
-                this->operator++;
+            //for (auto i = 0; i < k; i++) {
+                m_ptr++;
+                if (m_ptr == (*packet_it)->end() && packet_it != final) {
+                    m_ptr = (*(++packet_it))->begin();
+                }
+            //}
 
             return *this;
         }
