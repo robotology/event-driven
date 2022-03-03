@@ -32,8 +32,14 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
         yInfo() << "ROI definition found [" << x << y << width << height << "]";
         setROI(x, y, width, height);
     }
-    
-    //setup biases?
+
+    if(rf.check("sensitivity")) {
+        int sensitivity = rf.find("sensitivity").asInt();
+        printSensitivyBiases();
+        setSensitivityBiases(sensitivity);
+        printSensitivyBiases();
+    }
+
     //other options?
 
     return true;
@@ -102,6 +108,43 @@ int visCtrlATIS3::writeSisleyRegister(uint32_t sisley_reg_address, uint32_t sisl
     i2cdata[4] = tmp[3];
     return write(fd, i2cdata, 5) - 1 ; // -1 because of one is the starting register
 
+
+}
+
+//BIAS REGISTER INFORMATION
+//pad_enable | bias_enable | bias_polarity | cascode | bias_type (31:27)
+//internal buffer (26:21)
+//current_based_bias (20:8)
+//voltage_based_bias (7:0)
+//bias_diff_off = bias19 = reg 0x14C = F900011F = 0b11111 001000 0...01 00011111 
+//bias_diff_on = bias20 = reg 0x150 = E9000136 =  0b11101 001000 0...01 00110110
+
+void visCtrlATIS3::setSensitivityBiases(int sensitivity)
+{
+        if(sensitivity < 0) sensitivity = 1;
+        if(sensitivity > 99) sensitivity = 99;
+        
+        uint32_t diff_on{0};
+        uint32_t diff_off{0};
+        readSisleyRegister(0x14C, &diff_off);
+        diff_off &= 0xFFFFFF00;
+        diff_off += ((66 + 200) * 0.01 * sensitivity + 100 - 66);
+        writeSisleyRegister(0x14C, diff_off);
+
+        readSisleyRegister(0x150, &diff_on);
+        diff_on &= 0xFFFFFF00;
+        diff_on += ((66 - 350) * 0.01 * sensitivity + 650 - 66);
+        writeSisleyRegister(0x150, diff_on);
+}
+
+void visCtrlATIS3::printSensitivyBiases() 
+{
+
+    uint32_t diff_off{0};
+    readSisleyRegister(0x14C, &diff_off);
+    uint32_t diff_on{0};
+    readSisleyRegister(0x150, &diff_on);
+    yInfo() << "Biases:" << diff_off << diff_on << "[diff_off diff_on]";
 
 }
 

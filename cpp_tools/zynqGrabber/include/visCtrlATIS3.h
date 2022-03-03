@@ -12,6 +12,8 @@ private:
     int setROIAXIS(int start, int size, xory_t coord, tdorem_t type);
     bool sisleySetup();
     bool updateBiases(yarp::os::Bottle &bias);
+    void printSensitivyBiases();
+    void setSensitivityBiases(int sensitivity);
 
 public:
     visCtrlATIS3(int fd, channel_name channel) : visCtrlInterface(fd, channel) {};
