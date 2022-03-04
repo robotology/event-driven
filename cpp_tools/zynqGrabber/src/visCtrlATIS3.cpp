@@ -35,7 +35,7 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
 
     if(rf.check("sensitivity")) {
         int sensitivity = rf.find("sensitivity").asInt();
-	yInfo() << "Setting sensitivity to " << sensitivity;
+        yInfo() << "Setting sensitivity to " << sensitivity;
         printSensitivyBiases();
         setSensitivityBiases(sensitivity);
         printSensitivyBiases();
@@ -66,7 +66,6 @@ int visCtrlATIS3::readSisleyRegister(uint32_t sisley_reg_address, uint32_t *sisl
 
 int visCtrlATIS3::writeSisleyRegister(uint32_t sisley_reg_address, uint32_t sisley_data)
 {
-
     if(4 != i2cWrite(fd, VSCTRL_SISLEY_DATA_REG, (unsigned char *)&sisley_data, 4)) {
         yError() << "SisleyWrite: Could not write the data";
         return -1;
@@ -79,34 +78,7 @@ int visCtrlATIS3::writeSisleyRegister(uint32_t sisley_reg_address, uint32_t sisl
         return -1;
     }
 
-    return 0;
-
-    uint32_t data32;
-    char i2cdata[5];
-    uint8_t *tmp;
-
-    // // Data to be written in SISLEY_DATA_REG
-    // data32=sisley_data;
-    // tmp = (uint8_t *)(&data32);
-    // i2cdata[0] = I2C_AUTOTINCRREGS | VSCTRL_SISLEY_DATA_REG;
-    // i2cdata[1] = tmp[0];
-    // i2cdata[2] = tmp[1];
-    // i2cdata[3] = tmp[2];
-    // i2cdata[4] = tmp[3];
-    // if(write(fd, i2cdata, 5) != 5)
-    //     return -1;
-
-    // // Data to be written in SISLEY_ADDRESS_REG
-    // data32=WRITE_SISLEY_REG | (0x00FFFFFF&sisley_reg_address);
-    // tmp = (uint8_t *)(&data32);
-    // i2cdata[0] = I2C_AUTOTINCRREGS | VSCTRL_SISLEY_ADDRESS_REG;
-    // i2cdata[1] = tmp[0];
-    // i2cdata[2] = tmp[1];
-    // i2cdata[3] = tmp[2];
-    // i2cdata[4] = tmp[3];
-    // return write(fd, i2cdata, 5) - 1 ; // -1 because of one is the starting register
-
-
+    return 4;
 }
 
 //BIAS REGISTER INFORMATION
