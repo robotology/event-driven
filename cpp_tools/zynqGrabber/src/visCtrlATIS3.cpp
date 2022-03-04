@@ -36,10 +36,17 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
     if(rf.check("sensitivity")) {
         int sensitivity = rf.find("sensitivity").asInt();
         yInfo() << "Setting sensitivity to " << sensitivity;
-        printSensitivyBiases();
         setSensitivityBiases(sensitivity);
-        printSensitivyBiases();
     }
+
+    if(rf.check("refractory")) {
+        int ref_period = rf.find("refractory").asInt();
+        yInfo() << "Setting refractory period to " << ref_period;
+        setRefractoryBias(ref_period);  
+    }
+
+    printSensitivyBiases();
+    printRefractoryBias();
 
     //other options?
 
@@ -88,6 +95,24 @@ int visCtrlATIS3::writeSisleyRegister(uint32_t sisley_reg_address, uint32_t sisl
 //voltage_based_bias (7:0)
 //bias_diff_off = bias19 = reg 0x14C = F900011F = 0b11111 001000 0...01 00011111 
 //bias_diff_on = bias20 = reg 0x150 = E9000136 =  0b11101 001000 0...01 00110110
+//bias_refr = bias10 = reg 0x128 = D90001D3 
+
+void visCtrlATIS3::printRefractoryBias() 
+{
+    uint32_t bias_val{0};
+    readSisleyRegister(0x128, &bias_val);
+    bias_val &= 0xFFF;
+    yInfo() << "Biases:" << bias_val << "[period]";
+}
+
+void visCtrlATIS3::setRefractoryBias(int period) 
+{
+    uint32_t bias_val{0};
+    readSisleyRegister(0x128, &bias_val);
+    bias_val &= 0xFFFFFC00;
+    bias_val += period;
+    writeSisleyRegister(0x128, bias_val);
+}
 
 void visCtrlATIS3::setSensitivityBiases(int sensitivity)
 {

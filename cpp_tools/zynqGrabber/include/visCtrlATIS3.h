@@ -14,6 +14,8 @@ private:
     bool updateBiases(yarp::os::Bottle &bias);
     void printSensitivyBiases();
     void setSensitivityBiases(int sensitivity);
+    void printRefractoryBias();
+    void setRefractoryBias(int period);
 
 public:
     visCtrlATIS3(int fd, channel_name channel) : visCtrlInterface(fd, channel) {};
