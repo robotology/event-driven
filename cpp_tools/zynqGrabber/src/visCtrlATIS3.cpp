@@ -35,6 +35,7 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
 
     if(rf.check("sensitivity")) {
         int sensitivity = rf.find("sensitivity").asInt();
+	yInfo() << "Setting sensitivity to " << sensitivity;
         printSensitivyBiases();
         setSensitivityBiases(sensitivity);
         printSensitivyBiases();
@@ -50,7 +51,7 @@ int visCtrlATIS3::readSisleyRegister(uint32_t sisley_reg_address, uint32_t *sisl
     //  #define VSCTRL_SISLEY_DATA_REG     0x28
     //  #define VSCTRL_SISLEY_ADDRESS_REG  0x24
     sisley_reg_address &= 0x00FFFFFF;
-    if(4 != i2cWrite(fd, VSCTRL_SISLEY_ADDRESS_REG, (unsigned char *)sisley_reg_address, 4)) {
+    if(4 != i2cWrite(fd, VSCTRL_SISLEY_ADDRESS_REG, (unsigned char *)&sisley_reg_address, 4)) {
         yError() << "SisleyRead: Could not write the read command";
         return -1;
     }
@@ -62,42 +63,6 @@ int visCtrlATIS3::readSisleyRegister(uint32_t sisley_reg_address, uint32_t *sisl
 
     return 0; 
 }
-
-// int visCtrlATIS3::readSisleyRegister(uint32_t sisley_reg_address, uint32_t *sisley_data)
-// {
-//     uint32_t data32;
-//     char i2cdata[5];
-//     uint8_t *tmp;
-
-//     // Data to be written in SISLEY_ADDRESS_REG
-//     data32=READ_SISLEY_REG | (0x00FFFFFF&sisley_reg_address);
-//     tmp = (uint8_t *)(&data32);
-//     i2cdata[0] = I2C_AUTOTINCRREGS | VSCTRL_SISLEY_ADDRESS_REG;
-//     i2cdata[1] = tmp[0];
-//     i2cdata[2] = tmp[1];
-//     i2cdata[3] = tmp[2];
-//     i2cdata[4] = tmp[3];
-//     if(read(fd, i2cdata, 5) != 5)
-//         return -1;
-
-//     // Now the SISLEY_DATA_REG can be read
-//     i2cdata[0] = I2C_AUTOTINCRREGS | VSCTRL_SISLEY_DATA_REG;
-//     if(write (fd, i2cdata, 1) != 1)
-//         return -1;
-
-//     if (read(fd, (char *)sisley_data, 4)!=4)
-//     {
-//         //ERROR HANDLING: i2c transaction failed
-//         printf("Failed to read from the i2c bus.\n");
-//         exit(1);
-//     }
-//     else
-//     {
-//         //printf("Data read: %02X%02X%02X%02X\n", (*sisley_data&0xFF000000)>>24, (*sisley_data&0xFF0000)>>16, (*sisley_data&0xFF00)>>8, (*sisley_data&0xFF)>>0);
-//     }
-
-//     return (0);
-// }
 
 int visCtrlATIS3::writeSisleyRegister(uint32_t sisley_reg_address, uint32_t sisley_data)
 {
@@ -145,12 +110,12 @@ void visCtrlATIS3::setSensitivityBiases(int sensitivity)
         uint32_t diff_on{0};
         uint32_t diff_off{0};
         readSisleyRegister(0x14C, &diff_off);
-        diff_off &= 0xFFFFFF00;
+        diff_off &= 0xFFFFFC00;
         diff_off += ((66 + 200) * 0.01 * sensitivity + 100 - 66);
         writeSisleyRegister(0x14C, diff_off);
 
         readSisleyRegister(0x150, &diff_on);
-        diff_on &= 0xFFFFFF00;
+        diff_on &= 0xFFFFFC00;
         diff_on += ((66 - 350) * 0.01 * sensitivity + 650 - 66);
         writeSisleyRegister(0x150, diff_on);
 }
@@ -160,8 +125,10 @@ void visCtrlATIS3::printSensitivyBiases()
 
     uint32_t diff_off{0};
     readSisleyRegister(0x14C, &diff_off);
+    diff_off &= 0xFFF;
     uint32_t diff_on{0};
     readSisleyRegister(0x150, &diff_on);
+    diff_on &= 0xFFF;
     yInfo() << "Biases:" << diff_off << diff_on << "[diff_off diff_on]";
 
 }
