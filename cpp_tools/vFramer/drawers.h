@@ -39,6 +39,7 @@ class drawerInterface : public yarp::os::PeriodicThread {
 protected:
     std::string name;
     cv::Mat canvas;
+    bool yarp_publish;
     yarp::os::BufferedPort< yarp::sig::FlexImage > image_port;
 
     void run() override;
@@ -49,7 +50,7 @@ public:
 
     drawerInterface();
     std::string drawerName();
-    virtual bool initialise(const std::string &name, int height, int width)  = 0;
+    virtual bool initialise(const std::string &name, int height, int width, bool yarp_publish)  = 0;
 
 };
 
@@ -59,7 +60,15 @@ protected:
     ev::BufferedPort<ev::AE> temp_input;
     void updateImage() override;
 public:
-    bool initialise(const std::string &name, int height, int width) override;
+    bool initialise(const std::string &name, int height, int width, bool yarp_publish) override;
+};
+
+class blackDrawer : public drawerInterface {
+protected:
+    ev::window<ev::AE> input;
+    void updateImage() override;
+public:
+    bool initialise(const std::string &name, int height, int width, bool yarp_publish) override;
 };
 
 class isoDrawer : public drawerInterface {
@@ -72,7 +81,7 @@ protected:
     void updateImage() override;
     
 public:
-    bool initialise(const std::string &name, int height, int width) override;
+    bool initialise(const std::string &name, int height, int width, bool yarp_publish) override;
 };
 
 

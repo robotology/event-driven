@@ -31,6 +31,7 @@ static const cv::Vec3b lime{9, 250, 222};
 static const cv::Vec3b white{255, 255, 255};
 static const cv::Vec3b black{0, 0, 0};
 static const cv::Vec3b red{0, 0, 255};
+static const cv::Vec3b grey{128, 128, 128};
 
 class pixelShifter {
     //angles

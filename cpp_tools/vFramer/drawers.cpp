@@ -25,7 +25,6 @@ using namespace ev;
 
 // INTERFACE //
 // ========= //
-
 drawerInterface::drawerInterface() : PeriodicThread(0.05){};
 
 std::string drawerInterface::drawerName()
@@ -36,7 +35,16 @@ std::string drawerInterface::drawerName()
 void drawerInterface::run()
 {
     updateImage();
-    //image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelMono>(canvas));
+    if(yarp_publish) {
+        if(canvas.channels() == 3)
+            image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelRgb>(canvas));
+        else
+            image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelMono>(canvas));
+        image_port.write();
+    } else {
+        cv::imshow(name, canvas);
+        cv::waitKey(1);
+    }
 }
 
 bool drawerInterface::threadInit()
@@ -52,79 +60,61 @@ bool drawerInterface::threadInit()
         yError() << "Drawer" << name << "not running as canvas image not initialised";
         return false;
     }
-    return image_port.open(name + "/image:o");
+    if(yarp_publish)
+        return image_port.open(name + "/image:o");
+    else
+        cv::namedWindow(name, cv::WINDOW_NORMAL);
+     
+    return true;
 }
 
 //    GREY   //
 // ========= //
-bool greyDrawer::initialise(const std::string &name, int height, int width)
+bool greyDrawer::initialise(const std::string &name, int height, int width, bool yarp_publish)
 {
     this->name = name;
-    canvas = cv::Mat(height, width, CV_8UC1);
-    return temp_input.open(name + "/AE:i");
+    this->yarp_publish = yarp_publish;
+    canvas = cv::Mat(height, width, CV_8UC3);
+    return input.open(name + "/AE:i");
 }
 
 inline void draw_grey(const AE &v, cv::Mat &canvas) 
 {
-    auto &pixel = canvas.at<unsigned char>(v.y, v.x);
+    auto &pixel = canvas.at<cv::Vec3b>(v.y, v.x);
     if (v.p) {
-        if (pixel + 50 > 255) pixel = 255;
-        else pixel += 50;
+        if (pixel[0] + 50 > 255) pixel[0] = 255;
+        else pixel[0] += 50;
     } else {
-        canvas.at<unsigned char>(v.y, v.x) = 0;
-        if (pixel - 50 < 0) pixel = 0;
-        else pixel -= 50;
+        pixel = black;
     }
 }
 
 void greyDrawer::updateImage()
 {
-    int n = temp_input.getPendingReads();
-    if(n == 0) {
-        n = 1;
-        yWarning() << "no new packets?";
-    }
-    canvas = 128;
-    for(auto i = 0; i < n; i++) {
-        ev::packet<AE>* q = temp_input.read();
-        if(!q) return;
-        for (auto &v : *q) {
-            draw_grey(v, canvas);
-        }
-    }
-    cv::imshow("test image", canvas);
-    cv::waitKey(1);
-    return;
+    ev::info inf = input.readAll(true);
 
-    ev::info inf = input.readSlidingWinN(20000, true);
-    //ev::info inf = input.readAll(true);
-
-    yInfo() << inf.count << "in" << inf.duration << "seconds";
-
-    canvas = 128;
+    canvas = grey;
     for (auto &v : input)
     {
         draw_grey(v, canvas);
     }
-    cv::imshow("test image", canvas);
-    cv::waitKey(1);
+
 }
 
 //    ISO    //
 // ========= //
-bool isoDrawer::initialise(const std::string &name, int height, int width)
+bool isoDrawer::initialise(const std::string &name, int height, int width, bool yarp_publish)
 {
     this->name = name;
+    this->yarp_publish = yarp_publish;
     ps = ev::drawISOBase(height, width, time_window, base_image);
     base_image.copyTo(canvas);
-
     return input.open(name + "/AE:i");
 }
 
 void isoDrawer::updateImage()
 {
-    cv::namedWindow(name, cv::WINDOW_NORMAL);
-    ev::info inf = input.readSlidingWinT(time_window, true);
+    ev::info inf = input.readSlidingWinT(time_window, false);
 
     cv::Vec3b naqua = 0.05 * (cv::Vec3b(255, 255, 255) - aqua);
     cv::Vec3b nviolet = 0.05 * (cv::Vec3b(255, 255, 255) - violet);
@@ -133,7 +123,6 @@ void isoDrawer::updateImage()
     canvas = cv::Vec3b(255, 255, 255);
     double t = time_window;
     double time_increment = time_window/(double)inf.count;
-    yInfo() << inf.count << "in" << inf.duration << "seconds";
     for (auto &v : input)
     {
         int x = v.x;
@@ -163,10 +152,27 @@ void isoDrawer::updateImage()
     }
 
     canvas -= base_image;
+}
 
-    
-    cv::imshow(name, canvas);
-    cv::waitKey(1);
+// BLACK DRAW //
+// =========== //
+bool blackDrawer::initialise(const std::string &name, int height, int width, bool yarp_publish)
+{
+    this->name = name;
+    this->yarp_publish = yarp_publish;
+    canvas = cv::Mat(height, width, CV_8UC1);
+    return input.open(name + "/AE:i");
+}
+
+void blackDrawer::updateImage()
+{
+    ev::info inf = input.readSlidingWinT(0.033, false);
+
+    canvas = 0;
+    for (auto &v : input)
+    {
+        canvas.at<unsigned char>(v.y, v.x) = 255;
+    }
 }
 
 // // BLOB DRAW //
@@ -344,60 +350,7 @@ void isoDrawer::updateImage()
 
 
 
-// // BLACK DRAW //
-// // =========== //
 
-// const std::string blackDraw::drawtype = "BLACK";
-
-// std::string blackDraw::getDrawType()
-// {
-//     return blackDraw::drawtype;
-// }
-
-// std::string blackDraw::getEventType()
-// {
-//     return AddressEvent::tag;
-// }
-
-// void blackDraw::draw(cv::Mat &image, const ev::vQueue &eSet, int vTime)
-// {
-//     image = cv::Scalar(255, 255, 255);
-
-//     if(eSet.empty()) return;
-//     if(vTime < 0) vTime = eSet.back()->stamp;
-
-//     ev::vQueue::const_reverse_iterator qi;
-//     for(qi = eSet.rbegin(); qi != eSet.rend(); qi++) {
-
-//         int dt = vTime - (*qi)->stamp;
-//         if(dt < 0) dt += ev::vtsHelper::max_stamp;
-//         if((unsigned int)dt > display_window) break;
-
-//         auto aep = is_event<AddressEvent>(*qi);
-//         if(!aep) continue;
-
-//         int y = aep->y;
-//         int x = aep->x;
-//         if(flip) {
-//             y = Ylimit - 1 - y;
-//             x = Xlimit - 1 - x;
-//         }
-
-//         image.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
-//     }
-//     /*
-//     cv::Mat kernel = (cv::Mat_<float>(3,3) <<
-//         1,  1, 1,
-//         1, -8, 1,
-//         1,  1, 1);
-
-//     imgLaplacian = Mat::zeros(img.size());
-//     filter2D(img, imgLaplacian, kernel);
-
-//     cv::GaussianBlur(image, temp, cv::Size(3,3), 3);
-//     cv::addWeighted(temp, 1.5, image, -0.5, 0, image);
-//     */
-// }
 
 
 

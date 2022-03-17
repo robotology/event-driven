@@ -95,11 +95,6 @@ private:
     std::vector<drawerInterface *> publishers;
 
 public:
-    ~vFramerModule()
-    {
-        //while(publishers.size())
-        //    delete publishers.front();
-    }
 
     // configure all the module parameters and return true if successful
     bool configure(yarp::os::ResourceFinder &rf) override
@@ -108,8 +103,8 @@ public:
         std::string moduleName = rf.check("name", Value("/vFramer")).asString();
         setName(moduleName.c_str());
 
-        int height = rf.check("height", Value(360)).asInt();
-        int width = rf.check("width", Value(480)).asInt();
+        int height = rf.check("height", Value(480)).asInt();
+        int width = rf.check("width", Value(640)).asInt();
 
         double eventWindow = rf.check("eventWindow", Value(0.1)).asDouble();
         eventWindow = ev::secondsToTicks(eventWindow);
@@ -119,78 +114,46 @@ public:
         isoWindow = ev::secondsToTicks(isoWindow);
         isoWindow = std::min(isoWindow, ev::max_stamp / 2.0);
 
-        int frameRate = rf.check("frameRate", Value(30)).asInt();
+        int frameRate = rf.check("frameRate", Value(60)).asInt();
         double period = 1.0 / frameRate;
 
-        //bool useTimeout =
-        //        rf.check("timeout") && rf.check("timeout", Value(true)).asBool();
+        bool yarp_publish = rf.check("yarp_publish") && rf.check("yarp_publish", Value(true)).asBool();
+
         bool flip =
             rf.check("flip") && rf.check("flip", Value(true)).asBool();
-        //bool forceRender =
-        //        rf.check("forcerender") &&
-        //        rf.check("forcerender", Value(true)).asBool();
-        //    if(forceRender) {
-        //        vReader.setStrictUpdatePeriod(vtsHelper::vtsscaler * period);
-        //        period = 0;
-        //    }
 
-        //viewer options
-        //set up the default channel list
-        // yarp::os::Bottle tempDisplayList, *bp;
-        // tempDisplayList.addString("/Left");
-        // bp = &(tempDisplayList.addList()); bp->addString("AE");
-        // tempDisplayList.addString("/Right");
-        // bp = &(tempDisplayList.addList()); bp->addString("AE");
-
-        // //set the output channels
-        // yarp::os::Bottle * displayList = rf.find("displays").asList();
-        // if(!displayList)
-        //     displayList = &tempDisplayList;
-
-        // yInfo() << displayList->toString();
-
-        // if(displayList->size() % 2) {
-        //     yError() << "Error: display list configured incorrectly" << displayList->size();
-        //     return false;
-        // }
-
-        // int nDisplays = displayList->size() / 2;
-
-        // for(int i = 0; i < nDisplays; i++) {
-
-        //     string channel_name =
-        //             moduleName + displayList->get(i*2).asString();
-
-        //     channelInstance * new_ci = new channelInstance(channel_name);
-        //     new_ci->setRate(period);
-
-        //     Bottle * drawtypelist = displayList->get(i*2 + 1).asList();
-        //     for(unsigned int j = 0; j < drawtypelist->size(); j++)
-        //     {
-        //         string draw_type = drawtypelist->get(j).asString();
-        //         if(draw_type == "F") {
-        //             new_ci->addFrameDrawer(width, height);
-        //         }
-        //         else if(!new_ci->addDrawer(draw_type, width, height, eventWindow, isoWindow, flip))
-        //         {
-        //             yError() << "Could not create specified publisher"
-        //                      << channel_name << draw_type;
-        //             return false;
-        //         }
-        //     }
-        yInfo() << "Making publisher ...";
-        publishers.push_back(new isoDrawer);
-        if (!publishers.front()->initialise(getName("/grey"), height, width))
-        {
-            yError() << "Could not initialise publisher";
-            return false;
+        if (rf.check("grey") || rf.check("gray")) {
+            publishers.push_back(new greyDrawer);
+            if (!publishers.back()->initialise(getName("/grey"), height, width, yarp_publish)) {
+                yError() << "[GREY DRAW] failure";
+                return false;
+            } else {
+                yInfo() << "[GREY DRAW] success";
+            }
+            publishers.back()->setPeriod(period);
         }
-        publishers.front()->setPeriod(period);
 
-        // if (!yarp::os::Network::connect("/atis3/AE:o", getName("/grey/AE:i"), "fast_tcp"))
-        //     yError() << "Did not conenct to source";
+        if (rf.check("iso")) { 
+            publishers.push_back(new isoDrawer);
+            if (!publishers.back()->initialise(getName("/iso"), height, width, yarp_publish)) {
+                yError() << "[ISO DRAW] failure";
+                return false;
+            } else {
+                yInfo() << "[ISO DRAW] success";
+            }
+            publishers.back()->setPeriod(period);
+        }
 
-        //}
+        if (rf.check("black")) {
+            publishers.push_back(new blackDrawer);
+            if (!publishers.back()->initialise(getName("/black"), height, width, yarp_publish)) {
+                yError() << "[BLACK DRAW] failure";
+                return false;
+            } else {
+                yInfo() << "[BLACK DRAW] success";
+            }
+            publishers.back()->setPeriod(period);
+        }
 
         yInfo() << "Starting publishers";
         for (auto pub_i = publishers.begin(); pub_i != publishers.end(); pub_i++)
@@ -200,6 +163,7 @@ public:
                 yError() << "Could not start publisher" << (*pub_i)->drawerName();
                 return false;
             }
+            yarp::os::Network::connect("/atis3/AE:o", (*pub_i)->drawerName() + "/AE:i", "fast_tcp");
         }
 
         yInfo() << "Configure done";
