@@ -22,8 +22,9 @@
 #define ALL_SENSORS 1023 // If the 10 sensors are set, the value is 1023
 #define RESET_SENSORS() SENSORS = 0
 
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
+#include <sstream>
+//#include <experimental/filesystem>
+//namespace fs = std::experimental::filesystem;
 
 using namespace ev;
 using namespace yarp::os;
@@ -38,10 +39,9 @@ private:
     imuHelper imu_helper;
 
     ev::vtsHelper vtsHelper; // common for all LOGs
-    std::string accFileName, gyrFileName;
-    fs::path accFilePath, gyrFilePath;
     std::vector<std::vector<double>> accData;
     std::vector<std::vector<double>> gyrData;
+    std::ofstream acclog, gyrlog;
 
 public:
     /*!
@@ -53,23 +53,40 @@ public:
      */
     bool configure(yarp::os::ResourceFinder& rf)
     {
+        if(rf.check("help") || rf.check("h")) {
+            yInfo() << "Dump IMU data in a compatible way for IMU calibration";
+            yInfo() << "--p <string>: prefix for saved filenames";
+            return false;
+        }
+
         //set the module name used to name ports
         setName((rf.check("name", Value("/IMUCalibDumper")).asString()).c_str());
 
         //open io ports
-        if(!imu_port.open(getName() + "/IMU:i")) {
+        if(!imu_port.open(getName("/IMU:i"))) {
             yError() << "Could not open input port";
             return false;
         }
 
+        yarp::os::Network::connect("/vPreProcess/imu_samples:o", getName("/IMU:i"), "fast_tcp");
+
         //inilialize the vector which saves the values
         imu_state = std::vector<double>(10, 0);
 
-        accFileName = static_cast<std::string>(rf.check("accFileName", Value(std::string(std::getenv("HOME"))+"/results/IMUDataDump/acc.mat")).asString());
-        gyrFileName = static_cast<std::string>(rf.check("gyrFileName", Value(std::string(std::getenv("HOME"))+"/results/IMUDataDump/gyr.mat")).asString());
-        accFilePath = accFileName;
-        gyrFilePath = gyrFileName;
-        
+        std::string prefix = rf.check("p", Value("")).asString();
+        std::string accFileName = prefix + ".acc.mat";
+        acclog.open(accFileName, std::ofstream::out | std::ofstream::trunc);
+        if(!acclog.is_open()) {
+            yError() << "Could not open " << accFileName;
+            return false;
+        }
+        std::string gyrFileName = prefix + ".gyr.mat";
+        gyrlog.open(gyrFileName, std::ofstream::out | std::ofstream::trunc);
+        if (!gyrlog.is_open()) {
+            yError() << "Could not open " << gyrFileName;
+            return false;
+        }
+
         //start the asynchronous and synchronous threads
         return Thread::start();
     }
@@ -81,7 +98,7 @@ public:
      */
     double getPeriod()
     {
-        return 1; //period of synchrnous thread
+        return 5; //period of synchrnous thread
     }
 
     /*!
@@ -101,14 +118,6 @@ public:
     void onStop()
     {
         // Create files and save the data
-        if(!fs::exists(accFilePath.parent_path()))
-        {
-            yInfo() << "creating log file folder";
-            fs::create_directories(accFilePath.parent_path());
-        }
-        std::ofstream acclog, gyrlog;
-        acclog.open(accFileName, std::ofstream::out | std::ofstream::trunc);
-        gyrlog.open(gyrFileName, std::ofstream::out | std::ofstream::trunc);
         acclog << std::scientific;
         gyrlog << std::scientific; 
         // dump acc 
@@ -145,10 +154,14 @@ public:
     bool updateModule()
     {
         // Print data for making easy for the user to follow the calibration pattern
-        std::cout << "Acc reding: ";
-        for(auto e : accData.back())
-           std::cout << e << ", ";
-        std::cout << "\n"; 
+        static int i = 0;
+        std::stringstream ss;
+        
+        if(accData.size()) {
+            ss << ++i << " " << "Accelerometer: ";
+            for (auto e : accData.back()) ss << e << ", ";
+            yInfo() << ss.str();
+        }
         
         return Thread::isRunning();
     }
