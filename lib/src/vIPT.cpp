@@ -414,18 +414,18 @@ bool vIPT::sparseReverseTransform(int cam, int &y, int &x)
 
 bool vIPT::sparseProjectCam0ToCam1(int &y, int &x)
 {
-    if(!sparseForwardTransform(0, x, y))
+    if(!sparseForwardTransform(0, y, x))
         return false;
-    if(!sparseReverseTransform(1, x, y))
+    if(!sparseReverseTransform(1, y, x))
         return false;
     return true;
 }
 
 bool vIPT::sparseProjectCam1ToCam0(int &y, int &x)
 {
-    if(!sparseForwardTransform(1, x, y))
+    if(!sparseForwardTransform(1, y, x))
         return false;
-    if(!sparseReverseTransform(0, x, y))
+    if(!sparseReverseTransform(0, y, x))
         return false;
     return true;
 }
