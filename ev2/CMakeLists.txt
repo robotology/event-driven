@@ -20,17 +20,20 @@ if(OpenCV_FOUND)
     src/vis/filters.cpp
     src/vis/IPT.cpp
     src/vis/draw.cpp
+    src/algs/surface.cpp
     #include/event-driven/vis/vDraw_basic.cpp
     #include/event-driven/vis/vDraw_ISO.cpp
     #src/vDraw_skin.cpp
   )
   
-  list( APPEND public_header_files include/event-driven/vis.h)
+  list( APPEND public_header_files include/event-driven/vis.h
+                                   include/event-driven/algs.h)
   list( APPEND folder_header 
     include/event-driven/vis.h
     include/event-driven/vis/filters.h
     include/event-driven/vis/IPT.h
     include/event-driven/vis/draw.h
+    include/event-driven/algs/surface.h
     #include/event-driven/vis/vDraw.h
     #include/event-driven/vDrawSkin.h
   )
