@@ -30,21 +30,25 @@ public:
 
 class EROS : public surface
 {
+public:
     bool update(int x, int y, double t = 0, int p = 0) override;
 };
 
 class TOS : public surface
 {
+public:
     bool update(int x, int y, double t = 0, int p = 0) override;
 };
 
 class SITS : public surface
 {
+public:
     bool update(int x, int y, double t = 0, int p = 0) override;
 };
 
 class PIM : public surface
 {
+public:
     void init(int width, int height, int kernel_size, double parameter = 0.0) override;
     bool update(int x, int y, double t = 0, int p = 0) override;
 };
