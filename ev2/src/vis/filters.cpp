@@ -83,9 +83,6 @@ bool vNoiseFilter::check(int x, int y, int p, double t)
         }
     }
 
-    POL.at<uint8_t>(y, x) = p;
-    SAE.at<double>(y, x) = t;
-
     if(x_sfilter) {
         add = false;
         auto xl = std::max(x-s_sfilter, 0);
@@ -95,14 +92,17 @@ bool vNoiseFilter::check(int x, int y, int p, double t)
 
         for(auto xi = xl; xi < xh; ++xi) {
             for(auto yi = yl; yi < yh; ++yi) {
-                int dt = t - SAE.at<double>(yi, xi);
-                if(dt && dt < t_sfilter) {
+                double dt = t - SAE.at<double>(yi, xi);
+                if(dt < t_sfilter) {
                     add = true;
                     break;
                 }
             }
         }
     }
+
+    POL.at<uint8_t>(y, x) = p;
+    SAE.at<double>(y, x) = t;
 
     return add;
 }

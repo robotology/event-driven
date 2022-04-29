@@ -92,15 +92,15 @@ public:
         }
 
         if (T_temporal > 0.0) {
-            filter_left.use_temporal_filter(ev::secondsToTicks(T_temporal));
-            filter_right.use_temporal_filter(ev::secondsToTicks(T_temporal));
+            filter_left.use_temporal_filter(T_temporal);
+            filter_right.use_temporal_filter(T_temporal);
             yInfo() << "[VISION]: refractory filter - " << T_temporal << "secs";
         }
 
         if (T_spatial > 0.0) {
-            filter_left.use_spatial_filter(ev::secondsToTicks(T_spatial));
-            filter_right.use_spatial_filter(ev::secondsToTicks(T_spatial));
-            yInfo() << "[VISION]: pepper filter - " << T_temporal << "secs";
+            filter_left.use_spatial_filter(T_spatial);
+            filter_right.use_spatial_filter(T_spatial);
+            yInfo() << "[VISION]: pepper filter - " << T_spatial << "secs";
         }
     }
 
