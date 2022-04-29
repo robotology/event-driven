@@ -121,6 +121,7 @@ void isoDrawer::updateImage()
     
 
     canvas = cv::Vec3b(255, 255, 255);
+//    isoDraw<window<AE>::iterator>(canvas, input.begin(), input.end(), ps);
     double t = time_window;
     double time_increment = time_window/(double)inf.count;
     for (auto &v : input)

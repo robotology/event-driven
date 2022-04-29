@@ -32,6 +32,8 @@ static const cv::Vec3b white{255, 255, 255};
 static const cv::Vec3b black{0, 0, 0};
 static const cv::Vec3b red{0, 0, 255};
 static const cv::Vec3b grey{128, 128, 128};
+static const cv::Vec3b naqua{0.05 * (cv::Vec3b(255, 255, 255) - aqua)};
+static const cv::Vec3b nviolet{0.05 * (cv::Vec3b(255, 255, 255) - violet)};
 
 class pixelShifter {
     //angles
@@ -55,6 +57,36 @@ class pixelShifter {
 };
 
 pixelShifter drawISOBase(int height, int width, int period, cv::Mat &baseimage);
+//template <typename T> void isoDraw(cv::Mat img, T begin, T end, pixelShifter &ps);
 
+template <typename T> inline void isoDraw(cv::Mat img, T begin, T end, pixelShifter &ps){
+
+        double t0 = begin.packetTime();
+        for(auto &a = begin; a != end; a++) {
+            int x = a->x;
+            int y = a->y;
+            double z = a.packetTime() - t0;
+            ps.pttr(x, y, z);
+            if(x < 0 || x >= img.cols || y < 0 || y >= img.rows)
+                continue;
+            if(a->p)
+                img.at<cv::Vec3b>(y, x) -= naqua;
+            else
+                img.at<cv::Vec3b>(y, x) -= nviolet;
+
+            if (t0 < 0.05) {
+                int x = a->x;
+                int y = a->y;
+                double z = 0;
+                ps.pttr(x, y, z);
+                if (x < 0 || x >= img.cols || y < 0 || y >= img.rows)
+                    continue;
+                if(a->p)
+                    img.at<cv::Vec3b>(y, x) = aqua;
+                else
+                    img.at<cv::Vec3b>(y, x) = violet;
+            }
+        }
+    }
 
 }
