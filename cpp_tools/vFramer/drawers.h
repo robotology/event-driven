@@ -76,8 +76,7 @@ protected:
 
     static constexpr double time_window{1.0};
     ev::window<ev::AE> input;
-    ev::pixelShifter ps;
-    cv::Mat base_image;
+    ev::isoImager iso_drawer;
     void updateImage() override;
     
 public:

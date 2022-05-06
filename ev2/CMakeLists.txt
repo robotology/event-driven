@@ -33,6 +33,7 @@ if(OpenCV_FOUND)
     include/event-driven/vis/filters.h
     include/event-driven/vis/IPT.h
     include/event-driven/vis/draw.h
+    include/event-driven/algs.h
     include/event-driven/algs/surface.h
     #include/event-driven/vis/vDraw.h
     #include/event-driven/vDrawSkin.h

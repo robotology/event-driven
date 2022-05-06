@@ -152,34 +152,6 @@ pixelShifter drawISOBase(int height, int width, int period, cv::Mat &baseimage)
     return pr;
 }
 
-//template <typename T> void isoDraw(cv::Mat img, T begin, T end, pixelShifter &ps){
-//
-//    double t0 = begin.packetTime();
-//    for(auto &a = begin; a != end; a++) {
-//        int x = a.x;
-//        int y = a.y;
-//        double z = a.packetTime() - t0;
-//        ps.pttr(x, y, z);
-//        if(x < 0 || x >= img.cols || y < 0 || y >= img.rows)
-//            continue;
-//        if(a.p)
-//            img.at<cv::Vec3b>(y, x) -= naqua;
-//        else
-//            img.at<cv::Vec3b>(y, x) -= nviolet;
-//
-//        if (t0 < 0.05) {
-//            int x = a.x;
-//            int y = a.y;
-//            double z = 0;
-//            ps.pttr(x, y, z);
-//            if (x < 0 || x >= img.cols || y < 0 || y >= img.rows)
-//                continue;
-//            if(a.p)
-//                img.at<cv::Vec3b>(y, x) = aqua;
-//            else
-//                img.at<cv::Vec3b>(y, x) = violet;
-//        }
-//    }
-//}
 
-}
+
+}  // namespace ev

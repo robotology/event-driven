@@ -346,7 +346,7 @@ public:
         }
 
         T& operator*() const { return *m_ptr; }
-        T* operator->() { return m_ptr; }
+        T* operator->() { return &(*m_ptr); }
         iterator& operator++()
         {
 

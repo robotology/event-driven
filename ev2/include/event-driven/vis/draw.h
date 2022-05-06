@@ -57,19 +57,32 @@ class pixelShifter {
 };
 
 pixelShifter drawISOBase(int height, int width, int period, cv::Mat &baseimage);
-//template <typename T> void isoDraw(cv::Mat img, T begin, T end, pixelShifter &ps);
 
-template <typename T> inline void isoDraw(cv::Mat img, T begin, T end, pixelShifter &ps){
+class isoImager
+{
+private:
+    cv::Mat base_image;
+    ev::pixelShifter ps;
 
+public:
+
+    void init(int height, int width, int time_window)
+    {
+        //this initialises the pixel shifter and the image with axis drawn
+        ps = ev::drawISOBase(height, width, time_window, base_image);
+    }
+
+    template <typename T>
+    void draw(cv::Mat img, T begin, T end) {
         double t0 = begin.packetTime();
-        for(auto &a = begin; a != end; a++) {
+        for (auto a = begin; a != end; a++) {
             int x = a->x;
             int y = a->y;
             double z = a.packetTime() - t0;
             ps.pttr(x, y, z);
-            if(x < 0 || x >= img.cols || y < 0 || y >= img.rows)
+            if (x < 0 || x >= img.cols || y < 0 || y >= img.rows)
                 continue;
-            if(a->p)
+            if (a->p)
                 img.at<cv::Vec3b>(y, x) -= naqua;
             else
                 img.at<cv::Vec3b>(y, x) -= nviolet;
@@ -81,12 +94,15 @@ template <typename T> inline void isoDraw(cv::Mat img, T begin, T end, pixelShif
                 ps.pttr(x, y, z);
                 if (x < 0 || x >= img.cols || y < 0 || y >= img.rows)
                     continue;
-                if(a->p)
+                if (a->p)
                     img.at<cv::Vec3b>(y, x) = aqua;
                 else
                     img.at<cv::Vec3b>(y, x) = violet;
             }
         }
     }
+}; 
+
+
 
 }

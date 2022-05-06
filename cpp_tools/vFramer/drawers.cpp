@@ -107,52 +107,16 @@ bool isoDrawer::initialise(const std::string &name, int height, int width, bool 
 {
     this->name = name;
     this->yarp_publish = yarp_publish;
-    ps = ev::drawISOBase(height, width, time_window, base_image);
-    base_image.copyTo(canvas);
+    iso_drawer.init(height, width, time_window);
     return input.open(name + "/AE:i");
 }
 
 void isoDrawer::updateImage()
 {
     ev::info inf = input.readSlidingWinT(time_window, false);
-
-    cv::Vec3b naqua = 0.05 * (cv::Vec3b(255, 255, 255) - aqua);
-    cv::Vec3b nviolet = 0.05 * (cv::Vec3b(255, 255, 255) - violet);
     
-
     canvas = cv::Vec3b(255, 255, 255);
-//    isoDraw<window<AE>::iterator>(canvas, input.begin(), input.end(), ps);
-    double t = time_window;
-    double time_increment = time_window/(double)inf.count;
-    for (auto &v : input)
-    {
-        int x = v.x;
-        int y = v.y;
-        double z = t;
-        t -= time_increment;
-        ps.pttr(x, y, z);
-        if(x < 0 || x >= canvas.cols || y < 0 || y >= canvas.rows)
-            continue;
-        if(v.p)
-            canvas.at<cv::Vec3b>(y, x) -= naqua;
-        else
-            canvas.at<cv::Vec3b>(y, x) -= nviolet;
-
-        if (t < 0.05) {
-            int x = v.x;
-            int y = v.y;
-            double z = 0;
-            ps.pttr(x, y, z);
-            if (x < 0 || x >= canvas.cols || y < 0 || y >= canvas.rows)
-                continue;
-            if(v.p)
-                canvas.at<cv::Vec3b>(y, x) = aqua;
-            else
-                canvas.at<cv::Vec3b>(y, x) = violet;
-        }
-    }
-
-    canvas -= base_image;
+    iso_drawer.draw< window<AE>::iterator >(canvas, input.begin(), input.end());
 }
 
 // BLACK DRAW //
