@@ -29,6 +29,8 @@
 #include <yarp/cv/Cv.h>
 #include <event-driven/core.h>
 #include <event-driven/vis.h>
+#include <event-driven/algs.h>
+
 #include <map>
 #include <vector>
 #include <string>
@@ -83,6 +85,17 @@ public:
     bool initialise(const std::string &name, int height, int width, bool yarp_publish) override;
 };
 
+class erosDrawer : public drawerInterface {
+protected:
+    ev::window<ev::AE> input;
+    ev::EROS EROS_vis;
+    void updateImage() override;
+    int kernelSize {5};
+    double decay {0.3};
+public:
+    erosDrawer(int kernelSize, double decay): kernelSize(kernelSize), decay(decay), drawerInterface(){};
+    bool initialise(const std::string &name, int height, int width, bool yarp_publish) override;
+};
 
 // class overlayStereoDraw : public vDraw {
 

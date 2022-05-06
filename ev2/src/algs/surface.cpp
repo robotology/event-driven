@@ -102,13 +102,13 @@ bool EROS::update(int x, int y, double t, int p)
     return border;
 }
 
-void PIM::init(int width, int height, int kernel_size, double parameter) 
+void PIM::init(int width, int height, int kernel_size, double parameter)
 {
     surface::init(width, height, kernel_size, parameter);
     surf = cv::Mat(height, width, CV_32F);
 }
 
-bool PIM::update(int x, int y, double t, int p) 
+bool PIM::update(int x, int y, double t, int p)
 {
     if (p)
         surf.at<float>(y, x) -= 1.0f;

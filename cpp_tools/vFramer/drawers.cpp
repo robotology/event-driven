@@ -140,6 +140,28 @@ void blackDrawer::updateImage()
     }
 }
 
+// EROS DRAW //
+// =========== //
+bool erosDrawer::initialise(const std::string &name, int height, int width, bool yarp_publish)
+{
+    this->name = name;
+    this->yarp_publish = yarp_publish;
+    canvas = cv::Mat(height, width, CV_8UC3);
+    EROS_vis.init(width, height, this->kernelSize, this->decay);
+    return input.open(name + "/AE:i");
+}
+
+void erosDrawer::updateImage()
+{
+    ev::info inf = input.readAll(false);
+
+    for (auto &v : input)
+        EROS_vis.update(v.x, v.y);
+
+    cv::cvtColor(EROS_vis.getSurface(), canvas, cv::COLOR_GRAY2BGR);
+}
+
+
 // // BLOB DRAW //
 // // ========= //
 

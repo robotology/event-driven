@@ -119,6 +119,9 @@ public:
 
         bool yarp_publish = rf.check("yarp_publish") && rf.check("yarp_publish", Value(true)).asBool();
 
+        int kernel_size = rf.check("kernel_size", Value(5)).asInt();
+        double decay = rf.check("decay", Value(0.3)).asDouble();
+
         bool flip =
             rf.check("flip") && rf.check("flip", Value(true)).asBool();
 
@@ -155,6 +158,18 @@ public:
             publishers.back()->setPeriod(period);
         }
 
+        if (rf.check("eros")) {
+
+            publishers.push_back(new erosDrawer(kernel_size, decay));
+            if (!publishers.back()->initialise(getName("/eros"), height, width, yarp_publish)) {
+                yError() << "[EROS DRAW] failure";
+                return false;
+            } else {
+                yInfo() << "[EROS DRAW] success";
+            }
+            publishers.back()->setPeriod(period);
+        }
+
         yInfo() << "Starting publishers";
         for (auto pub_i = publishers.begin(); pub_i != publishers.end(); pub_i++)
         {
@@ -163,7 +178,7 @@ public:
                 yError() << "Could not start publisher" << (*pub_i)->drawerName();
                 return false;
             }
-            yarp::os::Network::connect("/atis3/AE:o", (*pub_i)->drawerName() + "/AE:i", "fast_tcp");
+//            yarp::os::Network::connect("/atis3/AE:o", (*pub_i)->drawerName() + "/AE:i", "fast_tcp");
         }
 
         yInfo() << "Configure done";
