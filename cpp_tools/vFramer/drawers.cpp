@@ -62,9 +62,11 @@ bool drawerInterface::threadInit()
     }
     if(yarp_publish)
         return image_port.open(name + "/image:o");
-    else
+    else{
         cv::namedWindow(name, cv::WINDOW_NORMAL);
-     
+        cv::resizeWindow(name, 960, 640);
+    }
+
     return true;
 }
 
@@ -91,7 +93,7 @@ inline void draw_grey(const AE &v, cv::Mat &canvas)
 
 void greyDrawer::updateImage()
 {
-    ev::info inf = input.readAll(true);
+    ev::info inf = input.readSlidingWinT(0.1, false);
 
     canvas = grey;
     for (auto &v : input)
@@ -107,14 +109,17 @@ bool isoDrawer::initialise(const std::string &name, int height, int width, bool 
 {
     this->name = name;
     this->yarp_publish = yarp_publish;
-    iso_drawer.init(height, width, time_window);
+    cv::Size base_size = iso_drawer.init(height, width, time_window);
+    canvas = cv::Mat(base_size, CV_8UC3);
     return input.open(name + "/AE:i");
 }
 
 void isoDrawer::updateImage()
 {
     ev::info inf = input.readSlidingWinT(time_window, false);
-    
+
+    if (inf.count == 0)
+        return;
     canvas = cv::Vec3b(255, 255, 255);
     iso_drawer.draw< window<AE>::iterator >(canvas, input.begin(), input.end());
 }

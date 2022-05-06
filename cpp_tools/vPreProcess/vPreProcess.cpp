@@ -167,9 +167,6 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
     // if(precheck)
     //     yInfo() << "Performing precheck for event corruption";
 
-    flag_stats = true;
-    flag_vision = true;
-
     if (flag_vision) {
         vision.init_splits(output_stereo, output_polarities, output_corners);
         vision.init_flips(flipx, flipy, {width, height});

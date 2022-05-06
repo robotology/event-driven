@@ -37,7 +37,7 @@ void pixelShifter::pttr(int &x, int &y, double &z) {
     y = ymod + yshift;  //z = zmod;
 }
 
-pixelShifter drawISOBase(int height, int width, int period, cv::Mat &baseimage)
+pixelShifter drawISOBase(int height, int width, double period, cv::Mat &baseimage)
 {
     int Xlimit = width;
     int Ylimit = height;
