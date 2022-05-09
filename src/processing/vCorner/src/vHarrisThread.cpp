@@ -180,11 +180,11 @@ void vHarrisThread::run()
 
             yarp::os::Bottle &scorebottleout = debugPort.prepare();
             scorebottleout.clear();
-            scorebottleout.addDouble(inputPort.queryRate());
-            scorebottleout.addDouble(countProcessed/(time-prevtime));
-            scorebottleout.addDouble((double)countProcessed/q->size());
-            scorebottleout.addDouble(delay_n);
-            scorebottleout.addDouble(inputPort.queryDelayT());
+            scorebottleout.addFloat64(inputPort.queryRate());
+            scorebottleout.addFloat64(countProcessed/(time-prevtime));
+            scorebottleout.addFloat64((double)countProcessed/q->size());
+            scorebottleout.addFloat64(delay_n);
+            scorebottleout.addFloat64(inputPort.queryDelayT());
             debugPort.write();
 
             prevtime = time;

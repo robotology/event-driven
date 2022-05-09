@@ -71,10 +71,10 @@ set_package_properties(OpenCV PROPERTIES TYPE OPTIONAL)
 
 if(OpenCV_FOUND)
     set(OpenCV_dep OpenCV)
-    find_package(YARP COMPONENTS OS sig math dev cv REQUIRED)
+    find_package(YARP COMPONENTS os sig math dev cv REQUIRED)
 else()
     set(OpenCV_dep "")
-    find_package(YARP COMPONENTS OS sig math dev REQUIRED)
+    find_package(YARP COMPONENTS os sig math dev REQUIRED)
 endif()
 yarp_configure_external_installation(event-driven)
 
@@ -105,7 +105,7 @@ install_basic_package_files(${PROJECT_NAME}
                             COMPATIBILITY SameMajorVersion
                             LOWERCASE_FILENAMES
                             NAMESPACE ev::
-                            DEPENDENCIES "YARP COMPONENTS OS sig"
+                            DEPENDENCIES "YARP COMPONENTS os sig"
                                          ${OpenCV_dep}
                             INCLUDE_CONTENT "yarp_configure_external_installation(event-driven NO_PATH_D)")
 

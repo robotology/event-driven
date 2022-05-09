@@ -106,7 +106,7 @@ public:
         // Period value: 1 sec by default
         double default_update_period = 1.0;
         update_period = rf.check("update_period",
-                                    Value(default_update_period)).asDouble();
+                                    Value(default_update_period)).asFloat64();
         yInfo() << "Setting update_period parameter to: " << update_period;
 
         // Initialize the MSO coincidence counters to zero

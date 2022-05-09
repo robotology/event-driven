@@ -143,7 +143,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                          rf.check("hpu_read", yarp::os::Value(true)).asBool();
         bool write_flag = rf.check("hpu_write") &&
                           rf.check("hpu_write", yarp::os::Value(true)).asBool();
-        int packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt();
+        int packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt32();
 
         if(read_flag)
             if(!hpu.openReadPort(moduleName, packet_size))
@@ -266,7 +266,7 @@ double zynqGrabberModule::getPeriod() {
 //                     if(val >= 0) {
 //                         reply.addString("Left: ");
 //                         reply.addString(biasName);
-//                         reply.addInt(val);
+//                         reply.addInt32(val);
 //                         ok = true;
 //                     } else {
 //                         reply.addString("Left Unknown Bias");
@@ -277,7 +277,7 @@ double zynqGrabberModule::getPeriod() {
 //                     if(val >= 0) {
 //                         reply.addString("Right: ");
 //                         reply.addString(biasName);
-//                         reply.addInt(val);
+//                         reply.addInt32(val);
 //                         ok = true;
 //                     } else {
 //                         reply.addString("Right Unknown Bias");
@@ -288,7 +288,7 @@ double zynqGrabberModule::getPeriod() {
 //                     if(val >= 0) {
 //                         reply.addString("Left: ");
 //                         reply.addString(biasName);
-//                         reply.addInt(val);
+//                         reply.addInt32(val);
 //                         ok = true;
 //                     } else {
 //                         reply.addString("Left Unknown Bias");
@@ -298,7 +298,7 @@ double zynqGrabberModule::getPeriod() {
 //                     if(val >= 0) {
 //                         reply.addString("Right: ");
 //                         reply.addString(biasName);
-//                         reply.addInt(val);
+//                         reply.addInt32(val);
 //                         ok = true & ok;
 //                     } else {
 //                         reply.addString("RightUnknown Bias");
@@ -316,7 +316,7 @@ double zynqGrabberModule::getPeriod() {
 //             rec = true;
 //             {
 //                 std::string biasName = command.get(1).asString();
-//                 unsigned int biasValue = command.get(2).asInt();
+//                 unsigned int biasValue = command.get(2).asInt32();
 //                 std::string channel = command.get(3).asString();
 
 //                 // setBias function

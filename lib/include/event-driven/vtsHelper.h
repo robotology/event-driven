@@ -351,15 +351,15 @@ private:
         yInfo() << "GYR_SKEW" << gs->toString();
 
         for(int i = 0; i < 3; i++) {
-            calib.ab[i] = ab->get(i).asDouble();
-            calib.ag[i] = ag->get(i).asDouble();
-            calib.gb[i] = gb->get(i).asDouble();
-            calib.gg[i] = gg->get(i).asDouble();
+            calib.ab[i] = ab->get(i).asFloat64();
+            calib.ag[i] = ag->get(i).asFloat64();
+            calib.gb[i] = gb->get(i).asFloat64();
+            calib.gg[i] = gg->get(i).asFloat64();
         }
 
         for (int i = 0; i < 9; i++) {
-            calib.as[i] = as->get(i).asDouble();
-            calib.gs[i] = gs->get(i).asDouble();
+            calib.as[i] = as->get(i).asFloat64();
+            calib.gs[i] = gs->get(i).asFloat64();
         }
 
         return true;
@@ -415,12 +415,12 @@ public:
             yWarning() << "IMU config (6) incorrect size = " << config->size();
             return false;
         }
-        bias[ACC_X] = config->get(0).asDouble();
-        gain[ACC_X] = config->get(1).asDouble();
-        bias[ACC_Y] = config->get(2).asDouble();
-        gain[ACC_Y] = config->get(3).asDouble();
-        bias[ACC_Z] = config->get(4).asDouble();
-        gain[ACC_Z] = config->get(5).asDouble();
+        bias[ACC_X] = config->get(0).asFloat64();
+        gain[ACC_X] = config->get(1).asFloat64();
+        bias[ACC_Y] = config->get(2).asFloat64();
+        gain[ACC_Y] = config->get(3).asFloat64();
+        bias[ACC_Z] = config->get(4).asFloat64();
+        gain[ACC_Z] = config->get(5).asFloat64();
 
         return true;
     }

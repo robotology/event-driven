@@ -302,10 +302,10 @@ bool vFlowModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("strict", yarp::os::Value(true)).asBool();
 
     /* set parameters */
-    int height = rf.check("height", yarp::os::Value(128)).asInt();
-    int width = rf.check("width", yarp::os::Value(128)).asInt();
-    int sobelSize = rf.check("filterSize", yarp::os::Value(3)).asInt();
-    int minEvtsOnPlane = rf.check("minEvtsThresh", yarp::os::Value(5)).asInt();
+    int height = rf.check("height", yarp::os::Value(128)).asInt32();
+    int width = rf.check("width", yarp::os::Value(128)).asInt32();
+    int sobelSize = rf.check("filterSize", yarp::os::Value(3)).asInt32();
+    int minEvtsOnPlane = rf.check("minEvtsThresh", yarp::os::Value(5)).asInt32();
 
     flowmanager = new vFlowManager(height, width, sobelSize, minEvtsOnPlane);
     return flowmanager->open(moduleName, strict);

@@ -166,7 +166,7 @@ void yarp2device::run()
         //we can remove data_copy and just use data_bottle when the
         //mask is done in the FPGA
         for(size_t i = 0; i < data_size; i += 1)
-            data_copy[i] = data_bottle->get(i).asInt();
+            data_copy[i] = data_bottle->get(i).asInt32();
 
 
         //move to bytes space

@@ -105,7 +105,7 @@ bool vDevCtrl::setBias(std::string biasName, unsigned int biasValue)
     yarp::os::Bottle &vals = bias.findGroup(biasName);
     if(vals.isNull()) return false;
     vals.pop(); //remove the old value
-    vals.addInt(biasValue);
+    vals.addInt32(biasValue);
     return true;
 }
 
@@ -113,7 +113,7 @@ unsigned int vDevCtrl::getBias(std::string biasName)
 {
     yarp::os::Bottle &vals = bias.findGroup(biasName);
     if(vals.isNull()) return -1;
-    return vals.get(3).asInt();
+    return vals.get(3).asInt32();
 }
 
 bool vDevCtrl::configureBiases(){
@@ -132,9 +132,9 @@ bool vDevCtrl::configureBiases(){
     for(size_t i = 1; i < bias.size(); i++) {
         yarp::os::Bottle *biasdata = bias.get(i).asList();
         toChange = biasdata->get(0).asString();
-        vref = biasdata->get(1).asInt();
-        header = biasdata->get(2).asInt();
-        voltage = biasdata->get(3).asInt();
+        vref = biasdata->get(1).asInt32();
+        header = biasdata->get(2).asInt32();
+        voltage = biasdata->get(3).asInt32();
         unsigned int biasVal = 255 * (voltage / vref);
         biasVal += header << 21;
         // bridging differences in the naming conventions

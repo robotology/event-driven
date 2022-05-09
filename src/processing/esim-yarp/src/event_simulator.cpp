@@ -94,9 +94,9 @@ public:
             return false;
         }
 
-        config_.log_eps = rf.check("log_eps", Value(0.001)).asDouble();
-        config_.C = rf.check("C", Value(1e-6)).asDouble();
-        config_.noise_variance = rf.check("noise_variance", Value(0.25)).asDouble();
+        config_.log_eps = rf.check("log_eps", Value(0.001)).asFloat64();
+        config_.C = rf.check("C", Value(1e-6)).asFloat64();
+        config_.noise_variance = rf.check("noise_variance", Value(0.25)).asFloat64();
         config_.use_log_image = rf.check("use_log_image", Value(true)).asBool();
 
         return Thread::start();

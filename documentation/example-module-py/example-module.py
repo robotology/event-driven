@@ -34,7 +34,7 @@ class ExampleModule(yarp.RFModule):
         # read flags and parameters
         example_flag = rf.check("example_flag") and rf.check("example_flag", yarp.Value(True)).asBool()
         default_value = 0.1
-        example_parameter = rf.check("example_parameter", yarp.Value(default_value)).asDouble()
+        example_parameter = rf.check("example_parameter", yarp.Value(default_value)).asFloat64()
 
         # do any other set-up required here
         # start the asynchronous and synchronous threads

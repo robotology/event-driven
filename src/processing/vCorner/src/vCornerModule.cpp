@@ -32,17 +32,17 @@ bool vCornerModule::configure(yarp::os::ResourceFinder &rf)
             rf.check("strict", yarp::os::Value(true)).asBool();
 
     /* set parameters */
-    int height = rf.check("height", yarp::os::Value(240)).asInt();
-    int width = rf.check("width", yarp::os::Value(304)).asInt();
-    int sobelsize = rf.check("filterSize", yarp::os::Value(5)).asInt();
-    unsigned int qlen = rf.check("qsize", yarp::os::Value(36)).asInt();
-    double temporalsize = rf.check("tempsize", yarp::os::Value(0.1)).asDouble();
-    int windowRad = rf.check("spatial", yarp::os::Value(5)).asInt();
-    double sigma = rf.check("sigma", yarp::os::Value(1.0)).asDouble();
-    double thresh = rf.check("thresh", yarp::os::Value(8.0)).asDouble();
+    int height = rf.check("height", yarp::os::Value(240)).asInt32();
+    int width = rf.check("width", yarp::os::Value(304)).asInt32();
+    int sobelsize = rf.check("filterSize", yarp::os::Value(5)).asInt32();
+    unsigned int qlen = rf.check("qsize", yarp::os::Value(36)).asInt32();
+    double temporalsize = rf.check("tempsize", yarp::os::Value(0.1)).asFloat64();
+    int windowRad = rf.check("spatial", yarp::os::Value(5)).asInt32();
+    double sigma = rf.check("sigma", yarp::os::Value(1.0)).asFloat64();
+    double thresh = rf.check("thresh", yarp::os::Value(8.0)).asFloat64();
     bool callback = rf.check("callback", yarp::os::Value(false)).asBool();
-    int nthreads = rf.check("nthreads", yarp::os::Value(2)).asInt();
-    double gain = rf.check("gain", yarp::os::Value(0.1)).asDouble();
+    int nthreads = rf.check("nthreads", yarp::os::Value(2)).asInt32();
+    double gain = rf.check("gain", yarp::os::Value(0.1)).asFloat64();
 
     /* create the thread and pass pointers to the module parameters */
     if(callback) {

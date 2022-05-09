@@ -119,9 +119,9 @@ bool visCtrlATIS3::updateBiases(yarp::os::Bottle &bias) {
     for (i = 1; i < bias.size(); i++) {
         yarp::os::Bottle *biasdata = bias.get(i).asList();
         biasName = biasdata->get(0).asString();
-        vref = biasdata->get(1).asInt();
-        header = biasdata->get(2).asInt();
-        voltage = biasdata->get(3).asInt();
+        vref = biasdata->get(1).asInt32();
+        header = biasdata->get(2).asInt32();
+        voltage = biasdata->get(3).asInt32();
         uint32_t biasVal = 0;
         biasVal = 511 * (voltage / vref);
 

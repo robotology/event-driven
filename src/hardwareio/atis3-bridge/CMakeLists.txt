@@ -5,14 +5,14 @@ add_executable(${PROJECT_NAME} atis-bridge-sdk.cpp)
 
 if(prophesee_core_FOUND)
 target_compile_definitions(${PROJECT_NAME} PRIVATE prophesee_core_FOUND)
-target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_OS
+target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_os
                                               YARP::YARP_init
                                               ev::event-driven
                                               prophesee_core
                                               prophesee_driver)
 else()
 target_compile_definitions(${PROJECT_NAME} PRIVATE MetavisionSDK_FOUND)
-target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_OS
+target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_os
                                               YARP::YARP_init
                                               ev::event-driven
                                               MetavisionSDK::core
