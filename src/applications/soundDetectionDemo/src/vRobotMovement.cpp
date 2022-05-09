@@ -146,7 +146,7 @@ public:
         // Number of sound source positions to classify: 9 by default
         int default_number_sound_source_neurons = 16;
         number_sound_source_neurons = rf.check("number_sound_source_neurons",
-                                    Value(default_number_sound_source_neurons)).asInt();
+                                    Value(default_number_sound_source_neurons)).asInt32();
         yInfo() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
 
         // iCub body part to be moved: "head" by default
@@ -158,19 +158,19 @@ public:
         // Joint ID to indicate the joint to be controlled: 2 by default
         int default_joint_id = 2;
         joint_id = rf.check("joint_id",
-                                    Value(default_joint_id)).asInt();
+                                    Value(default_joint_id)).asInt32();
         yInfo() << "Setting joint_id parameter to: " << joint_id;
 
         // Joint speed of movement: 10 by default
         double default_joint_speed = 10.0;
         joint_speed = rf.check("joint_speed",
-                                    Value(default_joint_speed)).asDouble();
+                                    Value(default_joint_speed)).asFloat64();
         yInfo() << "Setting joint_speed parameter to: " << joint_speed;
 
         // Period value: 1 sec by default
         double default_update_period = 1.0;
         update_period = rf.check("update_period",
-                                    Value(default_update_period)).asDouble();
+                                    Value(default_update_period)).asFloat64();
         yInfo() << "Setting update_period parameter to: " << update_period;
 
         // Do any other set-up required here

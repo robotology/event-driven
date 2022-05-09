@@ -285,18 +285,18 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     string moduleName = rf.check("name", Value("/vFramer")).asString();
     setName(moduleName.c_str());
 
-    int height = rf.check("height", Value(240)).asInt();
-    int width = rf.check("width", Value(304)).asInt();
+    int height = rf.check("height", Value(240)).asInt32();
+    int width = rf.check("width", Value(304)).asInt32();
 
-    double eventWindow = rf.check("eventWindow", Value(0.1)).asDouble();
+    double eventWindow = rf.check("eventWindow", Value(0.1)).asFloat64();
     eventWindow *= vtsHelper::vtsscaler;
     eventWindow = std::min(eventWindow, vtsHelper::max_stamp / 2.0);
 
-    double isoWindow = rf.check("isoWindow", Value(1.0)).asDouble();
+    double isoWindow = rf.check("isoWindow", Value(1.0)).asFloat64();
     isoWindow *= vtsHelper::vtsscaler;
     isoWindow = std::min(isoWindow, vtsHelper::max_stamp / 2.0);
 
-    int frameRate = rf.check("frameRate", Value(30)).asInt();
+    int frameRate = rf.check("frameRate", Value(30)).asInt32();
     double period = 1000.0 / frameRate;
 
     bool flip =
@@ -305,7 +305,7 @@ bool vFramerModule::configure(yarp::os::ResourceFinder &rf)
     cv::Size render_size = cv::Size(-1, -1);
     if(rf.check("out_height") && rf.check("out_width"))
     {
-        render_size = cv::Size(rf.find("out_width").asInt(), rf.find("out_height").asInt());
+        render_size = cv::Size(rf.find("out_width").asInt32(), rf.find("out_height").asInt32());
     }
 
     //bool useTimeout =

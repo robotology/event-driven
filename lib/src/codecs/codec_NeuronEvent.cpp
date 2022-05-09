@@ -66,7 +66,7 @@ bool neuronEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
     // check length
     if (vEvent::decode(packet, pos) && pos + 1 <= packet.size())
     {
-        id = packet.get(pos++).asInt();
+        id = packet.get(pos++).asInt32();
         return true;
     }
     return false;

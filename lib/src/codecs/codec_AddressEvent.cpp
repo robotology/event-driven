@@ -142,13 +142,13 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
     if (vEvent::decode(packet, pos) && pos + 1 <= packet.size())
     {
 #if defined CODEC_128x128
-        _bitorder128._coded_data = packet.get(pos++).asInt();
+        _bitorder128._coded_data = packet.get(pos++).asInt32();
         polarity = _bitorder128.polarity;
         x = _bitorder128.x;
         y = _bitorder128.y;
         channel = _bitorder128.channel;
 #elif defined CODEC_304x240_20
-        _bitorder20._coded_data = packet.get(pos++).asInt();
+        _bitorder20._coded_data = packet.get(pos++).asInt32();
         polarity = _bitorder20.polarity;
         x = _bitorder20.x;
         y = _bitorder20.y;
@@ -156,7 +156,7 @@ bool AddressEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
         channel  = _bitorder20.channel;
         skin = _bitorder20.skin;
 #else
-        _coded_data = packet.get(pos++).asInt();
+        _coded_data = packet.get(pos++).asInt32();
 #endif
         return true;
     }

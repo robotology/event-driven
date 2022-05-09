@@ -35,8 +35,8 @@ bool vRepTestHandler::configure(yarp::os::ResourceFinder &rf)
 
 
     reptest.setVisType(vis);
-    //reptest.setTemporalWindow(rf.check("tWin", yarp::os::Value(125000)).asInt());
-    reptest.setFixedWindow(rf.check("fWin", yarp::os::Value(1000)).asInt());
+    //reptest.setTemporalWindow(rf.check("tWin", yarp::os::Value(125000)).asInt32());
+    reptest.setFixedWindow(rf.check("fWin", yarp::os::Value(1000)).asInt32());
 
     /* create the thread and pass pointers to the module parameters */
     return reptest.open(moduleName, strict);
@@ -168,10 +168,10 @@ void vRepTest::onRead(ev::vBottle &inBottle)
         yarp::os::Bottle &outBottle = dumper.prepare();
         outBottle.clear();
         outBottle.addInt64(unwts);
-        outBottle.addInt(tWindow.getEventCount());
-        outBottle.addInt(fWindow.getEventCount());
-        outBottle.addInt(lWindow.getEventCount());
-        outBottle.addInt(edge.getEventCount());
+        outBottle.addInt32(tWindow.getEventCount());
+        outBottle.addInt32(fWindow.getEventCount());
+        outBottle.addInt32(lWindow.getEventCount());
+        outBottle.addInt32(edge.getEventCount());
 
         dumper.setEnvelope(yts);
         dumper.writeStrict();

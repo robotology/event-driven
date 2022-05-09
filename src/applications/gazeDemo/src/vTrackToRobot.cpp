@@ -56,15 +56,15 @@ bool vTrackToRobotModule::configure(yarp::os::ResourceFinder &rf)
 {
     //set the name of the module
     setName((rf.check("name", yarp::os::Value("/vGazeDemo")).asString()).c_str());
-    yThresh = rf.check("yThresh", yarp::os::Value(20)).asDouble();
-    rThresh = rf.check("rThresh", yarp::os::Value(5)).asDouble();
-    period = rf.check("period", yarp::os::Value(0.01)).asDouble();
+    yThresh = rf.check("yThresh", yarp::os::Value(20)).asFloat64();
+    rThresh = rf.check("rThresh", yarp::os::Value(5)).asFloat64();
+    period = rf.check("period", yarp::os::Value(0.01)).asFloat64();
     gazingActive = rf.check("start", yarp::os::Value(false)).asBool();
     useDemoRedBall = rf.check("grasp", yarp::os::Value(false)).asBool();
     velocityControl = rf.check("velocity", yarp::os::Value(false)).asBool();
-    res.height = rf.check("height", yarp::os::Value(240)).asDouble();
-    res.width = rf.check("width", yarp::os::Value(304)).asDouble();
-    arm_traj_time = rf.check("arm_traj_time", yarp::os::Value(1.0)).asDouble();
+    res.height = rf.check("height", yarp::os::Value(240)).asFloat64();
+    res.width = rf.check("width", yarp::os::Value(304)).asFloat64();
+    arm_traj_time = rf.check("arm_traj_time", yarp::os::Value(1.0)).asFloat64();
     usearm = rf.check("arm") && rf.check("arm", yarp::os::Value(true)).asBool();
 
     arm_target_position = yarp::sig::Vector(3);
@@ -394,12 +394,12 @@ bool vTrackToRobotModule::controlExternal(yarp::sig::Vector ltarget,
         yarp::os::Bottle &cartcoords = cartOutPort.prepare();
         cartcoords.clear();
         //    //add the XYZ position
-        cartcoords.addDouble(tp[0]); cartcoords.addDouble(tp[1]); cartcoords.addDouble(tp[2]);
+        cartcoords.addFloat64(tp[0]); cartcoords.addFloat64(tp[1]); cartcoords.addFloat64(tp[2]);
         //cartcoords.add(-1.0); cartcoords.add(0.0); cartcoords.add(-0.3);
         //    //add some buffer ints
-        cartcoords.addDouble(0.5); cartcoords.addDouble(pleft[0]); cartcoords.addDouble(pleft[1]);
+        cartcoords.addFloat64(0.5); cartcoords.addFloat64(pleft[0]); cartcoords.addFloat64(pleft[1]);
         //    //flag that the object is detected
-        cartcoords.addDouble(1.0);
+        cartcoords.addFloat64(1.0);
 
         cartOutPort.write();
     }

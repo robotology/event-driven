@@ -240,7 +240,7 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
         if (regVal == false){
             regName = "samplesRshift";
             if (cnfgReg.check(regName)){
-                bool regVal = cnfgReg.find(regName).asInt();
+                bool regVal = cnfgReg.find(regName).asInt32();
                 if(!setRegister(3,SAMPLES_RSHIFT,regAddr,regVal))
                     return false;
             }
@@ -250,7 +250,7 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
     regAddr = SKCTRL_RES_TO_ADDR;
     regName = "resamplingTimeout";
     if (cnfgReg.check(regName)){
-        bool regVal = cnfgReg.find(regName).asDouble();
+        bool regVal = cnfgReg.find(regName).asFloat64();
         if(i2cWrite(regAddr, (unsigned char *)(&regVal), sizeof(int)) < 0)
            return false;
     }
@@ -259,7 +259,7 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
     regName = "evGenSel";
     if(cnfgReg.check(regName)) {
 
-        int type = cnfgReg.find(regName).asInt();
+        int type = cnfgReg.find(regName).asInt32();
         int mask = 0;
         uint32_t p1, p2, p3, p4;
 
@@ -267,20 +267,20 @@ bool vSkinCtrl::configureRegisters(yarp::os::Bottle cnfgReg)
 
         case EV_GEN_1:
 
-            p1 = FIXED_UINT(cnfgReg.check("G1upthresh", Value(0.1)).asDouble());
-            p2 = FIXED_UINT(cnfgReg.check("G1downthresh", Value(0.1)).asDouble());
-            p3 = FIXED_UINT(cnfgReg.check("G1upnoise", Value(12.0)).asDouble());
-            p4 = FIXED_UINT(cnfgReg.check("G1downnoise", Value(12.0)).asDouble());
+            p1 = FIXED_UINT(cnfgReg.check("G1upthresh", Value(0.1)).asFloat64());
+            p2 = FIXED_UINT(cnfgReg.check("G1downthresh", Value(0.1)).asFloat64());
+            p3 = FIXED_UINT(cnfgReg.check("G1upnoise", Value(12.0)).asFloat64());
+            p4 = FIXED_UINT(cnfgReg.check("G1downnoise", Value(12.0)).asFloat64());
             yInfo() << "Setting Event Generator v1" << p1 << p2 << p3 << p4;
             config_generator(EV_GEN_1, p1, p2, p3, p4);
             break;
 
         case EV_GEN_2:
 
-            p1 = FIXED_UINT(cnfgReg.check("G2upthresh", Value(50.0)).asDouble());
-            p2 = FIXED_UINT(cnfgReg.check("G2downthresh", Value(50.0)).asDouble());
-            p3 = FIXED_UINT(cnfgReg.check("G2upnoise", Value(50.0)).asDouble());
-            p4 = FIXED_UINT(cnfgReg.check("G2downnoise", Value(50.0)).asDouble());
+            p1 = FIXED_UINT(cnfgReg.check("G2upthresh", Value(50.0)).asFloat64());
+            p2 = FIXED_UINT(cnfgReg.check("G2downthresh", Value(50.0)).asFloat64());
+            p3 = FIXED_UINT(cnfgReg.check("G2upnoise", Value(50.0)).asFloat64());
+            p4 = FIXED_UINT(cnfgReg.check("G2downnoise", Value(50.0)).asFloat64());
             yInfo() << "Setting Event Generator v2" << p1 << p2 << p3 << p4;
             config_generator(EV_GEN_2, p1, p2, p3, p4);
             break;

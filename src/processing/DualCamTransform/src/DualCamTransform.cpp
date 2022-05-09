@@ -374,8 +374,8 @@ bool DualCamTransformModule::configure( yarp::os::ResourceFinder &rf ) {
     calibrateLeft = rf.check("calibrateLeft", yarp::os::Value(false)).asBool();
     calibrateRight = rf.check("calibrateRight", yarp::os::Value(false)).asBool();
 
-    height = rf.check("height", yarp::os::Value(240)).asInt();
-    width = rf.check("width", yarp::os::Value(304)).asInt();
+    height = rf.check("height", yarp::os::Value(240)).asInt32();
+    width = rf.check("width", yarp::os::Value(304)).asInt32();
 
     this -> confFileName = rf.getHomeContextPath().c_str();
     confFileName += "/DualCamTransform.ini";
@@ -398,14 +398,14 @@ bool DualCamTransformModule::configure( yarp::os::ResourceFinder &rf ) {
     //Initialize calibration
     if (calibrateLeft) {
         vLeftImageCollector.open( getName( "/left/vImg:i" ) );
-        maxIter = rf.check( "maxIter", yarp::os::Value( 20 ) ).asInt();
+        maxIter = rf.check( "maxIter", yarp::os::Value( 20 ) ).asInt32();
         nIter = 0;
         vLeftImageCollector.start();
     }
 
     if (calibrateRight) {
         vRightImageCollector.open( getName( "/right/vImg:i" ) );
-        maxIter = rf.check( "maxIter", yarp::os::Value( 20 ) ).asInt();
+        maxIter = rf.check( "maxIter", yarp::os::Value( 20 ) ).asInt32();
         nIter = 0;
         vRightImageCollector.start();
     }
@@ -441,7 +441,7 @@ bool DualCamTransformModule::readConfigFile( const yarp::os::ResourceFinder &rf,
 
     for (unsigned int r = 0; r < homography.rows(); ++r ) {
         for (unsigned int c = 0; c < homography.cols(); ++c ) {
-            homography( r, c ) = list->get( r * homography.rows() + c ).asDouble();
+            homography( r, c ) = list->get( r * homography.rows() + c ).asFloat64();
         }
     }
 

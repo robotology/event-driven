@@ -71,8 +71,8 @@ bool FlowEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
     // check length
     if (AddressEvent::decode(packet, pos) && pos + 2 <= packet.size())
     {
-        _fei[0] = packet.get(pos++).asInt();
-        _fei[1] = packet.get(pos++).asInt();
+        _fei[0] = packet.get(pos++).asInt32();
+        _fei[1] = packet.get(pos++).asInt32();
         return true;
     }
     return false;

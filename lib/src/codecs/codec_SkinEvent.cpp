@@ -67,7 +67,7 @@ bool SkinEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
     // check length
     if (vEvent::decode(packet, pos) && pos + 1 <= packet.size())
     {
-        _skei = packet.get(pos++).asInt();
+        _skei = packet.get(pos++).asInt32();
         return true;
     }
     return false;

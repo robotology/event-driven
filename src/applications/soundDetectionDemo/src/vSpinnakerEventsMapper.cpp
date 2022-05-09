@@ -96,19 +96,19 @@ public:
         // Number of tones to classify: 5 by default
         int default_number_tones_output_neurons = 5;
         number_tones_output_neurons = rf.check("number_tones_output_neurons",
-                                    Value(default_number_tones_output_neurons)).asInt();
+                                    Value(default_number_tones_output_neurons)).asInt32();
         yInfo() << "Setting number_tones_output_neurons parameter to: " << number_tones_output_neurons;
 
         // Number of positions to classify: 9 by default
         int default_number_sound_source_neurons = 9;
         number_sound_source_neurons = rf.check("number_sound_source_neurons",
-                                    Value(default_number_sound_source_neurons)).asInt();
+                                    Value(default_number_sound_source_neurons)).asInt32();
         yInfo() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
 
         // Period value: 1 sec by default
         double default_update_period = 1.0;
         update_period = rf.check("update_period",
-                                    Value(default_update_period)).asDouble();
+                                    Value(default_update_period)).asFloat64();
         yInfo() << "Setting update_period parameter to: " << update_period;
 
         // Do any other set-up required here

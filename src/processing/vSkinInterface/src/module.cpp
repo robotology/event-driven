@@ -95,17 +95,17 @@ bool module::updateModule()
 
     unsigned int eventpackets = skinevents_in.queryunprocessed();
     if(eventpackets)
-        rates.addInt(skinevents_in.queryRate());
+        rates.addInt32(skinevents_in.queryRate());
     else
-        rates.addInt(0);
+        rates.addInt32(0);
     for(unsigned int i = 0; i < eventpackets; i++)
         const std::vector<ev::SkinEvent> *q = skinevents_in.read(yarp_stamp);
 
     unsigned int samplepackets = skinsamples_in.queryunprocessed();
     if(samplepackets)
-        rates.addInt(skinsamples_in.queryRate());
+        rates.addInt32(skinsamples_in.queryRate());
     else
-        rates.addInt(0);
+        rates.addInt32(0);
     for(unsigned int i = 0; i < samplepackets; i++)
         const std::vector<ev::SkinSample> *q = skinsamples_in.read(yarp_stamp);
 
