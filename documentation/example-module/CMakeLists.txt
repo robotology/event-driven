@@ -21,14 +21,14 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
 
 
 
-find_package(YARP COMPONENTS OS sig math dev REQUIRED)
+find_package(YARP COMPONENTS os sig math dev REQUIRED)
 find_package(event-driven REQUIRED)
 
 #default the install location to that of event-driven
 
 add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_OS
+target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_os
                                               YARP::YARP_init
                                               ev::event-driven)
 
