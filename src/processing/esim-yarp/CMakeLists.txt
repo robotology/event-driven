@@ -4,7 +4,7 @@ add_executable(${PROJECT_NAME} src/event_simulator.cpp)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_OS
+target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_os
         YARP::YARP_init
         YARP::YARP_sig
         YARP::YARP_cv

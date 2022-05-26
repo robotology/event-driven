@@ -11,7 +11,7 @@ project(IMUCalibDumper)
 
 add_executable(${PROJECT_NAME} IMUCalibDumper.cpp)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_OS
+target_link_libraries(${PROJECT_NAME} PRIVATE YARP::YARP_os
                                               YARP::YARP_init
                                               YARP::YARP_math
                                               ev::event-driven

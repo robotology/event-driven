@@ -52,22 +52,22 @@ bool vIPT::importIntrinsics(int cam, Bottle &parameters)
         return false;
     }
 
-    size_cam[cam].height = parameters.find("h").asInt();
-    size_cam[cam].width = parameters.find("w").asInt();
+    size_cam[cam].height = parameters.find("h").asInt32();
+    size_cam[cam].width = parameters.find("w").asInt32();
 
     cam_matrix[cam] = cv::Mat(3, 3, CV_64FC1);
     cam_matrix[cam].setTo(0);
-    cam_matrix[cam].at<double>(0, 0) = parameters.find("fx").asDouble();
-    cam_matrix[cam].at<double>(1, 1) = parameters.find("fy").asDouble();
+    cam_matrix[cam].at<double>(0, 0) = parameters.find("fx").asFloat64();
+    cam_matrix[cam].at<double>(1, 1) = parameters.find("fy").asFloat64();
     cam_matrix[cam].at<double>(2, 2) = 1.0;
-    cam_matrix[cam].at<double>(0, 2) = parameters.find("cx").asDouble();
-    cam_matrix[cam].at<double>(1, 2) = parameters.find("cy").asDouble();
+    cam_matrix[cam].at<double>(0, 2) = parameters.find("cx").asFloat64();
+    cam_matrix[cam].at<double>(1, 2) = parameters.find("cy").asFloat64();
 
     dist_coeff[cam] = cv::Mat(4, 1, CV_64FC1);
-    dist_coeff[cam].at<double>(0, 0) = parameters.find("k1").asDouble();
-    dist_coeff[cam].at<double>(0, 1) = parameters.find("k2").asDouble();
-    dist_coeff[cam].at<double>(0, 2) = parameters.find("p1").asDouble();
-    dist_coeff[cam].at<double>(0, 3) = parameters.find("p2").asDouble();
+    dist_coeff[cam].at<double>(0, 0) = parameters.find("k1").asFloat64();
+    dist_coeff[cam].at<double>(0, 1) = parameters.find("k2").asFloat64();
+    dist_coeff[cam].at<double>(0, 2) = parameters.find("p1").asFloat64();
+    dist_coeff[cam].at<double>(0, 3) = parameters.find("p2").asFloat64();
 
     return true;
 }
@@ -85,9 +85,9 @@ bool vIPT::importStereo(Bottle &parameters)
         stereo_translation = cv::Mat(3, 1, CV_64FC1); //Translation vector of right wrt left camera center
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
-                stereo_rotation.at<double>(row, col) = HN->get(row * 4 + col).asDouble();
+                stereo_rotation.at<double>(row, col) = HN->get(row * 4 + col).asFloat64();
             }
-            stereo_translation.at<double>(row) = HN->get(row * 4 + 3).asDouble();
+            stereo_translation.at<double>(row) = HN->get(row * 4 + 3).asFloat64();
         }
 
     }
@@ -414,18 +414,18 @@ bool vIPT::sparseReverseTransform(int cam, int &y, int &x)
 
 bool vIPT::sparseProjectCam0ToCam1(int &y, int &x)
 {
-    if(!sparseForwardTransform(0, x, y))
+    if(!sparseForwardTransform(0, y, x))
         return false;
-    if(!sparseReverseTransform(1, x, y))
+    if(!sparseReverseTransform(1, y, x))
         return false;
     return true;
 }
 
 bool vIPT::sparseProjectCam1ToCam0(int &y, int &x)
 {
-    if(!sparseForwardTransform(1, x, y))
+    if(!sparseForwardTransform(1, y, x))
         return false;
-    if(!sparseReverseTransform(0, x, y))
+    if(!sparseReverseTransform(0, y, x))
         return false;
     return true;
 }

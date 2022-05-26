@@ -2,7 +2,7 @@
 
 # vAuditiory Attention
 add_executable( vAuditoryAttention src/vAuditoryAttention.cpp)
-target_link_libraries(vAuditoryAttention PRIVATE YARP::YARP_OS
+target_link_libraries(vAuditoryAttention PRIVATE YARP::YARP_os
                                               YARP::YARP_init
                                               YARP::YARP_dev
                                               YARP::YARP_math
@@ -11,14 +11,14 @@ install(TARGETS vAuditoryAttention DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # vCochleaEventsMapper
 add_executable( vCochleaEventsMapper src/vCochleaEventsMapper.cpp)
-target_link_libraries(vCochleaEventsMapper PRIVATE YARP::YARP_OS
+target_link_libraries(vCochleaEventsMapper PRIVATE YARP::YARP_os
                                               YARP::YARP_init
                                               ev::event-driven)
 install(TARGETS vCochleaEventsMapper DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # robotMovement
 add_executable( vRobotMovement src/vRobotMovement.cpp)
-target_link_libraries(vRobotMovement PRIVATE YARP::YARP_OS
+target_link_libraries(vRobotMovement PRIVATE YARP::YARP_os
                                               YARP::YARP_init
                                               YARP::YARP_dev
                                               YARP::YARP_math
@@ -27,7 +27,7 @@ install(TARGETS vRobotMovement DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # soundClassification
 add_executable( vSoundClassification src/vSoundClassification.cpp)
-target_link_libraries(vSoundClassification PRIVATE YARP::YARP_OS
+target_link_libraries(vSoundClassification PRIVATE YARP::YARP_os
                                               YARP::YARP_init
                                               YARP::YARP_dev
                                               YARP::YARP_math
@@ -36,7 +36,7 @@ install(TARGETS vSoundClassification DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # spinnakerEventsMapper
 add_executable( vSpinnakerEventsMapper src/vSpinnakerEventsMapper.cpp)
-target_link_libraries(vSpinnakerEventsMapper PRIVATE YARP::YARP_OS
+target_link_libraries(vSpinnakerEventsMapper PRIVATE YARP::YARP_os
                                               YARP::YARP_init
                                               YARP::YARP_dev
                                               YARP::YARP_math

@@ -37,14 +37,14 @@ bool vVergenceModule::configure(yarp::os::ResourceFinder &rf)
     attach(rpcOut);
 
     /* create the thread and pass pointers to the module parameters */
-    vergenceManager = new vVergenceManager(rf.check("width", yarp::os::Value(128)).asInt(),
-                                             rf.check("height", yarp::os::Value(128)).asInt(),
-                                             rf.check("nEvents", yarp::os::Value(200)).asInt(),
-                                             rf.check("ori", yarp::os::Value(1)).asInt(),
-                                             rf.check("phases", yarp::os::Value(7)).asInt(),
-                                             rf.check("disparity", yarp::os::Value(14)).asInt(),
-                                             rf.check("stdsperlambda", yarp::os::Value(6.0)).asDouble(),
-                                             rf.check("threshold", yarp::os::Value(0.0)).asDouble());
+    vergenceManager = new vVergenceManager(rf.check("width", yarp::os::Value(128)).asInt32(),
+                                             rf.check("height", yarp::os::Value(128)).asInt32(),
+                                             rf.check("nEvents", yarp::os::Value(200)).asInt32(),
+                                             rf.check("ori", yarp::os::Value(1)).asInt32(),
+                                             rf.check("phases", yarp::os::Value(7)).asInt32(),
+                                             rf.check("disparity", yarp::os::Value(14)).asInt32(),
+                                             rf.check("stdsperlambda", yarp::os::Value(6.0)).asFloat64(),
+                                             rf.check("threshold", yarp::os::Value(0.0)).asFloat64());
 
     return vergenceManager->open(getName(), strict);
 }
@@ -93,12 +93,12 @@ bool vVergenceModule::respond(const yarp::os::Bottle &command,
     }
     else if (command.get(0).asString() == "kp") {
         reply.addString("Setting kp...");
-        this->vergenceManager->setkp(command.get(1).asDouble());
+        this->vergenceManager->setkp(command.get(1).asFloat64());
 
     }
     else if (command.get(0).asString() == "kd") {
         reply.addString("Setting kd...");
-        this->vergenceManager->setkd(command.get(1).asDouble());
+        this->vergenceManager->setkd(command.get(1).asFloat64());
 
     }
     return true;
@@ -390,10 +390,10 @@ void vVergenceManager::onRead(ev::vBottle &bot)
 //        depth = 220 / (2*tan(ang[2] * M_PI / 180.0));
 
 //        scopebot.clear();
-//        scopebot.addDouble(depth);
-//        scopebot.addInt((int)doVergence);
-//        scopebot.addInt(countA);
-//        scopebot.addInt(countR);
+//        scopebot.addFloat64(depth);
+//        scopebot.addInt32((int)doVergence);
+//        scopebot.addInt32(countA);
+//        scopebot.addInt32(countR);
 //        scopeOut.write();
 //    }
 
@@ -402,12 +402,12 @@ void vVergenceManager::onRead(ev::vBottle &bot)
     for(int i = 0; i < numberOri; i++) {
         for(int j = 0; j < numberPhases; j++) {
             if(filters[j + i * numberPhases].getResponse() > 0)
-                scopefiltersbot.addDouble(filters[j + i * numberPhases].getResponse());
+                scopefiltersbot.addFloat64(filters[j + i * numberPhases].getResponse());
             else
-                scopefiltersbot.addDouble(0.0);
+                scopefiltersbot.addFloat64(0.0);
         }
     }
-    scopefiltersbot.addDouble(respsum);
+    scopefiltersbot.addFloat64(respsum);
     scopeFiltersOut.write();
 
     static int i = 0;

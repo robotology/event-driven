@@ -111,8 +111,8 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
         return false;
     }
 
-    res.height = rf.check("height", Value(240)).asInt();
-    res.width = rf.check("width", Value(304)).asInt();
+    res.height = rf.check("height", Value(240)).asInt32();
+    res.width = rf.check("width", Value(304)).asInt32();
 
     bool filter_spatial = rf.check("filter_spatial") &&
                           rf.check("filter_spatial", Value(true)).asBool();
@@ -168,23 +168,23 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
     if(filter_spatial) {
         filter_left.use_spatial_filter(
                 rf.check("sf_time",
-                         Value(0.05)).asDouble() * vtsHelper::vtsscaler,
+                         Value(0.05)).asFloat64() * vtsHelper::vtsscaler,
                 rf.check("sf_size",
-                         Value(1)).asInt());
+                         Value(1)).asInt32());
         filter_right.use_spatial_filter(
                 rf.check("sf_time",
-                         Value(0.05)).asDouble() * vtsHelper::vtsscaler,
+                         Value(0.05)).asFloat64() * vtsHelper::vtsscaler,
                 rf.check("sf_size",
-                         Value(1)).asInt());
+                         Value(1)).asInt32());
     }
 
     if(filter_temporal) {
         filter_left.use_temporal_filter(
                 rf.check("tf_time",
-                         Value(0.1)).asDouble() * vtsHelper::vtsscaler);
+                         Value(0.1)).asFloat64() * vtsHelper::vtsscaler);
         filter_right.use_temporal_filter(
                 rf.check("tf_time",
-                         Value(0.1)).asDouble() * vtsHelper::vtsscaler);
+                         Value(0.1)).asFloat64() * vtsHelper::vtsscaler);
     }
 
     if(undistort) {

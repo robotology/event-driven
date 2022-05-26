@@ -791,7 +791,7 @@ public:
                 std :: cout << "Calibration data";
                 yarp::os::Bottle calibration_data = *(rf2.find("taxel2Repr").asList());
                 for (size_t i = 0; i < calibration_data.size(); i++){
-                    taxel2Repr.push_back(calibration_data.get(i).asInt());
+                    taxel2Repr.push_back(calibration_data.get(i).asInt32());
                 }
                 skin.initRepresentativeTaxels(taxel2Repr);
             }
@@ -813,13 +813,13 @@ public:
 
                     //std::string type(sensorConfig.get(0).asString()); useless since forearm has always same type and hand has a precise numbering for palm and fingers.
 
-                    int id=sensorConfig.get(1).asInt();
-                    double x=sensorConfig.get(2).asDouble();
-                    double y=sensorConfig.get(3).asDouble();
-                    double orientation=sensorConfig.get(4).asDouble();
-                    double gain=sensorConfig.get(5).asDouble();
-                    int    mirror=sensorConfig.get(6).asInt();
-                    int    layoutNum=sensorConfig.get(7).asInt();
+                    int id=sensorConfig.get(1).asInt32();
+                    double x=sensorConfig.get(2).asFloat64();
+                    double y=sensorConfig.get(3).asFloat64();
+                    double orientation=sensorConfig.get(4).asFloat64();
+                    double gain=sensorConfig.get(5).asFloat64();
+                    int    mirror=sensorConfig.get(6).asInt32();
+                    int    layoutNum=sensorConfig.get(7).asInt32();
 
                     skin.get_data(id,x,y,orientation,gain,mirror,layoutNum);
 
@@ -865,7 +865,7 @@ public:
                 std :: cout << "Calibration data";
                 yarp::os::Bottle calibration_data = *(rf2.find("taxel2Repr").asList());
                 for (size_t i = 0; i < calibration_data.size(); i++){
-                    taxel2Repr.push_back(calibration_data.get(i).asInt());
+                    taxel2Repr.push_back(calibration_data.get(i).asInt32());
                 }
                 handR.initRepresentativeTaxels(taxel2Repr);
             }
@@ -887,13 +887,13 @@ public:
 
                     //std::string type(sensorConfig.get(0).asString()); useless since forearm has always same type and hand has a precise numbering for palm and fingers.
 
-                    int id=sensorConfig.get(1).asInt();
-                    double x=sensorConfig.get(2).asDouble();
-                    double y=sensorConfig.get(3).asDouble();
-                    double orientation=sensorConfig.get(4).asDouble();
-                    double gain=sensorConfig.get(5).asDouble();
-                    int    mirror=sensorConfig.get(6).asInt();
-                    int    layoutNum=sensorConfig.get(7).asInt();
+                    int id=sensorConfig.get(1).asInt32();
+                    double x=sensorConfig.get(2).asFloat64();
+                    double y=sensorConfig.get(3).asFloat64();
+                    double orientation=sensorConfig.get(4).asFloat64();
+                    double gain=sensorConfig.get(5).asFloat64();
+                    int    mirror=sensorConfig.get(6).asInt32();
+                    int    layoutNum=sensorConfig.get(7).asInt32();
 
                     handR.get_data(id,x,y,orientation,gain,mirror,layoutNum);
                 }
@@ -937,7 +937,7 @@ public:
                 std :: cout << "Calibration data";
                 yarp::os::Bottle calibration_data = *(rf2.find("taxel2Repr").asList());
                 for (size_t i = 0; i < calibration_data.size(); i++){
-                    taxel2Repr.push_back(calibration_data.get(i).asInt());
+                    taxel2Repr.push_back(calibration_data.get(i).asInt32());
                 }
                 handL.initRepresentativeTaxels(taxel2Repr);
             }
@@ -959,13 +959,13 @@ public:
 
                     //std::string type(sensorConfig.get(0).asString()); useless since forearm has always same type and hand has a precise numbering for palm and fingers.
 
-                    int id=sensorConfig.get(1).asInt();
-                    double x=sensorConfig.get(2).asDouble();
-                    double y=sensorConfig.get(3).asDouble();
-                    double orientation=sensorConfig.get(4).asDouble();
-                    double gain=sensorConfig.get(5).asDouble();
-                    int    mirror=sensorConfig.get(6).asInt();
-                    int    layoutNum=sensorConfig.get(7).asInt();
+                    int id=sensorConfig.get(1).asInt32();
+                    double x=sensorConfig.get(2).asFloat64();
+                    double y=sensorConfig.get(3).asFloat64();
+                    double orientation=sensorConfig.get(4).asFloat64();
+                    double gain=sensorConfig.get(5).asFloat64();
+                    int    mirror=sensorConfig.get(6).asInt32();
+                    int    layoutNum=sensorConfig.get(7).asInt32();
 
                     handL.get_data(id,x,y,orientation,gain,mirror,layoutNum);
                 }

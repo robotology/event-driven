@@ -38,7 +38,7 @@ event<> vEvent::clone()
 
 void vEvent::encode(yarp::os::Bottle &b) const
 {
-    b.addInt(stamp&vtsHelper::max_stamp);
+    b.addInt32(stamp&vtsHelper::max_stamp);
 }
 
 void vEvent::encode(std::vector<int32_t> &b, unsigned int &pos) const
@@ -49,7 +49,7 @@ void vEvent::encode(std::vector<int32_t> &b, unsigned int &pos) const
 bool vEvent::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     if(pos + 1 <= packet.size()) {
-        stamp = packet.get(pos).asInt()&vtsHelper::max_stamp;
+        stamp = packet.get(pos).asInt32()&vtsHelper::max_stamp;
         pos += 1;
         return true;
     }

@@ -60,7 +60,7 @@ namespace ev {
     bool CochleaEvent::decode(const yarp::os::Bottle &packet, size_t &pos) {
         // check length
         if (vEvent::decode(packet, pos) && pos + 1 <= packet.size()) {
-            _cochleaei = packet.get(pos++).asInt();
+            _cochleaei = packet.get(pos++).asInt32();
             return true;
         }
         return false;

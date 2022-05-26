@@ -76,9 +76,9 @@ bool GaussianAE::decode(const yarp::os::Bottle &packet, size_t &pos)
     if (LabelledAE::decode(packet, pos) && pos + 3 <= packet.size())
     {
 
-        _gaei[0] = packet.get(pos++).asInt();
-        _gaei[1] = packet.get(pos++).asInt();
-        _gaei[2] = packet.get(pos++).asInt();
+        _gaei[0] = packet.get(pos++).asInt32();
+        _gaei[1] = packet.get(pos++).asInt32();
+        _gaei[2] = packet.get(pos++).asInt32();
         return true;
     }
     return false;

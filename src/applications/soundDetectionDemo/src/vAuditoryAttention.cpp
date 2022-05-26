@@ -107,13 +107,13 @@ public:
         // Number of sound source positions to classify: 9 by default
         int default_number_sound_source_neurons = 9;
         number_sound_source_neurons = rf.check("number_sound_source_neurons",
-                                    Value(default_number_sound_source_neurons)).asInt();
+                                    Value(default_number_sound_source_neurons)).asInt32();
         yInfo() << "Setting number_sound_source_neurons parameter to: " << number_sound_source_neurons;
 
         // Period value: 1 sec by default
         double default_update_period = 1.0;
         update_period = rf.check("update_period",
-                                    Value(default_update_period)).asDouble();
+                                    Value(default_update_period)).asFloat64();
         yInfo() << "Setting update_period parameter to: " << update_period;
 
         // Do any other set-up required here

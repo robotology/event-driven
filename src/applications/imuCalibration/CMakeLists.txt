@@ -7,9 +7,23 @@ if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-find_package(Boost REQUIRED)  
-find_package(Eigen3 REQUIRED)
-find_package(Ceres REQUIRED)
+find_package(Boost QUIET)
+if(NOT Boost_FOUND)
+  message("Boost not found - not compiling IMU calibration")
+  return()
+endif()
+
+find_package(Eigen3 QUIET)
+if(NOT Eigen3_FOUND)
+  message("Eigen3 not found - not compiling IMU calibration")
+  return()
+endif()
+
+find_package(Ceres QUIET)
+if(NOT Ceres_FOUND)
+  message("Ceres not found - not compiling IMU calibration")
+  return()
+endif()
 
 include_directories(./include
                     /usr/include

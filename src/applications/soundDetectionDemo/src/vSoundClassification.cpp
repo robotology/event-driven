@@ -99,19 +99,19 @@ public:
          // Number of tones to classify: 5 by default
         int default_number_tones_output_neurons = 5;
         number_tones_output_neurons = rf.check("number_tones_output_neurons",
-                                    Value(default_number_tones_output_neurons)).asInt();
+                                    Value(default_number_tones_output_neurons)).asInt32();
         yInfo() << "Setting number_tones_output_neurons parameter to: " << number_tones_output_neurons;
 
         // Short term memory size: 1000 by default
         int default_pure_tones_short_term_memory_size = 1000;
         pure_tones_short_term_memory_size = rf.check("pure_tones_short_term_memory_size", 
-                                    Value(default_pure_tones_short_term_memory_size)).asInt();
+                                    Value(default_pure_tones_short_term_memory_size)).asInt32();
         yInfo() << "Setting pure_tones_short_term_memory_size parameter to: " << pure_tones_short_term_memory_size;
 
         // Period value: 1 sec by default
         double default_update_period = 1.0;
         update_period = rf.check("update_period",
-                                    Value(default_update_period)).asDouble();
+                                    Value(default_update_period)).asFloat64();
         yInfo() << "Setting update_period parameter to: " << update_period;
 
         // Do any other set-up required here

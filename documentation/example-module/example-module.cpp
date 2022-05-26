@@ -39,7 +39,7 @@ public:
                 rf.check("example_flag", Value(true)).asBool();
         double default_value = 0.1;
         example_parameter = rf.check("example_parameter",
-                                     Value(default_value)).asDouble();
+                                     Value(default_value)).asFloat64();
 
         //do any other set-up required here
 
