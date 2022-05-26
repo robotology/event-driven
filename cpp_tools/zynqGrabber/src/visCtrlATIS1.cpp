@@ -172,9 +172,9 @@ bool visCtrlATIS1::updateBiases(yarp::os::Bottle &bias_list, bool voltage_biases
                 return false;
         //turn the bias value into the appropriate hex
         yarp::os::Bottle *biasdata = bias_list.get(i).asList();
-        vref = biasdata->get(1).asInt();
-        header = biasdata->get(2).asInt();
-        voltage = biasdata->get(3).asInt();
+        vref = biasdata->get(1).asInt32();
+        header = biasdata->get(2).asInt32();
+        voltage = biasdata->get(3).asInt32();
         unsigned int biasVal = 0;
         if(!voltage_biases)
             biasVal = voltage;
@@ -190,9 +190,9 @@ bool visCtrlATIS1::updateBiases(yarp::os::Bottle &bias_list, bool voltage_biases
     // //set the latch true for the last bias
     // if(!setLatchAtEnd(true)) return false;
     // yarp::os::Bottle *biasdata = bias_list.get(i).asList();
-    // vref = biasdata->get(1).asInt();
-    // header = biasdata->get(2).asInt();
-    // voltage = biasdata->get(3).asInt();
+    // vref = biasdata->get(1).asInt32();
+    // header = biasdata->get(2).asInt32();
+    // voltage = biasdata->get(3).asInt32();
     // unsigned int biasVal = 0;
     // if(!voltage_biases)
     //     biasVal = voltage;

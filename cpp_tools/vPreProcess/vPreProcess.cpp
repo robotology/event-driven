@@ -140,8 +140,8 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf)
     //vision flags
     flag_vision = rf.check("vision") &&
           rf.check("vision", Value(true)).asBool();
-    unsigned int height = rf.check("height", Value(480)).asInt();
-    unsigned int width = rf.check("width", Value(640)).asInt();
+    unsigned int height = rf.check("height", Value(480)).asInt32();
+    unsigned int width = rf.check("width", Value(640)).asInt32();
     bool undistort = rf.check("camera_calibration_file");
     bool flipx = rf.check("flipx") && rf.check("flipx", Value(true)).asBool();
     bool flipy = rf.check("flipy") && rf.check("flipy", Value(true)).asBool();

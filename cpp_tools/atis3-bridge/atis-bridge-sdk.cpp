@@ -118,17 +118,17 @@ public:
         Biases &bias = cam.biases();
         int bias_pol = 0;
         if(rf.check("polarity"))
-            bias_pol = rf.find("polarity").asInt();
+            bias_pol = rf.find("polarity").asInt32();
         if(rf.check("p"))
-            bias_pol = rf.find("p").asInt();
+            bias_pol = rf.find("p").asInt32();
         if(bias_pol < 0) bias_pol = 1;
         if(bias_pol > 99) bias_pol = 99;
         
         int bias_sens = 0;
         if (rf.check("sensitivity"))
-            bias_sens = rf.find("sensitivity").asInt();
+            bias_sens = rf.find("sensitivity").asInt32();
         if(rf.check("s"))
-            bias_sens = rf.find("s").asInt();
+            bias_sens = rf.find("s").asInt32();
         if(bias_sens < 0) bias_sens = 1;
         if(bias_sens > 99) bias_sens = 99;
 
@@ -164,7 +164,7 @@ public:
         const Geometry &geo = cam.geometry();
         yInfo() << "[" << geo.width() << "x" << geo.height() << "]";
 
-        double nf_param = rf.check("filter", Value(0.0)).asDouble();
+        double nf_param = rf.check("filter", Value(0.0)).asFloat64();
         if(nf_param > 0.0) 
         {
             nf.initialise(geo.width(), geo.height());

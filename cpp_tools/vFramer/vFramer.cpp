@@ -103,24 +103,24 @@ public:
         std::string moduleName = rf.check("name", Value("/vFramer")).asString();
         setName(moduleName.c_str());
 
-        int height = rf.check("height", Value(480)).asInt();
-        int width = rf.check("width", Value(640)).asInt();
+        int height = rf.check("height", Value(480)).asInt32();
+        int width = rf.check("width", Value(640)).asInt32();
 
-        double eventWindow = rf.check("eventWindow", Value(0.1)).asDouble();
+        double eventWindow = rf.check("eventWindow", Value(0.1)).asFloat64();
         eventWindow = ev::secondsToTicks(eventWindow);
         eventWindow = std::min(eventWindow, ev::max_stamp / 2.0);
 
-        double isoWindow = rf.check("isoWindow", Value(1.0)).asDouble();
+        double isoWindow = rf.check("isoWindow", Value(1.0)).asFloat64();
         isoWindow = ev::secondsToTicks(isoWindow);
         isoWindow = std::min(isoWindow, ev::max_stamp / 2.0);
 
-        int frameRate = rf.check("frameRate", Value(60)).asInt();
+        int frameRate = rf.check("frameRate", Value(60)).asInt32();
         double period = 1.0 / frameRate;
 
         bool yarp_publish = rf.check("yarp_publish") && rf.check("yarp_publish", Value(true)).asBool();
 
-        int kernel_size = rf.check("kernel_size", Value(5)).asInt();
-        double decay = rf.check("decay", Value(0.3)).asDouble();
+        int kernel_size = rf.check("kernel_size", Value(5)).asInt32();
+        double decay = rf.check("decay", Value(0.3)).asFloat64();
 
         bool flip =
             rf.check("flip") && rf.check("flip", Value(true)).asBool();

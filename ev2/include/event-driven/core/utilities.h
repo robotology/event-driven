@@ -161,12 +161,12 @@ public:
             yWarning() << "IMU config (6) incorrect size = " << config->size();
             return false;
         }
-        bias[ACC_X] = config->get(0).asDouble();
-        gain[ACC_X] = config->get(1).asDouble();
-        bias[ACC_Y] = config->get(2).asDouble();
-        gain[ACC_Y] = config->get(3).asDouble();
-        bias[ACC_Z] = config->get(4).asDouble();
-        gain[ACC_Z] = config->get(5).asDouble();
+        bias[ACC_X] = config->get(0).asFloat64();
+        gain[ACC_X] = config->get(1).asFloat64();
+        bias[ACC_Y] = config->get(2).asFloat64();
+        gain[ACC_Y] = config->get(3).asFloat64();
+        bias[ACC_Z] = config->get(4).asFloat64();
+        gain[ACC_Z] = config->get(5).asFloat64();
 
         return true;
     }

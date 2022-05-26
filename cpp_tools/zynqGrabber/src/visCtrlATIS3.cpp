@@ -34,13 +34,13 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
     }
 
     if(rf.check("sensitivity")) {
-        int sensitivity = rf.find("sensitivity").asInt();
+        int sensitivity = rf.find("sensitivity").asInt32();
         yInfo() << "Setting sensitivity to " << sensitivity;
         setSensitivityBiases(sensitivity);
     }
 
     if(rf.check("refractory")) {
-        int ref_period = rf.find("refractory").asInt();
+        int ref_period = rf.find("refractory").asInt32();
         yInfo() << "Setting refractory period to " << ref_period;
         setRefractoryBias(ref_period);  
     }
@@ -159,9 +159,9 @@ bool visCtrlATIS3::updateBiases(yarp::os::Bottle &bias) {
     for (i = 1; i < bias.size(); i++) {
         yarp::os::Bottle *biasdata = bias.get(i).asList();
         biasName = biasdata->get(0).asString();
-        vref = biasdata->get(1).asInt();
-        header = biasdata->get(2).asInt();
-        voltage = biasdata->get(3).asInt();
+        vref = biasdata->get(1).asInt32();
+        header = biasdata->get(2).asInt32();
+        voltage = biasdata->get(3).asInt32();
         uint32_t biasVal = 0;
         biasVal = 511 * (voltage / vref);
 

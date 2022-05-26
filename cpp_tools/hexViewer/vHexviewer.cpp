@@ -77,14 +77,14 @@ public:
                           " maybe that's not what you want!";
         }
 
-        cols = rf.check("cols", Value(4)).asInt();
+        cols = rf.check("cols", Value(4)).asInt32();
         std::stringstream ss; ss.str("");
 
         bits_to_check = 0; mask = 0;
         if(rf.check("mask")) {
             std::string maskstring = rf.check("mask", Value("x")).asString();
             if(maskstring.empty()) {
-                ss.str(""); ss << rf.find("mask").asInt();
+                ss.str(""); ss << rf.find("mask").asInt32();
                 maskstring = ss.str();
             }
 
