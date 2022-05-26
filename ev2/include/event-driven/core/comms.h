@@ -31,7 +31,6 @@
 #include <cstring>
 #include <unistd.h>
 #include <mutex>
-//#include <type_traits>
 
 namespace ev {
 
@@ -491,7 +490,6 @@ public:
 
         //set the new window for all data
         _setAllIterators(active.begin(), last_packet);
-
         m.unlock();
 
         return ret;
@@ -530,7 +528,6 @@ public:
 
         //set the new window for all data
         _setAllIterators(active.begin(), last_packet);
-
         m.unlock();
 
         return ret;
@@ -604,17 +601,15 @@ public:
         while(!isStopping()) {
 
             //blocking read of data from the port
+            bool reused_inactive = false;
             packet<T>* current_packet = nullptr;
             if(inactive.empty()) {
                 current_packet = new packet<T>;
-            } else {
-                current_packet = inactive.back();
-                m.lock();
-                inactive.pop_back();
-                m.unlock();
+            } else {    
+                current_packet = inactive.front();
+                reused_inactive = true;
             }
 
-            
             bool read_success = port.read(*current_packet);
 
             if(!read_success && !isStopping()) {
@@ -624,6 +619,7 @@ public:
             port.getEnvelope(current_packet->envelope());
 
             m.lock();
+            if(reused_inactive) inactive.pop_front();
             active.push_back(current_packet);
             _duration += current_packet->duration();
             _count += current_packet->size();

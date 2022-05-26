@@ -290,7 +290,7 @@ public:
                 current_buffer.clear();
 
             } else {
-                Time::delay(packet_time);
+                Time::delay(0.0001);
             }
         }
 

@@ -136,17 +136,6 @@ public:
             publishers.back()->setPeriod(period);
         }
 
-        if (rf.check("iso")) { 
-            publishers.push_back(new isoDrawer);
-            if (!publishers.back()->initialise(getName("/iso"), height, width, yarp_publish)) {
-                yError() << "[ISO DRAW] failure";
-                return false;
-            } else {
-                yInfo() << "[ISO DRAW] success";
-            }
-            publishers.back()->setPeriod(period);
-        }
-
         if (rf.check("black")) {
             publishers.push_back(new blackDrawer);
             if (!publishers.back()->initialise(getName("/black"), height, width, yarp_publish)) {
@@ -166,6 +155,17 @@ public:
                 return false;
             } else {
                 yInfo() << "[EROS DRAW] success";
+            }
+            publishers.back()->setPeriod(period);
+        }
+
+        if (rf.check("iso") || !publishers.size()) {
+            publishers.push_back(new isoDrawer);
+            if (!publishers.back()->initialise(getName("/iso"), height, width, yarp_publish)) {
+                yError() << "[ISO DRAW] failure";
+                return false;
+            } else {
+                yInfo() << "[ISO DRAW] success";
             }
             publishers.back()->setPeriod(period);
         }
