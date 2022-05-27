@@ -40,12 +40,12 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
     }
     printSensitivyBiases();
 
-    //if(rf.check("refractory")) {
-    //    int ref_period = rf.find("refractory").asInt32();
-    //    yInfo() << "Setting refractory period to " << ref_period;
-    //    setRefractoryBias(ref_period);  
-    //}
-    //printRefractoryBias();
+    if(rf.check("refractory")) {
+        int ref_period = rf.find("refractory").asInt32();
+        yInfo() << "Setting refractory period to " << ref_period;
+        setRefractoryBias(ref_period);  
+    }
+    printRefractoryBias();
 
     //other options?
 
@@ -106,10 +106,12 @@ void visCtrlATIS3::printRefractoryBias()
 
 void visCtrlATIS3::setRefractoryBias(int period) 
 {
+    if(period < 0) period = 0;
+    if(period > 100) period = 100;
     uint32_t bias_val{0};
     readSisleyRegister(0x128, &bias_val);
-    bias_val &= 0xFFFFFC00;
-    bias_val += period;
+    bias_val &= 0xFF300000;
+    bias_val += 245 - 0.5 * (100-period);
     writeSisleyRegister(0x128, bias_val);
 }
 
