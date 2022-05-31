@@ -120,17 +120,23 @@ void greyDrawer::updateImage()
 // ========= //
 bool isoDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
-    cv::Size base_size = iso_drawer.init(height, width, window_size);
-    return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+    bool success = drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+    img_size = iso_drawer.init(height, width, this->window_size);
+    return success;
 }
 
 void isoDrawer::updateImage()
 {
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+    else
+        canvas = white;
+
     ev::info inf = input.readSlidingWinT(window_size, false);
 
     if (inf.count == 0)
         return;
-    canvas = cv::Vec3b(255, 255, 255);
+
     iso_drawer.draw< window<AE>::iterator >(canvas, input.begin(), input.end());
 }
 
@@ -160,6 +166,9 @@ bool erosDrawer::initialise(const std::string &name, int height, int width, doub
 
 void erosDrawer::updateImage()
 {
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+
     ev::info inf = input.readAll(false);
 
     for (auto &v : input)

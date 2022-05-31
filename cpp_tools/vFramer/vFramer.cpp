@@ -57,6 +57,7 @@ public:
             yInfo() << "======================";
             yInfo() << "--eros_kernel : kernel size for eros view";
             yInfo() << "--eros_decay  : decay rate for eros view";
+            return false;
         }
 
         if (!yarp::os::Network::checkNetwork(2.0)) {
@@ -173,7 +174,7 @@ public:
 
     double getPeriod() override
     {
-        return 1.0;
+        return 2.0;
     }
 };
 

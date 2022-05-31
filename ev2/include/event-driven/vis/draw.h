@@ -106,6 +106,9 @@ public:
                     img.at<cv::Vec3b>(y, x) = violet;
             }
         }
+
+        img -= base_image;
+
     }
 }; 
 
