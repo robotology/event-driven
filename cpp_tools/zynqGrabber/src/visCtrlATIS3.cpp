@@ -38,14 +38,13 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
         yInfo() << "Setting sensitivity to " << sensitivity;
         setSensitivityBiases(sensitivity);
     }
+    printSensitivyBiases();
 
     if(rf.check("refractory")) {
         int ref_period = rf.find("refractory").asInt32();
         yInfo() << "Setting refractory period to " << ref_period;
         setRefractoryBias(ref_period);  
     }
-
-    printSensitivyBiases();
     printRefractoryBias();
 
     //other options?
@@ -107,29 +106,42 @@ void visCtrlATIS3::printRefractoryBias()
 
 void visCtrlATIS3::setRefractoryBias(int period) 
 {
+    if(period < 0) period = 0;
+    if(period > 100) period = 100;
     uint32_t bias_val{0};
     readSisleyRegister(0x128, &bias_val);
-    bias_val &= 0xFFFFFC00;
-    bias_val += period;
+    bias_val &= 0xFF300000;
+    bias_val += 245 - 0.5 * (100-period);
     writeSisleyRegister(0x128, bias_val);
 }
 
 void visCtrlATIS3::setSensitivityBiases(int sensitivity)
 {
-        if(sensitivity < 0) sensitivity = 1;
-        if(sensitivity > 99) sensitivity = 99;
-        
-        uint32_t diff_on{0};
-        uint32_t diff_off{0};
-        readSisleyRegister(0x14C, &diff_off);
-        diff_off &= 0xFFFFFC00;
-        diff_off += ((66 + 200) * 0.01 * sensitivity + 100 - 66);
-        writeSisleyRegister(0x14C, diff_off);
+    uint32_t diff_on{0};
+    uint32_t diff_off{0};
+    uint32_t diff{0};
 
-        readSisleyRegister(0x150, &diff_on);
-        diff_on &= 0xFFFFFC00;
-        diff_on += ((66 - 350) * 0.01 * sensitivity + 650 - 66);
-        writeSisleyRegister(0x150, diff_on);
+    //set the constant diff value
+    static const int diff_val = 43; 
+    readSisleyRegister(0x154, &diff);
+    diff &= 0xFF300000;
+    diff += diff_val;
+    writeSisleyRegister(0x154, diff);
+
+    if(sensitivity < 0) sensitivity = 0;
+    if(sensitivity > 100) sensitivity = 100;
+    double s = 10 + 13 * (1.0 - sensitivity *0.01);
+        
+    readSisleyRegister(0x14C, &diff_off);
+    diff_off &= 0xFF300000;
+    diff_off += diff_val - s;
+    writeSisleyRegister(0x14C, diff_off);
+
+    readSisleyRegister(0x150, &diff_on);
+    diff_on &= 0xFF300000;
+    diff_on += diff_val + s;
+    writeSisleyRegister(0x150, diff_on);
+
 }
 
 void visCtrlATIS3::printSensitivyBiases() 
@@ -141,7 +153,10 @@ void visCtrlATIS3::printSensitivyBiases()
     uint32_t diff_on{0};
     readSisleyRegister(0x150, &diff_on);
     diff_on &= 0xFFF;
-    yInfo() << "Biases:" << diff_off << diff_on << "[diff_off diff_on]";
+    uint32_t diff{0};
+    readSisleyRegister(0x154, &diff);
+    diff &= 0xFFF;
+    yInfo() << "Biases:" << diff_off << diff << diff_on << "[diff_off diff diff_on]";
 
 }
 
