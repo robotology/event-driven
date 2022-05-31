@@ -40,9 +40,13 @@ class drawerInterface : public yarp::os::PeriodicThread {
 
 protected:
     std::string name;
+    std::string portName;
+    std::string sourceName;
     cv::Mat canvas;
+    cv::Size img_size;
     bool yarp_publish;
     yarp::os::BufferedPort< yarp::sig::FlexImage > image_port;
+    double window_size;
 
     void run() override;
     bool threadInit() override;
@@ -50,51 +54,57 @@ protected:
 
 public:
 
-    drawerInterface();
+    drawerInterface() : PeriodicThread(0.05){};
     std::string drawerName();
-    virtual bool initialise(const std::string &name, int height, int width, bool yarp_publish)  = 0;
+    virtual bool initialise(const std::string &name, int height, int width, double window_size, 
+                        bool yarp_publish = false, const std::string &remote = "") = 0;
+    virtual void connectToRemote() {};
 
 };
 
-class greyDrawer : public drawerInterface {
+class drawerInterfaceAE : public drawerInterface 
+{
 protected:
     ev::window<ev::AE> input;
-    ev::BufferedPort<ev::AE> temp_input;
+public:
+    virtual bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
+    void connectToRemote() override;
+};
+
+class greyDrawer : public drawerInterfaceAE {
+protected:
     void updateImage() override;
 public:
-    bool initialise(const std::string &name, int height, int width, bool yarp_publish) override;
+    greyDrawer(){window_size=0.1;}
 };
 
-class blackDrawer : public drawerInterface {
+class blackDrawer : public drawerInterfaceAE {
 protected:
-    ev::window<ev::AE> input;
     void updateImage() override;
 public:
-    bool initialise(const std::string &name, int height, int width, bool yarp_publish) override;
+    blackDrawer(){window_size=0.033;}
 };
 
-class isoDrawer : public drawerInterface {
+class isoDrawer : public drawerInterfaceAE {
 protected:
-
-    static constexpr double time_window{1.0};
-    ev::window<ev::AE> input;
     ev::isoImager iso_drawer;
     void updateImage() override;
     
 public:
-    bool initialise(const std::string &name, int height, int width, bool yarp_publish) override;
+    isoDrawer(){window_size=1.0;}
+    bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
 
-class erosDrawer : public drawerInterface {
+class erosDrawer : public drawerInterfaceAE {
 protected:
-    ev::window<ev::AE> input;
-    ev::EROS EROS_vis;
-    void updateImage() override;
     int kernelSize {5};
     double decay {0.3};
+    ev::EROS EROS_vis;
+    void updateImage() override;
+    
 public:
-    erosDrawer(int kernelSize, double decay): kernelSize(kernelSize), decay(decay), drawerInterface(){};
-    bool initialise(const std::string &name, int height, int width, bool yarp_publish) override;
+    erosDrawer(int kernelSize, double decay): kernelSize(kernelSize), decay(decay), drawerInterfaceAE(){};
+    bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
 
 // class overlayStereoDraw : public vDraw {

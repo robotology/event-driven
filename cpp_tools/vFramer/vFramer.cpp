@@ -19,71 +19,11 @@
 #include "drawers.h"
 #include <sstream>
 #include <yarp/cv/Cv.h>
-//#include "event-driven/vDrawSkin.h"
 
 using namespace ev;
 using namespace yarp::os;
 using namespace yarp::sig;
 using std::string;
-
-
-/*////////////////////////////////////////////////////////////////////////////*/
-// drawer factory
-/*////////////////////////////////////////////////////////////////////////////*/
-// vDraw * createDrawer(std::string tag)
-// {
-
-//     if(tag == addressDraw::drawtype)
-//         return new addressDraw();
-//     if(tag == binaryDraw::drawtype)
-//         return new binaryDraw();
-//     if(tag == grayDraw::drawtype)
-//         return new grayDraw();
-//     if(tag == blackDraw::drawtype)
-//         return new blackDraw();
-//     if(tag == isoDraw::drawtype)
-//         return new isoDraw();
-//     if(tag == interestDraw::drawtype)
-//         return new interestDraw();
-//     if(tag == circleDraw::drawtype)
-//         return new circleDraw();
-//     if(tag == flowDraw::drawtype)
-//         return new flowDraw();
-//     if(tag == clusterDraw::drawtype)
-//         return new clusterDraw();
-//     if(tag == blobDraw::drawtype)
-//         return new blobDraw();
-//     if(tag == skinDraw::drawtype)
-//         return new skinDraw();
-//     if(tag == skinsampleDraw::drawtype)
-//         return new skinsampleDraw();
-//     if(tag == isoDrawSkin::drawtype)
-//         return new isoDrawSkin();
-//     if(tag == taxelsampleDraw::drawtype)
-//         return new taxelsampleDraw();
-//     if(tag == taxeleventDraw::drawtype)
-//         return new taxeleventDraw();
-//     if(tag == accDraw::drawtype)
-//         return new accDraw();
-//     if(tag == isoInterestDraw::drawtype)
-//         return new isoInterestDraw();
-//     if(tag == isoCircDraw::drawtype)
-//         return new isoCircDraw();
-//     if(tag == overlayStereoDraw::drawtype)
-//         return new overlayStereoDraw();
-//     if(tag == saeDraw::drawtype)
-//         return new saeDraw();
-//     if(tag == imuDraw::drawtype)
-//         return new imuDraw();
-//     if(tag == cochleaDraw::drawtype)
-//         return new cochleaDraw();
-//     if(tag == rasterDraw::drawtype)
-//         return new rasterDraw();
-//     if(tag == rasterDrawHN::drawtype)
-//         return new rasterDrawHN();
-//     return 0;
-
-// }
 
 /*////////////////////////////////////////////////////////////////////////////*/
 //module
@@ -99,6 +39,31 @@ public:
     // configure all the module parameters and return true if successful
     bool configure(yarp::os::ResourceFinder &rf) override
     {
+        if(rf.check("h") || rf.check("help"))
+        {
+            yInfo() << "vFramer - visualisation of event data";
+            yInfo() << "======================";
+            yInfo() << "--iso   [remote] : iso view,  optionally connect to remote (string)";
+            yInfo() << "--eros  [remote] : eros view, optionally connect to remote (string)";
+            yInfo() << "--grey  [remote] : grey view, optionally connect to remote (string)";
+            yInfo() << "--black [remote] : black view (calibration), optionally connect to remote (string)";
+            yInfo() << "======================";
+            yInfo() << "--name : global module name for ports";
+            yInfo() << "--height, --width : set resolution";
+            yInfo() << "--window_size : parameter affecting event accumulation (seconds/count)";
+            yInfo() << "--fps : frame-rate cap of display";
+            yInfo() << "--yarp_publish : publish over yarp port (calibration) instead of opencv frame";
+            yInfo() << "--flip : flip the image x and y";
+            yInfo() << "======================";
+            yInfo() << "--eros_kernel : kernel size for eros view";
+            yInfo() << "--eros_decay  : decay rate for eros view";
+        }
+
+        if (!yarp::os::Network::checkNetwork(2.0)) {
+            yError() << "Could not find yarp network";
+            return false;
+        }
+
         //admin options
         std::string moduleName = rf.check("name", Value("/vFramer")).asString();
         setName(moduleName.c_str());
@@ -106,28 +71,24 @@ public:
         int height = rf.check("height", Value(480)).asInt32();
         int width = rf.check("width", Value(640)).asInt32();
 
-        double eventWindow = rf.check("eventWindow", Value(0.1)).asFloat64();
-        eventWindow = ev::secondsToTicks(eventWindow);
-        eventWindow = std::min(eventWindow, ev::max_stamp / 2.0);
+        double window_size = rf.check("window_size", Value(-1.0)).asFloat64();
 
-        double isoWindow = rf.check("isoWindow", Value(1.0)).asFloat64();
-        isoWindow = ev::secondsToTicks(isoWindow);
-        isoWindow = std::min(isoWindow, ev::max_stamp / 2.0);
-
-        int frameRate = rf.check("frameRate", Value(60)).asInt32();
+        int frameRate = rf.check("fps", Value(60)).asInt32();
         double period = 1.0 / frameRate;
 
         bool yarp_publish = rf.check("yarp_publish") && rf.check("yarp_publish", Value(true)).asBool();
 
-        int kernel_size = rf.check("kernel_size", Value(5)).asInt32();
-        double decay = rf.check("decay", Value(0.3)).asFloat64();
+        int kernel_size = rf.check("eros_kernel", Value(5)).asInt32();
+        double decay = rf.check("eros_decay", Value(0.3)).asFloat64();
 
         bool flip =
             rf.check("flip") && rf.check("flip", Value(true)).asBool();
 
         if (rf.check("grey") || rf.check("gray")) {
+            string remote = rf.find("grey").asString();
+            if(!remote.size()) remote = rf.find("gray").asString();
             publishers.push_back(new greyDrawer);
-            if (!publishers.back()->initialise(getName("/grey"), height, width, yarp_publish)) {
+            if (!publishers.back()->initialise(getName("/grey"), height, width, window_size, yarp_publish, remote)) {
                 yError() << "[GREY DRAW] failure";
                 return false;
             } else {
@@ -137,8 +98,9 @@ public:
         }
 
         if (rf.check("black")) {
+            string remote = rf.find("black").asString();
             publishers.push_back(new blackDrawer);
-            if (!publishers.back()->initialise(getName("/black"), height, width, yarp_publish)) {
+            if (!publishers.back()->initialise(getName("/black"), height, width, window_size, yarp_publish, remote)) {
                 yError() << "[BLACK DRAW] failure";
                 return false;
             } else {
@@ -148,20 +110,22 @@ public:
         }
 
         if (rf.check("eros")) {
-
+            string remote = rf.find("eros").asString();
             publishers.push_back(new erosDrawer(kernel_size, decay));
-            if (!publishers.back()->initialise(getName("/eros"), height, width, yarp_publish)) {
+            if (!publishers.back()->initialise(getName("/eros"), height, width, window_size, yarp_publish, remote)) {
                 yError() << "[EROS DRAW] failure";
                 return false;
             } else {
                 yInfo() << "[EROS DRAW] success";
             }
             publishers.back()->setPeriod(period);
+            
         }
 
         if (rf.check("iso") || !publishers.size()) {
+            string remote = rf.find("iso").asString();
             publishers.push_back(new isoDrawer);
-            if (!publishers.back()->initialise(getName("/iso"), height, width, yarp_publish)) {
+            if (!publishers.back()->initialise(getName("/iso"), height, width, window_size, yarp_publish, remote)) {
                 yError() << "[ISO DRAW] failure";
                 return false;
             } else {
@@ -178,7 +142,6 @@ public:
                 yError() << "Could not start publisher" << (*pub_i)->drawerName();
                 return false;
             }
-//            yarp::os::Network::connect("/atis3/AE:o", (*pub_i)->drawerName() + "/AE:i", "fast_tcp");
         }
 
         yInfo() << "Configure done";
@@ -201,10 +164,10 @@ public:
         return true;
     }
 
-    //when we call update module we want to send the frame on the output port
-    //we use the framerate to determine how often we do this
     bool updateModule() override
     {
+        for (auto pub_i = publishers.begin(); pub_i != publishers.end(); pub_i++)
+            (*pub_i)->connectToRemote();
         return !isStopping();
     }
 
@@ -216,15 +179,7 @@ public:
 
 int main(int argc, char *argv[])
 {
-    yarp::os::Network yarp;
-    if (!yarp.checkNetwork(2.0))
-    {
-        yError() << "Could not find yarp network";
-        return 1;
-    }
-
     yarp::os::ResourceFinder rf;
-    rf.setVerbose(true);
     rf.setDefaultContext("event-driven");
     rf.setDefaultConfigFile("vFramer.ini");
     rf.configure(argc, argv);

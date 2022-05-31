@@ -25,8 +25,6 @@ using namespace ev;
 
 // INTERFACE //
 // ========= //
-drawerInterface::drawerInterface() : PeriodicThread(0.05){};
-
 std::string drawerInterface::drawerName()
 {
     return name;
@@ -55,11 +53,6 @@ bool drawerInterface::threadInit()
         yError() << "Drawer name not initialised";
         return false;
     }
-    if (canvas.rows == 0 || canvas.cols == 0)
-    {
-        yError() << "Drawer" << name << "not running as canvas image not initialised";
-        return false;
-    }
     if(yarp_publish)
         return image_port.open(name + "/image:o");
     else{
@@ -70,16 +63,31 @@ bool drawerInterface::threadInit()
     return true;
 }
 
-//    GREY   //
-// ========= //
-bool greyDrawer::initialise(const std::string &name, int height, int width, bool yarp_publish)
+
+// INTERFACE-AE //
+// ============ //
+bool drawerInterfaceAE::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote) 
 {
     this->name = name;
+    this->portName = name + "/AE:i";
+    this->sourceName = remote;
     this->yarp_publish = yarp_publish;
-    canvas = cv::Mat(height, width, CV_8UC3);
-    return input.open(name + "/AE:i");
+    this->img_size = {width, height};
+    if(window_size > 0.0)
+        this->window_size = window_size;
+    bool success = input.open(portName);
+    connectToRemote();
+    return success;
 }
 
+void drawerInterfaceAE::connectToRemote() 
+{
+    if(input.getInputCount() == 0 && !sourceName.empty())
+        yarp::os::Network::connect(sourceName, portName, "fast_tcp");
+}
+
+//    GREY   //
+// ========= //
 inline void draw_grey(const AE &v, cv::Mat &canvas) 
 {
     auto &pixel = canvas.at<cv::Vec3b>(v.y, v.x);
@@ -93,30 +101,32 @@ inline void draw_grey(const AE &v, cv::Mat &canvas)
 
 void greyDrawer::updateImage()
 {
-    ev::info inf = input.readSlidingWinT(0.1, false);
+    //make sure the canvas is sized correctly
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+    else
+        canvas = grey;
 
-    canvas = grey;
+    //get new events
+    ev::info inf = input.readSlidingWinT(window_size, false);
+
+    //paint the events onto the canvas
     for (auto &v : input)
-    {
         draw_grey(v, canvas);
-    }
 
 }
 
 //    ISO    //
 // ========= //
-bool isoDrawer::initialise(const std::string &name, int height, int width, bool yarp_publish)
+bool isoDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
-    this->name = name;
-    this->yarp_publish = yarp_publish;
-    cv::Size base_size = iso_drawer.init(height, width, time_window);
-    canvas = cv::Mat(base_size, CV_8UC3);
-    return input.open(name + "/AE:i");
+    cv::Size base_size = iso_drawer.init(height, width, window_size);
+    return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
 
 void isoDrawer::updateImage()
 {
-    ev::info inf = input.readSlidingWinT(time_window, false);
+    ev::info inf = input.readSlidingWinT(window_size, false);
 
     if (inf.count == 0)
         return;
@@ -124,36 +134,28 @@ void isoDrawer::updateImage()
     iso_drawer.draw< window<AE>::iterator >(canvas, input.begin(), input.end());
 }
 
+
 // BLACK DRAW //
 // =========== //
-bool blackDrawer::initialise(const std::string &name, int height, int width, bool yarp_publish)
-{
-    this->name = name;
-    this->yarp_publish = yarp_publish;
-    canvas = cv::Mat(height, width, CV_8UC1);
-    return input.open(name + "/AE:i");
-}
-
 void blackDrawer::updateImage()
 {
-    ev::info inf = input.readSlidingWinT(0.033, false);
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC1);
+    else
+        canvas = 0;
 
-    canvas = 0;
+    ev::info inf = input.readSlidingWinT(window_size, false);
+
     for (auto &v : input)
-    {
         canvas.at<unsigned char>(v.y, v.x) = 255;
-    }
 }
 
 // EROS DRAW //
 // =========== //
-bool erosDrawer::initialise(const std::string &name, int height, int width, bool yarp_publish)
+bool erosDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
-    this->name = name;
-    this->yarp_publish = yarp_publish;
-    canvas = cv::Mat(height, width, CV_8UC3);
     EROS_vis.init(width, height, this->kernelSize, this->decay);
-    return input.open(name + "/AE:i");
+    return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
 
 void erosDrawer::updateImage()

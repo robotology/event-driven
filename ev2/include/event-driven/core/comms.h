@@ -630,6 +630,15 @@ public:
 
     }
 
+    std::string getName()
+    {
+        return port.getName();
+    }
+
+    int getInputCount()
+    {
+        return port.getInputCount();
+    }
 
 
 private:
@@ -672,6 +681,7 @@ private:
     unsigned int _count{0};
     std::mutex m;
     yarp::os::Semaphore data_available;
+    std::string name;
 
 
 };
