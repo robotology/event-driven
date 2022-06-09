@@ -43,6 +43,7 @@ protected:
     std::string portName;
     std::string sourceName;
     cv::Mat canvas;
+    yarp::os::Stamp canvas_stamp;
     cv::Size img_size;
     bool yarp_publish;
     yarp::os::BufferedPort< yarp::sig::FlexImage > image_port;

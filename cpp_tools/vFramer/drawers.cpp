@@ -32,12 +32,14 @@ std::string drawerInterface::drawerName()
 
 void drawerInterface::run()
 {
+    canvas_stamp.update();
     updateImage();
     if(yarp_publish) {
         if(canvas.channels() == 3)
             image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelRgb>(canvas));
         else
             image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelMono>(canvas));
+        image_port.setEnvelope(canvas_stamp);
         image_port.write();
     } else {
         cv::imshow(name, canvas);
@@ -109,6 +111,7 @@ void greyDrawer::updateImage()
 
     //get new events
     ev::info inf = input.readSlidingWinT(window_size, false);
+    canvas_stamp.update(inf.timestamp);
 
     //paint the events onto the canvas
     for (auto &v : input)
@@ -133,6 +136,7 @@ void isoDrawer::updateImage()
         canvas = white;
 
     ev::info inf = input.readSlidingWinT(window_size, false);
+    canvas_stamp.update(inf.timestamp);
 
     if (inf.count == 0)
         return;
@@ -146,14 +150,15 @@ void isoDrawer::updateImage()
 void blackDrawer::updateImage()
 {
     if(canvas.empty())
-        canvas = cv::Mat(img_size, CV_8UC1);
+        canvas = cv::Mat(img_size, CV_8UC3);
     else
-        canvas = 0;
+        canvas = black;
 
     ev::info inf = input.readSlidingWinT(window_size, false);
+    canvas_stamp.update(inf.timestamp);
 
     for (auto &v : input)
-        canvas.at<unsigned char>(v.y, v.x) = 255;
+        canvas.at<cv::Vec3b>(v.y, v.x) = white;
 }
 
 // EROS DRAW //
@@ -170,6 +175,7 @@ void erosDrawer::updateImage()
         canvas = cv::Mat(img_size, CV_8UC3);
 
     ev::info inf = input.readAll(false);
+    canvas_stamp.update(inf.timestamp);
 
     for (auto &v : input)
         EROS_vis.update(v.x, v.y);

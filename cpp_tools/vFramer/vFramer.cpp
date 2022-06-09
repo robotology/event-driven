@@ -181,8 +181,6 @@ public:
 int main(int argc, char *argv[])
 {
     yarp::os::ResourceFinder rf;
-    rf.setDefaultContext("event-driven");
-    rf.setDefaultConfigFile("vFramer.ini");
     rf.configure(argc, argv);
 
     vFramerModule framerModule;

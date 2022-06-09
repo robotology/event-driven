@@ -38,6 +38,7 @@ typedef struct
 {
     unsigned int count;
     double duration;
+    double timestamp;
 } info;
 
 
@@ -165,12 +166,12 @@ public:
         return _duration;
     }
 
-    const double packetTime() const
+    inline const double timestamp() const
     {
         return e.getTime();
     }
 
-    const int packetID() const
+    inline const int id() const
     {
         return e.getCount();
     }
@@ -299,10 +300,6 @@ public:
 
     using yarp::os::BufferedPort< ev::packet<T> >::open;
     using yarp::os::BufferedPort< ev::packet<T> >::getPendingReads;
-    //using yarp::os::BufferedPort< ev::packet<T> >::read;
-    //using yarp::os::BufferedPort< ev::packet<T> >::unprepare;
-    //using yarp::os::BufferedPort< ev::packet<T> >::setEnvelope;
-    //using yarp::os::BufferedPort< ev::packet<T> >::getEnvelope;
     using yarp::os::BufferedPort< ev::packet<T> >::close;
     using yarp::os::BufferedPort< ev::packet<T> >::interrupt;
     using yarp::os::BufferedPort< ev::packet<T> >::resume;
@@ -325,6 +322,8 @@ public:
         void setAsEnd(typename std::list< packet<T>* >::iterator last)
         {
             m_ptr = (**last).end();
+            _timestamp = (*last)->timestamp();
+            _id = (*last)->id();
         }
 
         void setAsStart(typename std::list< packet<T>* >::iterator first, typename std::list< packet<T>* >::iterator last)
@@ -332,16 +331,21 @@ public:
             m_ptr = (**first).begin();
             packet_it = first;
             final = last;
+            _timestamp = (*first)->timestamp();
+            _id = (*first)->id();
         }
 
-        double packetTime() 
+        //here we always return the "packet timestamp" if the user wants to use
+        //the individual event timestamp, leave it to them to access it from the
+        //pointer.
+        double timestamp() 
         {
-            return (*packet_it)->packetTime();
+            return _timestamp;
         }
 
         double packetID()
         {
-            return (*packet_it)->packetID();
+            return _id;
         }
 
         T& operator*() const { return *m_ptr; }
@@ -352,6 +356,8 @@ public:
             m_ptr++;
             if(m_ptr == (*packet_it)->end() && packet_it != final) {
                 m_ptr = (*(++packet_it))->begin();
+                _timestamp = (*packet_it)->timestamp();
+                _id = (*packet_it)->id();
             }
 
             return *this;
@@ -364,6 +370,8 @@ public:
                 m_ptr++;
                 if (m_ptr == (*packet_it)->end() && packet_it != final) {
                     m_ptr = (*(++packet_it))->begin();
+                    _timestamp = (*packet_it)->timestamp();
+                    _id = (*packet_it)->id();
                 }
             //}
 
@@ -375,6 +383,8 @@ public:
         friend bool operator!= (const iterator& a, const iterator& b) { return a.m_ptr != b.m_ptr; };
 
     private:
+        int _id{0};
+        double _timestamp{0.0};
         typename packet<T>::iterator m_ptr;
         typename std::list< packet<T>* >::iterator packet_it;
         typename std::list< packet<T>* >::iterator final;
@@ -398,7 +408,7 @@ public:
         //set the new window for all data
         _setAllIterators(active.begin(), active.end());
 
-        info ret{_count, _duration};
+        info ret{_count, _duration, _timestamp};
         m.unlock();
 
         return ret;
@@ -425,7 +435,7 @@ public:
         //set the correct iterators
         _setAllIterators(active.begin(), active.end());
 
-        info ret{_count, _duration};
+        info ret{_count, _duration, _timestamp};
         m.unlock();
 
         return ret;
@@ -450,7 +460,7 @@ public:
         //set the correct iterators
         _setAllIterators(active.begin(), active.end());
 
-        info ret{_count, _duration};
+        info ret{_count, _duration, _timestamp};
         m.unlock();
 
         return ret;
@@ -475,7 +485,7 @@ public:
         }
 
         //move the iterator until we find our condition, or no more data
-        info ret{0, 0};
+        info ret{0, 0, 0};
         last_packet = active.begin();
         while(last_packet != active.end()) {
             ret.duration += (**last_packet).duration();
@@ -490,6 +500,7 @@ public:
 
         //set the new window for all data
         _setAllIterators(active.begin(), last_packet);
+        ret.timestamp = _timestamp;
         m.unlock();
 
         return ret;
@@ -514,7 +525,7 @@ public:
         }
 
         //move the iterator until we find our condition, or no more data
-        info ret{0, 0};
+        info ret{0, 0, 0};
         last_packet = active.begin();
         while(last_packet != active.end()) {
             ret.duration += (**last_packet).duration();
@@ -528,6 +539,7 @@ public:
 
         //set the new window for all data
         _setAllIterators(active.begin(), last_packet);
+        ret.timestamp = _timestamp;
         m.unlock();
 
         return ret;
@@ -666,6 +678,7 @@ private:
             last_packet = std::prev(end); //we need to drop it back one so it is inclusive in the data
             _begin.setAsStart(first_packet, last_packet);
             _end.setAsEnd(last_packet);
+            _timestamp = _end.timestamp();
         }
     }
 
@@ -677,12 +690,12 @@ private:
     typename std::list< packet<T>* >::iterator first_packet;
     iterator _begin;
     iterator _end;
+    double _timestamp{0.0};
     double _duration{0.0f};
     unsigned int _count{0};
     std::mutex m;
     yarp::os::Semaphore data_available;
     std::string name;
-
 
 };
 

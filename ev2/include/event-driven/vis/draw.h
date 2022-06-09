@@ -77,11 +77,11 @@ public:
 
     template <typename T>
     void draw(cv::Mat img, T begin, T end) {
-        double t0 = begin.packetTime();
+        double t0 = begin.timestamp();
         for (auto a = begin; a != end; a++) {
             int x = a->x;
             int y = a->y;
-            double dt = time_window - (a.packetTime() -t0);
+            double dt = time_window - (a.timestamp() -t0);
             if (dt < 0)
                 return;
             double z = dt;
