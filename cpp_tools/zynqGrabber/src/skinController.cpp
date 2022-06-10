@@ -112,15 +112,14 @@ int vSkinCtrl::i2cRead(unsigned char reg, unsigned char *data, unsigned int size
 
 }
 
-bool vSkinCtrl::configure(bool verbose)
+bool vSkinCtrl::configure()
 {
     if(!setDefaultRegisterValues())
         return false;
     std::cout << deviceName << ":" << (int)I2CAddress << " registers configured." << std::endl;
-    if(verbose) {
-        printConfiguration();
-        printFpgaStatus();
-    }
+    printConfiguration();
+    printFpgaStatus();
+
     return true;
 }
 

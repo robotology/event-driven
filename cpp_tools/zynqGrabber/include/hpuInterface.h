@@ -40,13 +40,14 @@ private:
     //parameters
     unsigned int max_dma_pool_size;
     unsigned int max_packet_size;
+    std::string port_name;
 
 public:
 
     device2yarp();
-    bool open(std::string module_name, int fd, unsigned int pool_size,
+    void configure(std::string module_name, int fd, unsigned int pool_size,
               unsigned int packet_size);
-
+    void yarpOpen();
     void run();
     void onStop();
 
@@ -61,11 +62,13 @@ protected:
 
     int fd;
     ev::BufferedPort<ev::AE> input_port;
+    std::string port_name;
 
 public:
 
     yarp2device();
-    bool open(std::string module_name, int fd);
+    void configure(std::string module_name, int fd);
+    void yarpOpen();
     void run();
     void onStop();
 
@@ -95,6 +98,7 @@ public:
                          bool loopback = false);
     bool openReadPort(std::string module_name, unsigned int packet_size);
     bool openWritePort(std::string module_name);
+    bool tryconnectToYARP();
     void start();
     void stop();
 

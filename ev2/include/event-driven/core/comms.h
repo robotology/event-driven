@@ -304,6 +304,7 @@ public:
     using yarp::os::BufferedPort< ev::packet<T> >::interrupt;
     using yarp::os::BufferedPort< ev::packet<T> >::resume;
     using yarp::os::BufferedPort< ev::packet<T> >::isWriting;
+    using yarp::os::BufferedPort< ev::packet<T> >::isClosed;
 };
 
 template <typename T> class window : public yarp::os::Thread

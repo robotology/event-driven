@@ -43,7 +43,7 @@ device2yarp::device2yarp()
     max_packet_size = 0;
 }
 
-bool device2yarp::open(string module_name, int fd, unsigned int pool_size,
+void device2yarp::configure(string module_name, int fd, unsigned int pool_size,
                        unsigned int packet_size)
 {
     this->fd = fd;
@@ -54,8 +54,21 @@ bool device2yarp::open(string module_name, int fd, unsigned int pool_size,
     }
     this->max_packet_size = packet_size;
     this->max_dma_pool_size = pool_size;
+    this->port_name = module_name + "/AE:o";
+}
 
-    return output_port.open(module_name + "/AE:o");
+void device2yarp::yarpOpen()
+{
+    if(output_port.isClosed()) {
+        if(!Network::checkNetwork(1.0)) {
+            yInfo() << "D2Y: YARP network not available";
+        } else {
+            if(output_port.open(port_name))
+                yInfo() << "D2Y: opened" << port_name;
+            else
+                yInfo() << "D2Y: cannot open" << port_name;
+        }
+    }
 }
 
 void  device2yarp::run() {
@@ -132,10 +145,24 @@ yarp2device::yarp2device()
     fd = -1;
 }
 
-bool yarp2device::open(std::string module_name, int fd)
+void yarp2device::configure(std::string module_name, int fd)
 {
     this->fd = fd;
-    return input_port.open(module_name + "/AE:i");
+    port_name = module_name + "/AE:i";
+}
+
+void yarp2device::yarpOpen()
+{
+    if(input_port.isClosed()) {
+        if(!Network::checkNetwork(1.0)) {
+            yInfo() << "D2Y: YARP network not available";
+        } else {
+            if(input_port.open(port_name))
+                yInfo() << "D2Y: opened" << port_name;
+            else
+                yInfo() << "D2Y: cannot open" << port_name;
+        }
+    }
 }
 
 void yarp2device::onStop()
@@ -149,6 +176,11 @@ void yarp2device::run()
     int total_events = 0;
 
     while(true) {
+
+        if(input_port.isClosed()) {
+            Time::delay(1.0);
+            continue;
+        }
 
         const packet<AE>* packet = input_port.read(true); //blocking read
         if(!packet) return; //when interrupt is called returns null
@@ -357,20 +389,30 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
 
 bool hpuInterface::openReadPort(string module_name, unsigned int packet_size)
 {
-    if(fd < 0 || !D2Y.open(module_name, fd, pool_size, packet_size))
+    if(fd < 0)
         return false;
-
+    D2Y.configure(module_name, fd, pool_size, packet_size);
     yInfo() << "Maximum packet size:" << packet_size;
     read_thread_open = true;
+    D2Y.yarpOpen();
     return true;
+}
+
+bool hpuInterface::tryconnectToYARP()
+{
+    if(read_thread_open)
+        D2Y.yarpOpen();
+    if(write_thread_open)
+        Y2D.yarpOpen();
 }
 
 bool hpuInterface::openWritePort(string module_name)
 {
-    if(fd < 0 || !Y2D.open(module_name, fd))
+    if(fd < 0)
         return false;
-
+    Y2D.configure(module_name, fd);
     write_thread_open = true;
+    Y2D.yarpOpen();
     return true;
 }
 

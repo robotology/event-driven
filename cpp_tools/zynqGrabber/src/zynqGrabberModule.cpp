@@ -54,22 +54,9 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
     std::string moduleName = rf.check("name", yarp::os::Value("/zynqGrabber")).asString();
     setName(moduleName.c_str());
-    bool verbose = rf.check("verbose") && rf.check("verbose", yarp::os::Value(true)).asBool();
-    bool biaswrite = rf.check("biaswrite") && rf.check("biaswrite", yarp::os::Value(true)).asBool();
     bool iBias = rf.check("iBias") && rf.check("iBias", yarp::os::Value(true)).asBool();
     bool useAPS = rf.check("aps") && rf.check("aps", yarp::os::Value(true)).asBool();
-    std::string logfile = rf.check("logfile", yarp::os::Value("/home/icub/zynqGrabberlog.txt")).asString();
-
-    time_t t = std::time(0);   // get date now
-    struct tm * curdate = std::localtime(&t);
-    std::ofstream logwriter;
-    logwriter.open(logfile.c_str(), std::ios_base::app);
-    bool lwo = logwriter.is_open();
-    if(lwo) logwriter << "ZYNQGRABBER RUNNING: " << curdate->tm_mday << "-" << curdate->tm_mon + 1 << "-" << curdate->tm_year+1900;
-    if(lwo) logwriter << " " << curdate->tm_hour << ":" << curdate->tm_min << ":" << curdate->tm_sec << std::endl;
-
     std::string deviceType = rf.find("sensor").asString();
-
     visCtrlManager.connect(rf.find("i2cVision").asString());
     visCtrlManager.configureAndActivate(rf);
 
@@ -83,13 +70,11 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         if(!skctrlMng.connect())
         {
             yError() << "Could not connect to skin controller";
-            if(lwo) logwriter << "Could not connect to skin" << std::endl;
             return false;
         }
 
-        if(!skctrlMng.configure(verbose)) {
+        if(!skctrlMng.configure()) {
             yError() << "Could not set skin defaults";
-            if(lwo) logwriter << "Could not set skin defaults" << std::endl;
             return false;
         }
 
@@ -97,32 +82,12 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         yarp::os::Bottle &cnfglists = rf.findGroup("SKIN_CNFG");
         if(cnfglists.isNull()) {
             yWarning() << "No Skin Parameters Found";
-            if(lwo) logwriter << "No Skin Parameters Found" << std::endl;
         } else if(!skctrlMng.configureRegisters(cnfglists)) {
             yError() << "Could not configure ini parameters";
-            if(lwo) logwriter << "Could not configure ini parameters" << std::endl
-                              << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
             return false;
         }
 
-        if(lwo) logwriter << "Connected to and configured skin" << std::endl;
-
     }
-
-    bool yarppresent = yarp::os::Network::checkNetwork(5);
-    if(!yarppresent)
-        yError() << "Could not connect to YARP network";
-
-    if(!yarppresent || biaswrite) {
-        // vsctrlMngLeft.disconnect(false);
-        // vsctrlMngRight.disconnect(false);
-        visCtrlManager.disconnect();
-        skctrlMng.disconnect();
-        if(lwo) logwriter << "Only writing biases, or YARP not present" << std::endl << "ZYNQGRABBER CLOSING" << std::endl << std::endl;
-        return false;
-    }
-    logwriter.close();
-
 
     //open rateThread device2yarp
     if(rf.check("dataDevice")) {
@@ -157,32 +122,29 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         hpu.start();
     }
 
-    if (!handlerPort.open(moduleName)) {
-        std::cout << "Unable to open RPC port @ /" << moduleName << std::endl;
-        return false;
-    }
-    attach(handlerPort);
+    // if (!handlerPort.open(moduleName)) {
+    //     std::cout << "Unable to open RPC port @ /" << moduleName << std::endl;
+    //     return false;
+    // }
+    // attach(handlerPort);
 
     return true;
 }
 
 bool zynqGrabberModule::interruptModule() {
     std::cout << "breaking YARP connections.. ";
-    handlerPort.close();        // rpc of the RF module
+   // handlerPort.close();        // rpc of the RF module
     hpu.stop();
     std::cout << "done" << std::endl;
 
     std::cout << "closing device drivers.. ";
-    // vsctrlMngLeft.disconnect(false);
-    // vsctrlMngRight.disconnect(false);
     visCtrlManager.disconnect();
     std::cout << "done" << std::endl;
     return true;
 }
 
-bool zynqGrabberModule::close() {
-
-
+bool zynqGrabberModule::close()
+ {
     return true;
 }
 
@@ -191,10 +153,12 @@ bool zynqGrabberModule::updateModule() {
 
     //if(!vsctrlMngRight.activateAPSShutter())
     //    yWarning() << "Could not activate APS shutter";
+    hpu.tryconnectToYARP();
     return !isStopping();
 }
 
-double zynqGrabberModule::getPeriod() {
+double zynqGrabberModule::getPeriod() 
+{
     /* module periodicity (seconds), called implicitly by myModule */
     return 1.0;
 }
