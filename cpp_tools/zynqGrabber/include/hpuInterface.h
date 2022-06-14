@@ -98,7 +98,7 @@ public:
                          bool loopback = false);
     bool openReadPort(std::string module_name, unsigned int packet_size);
     bool openWritePort(std::string module_name);
-    bool tryconnectToYARP();
+    void tryconnectToYARP();
     void start();
     void stop();
 

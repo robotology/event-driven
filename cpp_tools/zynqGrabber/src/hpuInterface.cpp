@@ -398,7 +398,7 @@ bool hpuInterface::openReadPort(string module_name, unsigned int packet_size)
     return true;
 }
 
-bool hpuInterface::tryconnectToYARP()
+void hpuInterface::tryconnectToYARP()
 {
     if(read_thread_open)
         D2Y.yarpOpen();
