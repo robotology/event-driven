@@ -16,14 +16,12 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __VCODEC__
-#define __VCODEC__
+#pragma once
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Portable.h>
 #include <yarp/os/ConnectionWriter.h>
 #include <yarp/os/LogStream.h>
-#include <yarp/os/Semaphore.h>
 #include <yarp/os/Stamp.h>
 #include <vector>
 #include <deque>
@@ -31,6 +29,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <mutex>
+#include <condition_variable>
 
 namespace ev {
 
@@ -65,18 +64,6 @@ public:
     {
         buffer.resize(initial_buffer_size);
     }
-
-    // template<class Q = T>
-    // typename std::enable_if<std::is_same<Q, int32_t>::value, bool>::type someFunc(std::string s)
-    // {
-    //     return true;
-    // }
-
-    // template<class Q = T>
-    // typename std::enable_if<!std::is_same<Q, int32_t>::value, bool>::type someFunc(std::string s)
-    // {
-    //     return Q::tag == s;
-    // }
 
     bool read(yarp::os::ConnectionReader &reader) override
     {
@@ -394,163 +381,183 @@ public:
     iterator begin() { return _begin; }
     iterator end()   { return _end; }
 
-    //different methods to access the data
-    //all data and delete it once read. set the begin() and end() iterators
-    //set the duration and number of events
-    //when this is called delete all data before begin().
-    info readAll(bool blocking = true)
+    //methods to access the data
+    //read packet is unique as it returns the packet while the other methods
+    //set the iterators that allow iteration through the data agnostic to the 
+    //number of packets in the window
+    packet<T>* readPacket(bool blocking = true)
     {
-        if(blocking) data_available.wait();
-        m.lock();
-
-        //first of all remove all the old stuff
+        std::unique_lock<std::mutex> lk(m);
         _removeAlreadyRead();
 
+        if(blocking)
+            signal.wait(lk, [this]{return in_port.count > 0;});
+
+        if(active.empty()) 
+        {
+            _resetIterators(active.begin(), active.begin());
+            in_window = {0, 0, 0};
+            return nullptr;
+        } 
+        else
+        {
+            _resetIterators(active.begin(), std::next(active.begin()));
+            in_window = {(unsigned int)(**active.begin()).size(), 
+                        (**active.begin()).duration(), 
+                        (**active.begin()).timestamp()};
+            return *active.begin();
+        }
+    }
+
+    info readAll(bool blocking = true)
+    {
+        //enter critical section
+        std::unique_lock<std::mutex> lk(m);
+
+        //remove all the old data
+        _removeAlreadyRead();
+
+        //if blocking wait for some data
+        if(blocking)
+            signal.wait(lk, [this]{return in_port.count > 0;});
+
         //set the new window for all data
-        _setAllIterators(active.begin(), active.end());
+        _resetIterators(active.begin(), active.end());
+        in_window = in_port;
 
-        info ret{_count, _duration, _timestamp};
-        m.unlock();
-
-        return ret;
+        return in_window;
 
     }
 
     info readSlidingWinT(double seconds, bool blocking = true)
     {
-        if(blocking) data_available.wait();
-        m.lock();
+        std::unique_lock<std::mutex> lk(m);
 
-        //pop packets until we find the desired temporal window
-        while(_duration > seconds) {
+        if(blocking) 
+            signal.wait(lk, [this]{return in_port.count > in_window.count;});
+        
+         //pop packets until we find the desired temporal window
+        while(!active.empty())
+        {
+            //get the first packet in the active queue stats
             auto packet_duration = (**active.begin()).duration();
-            if(_duration - packet_duration < seconds)
+            auto packet_count =  (**active.begin()).size();
+
+            //if we can remove the packet and stay in the correct time do it
+            if(in_port.duration - packet_duration < seconds)
                 break;
-            _duration -= packet_duration;
-            _count -= (**active.begin()).size();
+            in_port.duration -= packet_duration;
+            in_port.count -= packet_count;
             inactive.push_back(*active.begin());
             active.pop_front();
         }
 
-
         //set the correct iterators
-        _setAllIterators(active.begin(), active.end());
+        _resetIterators(active.begin(), active.end());
+        in_window = in_port;
 
-        info ret{_count, _duration, _timestamp};
-        m.unlock();
-
-        return ret;
+        return in_window;
     }
 
     info readSlidingWinN(unsigned int count, bool blocking = true)
     {
-        if(blocking) data_available.wait();
-        m.lock();
+        std::unique_lock<std::mutex> lk(m);
+        if(blocking) 
+            signal.wait(lk, [this]{return  in_port.count > in_window.count;});
 
-        //pop packets until we find the desired temporal window
-        while(_count > count) {
-            auto packet_count = (**active.begin()).size();
-            if(_count - packet_count < count)
+         //pop packets until we find the desired fixed-count window
+        while(!active.empty())
+        {
+            //get the first packet in the active queue stats
+            auto packet_duration = (**active.begin()).duration();
+            auto packet_count =  (**active.begin()).size();
+
+            //if we can remove the packet and stay in the correct time do it
+            if(in_port.count - packet_count < count)
                 break;
-            _count -= packet_count;
-            _duration -= (**active.begin()).duration();
+            in_port.duration -= packet_duration;
+            in_port.count -= packet_count;
             inactive.push_back(*active.begin());
             active.pop_front();
         }
 
         //set the correct iterators
-        _setAllIterators(active.begin(), active.end());
+        _resetIterators(active.begin(), active.end());
+        in_window = in_port;
 
-        info ret{_count, _duration, _timestamp};
-        m.unlock();
-
-        return ret;
+        return in_window;
     }
 
     info readChunkN(unsigned int count, bool blocking = true)
     {
-        m.lock();
-
         //first of all remove all the old stuff
+        std::unique_lock<std::mutex> lk(m);
         _removeAlreadyRead();
 
         //if we are blocking on a condition then wait till we have enough data
         if(blocking) {
-            while(_count < count) {
-                m.unlock();
-                data_available.wait();
-                m.lock();
-                if(isStopping())
-                    break;
+            while(in_port.count < count) {
+                signal.wait(lk);
+                if(isStopping()) return {0, 0, 0};
             }
         }
 
         //move the iterator until we find our condition, or no more data
-        info ret{0, 0, 0};
+        in_window = {0, 0, 0};
         last_packet = active.begin();
         while(last_packet != active.end()) {
-            ret.duration += (**last_packet).duration();
-            ret.count += (**last_packet).size();
+            in_window.duration += (**last_packet).duration();
+            in_window.count += (**last_packet).size();
+            in_window.timestamp = (**last_packet).timestamp();
             last_packet++;
 
-            if(ret.count >= count)
+            if(in_window.count >= count)
                 break;
         }
-        if(last_packet == active.end())
-            data_available.check(); //by chance all data gone -> lock()
 
         //set the new window for all data
-        _setAllIterators(active.begin(), last_packet);
-        ret.timestamp = _timestamp;
-        m.unlock();
+        _resetIterators(active.begin(), last_packet);
 
-        return ret;
+        return in_window;
     }
 
     info readChunkT(float seconds, bool blocking = true)
     {
-        m.lock();
-
         //first of all remove all the old stuff
+        std::unique_lock<std::mutex> lk(m);
         _removeAlreadyRead();
 
         //if we are blocking on a condition then wait till we have enough data
         if(blocking) {
-            while(_duration < seconds) {
-                m.unlock();
-                data_available.wait();
-                m.lock();
-                if(isStopping())
-                    break;
+            while(in_port.duration < seconds) {
+                signal.wait(lk);
+                if(isStopping()) return {0, 0, 0};
             }
         }
 
         //move the iterator until we find our condition, or no more data
-        info ret{0, 0, 0};
+        in_window = {0, 0, 0};
         last_packet = active.begin();
         while(last_packet != active.end()) {
-            ret.duration += (**last_packet).duration();
-            ret.count += (**last_packet).size();
+            in_window.duration += (**last_packet).duration();
+            in_window.count += (**last_packet).size();
+            in_window.timestamp = (**last_packet).timestamp();
             last_packet++;
-            if(ret.duration >= seconds)
+
+            if(in_window.duration >= seconds)
                 break;
         }
-        if(last_packet == active.end())
-            data_available.check(); //by chance all data gone -> lock()
 
         //set the new window for all data
-        _setAllIterators(active.begin(), last_packet);
-        ret.timestamp = _timestamp;
-        m.unlock();
+        _resetIterators(active.begin(), last_packet);
 
-        return ret;
+        return in_window;
     }
 
     window()
     {
         first_packet = active.begin();
         last_packet = active.begin();
-        data_available = yarp::os::Semaphore(0);
     }
 
     ~window()
@@ -563,24 +570,21 @@ public:
             delete *i;
     }
 
-    double getUnprocessedDelay(void) const
+    info stats_current(void) const
     {
-        double delay = 0.0;
-        auto i = last_packet; i++;
-        for(; i != active.end(); i++)
-            delay += (*i)->duration();
-
-        return delay;
+        return in_window;
     }
 
-    double duration(void) const
+    info stats_unprocessed(void) const
     {
-        return _duration;
+        return {in_port.count - in_window.count,
+                in_port.duration - in_window.duration,
+                in_port.timestamp};
     }
 
-    unsigned int count(void) const
+    info stats_all(void) const
     {
-        return _count;
+        return in_port;
     }
 
     bool open(const std::string name)
@@ -605,15 +609,14 @@ public:
     void onStop()
     {
         port.close();
-        data_available.post();
-        m.unlock();
+        //m.unlock();
     }
 
     void run()
     {
-        while(!isStopping()) {
+        while(true) {
 
-            //blocking read of data from the port
+            //find the best memory location to use or create more
             bool reused_inactive = false;
             packet<T>* current_packet = nullptr;
             if(inactive.empty()) {
@@ -623,23 +626,32 @@ public:
                 reused_inactive = true;
             }
 
+            //blocking read from the port
             bool read_success = port.read(*current_packet);
 
-            if(!read_success && !isStopping()) {
+            //and handle return without data
+            if(isStopping()) {
+                break;
+            }
+            else if(!read_success) {
                 yWarning() << "port read failure!";
                 break;
             }
+
             port.getEnvelope(current_packet->envelope());
 
-            m.lock();
-            if(reused_inactive) inactive.pop_front();
-            active.push_back(current_packet);
-            _duration += current_packet->duration();
-            _count += current_packet->size();
-            m.unlock();
-            data_available.check(); //we would prefer to use a binary_semaphore here
-            data_available.post();
+            //shared section - updated active, inactive, in_port info
+            {
+                std::lock_guard<std::mutex> lock(m); //releases leaving { }
+                if (reused_inactive) inactive.pop_front();
+                active.push_back(current_packet);
+                in_port.duration += current_packet->duration();
+                in_port.count += current_packet->size();
+                in_port.timestamp = current_packet->timestamp();
+            }
+            signal.notify_one();
         }
+        signal.notify_one();
 
     }
 
@@ -660,14 +672,14 @@ private:
     {
         if(last_packet != active.end()) ++last_packet;
         while(first_packet != last_packet) {
-            _duration -= (**first_packet).duration();
-            _count -= (**first_packet).size();
+            in_port.duration -= (**first_packet).duration();
+            in_port.count -= (**first_packet).size();
             inactive.push_back(*first_packet);
             first_packet = active.erase(first_packet);
         }
     }
 
-    void _setAllIterators(typename std::list< packet<T>* >::iterator start, typename  std::list< packet<T>* >::iterator end)
+    void _resetIterators(typename std::list< packet<T>* >::iterator start, typename  std::list< packet<T>* >::iterator end)
     {
         if(active.empty()) {
             first_packet = active.begin();
@@ -679,31 +691,35 @@ private:
             last_packet = std::prev(end); //we need to drop it back one so it is inclusive in the data
             _begin.setAsStart(first_packet, last_packet);
             _end.setAsEnd(last_packet);
-            _timestamp = _end.timestamp();
         }
     }
 
+    //input port
     yarp::os::Port port;
 
+    //data storage
     std::list< packet<T>* > active;
     std::list< packet<T>* > inactive;
+
+    //in_port is all data that has been read
+    info in_port;
+    //in_window is data that is actively asked to be interated through
+    info in_window;
+
+    //packet iterators point to packets be "in_window"
     typename std::list< packet<T>* >::iterator last_packet;
     typename std::list< packet<T>* >::iterator first_packet;
+    //iterators point to individual events "in_window"
     iterator _begin;
     iterator _end;
-    double _timestamp{0.0};
-    double _duration{0.0f};
-    unsigned int _count{0};
+
+    //thread synchronisation
     std::mutex m;
-    yarp::os::Semaphore data_available;
-    std::string name;
+    std::condition_variable signal;
 
 };
 
-
-
 }
 
-#endif
 
 
