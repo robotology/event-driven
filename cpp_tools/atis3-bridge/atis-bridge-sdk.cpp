@@ -27,11 +27,15 @@
 #endif
 
 #include <yarp/os/all.h>
+#include <yarp/cv/Cv.h>
 #include <vector>
+#include <map>
+#include <mutex>
+#include <condition_variable>
+
 #include "event-driven/core.h"
 #include "event-driven/vis.h"
-#include <yarp/cv/Cv.h>
-#include <map>
+
 using namespace ev;
 using namespace yarp::os;
 
@@ -54,6 +58,7 @@ private:
     ev::vNoiseFilter nf;
 
     std::mutex m;
+    std::condition_variable signal;
     std::vector< ev::packet<AE> > buffer;
     int buffer_size{0};
     int buffer_used{0};
@@ -194,6 +199,7 @@ public:
     {
         cam.stop();
         output_port.close();
+        signal.notify_one();
     }
 
     //synchronous thread
@@ -209,12 +215,11 @@ public:
         return Thread::isRunning();
     }
 
-    void fill_buffer(const EventCD *begin, const EventCD *end) {
-
-        AE ae;
-        // this loop allows us to get access to each event received in this callback
-        m.lock();
+    void fill_buffer(const EventCD *begin, const EventCD *end) 
+    {
+        std::unique_lock<std::mutex> lk(m);
         //fill up the buffer that will be sent over the port in the other thread
+        AE ae;
         if (nf.active()) {
             for (const EventCD *ev = begin; ev != end; ++ev) {
                 if(nf.check(ev->x, ev->y, ev->p, ev->t * 0.000001)) {
@@ -234,7 +239,9 @@ public:
                 buffer[b_sel].push_back(ae);
             }
         }
-        m.unlock();
+        lk.unlock();
+        signal.notify_one();
+
     }
 
     //using ExposureFrameCallback = std::function<void(Prophesee::timestamp, const cv::Mat &)>;
@@ -264,34 +271,29 @@ public:
     {
         const static constexpr double packet_time = 0.004;
         double tic = yarp::os::Time::now();
-        while(!Thread::isStopping()) {
-
-            //if we have data to send, do so, otherwise we are just going to wait for 1 ms
+        while(true) {
+            // wait for data and then switch buffers so the callback can keep
+            // filling the second buffer while we are sending
             ev::packet<AE> &current_buffer = buffer[b_sel];
-            if(current_buffer.size() > 0) {
+            std::unique_lock<std::mutex> lk(m);
+            signal.wait(lk, [this] { return buffer[b_sel].size() > 0 || Thread::isStopping(); });
+            switch_buffer(b_sel);
+            lk.unlock();
 
-                //switch buffers so the callback can keep filling the second buffer while we are sending
-                m.lock();
-                switch_buffer(b_sel);
-                m.unlock();
+            if(Thread::isStopping()) break;
 
-                //send the data in the first buffer
-                current_buffer.duration(yarp::os::Time::now()-tic);
-                tic += current_buffer.duration();
-                yarpstamp.update();
-                output_port.setEnvelope(yarpstamp);
-                output_port.write(current_buffer);
-                counter_packets++;
-                counter_events += current_buffer.size();
+            // send the data in the first buffer
+            current_buffer.duration(yarp::os::Time::now() - tic);
+            tic += current_buffer.duration();
+            yarpstamp.update();
+            output_port.setEnvelope(yarpstamp);
+            output_port.write(current_buffer);
+            counter_packets++;
+            counter_events += current_buffer.size();
+            current_buffer.clear();
 
-                if(record_mode && current_buffer.duration() < packet_time)
-                    Time::delay(packet_time - current_buffer.duration());
-
-                current_buffer.clear();
-
-            } else {
-                Time::delay(0.0001);
-            }
+            if (record_mode && current_buffer.duration() < packet_time)
+                Time::delay(packet_time - current_buffer.duration());
         }
 
     }
@@ -302,9 +304,6 @@ int main(int argc, char * argv[])
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;
-    rf.setVerbose( false );
-    rf.setDefaultContext( "event-driven" );
-    rf.setDefaultConfigFile( "atis3-bridge.ini" );
     rf.configure( argc, argv );
 
     /* create the module */
