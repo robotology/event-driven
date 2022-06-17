@@ -21,6 +21,8 @@ if(OpenCV_FOUND)
     src/vis/IPT.cpp
     src/vis/draw.cpp
     src/algs/surface.cpp
+    src/algs/corner.cpp
+    src/algs/flow.cpp
     #include/event-driven/vis/vDraw_basic.cpp
     #include/event-driven/vis/vDraw_ISO.cpp
     #src/vDraw_skin.cpp
@@ -35,6 +37,8 @@ if(OpenCV_FOUND)
     include/event-driven/vis/draw.h
     include/event-driven/algs.h
     include/event-driven/algs/surface.h
+    include/event-driven/algs/corner.h
+    include/event-driven/algs/flow.h
     #include/event-driven/vis/vDraw.h
     #include/event-driven/vDrawSkin.h
   )
