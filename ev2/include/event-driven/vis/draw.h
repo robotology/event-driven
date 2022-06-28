@@ -76,7 +76,46 @@ public:
     }
 
     template <typename T>
-    void draw(cv::Mat img, T begin, T end, int step = 1) {
+    void count_draw(cv::Mat img, T begin, T end, int count) {
+
+        double counter = 0.0;
+        for (auto a = begin; a != end; a++) {
+
+            double dt = time_window * (1.0 - counter++ / count);
+
+            if (dt < 0.05) {
+                int x = a->x;
+                int y = a->y;
+                double z = 0;
+                ps.pttr(x, y, z);
+                if (x < 0 || x >= img.cols || y < 0 || y >= img.rows)
+                    continue;
+                if (a->p)
+                    img.at<cv::Vec3b>(y, x) = black;
+                else
+                    img.at<cv::Vec3b>(y, x) = black;
+            }
+
+            int x = a->x;
+            int y = a->y;
+            double z = dt;
+            ps.pttr(x, y, z);
+            if (x < 0 || x >= img.cols || y < 0 || y >= img.rows)
+                continue;
+            if (a->p)
+                img.at<cv::Vec3b>(y, x) = black;
+            else
+                img.at<cv::Vec3b>(y, x) = black;
+
+
+        }
+
+        img -= base_image;
+
+    }
+
+    template <typename T>
+    void time_draw(cv::Mat img, T begin, T end, int step = 1) {
         double t0 = begin.timestamp();
         if(step < 1) step = 1;
         int counter = 0;

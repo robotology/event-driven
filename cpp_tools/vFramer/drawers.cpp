@@ -142,7 +142,7 @@ void isoDrawer::updateImage()
         return;
     int step = inf.count / 5000000;
 
-    iso_drawer.draw< window<AE>::iterator >(canvas, input.begin(), input.end(), step);
+    iso_drawer.time_draw< window<AE>::iterator >(canvas, input.begin(), input.end(), step);
 }
 
 
@@ -210,11 +210,8 @@ void cornerDrawer::updateImage()
     if(number_to_erase > 0)
         corner_q.erase(corner_q.begin(), corner_q.begin() + number_to_erase);
 
-    for(auto &v : corner_q)
-        canvas.at<cv::Vec3b>(v.y, v.x) = black;
-
-
-    //iso_drawer.draw< window<AE>::iterator >(canvas, input.begin(), input.end());
+    iso_drawer.count_draw< std::deque<AE>::iterator >(canvas, corner_q.begin(), corner_q.end(), corner_q.size());
+    
 }
 
 
