@@ -108,6 +108,19 @@ public:
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
 
+class cornerDrawer : public drawerInterfaceAE {
+protected:
+
+    std::deque<ev::AE> corner_q;
+    ev::isoImager iso_drawer;
+    ev::corner_detector cd;
+    void updateImage() override;
+    
+public:
+    cornerDrawer(){window_size=1.0;}
+    bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
+};
+
 // class overlayStereoDraw : public vDraw {
 
 // public:

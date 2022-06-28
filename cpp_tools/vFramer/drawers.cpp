@@ -184,6 +184,39 @@ void erosDrawer::updateImage()
     cv::cvtColor(EROS_vis.getSurface(), canvas, cv::COLOR_GRAY2BGR);
 }
 
+//    CORNER    //
+// ========= //
+bool cornerDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
+{
+    bool success = drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+    img_size = iso_drawer.init(height, width, this->window_size);
+    cd.initialise(height, width, 7, 7);
+    return success;
+}
+
+void cornerDrawer::updateImage()
+{
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+    else
+        canvas = white;
+
+    ev::info inf = input.readAll(false);
+    canvas_stamp.update(inf.timestamp);
+
+    cd.detect<window<AE>::iterator>(input.begin(), input.end(), corner_q);
+
+    int number_to_erase = corner_q.size() - 100000;
+    if(number_to_erase > 0)
+        corner_q.erase(corner_q.begin(), corner_q.begin() + number_to_erase);
+
+    for(auto &v : corner_q)
+        canvas.at<cv::Vec3b>(v.y, v.x) = black;
+
+
+    //iso_drawer.draw< window<AE>::iterator >(canvas, input.begin(), input.end());
+}
+
 
 // // BLOB DRAW //
 // // ========= //

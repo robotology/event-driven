@@ -90,14 +90,8 @@ bool EROS::update(int x, int y, double t, int p)
 
     bool border = setRoiAndRegion(x, y);
 
-    unsigned char &c = region.at<unsigned char>(half_kernel, half_kernel);
-    for (auto xi = 0; xi < region.cols; xi++) {
-        for (auto yi = 0; yi < region.rows; yi++) {
-            unsigned char &p = region.at<unsigned char>(yi, xi);
-            if(p > c) p *= odecay;
-        }
-    }
-    c = 255;
+    region *= odecay;
+    surf.at<char>(y, x) = 255;
 
     return border;
 }

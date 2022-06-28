@@ -83,30 +83,32 @@ public:
     }
 
     template <typename T>
-    std::deque<AE> detect(T begin, T end)
+    void detect(T begin, T end, std::deque<AE> &results)
     {
-        std::deque<ev::AE> output;
         //first update the EROS
         for(auto &v = begin; v != end; v++) {
-            if(eros.update(v.x, v.y)) continue;
+            if(eros.update(v->x, v->y)) continue;
 
-            float& score = LUT.at<float>(v.y, v.x);
+            float& score = LUT.at<float>(v->y, v->x);
             if(score > threshold)
-                output.push_back(v);
-            
-            count++;
-            double delta = score - score_mean;
-            score_mean += delta / count;
-            double delta2 = score - score_mean;
-            score_variance += delta * delta2;
+                 results.push_back(*v);
+
+            //if (count < 1000000) {
+                count++;
+                double delta = score - score_mean;
+                score_mean += delta / count;
+                double delta2 = score - score_mean;
+                score_variance += delta * delta2;
+           // }
         }
         threshold = score_mean + 2*sqrt(score_variance / count);
+        //threshold = 0.00001;
 
         // std::unique_lock<std::mutex> lk(m);
         // eros_updated = true;
         // lk.unlock();
         // signal.notify_one();
-        return output;
+
 
     }
 

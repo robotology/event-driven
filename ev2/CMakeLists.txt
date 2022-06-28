@@ -69,10 +69,12 @@ target_compile_options(${EVENTDRIVEN_LIBRARY} PRIVATE -Wall)
 if(OpenCV_FOUND)
     target_link_libraries(${EVENTDRIVEN_LIBRARY} PUBLIC YARP::YARP_os
                                                         YARP::YARP_sig
+                                                        pthread
                                                         ${OpenCV_LIBRARIES})
 else()
     target_link_libraries(${EVENTDRIVEN_LIBRARY} PUBLIC YARP::YARP_os
-                                                        YARP::YARP_sig)
+                                                        YARP::YARP_sig
+                                                        pthread)
 endif()
 
 install(TARGETS ${EVENTDRIVEN_LIBRARY}

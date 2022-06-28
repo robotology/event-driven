@@ -123,6 +123,18 @@ public:
             
         }
 
+        if (rf.check("corner")) {
+            string remote = rf.find("corner").asString();
+            publishers.push_back(new cornerDrawer());
+            if (!publishers.back()->initialise(getName("/corner"), height, width, window_size, yarp_publish, remote)) {
+                yError() << "[CORNER DRAW] failure";
+                return false;
+            } else {
+                yInfo() << "[CORNER DRAW] success";
+            }
+            publishers.back()->setPeriod(period);
+        }
+
         if (rf.check("iso") || !publishers.size()) {
             string remote = rf.find("iso").asString();
             publishers.push_back(new isoDrawer);
