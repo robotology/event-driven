@@ -76,22 +76,15 @@ public:
     }
 
     template <typename T>
-    void draw(cv::Mat img, T begin, T end) {
+    void draw(cv::Mat img, T begin, T end, int step = 1) {
         double t0 = begin.timestamp();
+        if(step < 1) step = 1;
+        int counter = 0;
         for (auto a = begin; a != end; a++) {
-            int x = a->x;
-            int y = a->y;
+
             double dt = time_window - (a.timestamp() -t0);
             if (dt < 0)
                 return;
-            double z = dt;
-            ps.pttr(x, y, z);
-            if (x < 0 || x >= img.cols || y < 0 || y >= img.rows)
-                continue;
-            if (a->p)
-                img.at<cv::Vec3b>(y, x) -= naqua;
-            else
-                img.at<cv::Vec3b>(y, x) -= nviolet;
 
             if (dt < 0.05) {
                 int x = a->x;
@@ -105,6 +98,21 @@ public:
                 else
                     img.at<cv::Vec3b>(y, x) = violet;
             }
+
+            if(counter++ % step) continue; 
+
+            int x = a->x;
+            int y = a->y;
+            double z = dt;
+            ps.pttr(x, y, z);
+            if (x < 0 || x >= img.cols || y < 0 || y >= img.rows)
+                continue;
+            if (a->p)
+                img.at<cv::Vec3b>(y, x) -= naqua;
+            else
+                img.at<cv::Vec3b>(y, x) -= nviolet;
+
+
         }
 
         img -= base_image;

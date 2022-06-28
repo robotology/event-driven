@@ -140,8 +140,9 @@ void isoDrawer::updateImage()
 
     if (inf.count == 0)
         return;
+    int step = inf.count / 5000000;
 
-    iso_drawer.draw< window<AE>::iterator >(canvas, input.begin(), input.end());
+    iso_drawer.draw< window<AE>::iterator >(canvas, input.begin(), input.end(), step);
 }
 
 
