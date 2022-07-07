@@ -64,7 +64,7 @@ private:
 
 public:
 
-    ~corner_detector()
+    void stop()
     {
         harris_block_size = -1;
         harris_thread.join();

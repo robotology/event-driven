@@ -214,6 +214,10 @@ void cornerDrawer::updateImage()
     
 }
 
+void cornerDrawer::threadRelease()
+{
+    cd.stop();
+}
 
 // // BLOB DRAW //
 // // ========= //
