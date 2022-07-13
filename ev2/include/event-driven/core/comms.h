@@ -419,7 +419,7 @@ public:
 
         //if blocking wait for some data
         if(blocking)
-            signal.wait(lk, [this]{return in_port.count > 0;});
+            signal.wait(lk, [this]{return in_port.count > 0 || isStopping();});
 
         //set the new window for all data
         _resetIterators(active.begin(), active.end());
@@ -434,7 +434,7 @@ public:
         std::unique_lock<std::mutex> lk(m);
 
         if(blocking) 
-            signal.wait(lk, [this]{return in_port.count > in_window.count;});
+            signal.wait(lk, [this]{return in_port.count > in_window.count || isStopping();});
         
          //pop packets until we find the desired temporal window
         while(!active.empty())
@@ -463,7 +463,7 @@ public:
     {
         std::unique_lock<std::mutex> lk(m);
         if(blocking) 
-            signal.wait(lk, [this]{return  in_port.count > in_window.count;});
+            signal.wait(lk, [this]{return  in_port.count > in_window.count || isStopping();});
 
          //pop packets until we find the desired fixed-count window
         while(!active.empty())
