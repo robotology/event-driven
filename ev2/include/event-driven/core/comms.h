@@ -702,9 +702,9 @@ private:
     std::list< packet<T>* > inactive;
 
     //in_port is all data that has been read
-    info in_port;
+    info in_port{0};
     //in_window is data that is actively asked to be interated through
-    info in_window;
+    info in_window{0};
 
     //packet iterators point to packets be "in_window"
     typename std::list< packet<T>* >::iterator last_packet;
