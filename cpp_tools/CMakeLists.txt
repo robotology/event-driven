@@ -8,6 +8,7 @@ add_subdirectory(hexViewer)
 if(OpenCV_FOUND)
   add_subdirectory(vFramer)
   add_subdirectory(vPreProcess)
+  add_subdirectory(calibration)
 endif()
 
 if(prophesee_core_FOUND OR MetavisionSDK_FOUND)
