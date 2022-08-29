@@ -84,10 +84,10 @@ public:
             yError() << "please supply the checker square edge length in metres with --cs <double>";
             return false;
         }
-        edge_length = rf.find("cs").asDouble();
+        edge_length = rf.find("cs").asFloat32();
 
-        img_size = cv::Size(rf.check("w", Value(640)).asInt(), rf.check("h", Value(480)).asInt());
-        board_size = cv::Size(rf.check("cw", Value(8)).asInt(), rf.check("ch", Value(6)).asInt());
+        img_size = cv::Size(rf.check("w", Value(640)).asInt32(), rf.check("h", Value(480)).asInt32());
+        board_size = cv::Size(rf.check("cw", Value(8)).asInt32(), rf.check("ch", Value(6)).asInt32());
 
         yInfo() << "EVENT CAMERA CALIBRATION";
         yInfo() << "saving calibration:" << fout;
