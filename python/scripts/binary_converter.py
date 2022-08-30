@@ -10,5 +10,10 @@ parser.add_argument('--output', '-o', dest='output_path', type=str, required=Tru
 
 args = parser.parse_args()
 
-data = importIitYarpBinaryDataLog(filePathOrName=args.input_path)
-exportIitYarp(data, exportFilePath=args.output_path)
+maxBytesToImport = 100000000
+
+for i in range(0, fileSize, maxBytesToImport):
+    data = importIitYarpBinaryDataLog(filePathOrName=args.input_path,
+                                      importMaxBytes=maxBytesToImport,
+                                      importFromByte=i)
+    exportIitYarp(data, exportFilePath=args.output_path, writeMode='a', protectedWrite=False)
