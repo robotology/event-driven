@@ -1,6 +1,7 @@
 from bimvee.importIitYarp import importIitYarpBinaryDataLog
 from bimvee.exportIitYarp import exportIitYarp
 import argparse
+from os.path import getsize
 
 parser = argparse.ArgumentParser(description='Converter from binary to yarp format')
 parser.add_argument('--input', '-i', dest='input_path', type=str, required=True,
@@ -10,10 +11,12 @@ parser.add_argument('--output', '-o', dest='output_path', type=str, required=Tru
 
 args = parser.parse_args()
 
-maxBytesToImport = 100000000
+maxBytesToImport = 320000000
 
-for i in range(0, fileSize, maxBytesToImport):
+for i in range(0, getsize(args.input_path), maxBytesToImport):
     data = importIitYarpBinaryDataLog(filePathOrName=args.input_path,
                                       importMaxBytes=maxBytesToImport,
-                                      importFromByte=i)
+                                      importFromByte=i,
+                                      zeroTimestamps=False
+                                      )
     exportIitYarp(data, exportFilePath=args.output_path, writeMode='a', protectedWrite=False)
