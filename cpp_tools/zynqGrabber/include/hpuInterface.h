@@ -95,7 +95,7 @@ public:
     hpuInterface();
 
     bool configureDevice(std::string device_name, bool spinnaker = false,
-                         bool loopback = false);
+                         bool loopback = false, bool gtp = true);
     bool openReadPort(std::string module_name, unsigned int packet_size);
     bool openWritePort(std::string module_name);
     void tryconnectToYARP();

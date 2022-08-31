@@ -182,29 +182,29 @@ void visCtrlInterface::printConfiguration(int fd, channel_name name)
 
     unsigned int regval = 0;
     i2cRead(fd, VSCTRL_INFO_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("Info: 0x%08X\n", regval);
+    printf("\tInfo:\t\t 0x%08X\n", regval);
     i2cRead(fd, VSCTRL_STATUS_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("Status: 0x%08X\n", regval);
+    printf("\tStatus:\t\t 0x%08X\n", regval);
     i2cRead(fd, VSCTRL_SRC_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("Config: 0x%08X\n", regval);
+    printf("\tConfig:\t\t 0x%08X\n", regval);
     i2cRead(fd, VSCTRL_SRC_DST_CTRL_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("DstCtrl: 0x%08X\n", regval);
+    printf("\tDstCtrl:\t 0x%08X\n", regval);
     i2cRead(fd, VSCTRL_PAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("PEAR-config: 0x%08X\n", regval);
+    printf("\tPEAR-config:\t 0x%08X\n", regval);
     i2cRead(fd, VSCTRL_HSSAER_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("HSSAER-config: 0x%08X\n", regval);
+    printf("\tHSSAER-config:\t 0x%08X\n", regval);
     i2cRead(fd, VSCTRL_GTP_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("GTP-config: 0x%08X\n", regval);
+    printf("\tGTP-config:\t 0x%08X\n", regval);
     i2cRead(fd, VSCTRL_BG_CNFG_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("BG-config: 0x%08X\n", regval);
+    printf("\tBG-config:\t 0x%08X\n", regval);
     i2cRead(fd, VSCTRL_BG_PRESC_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("BG-prescaler: 0x%08X\n", regval);
+    printf("\tBG-prescaler:\t 0x%08X\n", regval);
     i2cRead(fd, VSCTRL_BG_TIMINGS_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("BG-timings: 0x%08X\n", regval);
+    printf("\tBG-timings:\t 0x%08X\n", regval);
     i2cRead(fd, VSCTRL_GPO_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("GPO: 0x%08X\n", regval);
+    printf("\tGPO:\t\t 0x%08X\n", regval);
     i2cRead(fd, VSCTRL_GPI_ADDR, (unsigned char *)&regval, sizeof(regval));
-    printf("GPI: 0x%08X\n", regval);
+    printf("\tGPI:\t\t 0x%08X\n", regval);
 
 }
 
@@ -251,8 +251,7 @@ autoVisionController::~autoVisionController()
 
 void autoVisionController::connect(std::string i2c_device) 
 {
-    yInfo() << "";
-    yInfo() << "===== Vision Controller =====";
+    
     fd = visCtrlInterface::openI2Cdevice(i2c_device);
     if(fd < 0) 
     {
@@ -274,25 +273,27 @@ void autoVisionController::configureAndActivate(yarp::os::ResourceFinder rf)
         rf.check("visRightOn", yarp::os::Value(true)).asBool();
 
     if(controls[0]) {
+        std::cout << std::endl; std::cout.flush();
+        yInfo() << "Configuring Left Camera";
+        controls[0]->configure(rf);
         if (!lefton)
             yWarning() << "Left camera connected but not using";
         else
-            yInfo() << "Configuring Left Camera";
-        controls[0]->configure(rf);
+           controls[0]->printConfiguration();
         controls[0]->activate(lefton);
-        if(lefton) controls[0]->printConfiguration();
-        
+        std::cout << std::endl; std::cout.flush();
     }
 
     if(controls[1]) {
+        std::cout << std::endl; std::cout.flush();
+        yInfo() << "Configuring Right Camera";
+        controls[1]->configure(rf);
         if (!righton)
             yWarning() << "Right camera connected but not using";
         else
-            yInfo() << "Configuring Right Camera";
-        controls[1]->configure(rf);
-        controls[1]->activate(righton);
-        if(righton)controls[1]->printConfiguration();
-        
+            controls[1]->printConfiguration();
+        controls[1]->activate(righton);    
+        std::cout << std::endl; std::cout.flush();   
     }
 
 }

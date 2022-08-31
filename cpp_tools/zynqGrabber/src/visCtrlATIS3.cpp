@@ -11,17 +11,13 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
     //somewhere and the prints change the way the code is compiled "avoiding"
     //the bug by chance.
 
-    yInfo() << "enable GTP";
     if (!enableGTP()) return false;
-    yInfo() << "enable sisley";
     if (!sisleySetup()) return false;
-    yInfo() << "enable activate";
     if (!activate()) return false;
-    yInfo() << "enable transmission";
     // Enable data transmission from VSCTRL
     unsigned int data32=VSCTRL_ENABLE_GEN3;
     if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *) &data32, 1) != 1) return false;
-    yInfo() << "ENABLED";
+    yInfo() << "\t...configured registers.";
 
     yarp::os::Bottle &roi_definition = rf.findGroup("ATIS_ROI");
     if(!roi_definition.isNull()) {
@@ -29,20 +25,20 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
         int y = roi_definition.find("y").asInt32();
         int width = roi_definition.find("width").asInt32();
         int height = roi_definition.find("height").asInt32();
-        yInfo() << "ROI definition found [" << x << y << width << height << "]";
+        yInfo() << "\tROI definition found [" << x << y << width << height << "]";
         setROI(x, y, width, height);
     }
 
     if(rf.check("sensitivity")) {
         int sensitivity = rf.find("sensitivity").asInt32();
-        yInfo() << "Setting sensitivity to " << sensitivity;
+        yInfo() << "\tSetting sensitivity to " << sensitivity;
         setSensitivityBiases(sensitivity);
     }
     printSensitivyBiases();
 
     if(rf.check("refractory")) {
         int ref_period = rf.find("refractory").asInt32();
-        yInfo() << "Setting refractory period to " << ref_period;
+        yInfo() << "\tSetting refractory period to " << ref_period;
         setRefractoryBias(ref_period);  
     }
     printRefractoryBias();
@@ -101,7 +97,7 @@ void visCtrlATIS3::printRefractoryBias()
     uint32_t bias_val{0};
     readSisleyRegister(0x128, &bias_val);
     bias_val &= 0xFFF;
-    yInfo() << "Biases:" << bias_val << "[period]";
+    yInfo() << "\tBiases:" << bias_val << "[period]";
 }
 
 void visCtrlATIS3::setRefractoryBias(int period) 
@@ -156,7 +152,7 @@ void visCtrlATIS3::printSensitivyBiases()
     uint32_t diff{0};
     readSisleyRegister(0x154, &diff);
     diff &= 0xFFF;
-    yInfo() << "Biases:" << diff_off << diff << diff_on << "[diff_off diff diff_on]";
+    yInfo() << "\tBiases:" << diff_off << diff << diff_on << "[diff_off diff diff_on]";
 
 }
 
@@ -192,19 +188,24 @@ bool visCtrlATIS3::updateBiases(yarp::os::Bottle &bias) {
 
 bool visCtrlATIS3::activate(bool activate)
 {
-    if(!activate) return true;
     unsigned char value_8bit;
 
     // VSCTRL: Enable VDDA, VDDD and VDDC end keep out from reset MRRSTN
     if (i2cRead(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
-    value_8bit=value_8bit|(VSCTRL_ENABLE_VDDA);
+    if(activate)
+        value_8bit |= VSCTRL_ENABLE_VDDA;
+    else
+        value_8bit &= ~VSCTRL_ENABLE_VDDA;
     // I repeat three times as suggested in sisley reference stuff...
     if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
     if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
     if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
 
     if (i2cRead(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
-    value_8bit=value_8bit|(VSCTRL_DISABLE_TDRSTN);
+    if(activate)
+        value_8bit |= VSCTRL_DISABLE_TDRSTN;
+    else
+        value_8bit &= ~VSCTRL_DISABLE_TDRSTN;
     // I repeat three times as suggested in sisley reference stuff...
     if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
     if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
@@ -214,11 +215,11 @@ bool visCtrlATIS3::activate(bool activate)
 }
 
 bool visCtrlATIS3::sisleySetup() {
-    printf("GEN3: Enable analog\n");
+    //printf("GEN3: Enable analog\n");
     if (writeSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x02) != 4) return false;
-    printf("GEN3: Assert bgen_en\n");
+    //printf("GEN3: Assert bgen_en\n");
     if (writeSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x12) != 4) return false;
-    printf("GEN3: Assert bgen_rstn\n");
+    //printf("GEN3: Assert bgen_rstn\n");
     if (writeSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x1A) != 4) return false;
     usleep(1000);
     return true;

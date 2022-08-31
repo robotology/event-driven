@@ -33,12 +33,7 @@ using std::string;
 
 int main(int argc, char * argv[])
 {
-    yarp::os::Network yarp;
-    //we do a network check only after programming the biases to ensure the
-    //cameras are configured in a good operational state.
-
     yarp::os::ResourceFinder rf;
-    rf.setVerbose(true);
     rf.setDefaultConfigFile("zynqGrabber.ini"); //overridden by --from parameter
     rf.setDefaultContext("event-driven");   //overridden by --context parameter
     rf.configure(argc, argv);
@@ -51,18 +46,20 @@ int main(int argc, char * argv[])
 
 bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
 
-
-    std::string moduleName = rf.check("name", yarp::os::Value("/zynqGrabber")).asString();
-    setName(moduleName.c_str());
-    bool iBias = rf.check("iBias") && rf.check("iBias", yarp::os::Value(true)).asBool();
-    bool useAPS = rf.check("aps") && rf.check("aps", yarp::os::Value(true)).asBool();
-    std::string deviceType = rf.find("sensor").asString();
-    visCtrlManager.connect(rf.find("i2cVision").asString());
-    visCtrlManager.configureAndActivate(rf);
+    setName(rf.check("name", yarp::os::Value("/zynqGrabber")).asString().c_str());
+    
+    if(rf.check("i2cVision"))
+    { 
+        std::cout << std::endl; std::cout.flush();
+        yInfo() << "===== Vision Controller =====";
+        visCtrlManager.connect(rf.find("i2cVision").asString());
+        visCtrlManager.configureAndActivate(rf);
+        std::cout << std::endl; std::cout.flush();
+    }
 
     if(rf.check("skinCtrl")) {
 
-        yInfo() << "";
+        std::cout << std::endl; std::cout.flush();
         yInfo() << "===== Skin Controller =====";
 
         skctrlMng = vSkinCtrl(rf.find("skinCtrl").asString(), I2C_ADDRESS_AUX);
@@ -86,13 +83,13 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
             yError() << "Could not configure ini parameters";
             return false;
         }
-
+        std::cout << std::endl; std::cout.flush();
     }
 
     //open rateThread device2yarp
     if(rf.check("dataDevice")) {
 
-        yInfo() << "";
+        std::cout << std::endl; std::cout.flush();
         yInfo() << "===== HPU Controller =====";
 
         string data_device = rf.find("dataDevice").asString();
@@ -100,8 +97,10 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                              rf.check("use_spinnaker", yarp::os::Value(true)).asBool();
         bool loopback = rf.check("loopback_debug") &&
                         rf.check("loopback_debug", yarp::os::Value(true)).asBool();
+        bool gtp = rf.check("gtp") &&
+                   rf.check("gtp", Value(true)).asBool();
 
-        if(!hpu.configureDevice(data_device, use_spinnaker, loopback))
+        if(!hpu.configureDevice(data_device, use_spinnaker, loopback, gtp))
             return false;
 
         bool read_flag = rf.check("hpu_read") &&
@@ -111,15 +110,16 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         int packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt32();
 
         if(read_flag)
-            if(!hpu.openReadPort(moduleName, packet_size))
+            if(!hpu.openReadPort(getName(), packet_size))
                 return false;
 
         if(write_flag)
-            if(!hpu.openWritePort(moduleName))
+            if(!hpu.openWritePort(getName()))
                 return false;
 
         yInfo() << "Starting HPU read/write threads";
         hpu.start();
+        std::cout << std::endl; std::cout.flush();
     }
 
     // if (!handlerPort.open(moduleName)) {

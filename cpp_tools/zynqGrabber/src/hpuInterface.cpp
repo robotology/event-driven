@@ -224,7 +224,7 @@ hpuInterface::hpuInterface()
     write_thread_open = false;
 }
 
-bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loopback)
+bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loopback, bool gtp)
 {
     //open the device
     fd = open(device_name.c_str(), O_RDWR);
@@ -281,20 +281,26 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     if(ioctl(fd, HPU_GET_RX_PN, &pool_count) < 0)
         { yError() << "Could not read pool count"; return false; }
 
+    hpu_interface_cfg_t trans_config;
     hpu_rx_interface_ioctl_t rx_config;
-    rx_config = {INTERFACE_EYE_R, {{1, 1, 1, 1}, 0, 0, 0}};
+    if(gtp)
+        trans_config = {{0, 0, 0, 0}, 1, 0, 0};
+    else
+        trans_config = {{1, 1, 1, 1}, 0, 0, 0};
+        
+    rx_config = {INTERFACE_EYE_R, {{0, 0, 0, 0}, 1, 0, 0}};
     if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
         { yError() << "Could not write EYE_R config"; return false; }
 
-    rx_config = {INTERFACE_EYE_L, {{1, 1, 1, 1}, 0, 0, 0}};
+    rx_config = {INTERFACE_EYE_L, {{0, 0, 0, 0}, 1, 0, 0}};
     if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
         { yError() << "Could not write EYE_L config"; return false; }
 
-    rx_config = {INTERFACE_AUX, {{1, 1, 1, 1}, 1, 1, 1}};
+    rx_config = {INTERFACE_AUX, {{0, 0, 0, 0}, 0, 0, 0}};
     if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
         { yError() << "Could not write AUX config"; return false; }
 
-    hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 1, 0}, ROUTE_FIXED};
+    hpu_tx_interface_ioctl_t tx_config = {{{0, 0, 0, 0}, 0, 0, 0}, ROUTE_FIXED};
     if(ioctl(fd, HPU_TX_INTERFACE, &tx_config) < 0)
         { yError() << "Could not write hpu tx config"; return false; }
 
