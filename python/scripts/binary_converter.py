@@ -19,4 +19,4 @@ for i in range(0, getsize(args.input_path), maxBytesToImport):
                                       importFromByte=i,
                                       zeroTimestamps=False
                                       )
-    exportIitYarp(data, exportFilePath=args.output_path, writeMode='a', protectedWrite=False)
+    exportIitYarp(data, exportFilePath=args.output_path, writeMode='a', protectedWrite=False, exportTimestamps=False)
