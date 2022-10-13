@@ -169,9 +169,12 @@ public:
         const Geometry &geo = cam.geometry();
         yInfo() << "[" << geo.width() << "x" << geo.height() << "]";
 
-        double nf_param = rf.check("filter", Value(0.0)).asFloat64();
+        double nf_param = 0.0;
+        if(rf.check("filter")) nf_param = rf.find("filter").asFloat64();
+        if(rf.check("f")) nf_param = rf.find("f").asFloat64();
         if(nf_param > 0.0) 
         {
+            yInfo() << "[FILTER] ON. Maximum 1 event per pixel per" << nf_param << "seconds";
             nf.initialise(geo.width(), geo.height());
             nf.use_temporal_filter(nf_param);
         }
