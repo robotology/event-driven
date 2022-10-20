@@ -10,12 +10,57 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
     //delays doesn't work either. Typically it means there is a memory bug
     //somewhere and the prints change the way the code is compiled "avoiding"
     //the bug by chance.
+    channelSelect(fd, channel);
 
-    if (!enableGTP()) return false;
-    if (!sisleySetup()) return false;
-    if (!activate()) return false;
+    uint32_t data32;
+	// VSCTRL: Enable clock
+	data32=VSCTRL_ENABLE_CLK;
+	if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG1, (uint8_t *)&data32, 1) != 1) return false;
+
+    // Enable GTP
+    data32 = 0x24;
+	if (i2cWrite(fd, VSCTRL_DSTCTRL_REG, (uint8_t *)&data32, 1) != 1) return false;
+
+    //align GTP between eye and zynq FPGA
+    data32 = 0x01;
+    if (i2cWrite(fd, VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+    yarp::os::Time::delay(0.01);
+    data32 = 0x00;
+    if (i2cWrite(fd, VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+
+    // VSCTRL: Flush Fifo
+	data32=VSCTRL_FLUSH_FIFO;
+	if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+
+
+    if (writeSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x02) != 4) return false;
+    //printf("GEN3: Assert bgen_en\n");
+    if (writeSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x12) != 4) return false;
+    //printf("GEN3: Assert bgen_rstn\n");
+    if (writeSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x1A) != 4) return false;
+    usleep(1000);
+
+
+        unsigned char value_8bit;
+
+    // VSCTRL: Enable VDDA, VDDD and VDDC end keep out from reset MRRSTN
+    if (i2cRead(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+    value_8bit |= VSCTRL_ENABLE_VDDA;
+    // I repeat three times as suggested in sisley reference stuff...
+    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+
+    if (i2cRead(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+    value_8bit |= VSCTRL_DISABLE_TDRSTN;
+    // I repeat three times as suggested in sisley reference stuff...
+    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
+
     // Enable data transmission from VSCTRL
-    unsigned int data32=VSCTRL_ENABLE_GEN3;
+    
+    data32=VSCTRL_ENABLE_GEN3;
     if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *) &data32, 1) != 1) return false;
     yInfo() << "\t...configured registers.";
 
@@ -188,64 +233,8 @@ bool visCtrlATIS3::updateBiases(yarp::os::Bottle &bias) {
 
 bool visCtrlATIS3::activate(bool activate)
 {
-    unsigned char value_8bit;
+    channelSelect(fd, channel);
 
-    // VSCTRL: Enable VDDA, VDDD and VDDC end keep out from reset MRRSTN
-    if (i2cRead(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
-    if(activate)
-        value_8bit |= VSCTRL_ENABLE_VDDA;
-    else
-        value_8bit &= ~VSCTRL_ENABLE_VDDA;
-    // I repeat three times as suggested in sisley reference stuff...
-    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
-    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
-    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
-
-    if (i2cRead(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
-    if(activate)
-        value_8bit |= VSCTRL_DISABLE_TDRSTN;
-    else
-        value_8bit &= ~VSCTRL_DISABLE_TDRSTN;
-    // I repeat three times as suggested in sisley reference stuff...
-    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
-    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
-    if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
-
-    return true;
-}
-
-bool visCtrlATIS3::sisleySetup() {
-    //printf("GEN3: Enable analog\n");
-    if (writeSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x02) != 4) return false;
-    //printf("GEN3: Assert bgen_en\n");
-    if (writeSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x12) != 4) return false;
-    //printf("GEN3: Assert bgen_rstn\n");
-    if (writeSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x1A) != 4) return false;
-    usleep(1000);
-    return true;
-}
-
-bool visCtrlATIS3::enableGTP()
-{
-    uint32_t data32;
-	// VSCTRL: Enable clock
-	data32=VSCTRL_ENABLE_CLK;
-	if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG1, (uint8_t *)&data32, 1) != 1) return false;
-
-    // Enable GTP
-    data32 = 0x24;
-	if (i2cWrite(fd, VSCTRL_DSTCTRL_REG, (uint8_t *)&data32, 1) != 1) return false;
-
-    //align GTP between eye and zynq FPGA
-    data32 = 0x01;
-    if (i2cWrite(fd, VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
-    yarp::os::Time::delay(0.01);
-    data32 = 0x00;
-    if (i2cWrite(fd, VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
-
-    // VSCTRL: Flush Fifo
-	data32=VSCTRL_FLUSH_FIFO;
-	if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1) != 1) return false;
 
     return true;
 }
