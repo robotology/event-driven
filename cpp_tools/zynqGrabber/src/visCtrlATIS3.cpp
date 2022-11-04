@@ -13,24 +13,26 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
     channelSelect(fd, channel);
 
     uint32_t data32;
+    uint8_t  data8;
+    
 	// VSCTRL: Enable clock
-	data32=VSCTRL_ENABLE_CLK;
-	if (i2cWrite(fd, VSCTRL_SISLEY_LDO_RSTN_REG1, (uint8_t *)&data32, 1) != 1) return false;
+	data8=0x01;
+	if (i2cWrite(fd, 0x21, &data8, 1) != 1) return false;
 
     // Enable GTP
-    data32 = 0x24;
-	if (i2cWrite(fd, VSCTRL_DSTCTRL_REG, (uint8_t *)&data32, 1) != 1) return false;
+    data8 = 0x24;
+	if (i2cWrite(fd, 0x11, &data8, 1) != 1) return false;
 
     //align GTP between eye and zynq FPGA
-    data32 = 0x01;
-    if (i2cWrite(fd, VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+    data8 = 0x01;
+    if (i2cWrite(fd, 0x1C, &data8, 1) != 1) return false;
     yarp::os::Time::delay(0.01);
-    data32 = 0x00;
-    if (i2cWrite(fd, VSCTRL_GTP_CNFG_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+    data8 = 0x00;
+    if (i2cWrite(fd, 0x1C, &data8, 1) != 1) return false;
 
     // VSCTRL: Flush Fifo
-	data32=VSCTRL_FLUSH_FIFO;
-	if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *)&data32, 1) != 1) return false;
+	data8=0x40;
+	if (i2cWrite(fd, 0x10, &data8, 1) != 1) return false;
 
 
     if (writeSisleyRegister(SISLEY_GLOBAL_CTRL_REG, 0x02) != 4) return false;
@@ -41,7 +43,7 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
     usleep(1000);
 
 
-        unsigned char value_8bit;
+    unsigned char value_8bit;
 
     // VSCTRL: Enable VDDA, VDDD and VDDC end keep out from reset MRRSTN
     if (i2cRead(fd, VSCTRL_SISLEY_LDO_RSTN_REG, &value_8bit, 1) != 1) return false;
@@ -60,8 +62,8 @@ bool visCtrlATIS3::configure(yarp::os::ResourceFinder rf)
 
     // Enable data transmission from VSCTRL
     
-    data32=VSCTRL_ENABLE_GEN3;
-    if (i2cWrite(fd, VSCTRL_SRC_DST_CTRL_ADDR, (uint8_t *) &data32, 1) != 1) return false;
+    // data8=0x08;
+    // if (i2cWrite(fd, 0x10, &data8, 1) != 1) return false;
     yInfo() << "\t...configured registers.";
 
     yarp::os::Bottle &roi_definition = rf.findGroup("ATIS_ROI");
@@ -234,8 +236,8 @@ bool visCtrlATIS3::updateBiases(yarp::os::Bottle &bias) {
 bool visCtrlATIS3::activate(bool activate)
 {
     channelSelect(fd, channel);
-
-
+    uint8_t data8 = activate ? 0x08 : 0x00;
+    i2cWrite(fd, 0x10, &data8, 1);
     return true;
 }
 

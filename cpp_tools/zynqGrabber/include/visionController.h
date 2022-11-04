@@ -97,8 +97,8 @@ public:
     void configureAndActivate(yarp::os::ResourceFinder rf);
     void disconnect()
     {
-        if(controls[0]) controls[0]->activate(false);
-        if(controls[1]) controls[1]->activate(false);
+        // if(controls[0]) controls[0]->activate(false);
+        // if(controls[1]) controls[1]->activate(false);
     }
 };
 

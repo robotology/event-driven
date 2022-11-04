@@ -276,11 +276,11 @@ void autoVisionController::configureAndActivate(yarp::os::ResourceFinder rf)
         std::cout << std::endl; std::cout.flush();
         yInfo() << "Configuring Left Camera";
         controls[0]->configure(rf);
+        controls[0]->activate(lefton);
         if (!lefton)
             yWarning() << "Left camera connected but not using";
         else
            controls[0]->printConfiguration();
-        controls[0]->activate(lefton);
         std::cout << std::endl; std::cout.flush();
     }
 
@@ -288,11 +288,11 @@ void autoVisionController::configureAndActivate(yarp::os::ResourceFinder rf)
         std::cout << std::endl; std::cout.flush();
         yInfo() << "Configuring Right Camera";
         controls[1]->configure(rf);
+        controls[1]->activate(righton); 
         if (!righton)
             yWarning() << "Right camera connected but not using";
         else
-            controls[1]->printConfiguration();
-        controls[1]->activate(righton);    
+            controls[1]->printConfiguration();  
         std::cout << std::endl; std::cout.flush();   
     }
 
