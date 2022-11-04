@@ -44,7 +44,7 @@ device2yarp::device2yarp()
 }
 
 void device2yarp::configure(string module_name, int fd, unsigned int pool_size,
-                       unsigned int packet_size)
+                       unsigned int packet_size, bool record_mode)
 {
     this->fd = fd;
 
@@ -55,6 +55,13 @@ void device2yarp::configure(string module_name, int fd, unsigned int pool_size,
     this->max_packet_size = packet_size;
     this->max_dma_pool_size = pool_size;
     this->port_name = module_name + "/AE:o";
+    
+    // min_packet_duration = 0.0 by default
+    if(record_mode) 
+    {
+        min_packet_duration = 0.004; // 4 ms
+        yInfo() << "RECORD MODE [ON]: packets minimum 4ms";
+    }
 }
 
 void device2yarp::yarpOpen()
@@ -89,16 +96,19 @@ void  device2yarp::run() {
         packet.clear();
         packet.size(max_packet_size / sizeof(AE) + (max_packet_size % sizeof(AE) ? 1 : 0));
 
-        int r = -1;
         bool iswriting = true;
-        while(iswriting && r != 0) {
-            r = packet.singleDeviceRead(fd);
+        double time_accum = 0.0;
+        while(iswriting || time_accum < min_packet_duration) 
+        {
+            int r = packet.singleDeviceRead(fd);
             iswriting = output_port.isWriting();
+            time_accum = yarp::os::Time::now() - tic;
+            if(r == 0) break; //the packet is full, we cannot read anymore data!
         }
+        tic += time_accum;
 
-        //int n_bytes_read = packet.fillFromDevice(fd, max_dma_pool_size, max_packet_size);
-        packet.duration(yarp::os::Time::now() - tic);
-        tic += packet.duration();
+        packet.duration(time_accum);
+        
 
         if(packet.size() == 0) {
             yError() << "0 size packet?";
@@ -393,11 +403,11 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
     return true;
 }
 
-bool hpuInterface::openReadPort(string module_name, unsigned int packet_size)
+bool hpuInterface::openReadPort(string module_name, unsigned int packet_size, bool record_mode)
 {
     if(fd < 0)
         return false;
-    D2Y.configure(module_name, fd, pool_size, packet_size);
+    D2Y.configure(module_name, fd, pool_size, packet_size, record_mode);
     yInfo() << "Maximum packet size:" << packet_size;
     read_thread_open = true;
     D2Y.yarpOpen();

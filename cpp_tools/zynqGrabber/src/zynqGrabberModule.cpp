@@ -99,6 +99,8 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                         rf.check("loopback_debug", yarp::os::Value(true)).asBool();
         bool gtp = rf.check("gtp") &&
                    rf.check("gtp", Value(true)).asBool();
+        bool record_mode = rf.check("record_mode") &&
+                           rf.check("record_mode", Value(true)).asBool();
 
         if(!hpu.configureDevice(data_device, use_spinnaker, loopback, gtp))
             return false;
@@ -110,7 +112,7 @@ bool zynqGrabberModule::configure(yarp::os::ResourceFinder &rf) {
         int packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt32();
 
         if(read_flag)
-            if(!hpu.openReadPort(getName(), packet_size))
+            if(!hpu.openReadPort(getName(), packet_size, record_mode))
                 return false;
 
         if(write_flag)

@@ -41,12 +41,13 @@ private:
     unsigned int max_dma_pool_size;
     unsigned int max_packet_size;
     std::string port_name;
+    double min_packet_duration{0.0};
 
 public:
 
     device2yarp();
     void configure(std::string module_name, int fd, unsigned int pool_size,
-              unsigned int packet_size);
+              unsigned int packet_size, bool record_mode);
     void yarpOpen();
     void run();
     void onStop();
@@ -96,7 +97,7 @@ public:
 
     bool configureDevice(std::string device_name, bool spinnaker = false,
                          bool loopback = false, bool gtp = true);
-    bool openReadPort(std::string module_name, unsigned int packet_size);
+    bool openReadPort(std::string module_name, unsigned int packet_size, bool record_mode = false);
     bool openWritePort(std::string module_name);
     void tryconnectToYARP();
     void start();
