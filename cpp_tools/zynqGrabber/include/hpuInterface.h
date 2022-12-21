@@ -34,13 +34,15 @@ private:
 
     //data buffer thread
     int fd; 
-    ev::BufferedPort<ev::AE> output_port;
+    ev::BufferedPort<ev::encoded> AE_output_port;
+    ev::BufferedPort<ev::encoded> skin_output_port;
     yarp::os::Stamp yarp_stamp;
 
     //parameters
     unsigned int max_dma_pool_size;
     unsigned int max_packet_size;
     std::string port_name;
+    std::string skin_port_name;
     double min_packet_duration{0.0};
 
 public:

@@ -55,6 +55,7 @@ void device2yarp::configure(string module_name, int fd, unsigned int pool_size,
     this->max_packet_size = packet_size;
     this->max_dma_pool_size = pool_size;
     this->port_name = module_name + "/AE:o";
+    this->skin_port_name = module_name + "/skin:o";
     
     // min_packet_duration = 0.0 by default
     if(record_mode) 
@@ -66,14 +67,19 @@ void device2yarp::configure(string module_name, int fd, unsigned int pool_size,
 
 void device2yarp::yarpOpen()
 {
-    if(output_port.isClosed()) {
+    if(AE_output_port.isClosed()) {
         if(!Network::checkNetwork(1.0)) {
             yInfo() << "D2Y: YARP network not available";
         } else {
-            if(output_port.open(port_name))
+            if(AE_output_port.open(port_name))
                 yInfo() << "D2Y: opened" << port_name;
             else
                 yInfo() << "D2Y: cannot open" << port_name;
+
+            if(skin_output_port.open(skin_port_name))
+                yInfo() << "D2Y: opened" << skin_port_name;
+            else
+                yInfo() << "D2Y: cannot open" << skin_port_name;
         }
     }
 }
@@ -92,36 +98,59 @@ void  device2yarp::run() {
 
     while(!isStopping()) {
 
-        ev::packet<AE>& packet = output_port.prepare();
+        ev::packet<encoded> packet;
+        ev::packet<encoded>& AE_packet = AE_output_port.prepare();
+        ev::packet<encoded>& skin_packet = skin_output_port.prepare();
         packet.clear();
         packet.size(max_packet_size / sizeof(AE) + (max_packet_size % sizeof(AE) ? 1 : 0));
+        AE_packet.clear();
+        AE_packet.size(max_packet_size / sizeof(AE) + (max_packet_size % sizeof(AE) ? 1 : 0));
+        skin_packet.clear();
+        skin_packet.size(max_packet_size / sizeof(AE) + (max_packet_size % sizeof(AE) ? 1 : 0));
 
         bool iswriting = true;
         double time_accum = 0.0;
         while(iswriting || time_accum < min_packet_duration) 
         {
             int r = packet.singleDeviceRead(fd);
-            iswriting = output_port.isWriting();
+            iswriting = AE_output_port.isWriting();
             time_accum = yarp::os::Time::now() - tic;
             if(r == 0) break; //the packet is full, we cannot read anymore data!
         }
         tic += time_accum;
 
-        packet.duration(time_accum);
+        for (auto & p: packet){
+            if (IS_SKIN(p.data)){
+                skin_packet.push_back(p); // TODO add skin.process from vPreProcess
+                continue;
+            }
+            AE_packet.push_back(p);
+        }
+
+        AE_packet.duration(time_accum);
+        skin_packet.duration(time_accum);
         
 
-        if(packet.size() == 0) {
+        if(AE_packet.size() == 0) {
             yError() << "0 size packet?";
-            output_port.unprepare();
+            AE_output_port.unprepare();
             continue;
+        }
+        if(skin_packet.size() == 0) {
+            //yError() << "0 size packet?";
+            skin_output_port.unprepare();
+            //continue;
         }
 
         yarp_stamp.update();
-        packet.envelope() = yarp_stamp;
-        output_port.write();
+        AE_packet.envelope() = yarp_stamp;
+        //skin_packet.envelope() = yarp_stamp;
+        AE_output_port.write();
+        //skin_output_port.write();
 
         //report statistics to yarp
-        event_count += packet.size();
+        event_count += AE_packet.size();
+        event_count += skin_packet.size();
         packet_count++;
         static double prev_ts = yarp::os::Time::now();
         double update_period = yarp::os::Time::now() - prev_ts;
@@ -144,7 +173,8 @@ void  device2yarp::run() {
 
 void device2yarp::onStop()
 {
-    output_port.close();
+    AE_output_port.close();
+    skin_output_port.close();
 }
 
 /******************************************************************************/
