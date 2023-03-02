@@ -1,44 +1,44 @@
 set( folder_source
-  src/core/codec.cpp
-  src/core/comms.cpp
+  event-driven/core/codec.cpp
+  event-driven/core/comms.cpp
   #include/event-driven/core/vPort.cpp
-  src/core/utilities.cpp
+  event-driven/core/utilities.cpp
 )
 
-set(public_header_files include/event-driven/core.h)
+set(public_header_files event-driven/core.h)
 set( folder_header
-  include/event-driven/core.h
-  include/event-driven/core/codec.h
-  include/event-driven/core/utilities.h
-  include/event-driven/core/comms.h
+  event-driven/core.h
+  event-driven/core/codec.h
+  event-driven/core/utilities.h
+  event-driven/core/comms.h
   #include/event-driven/core/vPort.h
 )
 
 if(OpenCV_FOUND)
 
   list( APPEND folder_source 
-    src/vis/filters.cpp
-    src/vis/IPT.cpp
-    src/vis/draw.cpp
-    src/algs/surface.cpp
-    src/algs/corner.cpp
-    src/algs/flow.cpp
+    event-driven/vis/filters.cpp
+    event-driven/vis/IPT.cpp
+    event-driven/vis/draw.cpp
+    event-driven/algs/surface.cpp
+    event-driven/algs/corner.cpp
+    event-driven/algs/flow.cpp
     #include/event-driven/vis/vDraw_basic.cpp
     #include/event-driven/vis/vDraw_ISO.cpp
     #src/vDraw_skin.cpp
   )
   
-  list( APPEND public_header_files include/event-driven/vis.h
-                                   include/event-driven/algs.h)
+  list( APPEND public_header_files event-driven/vis.h
+                                   event-driven/algs.h)
   list( APPEND folder_header 
-    include/event-driven/vis.h
-    include/event-driven/vis/filters.h
-    include/event-driven/vis/IPT.h
-    include/event-driven/vis/draw.h
-    include/event-driven/algs.h
-    include/event-driven/algs/surface.h
-    include/event-driven/algs/corner.h
-    include/event-driven/algs/flow.h
+    event-driven/vis.h
+    event-driven/vis/filters.h
+    event-driven/vis/IPT.h
+    event-driven/vis/draw.h
+    event-driven/algs.h
+    event-driven/algs/surface.h
+    event-driven/algs/corner.h
+    event-driven/algs/flow.h
     #include/event-driven/vis/vDraw.h
     #include/event-driven/vDrawSkin.h
   )
@@ -56,7 +56,7 @@ add_library(ev::${EVENTDRIVEN_LIBRARY} ALIAS ${EVENTDRIVEN_LIBRARY})
 set_target_properties(${EVENTDRIVEN_LIBRARY} PROPERTIES PUBLIC_HEADER "${public_header_files}"
                                                           VERSION ${event-driven_VERSION}
                                                           SOVERSION 2)
-target_include_directories(${EVENTDRIVEN_LIBRARY} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+target_include_directories(${EVENTDRIVEN_LIBRARY} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/event-driven>"
                                                          "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>") # FIXME INSTALL PATH
 
 target_compile_definitions(${EVENTDRIVEN_LIBRARY} PRIVATE 
@@ -84,4 +84,4 @@ install(TARGETS ${EVENTDRIVEN_LIBRARY}
         RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}"                            COMPONENT bin
         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${EVENTDRIVEN_LIBRARY}" COMPONENT dev)
 
-install(DIRECTORY "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(DIRECTORY "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/event-driven" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" FILES_MATCHING PATTERN "*.h")
