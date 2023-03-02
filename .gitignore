@@ -1,4 +1,4 @@
-#this file is created by QT creator IDE
+
 *.asv
 CMakeLists.txt.user
 CMakeLists.txt.user.*
@@ -25,6 +25,5 @@ debug/
 *.autosave
 .idea/
 documentation/images/*
-matlab/alogrithms/LK_Template_Tracking_version3a/
 *.pyc
 

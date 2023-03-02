@@ -5,46 +5,37 @@
 cmake_minimum_required(VERSION 3.5)
 project(event-driven
         LANGUAGES CXX C
-        VERSION 1.3)
-
+        VERSION 2.0)
 include(GNUInstallDirs)
-include(FeatureSummary)
 
+#options
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
-
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-
 if(MSVC)
     set(CMAKE_DEBUG_POSTFIX "d")
 endif()
-
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-find_package(YCM QUIET)
-set_package_properties(YCM PROPERTIES TYPE RECOMMENDED)
-
-if(NOT YCM_FOUND)
-  list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-endif()
-
 option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
+set(CONTEXT_DIR event-driven)
+set(EVENTDRIVEN_LIBRARY event-driven)
 
-# option(BUILD_TESTING "Create tests using CMake" OFF)
-# if(BUILD_TESTING)
-#     enable_testing()
-# endif()
-
+#YCM and cmake search path options
+message(STATUS "Install Directory: ${CMAKE_INSTALL_PREFIX}")
+find_package(YCM QUIET)
+if(YCM_FOUND)
+  message(STATUS "Found YCM: (found version ${YCM_VERSION})")
+else()
+  list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+endif() 
 include(AddInstallRPATHSupport)
 add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
                           LIB_DIRS "${CMAKE_INSTALL_FULL_LIBDIR}"
                           INSTALL_NAME_DIR "${CMAKE_INSTALL_FULL_LIBDIR}"
                           USE_LINK_PATH)
-
 if(NOT CMAKE_CONFIGURATION_TYPES)
     if(NOT CMAKE_BUILD_TYPE)
         message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -52,52 +43,56 @@ if(NOT CMAKE_CONFIGURATION_TYPES)
     endif()
 endif()
 
-set(CONTEXT_DIR event-driven)
-set(EVENTDRIVEN_LIBRARY event-driven)
+set(YARP_COMPONENTS os sig math dev)
+set(OpenCV_dep "")
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fno-strict-aliasing -std=c++11 -fPIC")
-#set(EVENTDRIVENLIBS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/libraries/include)
-
-option(ADD_DOCS_TO_IDE "Add apps/documentation to IDE" OFF)
-
-find_package(MetavisionSDK COMPONENTS core driver QUIET)
-set_package_properties(MetavisionSDK PROPERTIES TYPE OPTIONAL)
-
-find_package(prophesee_core QUIET)
-set_package_properties(prophesee_core PROPERTIES TYPE OPTIONAL)
-
-find_package(OpenCV)
-set_package_properties(OpenCV PROPERTIES TYPE OPTIONAL)
-
-if(OpenCV_FOUND)
-    set(OpenCV_dep OpenCV)
-    find_package(YARP COMPONENTS os sig math dev cv REQUIRED)
-else()
-    set(OpenCV_dep "")
-    find_package(YARP COMPONENTS os sig math dev REQUIRED)
-endif()
-yarp_configure_external_installation(event-driven)
-
-
-
-feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES)
+# opencv
+find_package(OpenCV QUIET)
 if(OpenCV_FOUND)
     message(STATUS "Found OpenCV: (found version ${OpenCV_VERSION})")
+    set(OpenCV_dep OpenCV)
+    list(APPEND YARP_COMPONENTS cv)
 endif()
-add_subdirectory(lib)
-add_subdirectory(src)
-# add_subdirectory(bindings)
-# if(BUILD_TESTING)
-#     add_subdirectory(test)
-# endif()
 
-if(ADD_DOCS_TO_IDE)
-    file(GLOB tutorialfiles documentation/*.md
-                            documentation/application_instructions/*.md)
-    add_custom_target(project_documentation SOURCES README.md ${tutorialfiles})
-endif(ADD_DOCS_TO_IDE)
+#YARP
+find_package(YARP COMPONENTS ${YARP_COMPONENTS} REQUIRED)
+yarp_configure_external_installation(event-driven)
+
+#metavision packages (prophesee is old version)
+find_package(MetavisionSDK COMPONENTS core driver QUIET)
+if(MetavisionSDK_FOUND)
+  message(STATUS "Found MetavisionSDK: (found version ${MetavisionSDK_VERSION})")
+endif()
+find_package(prophesee_core QUIET)
+if(prophesee_core_FOUND)
+  message(STATUS "Found prophesee_core: (found version ${prophesee_core_VERSION})")
+endif()
+
+#build the library
 
 
+#set options for the timing and encoding
+set(VLIB_ENABLE_TS OFF CACHE BOOL "events have individual timestamps")
+set(VLIB_CLOCK_PERIOD_NS 80 CACHE STRING "event timestamp clock period (ns)")
+set(VLIB_TIMER_BITS 30 CACHE STRING "event timestamp maximum = 2^TIMERBITS")
+string(COMPARE GREATER ${VLIB_TIMER_BITS} 31 TOOMANYBITSINCOUNTER)
+if(TOOMANYBITSINCOUNTER)
+  message( FATAL_ERROR "Maximum bits useable is 31 (VLIB_TIMER_BITS)")
+endif()
+if(${VLIB_ENABLE_TS})
+  message(STATUS "ON: individual event timestamps")
+  message(STATUS "EVENT CLOCK: ${VLIB_CLOCK_PERIOD_NS} ns")
+  message(STATUS "MAX TIMESTAMP: ${VLIB_TIMER_BITS}/32 bits")
+else()
+  message(STATUS "OFF: individual event timestamps")
+endif()
+
+add_subdirectory(ev2)
+
+#build additional tools
+add_subdirectory(cpp_tools)
+
+#install the package
 include(InstallBasicPackageFiles)
 install_basic_package_files(${PROJECT_NAME}
                             EXPORT eventdriven
@@ -105,8 +100,7 @@ install_basic_package_files(${PROJECT_NAME}
                             COMPATIBILITY SameMajorVersion
                             LOWERCASE_FILENAMES
                             NAMESPACE ev::
-                            DEPENDENCIES "YARP COMPONENTS os sig"
-                                         ${OpenCV_dep}
+                            DEPENDENCIES "YARP COMPONENTS os sig" ${OpenCV_dep}
                             INCLUDE_CONTENT "yarp_configure_external_installation(event-driven NO_PATH_D)")
 
 include(AddUninstallTarget)
