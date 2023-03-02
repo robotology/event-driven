@@ -1,15 +1,26 @@
-# Useful Python Scripts
+# Offline Python Scripts
 
-Some data conversion scripts and more
+`event-driven` has two companion repositories for offline dataset manipulation which has replaced much of the python helper functions:
 
-```
-python3 <script_name.py> [options]
-```
+### BIMVEE
 
-### binary_converter.py
+[Batch Import, Manipulation, Visualisation, and Export of Events](https://github.com/event-driven-robotics/bimvee)
 
-Convert data dumped with the binary dumper to a yarpdataplayer compatible format.
+Loading and converting datasets from most of the common event datasets
 
-### event_collapse.py
+### MUSTARD
 
-Convert high frequency data (< 1 ms) typically saved with yarpdatadumper to a real-time compatible format (4 ms) for yarpdataplayer playback.
+[MUlti STream Agnostic Representation Dataplayer](https://github.com/event-driven-robotics/mustard)
+
+Uses BIMVEE to load any dataset and visualise with tracking bar. Can be used to annotate data
+
+
+### Scripts
+
+Here we have a couple of scripts:
+
+`ev2converter.py` - uses BIMVEE to convert old event-driven datasets to the new event-driven-2.0 format.
+
+`plot_imu_dump.py` - datasets dumped from imu calibration methods can be visualised to understand the data quality.
+
+
