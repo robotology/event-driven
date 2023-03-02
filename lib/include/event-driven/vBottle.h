@@ -219,8 +219,8 @@ private:
     //you cannot use any of the following functions
     void add();
     void addDict();
-    void addDouble();
-    void addInt();
+    void addFloat64();
+    void addInt32();
     void addList();
     void addString();
     void addVocab();
@@ -278,7 +278,7 @@ public:
         header1.push_back(BOTTLE_TAG_STRING); //code for string
         header1.push_back(2); // length of string
         header2 = "AE";
-        header3.push_back(BOTTLE_TAG_LIST|BOTTLE_TAG_INT); // bottle code + specialisation with ints
+        header3.push_back(BOTTLE_TAG_LIST|BOTTLE_TAG_INT32); // bottle code + specialisation with ints
         header3.push_back(0); // <- set the number of ints here (e.g. 2 * #v's)
         elementINTS = 2;
         elementBYTES = sizeof(std::int32_t) * elementINTS;

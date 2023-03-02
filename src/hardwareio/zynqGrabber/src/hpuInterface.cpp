@@ -166,7 +166,7 @@ void yarp2device::run()
         //we can remove data_copy and just use data_bottle when the
         //mask is done in the FPGA
         for(size_t i = 0; i < data_size; i += 1)
-            data_copy[i] = data_bottle->get(i).asInt();
+            data_copy[i] = data_bottle->get(i).asInt32();
 
 
         //move to bytes space
@@ -254,7 +254,7 @@ bool hpuInterface::configureDevice(string device_name, bool spinnaker, bool loop
             << (int)((version >> 4) & 0xF) << "." << (int)((version >> 0) & 0xF);
 
     //32 bit timestamp
-    uint32_t timestampswitch = 1;
+    uint32_t timestampswitch = TIMESTAMP32BIT;
     if(ioctl(fd, HPU_TS_MODE, &timestampswitch) < 0)
         { yError() << "Could not write timestamp mode"; return false; }
 

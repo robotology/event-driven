@@ -40,43 +40,43 @@
     <connection>
         <from>/zynqGrabber/vBottle:o</from>
         <to>/vPreProcess/vBottle:i</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
     <connection>
         <from>/vPreProcess/vBottle:o</from>
         <to>/vCorner/vBottle:i</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
     <connection>
         <from>/vPreProcess/vBottle:o</from>
         <to>/vFramer/AE:i</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
     <connection>
         <from>/vPreProcess/vBottle:o</from>
         <to>/vCorner/vBottle:i</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
     <connection>
         <from>/vCorner/vBottle:o</from>
         <to>/vFramer/LAE:i</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
     <connection>
         <from>/vFramer/left</from>
         <to>/viewLeft</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
     <connection>
         <from>/vFramer/right</from>
         <to>/viewRight</to>
-        <protocol>udp</protocol>
+        <protocol>fast_tcp</protocol>
     </connection>
 
 </application>

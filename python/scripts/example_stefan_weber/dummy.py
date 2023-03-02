@@ -39,7 +39,7 @@ with bottleBuffer as buf:
         # import ipdb; ipdb.set_trace()
         val = int(data[-1,1])
         print(val)
-        bout.addInt(val)
+        bout.addInt32(val)
         print('writing %s' % val)
         po.write()
     output_port.close()

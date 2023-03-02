@@ -23,23 +23,50 @@ public:
 
     virtual bool configure(yarp::os::ResourceFinder& rf)
     {
+
+        //display help
+        if(rf.check("help") || rf.check("h")) {
+            yInfo() << "vHexviewer is designed to view the event-stream as"
+                       " hexadecimal values with the option to mask certain"
+                       " events that correspond to a criteria";
+            yInfo() << "--cols: set the number of output columns to use."
+                       " Fit to your terminal width";
+            yInfo() << "--mask: only events corresponding to the bit pattern"
+                       " are shown.";
+            yInfo() << "x = don't care | 1 = bit must be set | 0 bit must be clear";
+            yInfo() << "example --mask 10x011xx";
+            return false;
+        }
+
+        /* initialize yarp network */
+        yarp::os::Network yarp;
+        if(!yarp.checkNetwork(2.0)) {
+            std::cout << "Could not connect to YARP" << std::endl;
+            return false;
+        }
+
         //set the module name used to name ports
         setName((rf.check("name", Value("/vHexviewer")).asString()).c_str());
 
         //open io ports
-        if(!input_port.open(getName() + "/AE:i")) {
+        if(!input_port.open(getName("/AE:i"))) {
             yError() << "Could not open input port";
             return false;
         }
 
-        cols = rf.check("cols", Value(4)).asInt();
+        if(yarp::os::Network::connect("/zynqGrabber/AE:o", getName("/AE:i"), "fast_tcp")) {
+            yWarning() << "Automatically connected to /zynqGrabber/AE:o but"
+                          " maybe that's not what you want!";
+        }
+
+        cols = rf.check("cols", Value(4)).asInt32();
         std::stringstream ss; ss.str("");
 
         bits_to_check = 0; mask = 0;
         if(rf.check("mask")) {
             std::string maskstring = rf.check("mask", Value("x")).asString();
             if(maskstring.empty()) {
-                ss.str(""); ss << rf.find("mask").asInt();
+                ss.str(""); ss << rf.find("mask").asInt32();
                 maskstring = ss.str();
             }
 
@@ -143,12 +170,7 @@ public:
 
 int main(int argc, char * argv[])
 {
-    /* initialize yarp network */
-    yarp::os::Network yarp;
-    if(!yarp.checkNetwork(2)) {
-        std::cout << "Could not connect to YARP" << std::endl;
-        return -1;
-    }
+
 
     /* prepare and configure the resource finder */
     yarp::os::ResourceFinder rf;

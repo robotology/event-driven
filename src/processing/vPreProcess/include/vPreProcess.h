@@ -56,6 +56,7 @@ private:
     ev::vWritePort out_port_crn_left;
     ev::vWritePort out_port_crn_right;
     ev::vWritePort out_port_crn_stereo;
+    yarp::os::BufferedPort< yarp::sig::Vector > rate_port;
 
     //parameters
     std::string name;
@@ -90,6 +91,10 @@ private:
     std::deque<double> rates;
     std::deque<double> intervals;
     std::deque<double> proc_times;
+    
+    bool vis{false};
+    std::deque<double> plot_rates;
+    void visualise_rate();
 
 public:
 

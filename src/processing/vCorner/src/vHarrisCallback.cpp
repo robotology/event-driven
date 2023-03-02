@@ -136,7 +136,7 @@ void vHarrisCallback::onRead(ev::vBottle &bot)
         if(debugPort.getOutputCount()) {
             yarp::os::Bottle &scorebottleout = debugPort.prepare();
             scorebottleout.clear();
-//            scorebottleout.addDouble(cpudelay);
+//            scorebottleout.addFloat64(cpudelay);
             debugPort.write();
         }
 

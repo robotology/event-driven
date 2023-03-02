@@ -32,6 +32,8 @@ event<> createEvent(const std::string &type)
         return make_event<SkinEvent>();
     if(type == SkinSample::tag)
         return make_event<SkinSample>();
+    if(type == CochleaEvent::tag)
+        return make_event<CochleaEvent>();
     if(type == LabelledAE::tag)
         return make_event<LabelledAE>();
     if(type == FlowEvent::tag)
@@ -54,6 +56,8 @@ unsigned int packetSize(const std::string &type)
         return 2;
     if(type == SkinSample::tag)
         return 4;
+    if(type == CochleaEvent::tag)
+        return 2;
     if(type == LabelledAE::tag)
         return 3;
     if(type == FlowEvent::tag)

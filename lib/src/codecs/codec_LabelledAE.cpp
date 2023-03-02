@@ -46,7 +46,7 @@ event<> LabelledAE::clone()
 void LabelledAE::encode(yarp::os::Bottle &b) const
 {
     AddressEvent::encode(b);
-    b.addInt(ID);
+    b.addInt32(ID);
 }
 
 void LabelledAE::encode(std::vector<int32_t> &b, unsigned int &pos) const
@@ -66,7 +66,7 @@ bool LabelledAE::decode(const yarp::os::Bottle &packet, size_t &pos)
 {
     if (AddressEvent::decode(packet, pos) && pos + 1 <= packet.size())
     {
-        ID = packet.get(pos).asInt();
+        ID = packet.get(pos).asInt32();
         pos+=1;
         return true;
     }

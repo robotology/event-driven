@@ -59,7 +59,7 @@ vPreProcess::vPreProcess() : name("/vPreProcess") {
     out_port_aps_left.setWriteType(AE::tag);
     out_port_aps_right.setWriteType(AE::tag);
     out_port_imu_samples.setWriteType(IMUevent::tag);
-    out_port_audio.setWriteType(AE::tag);
+    out_port_audio.setWriteType(CochleaEvent::tag);
     out_port_crn_left.setWriteType(AE::tag);
     out_port_crn_right.setWriteType(AE::tag);
     out_port_crn_stereo.setWriteType(AE::tag);
@@ -80,14 +80,39 @@ vPreProcess::~vPreProcess() {
     out_port_crn_left.close();
     out_port_crn_right.close();
     out_port_crn_stereo.close();
+    rate_port.close();
 
 }
 
 bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
     setName((rf.check("name", yarp::os::Value("/vPreProcess")).asString()).c_str());
 
-    res.height = rf.check("height", Value(240)).asInt();
-    res.width = rf.check("width", Value(304)).asInt();
+    if(rf.check("h") || rf.check("help")) {
+        yInfo() << "--height <int>: image size";
+        yInfo() << "--width <int>: image size";
+        yInfo() << "--filter_spatial <bool>: use the spatial filter";
+        yInfo() << "--filter_temporal <bool>: use the temporal filter";
+        yInfo() << "--undistort <bool>: correct for lens distortion";
+        yInfo() << "--flipx <bool>: flip the image horizontally";
+        yInfo() << "--flipy <bool>: flip the image vertically";
+        yInfo() << "--precheck <bool>: check packets and events for corruption";
+        yInfo() << "--split_stereo <bool>: 2 streams based on left/right";
+        yInfo() << "--split_polarities <bool>: 2 streams based on polarities";
+        yInfo() << "--combined_stereo <bool>: combine left/right "
+                   "(can be used together with split_stereo)";
+        yInfo() << "--local_stamp <bool>: overwrite the packet stamp with one"
+                   "immediately as the packet arrives";
+        yInfo() << "--corners <bool>: open a separate port for corners only."
+                   "All events still exist in regular vision stream.";
+        yInfo() << "--sf_time <double>: spatial filter time window (sec)";
+        yInfo() << "--sf_size <int>: spatial filter (half) size (pixels)";
+        yInfo() << "--tf_time <double>: temporal filter time window (sec)";
+        yInfo() << "--camera_calibration_file <path>: calibration file to use for undistort";
+        return false;
+    }
+
+    res.height = rf.check("height", Value(240)).asInt32();
+    res.width = rf.check("width", Value(304)).asInt32();
 
     bool filter_spatial = rf.check("filter_spatial") &&
                           rf.check("filter_spatial", Value(true)).asBool();
@@ -111,6 +136,8 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
                       rf.check("local_stamp", Value(true)).asBool();
     corners = rf.check("corners") &&
               rf.check("corners", Value(true)).asBool();
+    vis = rf.check("vis") &&
+          rf.check("vis", Value(true)).asBool();
 
     if(!split_stereo) combined_stereo = true;
 
@@ -141,31 +168,41 @@ bool vPreProcess::configure(yarp::os::ResourceFinder &rf) {
     if(filter_spatial) {
         filter_left.use_spatial_filter(
                 rf.check("sf_time",
-                         Value(0.05)).asDouble() * vtsHelper::vtsscaler,
+                         Value(0.05)).asFloat64() * vtsHelper::vtsscaler,
                 rf.check("sf_size",
-                         Value(1)).asInt());
+                         Value(1)).asInt32());
         filter_right.use_spatial_filter(
                 rf.check("sf_time",
-                         Value(0.05)).asDouble() * vtsHelper::vtsscaler,
+                         Value(0.05)).asFloat64() * vtsHelper::vtsscaler,
                 rf.check("sf_size",
-                         Value(1)).asInt());
+                         Value(1)).asInt32());
     }
 
     if(filter_temporal) {
         filter_left.use_temporal_filter(
                 rf.check("tf_time",
-                         Value(0.1)).asDouble() * vtsHelper::vtsscaler);
+                         Value(0.1)).asFloat64() * vtsHelper::vtsscaler);
         filter_right.use_temporal_filter(
                 rf.check("tf_time",
-                         Value(0.1)).asDouble() * vtsHelper::vtsscaler);
+                         Value(0.1)).asFloat64() * vtsHelper::vtsscaler);
     }
 
     if(undistort) {
 
-        if(calibrator.configure("camera", "atis_calib.ini", 1))
-            calibrator.showMapProjections(3.0);
-        else
-            yWarning() << "Could not correctly configure the cameras";
+        std::string calib_file_path = rf.check("camera_calibration_file", Value("")).asString();
+        if(calibrator.configure(calib_file_path, 1)) {
+            calibrator.printValidCalibrationValues();
+            //calibrator.showMapProjections(3.0);
+        } else {
+            yError() << "Could not correctly configure the cameras";
+            return false;
+        }
+    }
+
+    if(vis) {
+        cv::namedWindow("Event Rate", cv::WINDOW_NORMAL);
+        cv::resizeWindow("Event Rate", 480, 360);
+        cv::moveWindow("Event Rate", 580, 62);
     }
 
     return Thread::start();
@@ -229,12 +266,34 @@ bool vPreProcess::threadInit() {
         return false;
     if(!inPort.open(getName() + "/AE:i"))
         return false;
+    if(!rate_port.open(getName("/rate:o")))
+        return false;
 
     return true;
 }
 
 double vPreProcess::getPeriod() {
-    return 2.0;
+    return 0.2;
+}
+
+void vPreProcess::visualise_rate()
+{
+    const static int s = 10;
+    cv::Mat canvas = cv::Mat::zeros(20*s, 40*s, CV_8UC1);
+    for(auto i = 1; i < plot_rates.size(); i++) {
+        cv::line(canvas, cv::Point((i-1)*s, plot_rates[i-1]*s), cv::Point(i*s, plot_rates[i]*s), CV_RGB(255, 255, 255), 2);
+    }
+    cv::line(canvas, cv::Point(0, 5*s), cv::Point(canvas.cols-1, 5*s), CV_RGB(128, 128, 128));
+    cv::line(canvas, cv::Point(0, 10*s), cv::Point(canvas.cols-1, 10*s), CV_RGB(128, 128, 128));
+    cv::line(canvas, cv::Point(0, 15*s), cv::Point(canvas.cols-1, 15*s), CV_RGB(128, 128, 128));
+    cv::flip(canvas, canvas, 0);
+    cv::putText(canvas, "15M events/s", cv::Point(5, 5*s), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255, 255, 255), 1);
+    cv::putText(canvas, "10M events/s", cv::Point(5, 10*s), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255, 255, 255), 1);
+    cv::putText(canvas, " 5M events/s", cv::Point(5, 15*s), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255, 255, 255), 1);
+    cv::resize(canvas, canvas, cv::Size(480, 360));
+
+    cv::imshow("Event Rate", canvas);
+    cv::waitKey(1);
 }
 
 bool vPreProcess::updateModule() {
@@ -247,6 +306,15 @@ bool vPreProcess::updateModule() {
         yInfo() << "Using" << v_total << "/" << (v_total + v_dropped)
                 << "(" << pc << "%)" << "of events. Maximum rate:"
                 << max_rate << "events / second.";
+        auto &temp = rate_port.prepare();
+        temp.resize(1);
+        temp[0] = 0.000001 * ((double)v_total + (double)v_dropped) / getPeriod();
+        rate_port.write();
+    }
+    if(vis) {
+        plot_rates.push_back(0.000001 * ((double)v_total + (double)v_dropped) / getPeriod());
+        while (plot_rates.size() > 40) plot_rates.pop_front();
+        visualise_rate();
     }
     v_total = 0;
     v_dropped = 0;

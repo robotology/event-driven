@@ -59,7 +59,7 @@ public:
         }
 
         //threshold
-        threshold = rf.check("threshold", Value(20)).asDouble();
+        threshold = rf.check("threshold", Value(20)).asFloat64();
 
         //inilialize the vector which saves the values
         imu_state.resize(10, 0.0);

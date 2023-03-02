@@ -42,32 +42,32 @@ bool EventClustering::configure(yarp::os::ResourceFinder &rf)
 
     //how quickly cluster shape changes given new information
     double alphaShape =
-            rf.check("alphaShape", yarp::os::Value(0.01)).asDouble();
+            rf.check("alphaShape", yarp::os::Value(0.01)).asFloat64();
     //how quickly cluster position changes given new information
-    double alphaPos = rf.check("alphaPos", yarp::os::Value(0.1)).asDouble();
+    double alphaPos = rf.check("alphaPos", yarp::os::Value(0.1)).asFloat64();
     //at what threshold a cluster becomes active given activity
-    double Tact = rf.check("tAct", yarp::os::Value(20)).asDouble();
+    double Tact = rf.check("tAct", yarp::os::Value(20)).asFloat64();
     //at what threshold an active cluster becomes inactive given no activity
-    double Tinact = rf.check("tInact", yarp::os::Value(10)).asDouble();
+    double Tinact = rf.check("tInact", yarp::os::Value(10)).asFloat64();
     //at what threshold an inactive cluster becomes free
-    double Tfree = rf.check("tFree", yarp::os::Value(5)).asDouble();
+    double Tfree = rf.check("tFree", yarp::os::Value(5)).asFloat64();
     //maximum period at which a cluster can output a cluster event
-    double Tevent = rf.check("tClusRefr", yarp::os::Value(2)).asDouble();
+    double Tevent = rf.check("tClusRefr", yarp::os::Value(2)).asFloat64();
     //cluster initialisation parameters (size in x, y and angle between x&y
-    double SigX = rf.check("sigX", yarp::os::Value(5)).asDouble();
-    double SigY = rf.check("sigY", yarp::os::Value(5)).asDouble();
-    double SigXY = rf.check("sigXY", yarp::os::Value(0)).asDouble();
+    double SigX = rf.check("sigX", yarp::os::Value(5)).asFloat64();
+    double SigY = rf.check("sigY", yarp::os::Value(5)).asFloat64();
+    double SigXY = rf.check("sigXY", yarp::os::Value(0)).asFloat64();
     //are clusters fixed to circular gaussians?
     bool Fixedshape = rf.check("fixedShape", yarp::os::Value(false)).asBool();
     //how often clusters are decayed (computation trade-off)
-    int Regrate = rf.check("regRate", yarp::os::Value(50)).asInt();
+    int Regrate = rf.check("regRate", yarp::os::Value(50)).asInt32();
     //maximum distance an event can be from the centre of the cluster
-    double Maxdist = rf.check("maxDist", yarp::os::Value(10)).asDouble();
+    double Maxdist = rf.check("maxDist", yarp::os::Value(10)).asFloat64();
     //how slowly events decay
-    double decay_tau = rf.check("decay", yarp::os::Value(10000)).asDouble();
+    double decay_tau = rf.check("decay", yarp::os::Value(10000)).asFloat64();
     //is there a limit on the number of clusters?
     double clusterLimit =
-            rf.check("clusterLimit", yarp::os::Value(-1)).asDouble();
+            rf.check("clusterLimit", yarp::os::Value(-1)).asFloat64();
 
 
 

@@ -63,7 +63,7 @@ public:
         header1.push_back(BOTTLE_TAG_STRING); //code for string
         header1.push_back(0); // length of string
         header2 = "";
-        header3.push_back(BOTTLE_TAG_LIST|BOTTLE_TAG_INT); // bottle code + specialisation with ints
+        header3.push_back(BOTTLE_TAG_LIST|BOTTLE_TAG_INT32); // bottle code + specialisation with ints
         header3.push_back(0); // <- set the number of ints here (e.g. 2 * #v's)
         elementINTS = 0;
         elementBYTES = sizeof(int32_t) * elementINTS;
@@ -189,22 +189,22 @@ public:
     bool read(yarp::os::ConnectionReader& connection) {
 
         //META DATA OF BOTTLE
-        if(connection.expectInt() != BOTTLE_TAG_LIST) //a list
+        if(connection.expectInt32() != BOTTLE_TAG_LIST) //a list
             return false;
-        if(connection.expectInt() != 2) //of two internal bottles
+        if(connection.expectInt32() != 2) //of two internal bottles
             return false;
 
         //DATA OF FIRST INTERNAL BOTTLE (type of event)
-        if(connection.expectInt() != BOTTLE_TAG_STRING) // first of two
+        if(connection.expectInt32() != BOTTLE_TAG_STRING) // first of two
             return false;
-        int str_len = connection.expectInt();
+        int str_len = connection.expectInt32();
         event_type.resize(str_len);
         connection.expectBlock((char *)event_type.data(), str_len);
 
         //DATA OF SECOND INTERNAL BOTTLE (data of events)
-        if(connection.expectInt() != (BOTTLE_TAG_LIST|BOTTLE_TAG_INT32))
+        if(connection.expectInt32() != (BOTTLE_TAG_LIST|BOTTLE_TAG_INT32))
             return false;
-        ints_to_read = (unsigned int)connection.expectInt(); //in integers!!
+        ints_to_read = (unsigned int)connection.expectInt32(); //in integers!!
 
         if(ints_to_read > internaldata.size())
             internaldata.resize(ints_to_read);
@@ -330,6 +330,15 @@ public:
         return _internal_write(envelope);
     }
 
+    bool write(const vector<int32_t> &q, Stamp &envelope, size_t n_to_write)
+    {
+        n_to_write = std::min(n_to_write, q.size());
+        internal_storage.setExternalData((const char *)q.data(),
+                                         n_to_write * sizeof(int32_t));
+        return _internal_write(envelope);
+    }
+
+
     bool write(const deque<int32_t> &q, Stamp &envelope)
     {
         internal_storage.setInternalData(q);
@@ -396,7 +405,7 @@ public:
         working_queue = nullptr;
         p_time = 0;
 
-        setPriority(99, SCHED_FIFO);
+        //setPriority(0, SCHED_FIFO);
 
         dataavailable.wait(); //init counter to 0
     }
@@ -470,6 +479,8 @@ public:
             port.getEnvelope(yarp_stamp);
             T *next_queue = new T;
             internal_storage.decodePacket(*next_queue);
+            if(countEvents<T>(*next_queue) <= 0)
+                continue;
 
             m.lock();
 
@@ -577,6 +588,10 @@ public:
     double queryRate()
     {
         return event_rate * vtsHelper::vtsscaler;
+    }
+
+    int getInputCount(){
+        return port.getInputCount();
     }
 
     std::string delayStatString()

@@ -71,8 +71,8 @@ bool SkinSample::decode(const yarp::os::Bottle &packet, size_t &pos)
     // check length
     if (SkinEvent::decode(packet, pos) && pos + 2 <= packet.size())
     {
-        _ts = packet.get(pos++).asInt();
-        value = packet.get(pos++).asInt();
+        _ts = packet.get(pos++).asInt32();
+        value = packet.get(pos++).asInt32();
         return true;
     }
     return false;

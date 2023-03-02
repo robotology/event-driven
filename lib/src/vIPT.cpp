@@ -30,11 +30,14 @@ namespace ev {
 
 vIPT::vIPT()
 {
+    size_cam[0] = Size(-1, -1);
+    size_cam[1] = Size(-1, -1);
     size_shared = Size(0, 0);
 }
 
 bool vIPT::importIntrinsics(int cam, Bottle &parameters)
 {
+
     if(parameters.isNull()) {
         yWarning() << "Could not find camera" << cam <<"parameters";
         return false;
@@ -49,22 +52,22 @@ bool vIPT::importIntrinsics(int cam, Bottle &parameters)
         return false;
     }
 
-    size_cam[cam].height = parameters.find("h").asInt();
-    size_cam[cam].width = parameters.find("w").asInt();
+    size_cam[cam].height = parameters.find("h").asInt32();
+    size_cam[cam].width = parameters.find("w").asInt32();
 
     cam_matrix[cam] = cv::Mat(3, 3, CV_64FC1);
     cam_matrix[cam].setTo(0);
-    cam_matrix[cam].at<double>(0, 0) = parameters.find("fx").asDouble();
-    cam_matrix[cam].at<double>(1, 1) = parameters.find("fy").asDouble();
+    cam_matrix[cam].at<double>(0, 0) = parameters.find("fx").asFloat64();
+    cam_matrix[cam].at<double>(1, 1) = parameters.find("fy").asFloat64();
     cam_matrix[cam].at<double>(2, 2) = 1.0;
-    cam_matrix[cam].at<double>(0, 2) = parameters.find("cx").asDouble();
-    cam_matrix[cam].at<double>(1, 2) = parameters.find("cy").asDouble();
+    cam_matrix[cam].at<double>(0, 2) = parameters.find("cx").asFloat64();
+    cam_matrix[cam].at<double>(1, 2) = parameters.find("cy").asFloat64();
 
     dist_coeff[cam] = cv::Mat(4, 1, CV_64FC1);
-    dist_coeff[cam].at<double>(0, 0) = parameters.find("k1").asDouble();
-    dist_coeff[cam].at<double>(0, 1) = parameters.find("k2").asDouble();
-    dist_coeff[cam].at<double>(0, 2) = parameters.find("p1").asDouble();
-    dist_coeff[cam].at<double>(0, 3) = parameters.find("p2").asDouble();
+    dist_coeff[cam].at<double>(0, 0) = parameters.find("k1").asFloat64();
+    dist_coeff[cam].at<double>(0, 1) = parameters.find("k2").asFloat64();
+    dist_coeff[cam].at<double>(0, 2) = parameters.find("p1").asFloat64();
+    dist_coeff[cam].at<double>(0, 3) = parameters.find("p2").asFloat64();
 
     return true;
 }
@@ -82,9 +85,9 @@ bool vIPT::importStereo(Bottle &parameters)
         stereo_translation = cv::Mat(3, 1, CV_64FC1); //Translation vector of right wrt left camera center
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
-                stereo_rotation.at<double>(row, col) = HN->get(row * 4 + col).asDouble();
+                stereo_rotation.at<double>(row, col) = HN->get(row * 4 + col).asFloat64();
             }
-            stereo_translation.at<double>(row) = HN->get(row * 4 + 3).asDouble();
+            stereo_translation.at<double>(row) = HN->get(row * 4 + 3).asFloat64();
         }
 
     }
@@ -161,14 +164,13 @@ const cv::Mat& vIPT::getQ(){
     return Q;
 }
 
-bool vIPT::configure(const string calibContext, const string calibFile, int size_scaler)
+bool vIPT::configure(const string &calib_file_path, int size_scaler)
 
 {
     ResourceFinder calibfinder;
-    calibfinder.setVerbose();
-    calibfinder.setDefaultContext(calibContext);
-    calibfinder.setDefaultConfigFile(calibFile);
+    calibfinder.setDefault("from", calib_file_path);
     calibfinder.configure(0, 0);
+
 
     //import intrinsics
     bool valid_cam1 = importIntrinsics(0, calibfinder.findGroup("CAMERA_CALIBRATION_LEFT"));
@@ -357,6 +359,35 @@ bool vIPT::showMapProjections(double seconds)
     return true;
 }
 
+void vIPT::printValidCalibrationValues()
+{
+    yInfo() << "Printing non-empty intrinsic and extrinsic parameters:";
+    std::stringstream ss;
+    for(auto i : {0, 1}) {
+        if(size_cam[i].width > 0) {
+            ss << "size_cam[" << i << "]" << std::endl;
+            ss << size_cam[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+        if(!cam_matrix[i].empty()) {
+            ss << "cam_matrix[" << i << "]" << std::endl;
+            ss << cam_matrix[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+        if(!dist_coeff[i].empty()) {
+            ss << "dist_coeff[" << i << "]" << std::endl;
+            ss << dist_coeff[i] << std::endl; yInfo() << ss.str(); ss.str("");
+        }
+    }
+
+    if(!stereo_translation.empty()) {
+        ss << "stereo_translation" << std::endl;
+        ss << stereo_translation << std::endl; yInfo() << ss.str(); ss.str("");
+    }
+    if(!stereo_rotation.empty()) {
+        ss << "stereo_rotation" << std::endl;
+        ss << stereo_rotation << std::endl; yInfo() << ss.str(); ss.str("");
+    }
+}
+
 bool vIPT::sparseForwardTransform(int cam, int &y, int &x)
 {
     cv::Vec2i p(y, x);
@@ -383,18 +414,18 @@ bool vIPT::sparseReverseTransform(int cam, int &y, int &x)
 
 bool vIPT::sparseProjectCam0ToCam1(int &y, int &x)
 {
-    if(!sparseForwardTransform(0, x, y))
+    if(!sparseForwardTransform(0, y, x))
         return false;
-    if(!sparseReverseTransform(1, x, y))
+    if(!sparseReverseTransform(1, y, x))
         return false;
     return true;
 }
 
 bool vIPT::sparseProjectCam1ToCam0(int &y, int &x)
 {
-    if(!sparseForwardTransform(1, x, y))
+    if(!sparseForwardTransform(1, y, x))
         return false;
-    if(!sparseReverseTransform(0, x, y))
+    if(!sparseReverseTransform(0, y, x))
         return false;
     return true;
 }
@@ -426,6 +457,70 @@ bool vIPT::denseProjectCam1ToCam0(cv::Mat &m)
     denseForwardTransform(1, m);
     denseReverseTransform(0, m);
     return true;
+}
+
+cv::Mat drawRefAxis()
+{
+    std::array<float, 3> r = {0.1f, 0.1f, 0.1f};
+
+    return drawRefAxis(r);
+}
+
+cv::Mat drawRefAxis(std::array<double, 4> q){
+
+    double x = 1.0, y = 0.0, z = 0.0, a;
+
+    double qw = q[0];
+    double qx = q[1];
+    double qy = q[2];
+    double qz = q[3];
+
+    a = 2.0 * acos(qw);
+    // quaternion normalised then w is less than 1, so term always positive.
+    double s = sqrt(1-qw*qw);
+    // test to avoid divide by zero, s is always positive due to sqrt
+    if (s < 0.001) {
+        // if s close to zero then direction of axis not important
+        x = qx; // if it is important that axis is normalised then replace with x=1; y=z=0;
+        y = qy;
+        z = qz;
+    } else {
+        x = qx / s; // normalise axis
+        y = qy / s;
+        z = qz / s;
+    }
+
+    std::array<float, 3> r = {static_cast<float>(a*x), static_cast<float>(a*y), static_cast<float>(a*z)};
+    return drawRefAxis(r);;
+}
+
+cv::Mat drawRefAxis(std::array<float, 3> r)
+{
+    static float _K[9] = {500.0f, 0.0f, 160.0f, 0.0f, 500.0f, 120.0f, 0.0f, 0.0f, 1.0f};
+    cv::Mat K = cv::Mat(3, 3, CV_32F, _K);
+
+    return drawRefAxis(r, K);
+}
+cv::Mat drawRefAxis(std::array<float, 3> _r, cv::Mat K)
+{
+    static float _points[12] = {0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1};
+    cv::Mat points = cv::Mat(4, 3, CV_32F, _points);
+    static float _t[3] = {0.0f, 0.0f, 5.0f};
+    cv::Mat t = cv::Mat(1, 3, CV_32F, _t);
+
+    //float temp = _r[0]; _r[0] = -_r[1]; _r[1] = temp;
+    //_r[0] += M_PI_2;
+    cv::Mat r(1, 3, CV_32F, &_r);
+
+    std::vector<cv::Point2f> projected_points;
+    cv::projectPoints(points, r, t, K, cv::noArray(), projected_points);
+
+    cv::Mat canvas(240, 320, CV_8UC3, cv::Scalar(0, 0, 0));
+    cv::line(canvas, projected_points[0], projected_points[1], cv::Scalar(0, 0, 255), 2);
+    cv::line(canvas, projected_points[0], projected_points[2], cv::Scalar(255, 0, 0), 2);
+    cv::line(canvas, projected_points[0], projected_points[3], cv::Scalar(0, 255, 0), 2);
+
+    return canvas;
 }
 
 } //namespace ev::

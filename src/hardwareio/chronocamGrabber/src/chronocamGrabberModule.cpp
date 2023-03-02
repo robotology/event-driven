@@ -92,9 +92,9 @@ bool chronocamGrabberModule::configure(yarp::os::ResourceFinder &rf) {
     }
 
 
-    int readPacketSize = 8 * rf.check("readPacketSize", yarp::os::Value("512")).asInt();
-    int bufferSize     = 8 * rf.check("bufferSize", yarp::os::Value("5120")).asInt();
-    int maxBottleSize  = 8 * rf.check("maxBottleSize", yarp::os::Value("5120")).asInt();
+    int readPacketSize = 8 * rf.check("readPacketSize", yarp::os::Value("512")).asInt32();
+    int bufferSize     = 8 * rf.check("bufferSize", yarp::os::Value("5120")).asInt32();
+    int maxBottleSize  = 8 * rf.check("maxBottleSize", yarp::os::Value("5120")).asInt32();
 
     if(!D2Y.initialise(vsctrlMng.getStream(), moduleName, errorcheck, bufferSize, readPacketSize, maxBottleSize)) {
         std::cout << "A data device was specified but could not be initialised" << std::endl;
@@ -109,10 +109,10 @@ bool chronocamGrabberModule::configure(yarp::os::ResourceFinder &rf) {
                 std::cout << filp.toString() << std::endl;
 
                 D2Y.initialiseFilter(true,
-                                     filp.find("width").asInt(),
-                                     filp.find("height").asInt(),
-                                     filp.find("tsize").asInt(),
-                                     filp.find("ssize").asInt());
+                                     filp.find("width").asInt32(),
+                                     filp.find("height").asInt32(),
+                                     filp.find("tsize").asInt32(),
+                                     filp.find("ssize").asInt32());
         }
 
             if(jumpcheck) {
@@ -223,7 +223,7 @@ bool chronocamGrabberModule::respond(const yarp::os::Bottle& command,
         if(val >= 0) {
             reply.addString("Camera: ");
             reply.addString(biasName);
-            reply.addInt(val);
+            reply.addInt32(val);
             ok = true;
         } else {
             reply.addString("Unknown Bias");
@@ -236,7 +236,7 @@ bool chronocamGrabberModule::respond(const yarp::os::Bottle& command,
         rec = true;
     {
         std::string biasName = command.get(1).asString();
-        unsigned int biasValue = command.get(2).asInt();
+        unsigned int biasValue = command.get(2).asInt32();
 
         // setBias function
         vsctrlMng.setBias(biasName, biasValue);

@@ -91,13 +91,13 @@ void AutoSaccadeModule::readParams( const ResourceFinder &rf ) {//set the name o
     }
     setName( moduleName.c_str() );
     //Read parameters
-    checkPeriod = rf.check( "checkPeriod", Value( 0.1 ) ).asDouble();
-    minVpS = rf.check( "minVpS", Value( 75000 ) ).asDouble();
-    timeout = rf.check( "timeout", Value( 1.0 ) ).asDouble();
-    refSpeed = rf.check( "refSpeed", Value( 300.0 ) ).asDouble();
-    refAcc = rf.check( "refAcc", Value( 200.0 ) ).asDouble();
-    camWidth = rf.check( "camWidth", Value( 304 ) ).asInt();
-    camHeight = rf.check( "camHeight", Value( 240 ) ).asInt();
+    checkPeriod = rf.check( "checkPeriod", Value( 0.1 ) ).asFloat64();
+    minVpS = rf.check( "minVpS", Value( 75000 ) ).asFloat64();
+    timeout = rf.check( "timeout", Value( 1.0 ) ).asFloat64();
+    refSpeed = rf.check( "refSpeed", Value( 300.0 ) ).asFloat64();
+    refAcc = rf.check( "refAcc", Value( 200.0 ) ).asFloat64();
+    camWidth = rf.check( "camWidth", Value( 304 ) ).asInt32();
+    camHeight = rf.check( "camHeight", Value( 240 ) ).asInt32();
 
 }
 
@@ -227,7 +227,7 @@ bool AutoSaccadeModule::updateModule() {
 
     //output the event rate for debug purposes
     Bottle vRateBottle;
-    vRateBottle.addDouble( eventRate );
+    vRateBottle.addFloat64( eventRate );
     vRatePort.write(vRateBottle);
 
     //ImageOf<PixelBgr> &leftImage = leftImgPort.prepare();

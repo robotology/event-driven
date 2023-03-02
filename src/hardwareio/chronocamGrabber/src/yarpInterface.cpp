@@ -311,7 +311,7 @@ void  device2yarp::run() {
         if(portEventCount.getOutputCount() && nBytesRead) {
             yarp::os::Bottle &ecb = portEventCount.prepare();
             ecb.clear();
-            ecb.addInt(nBytesRead / 8);
+            ecb.addInt32(nBytesRead / 8);
             portEventCount.write();
         }
 

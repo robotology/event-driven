@@ -5,6 +5,7 @@ CMakeLists.txt.user.*
 *.autosave
 *.orig
 *.swp
+.vscode
 
 # ignore all temporary files
 *~
@@ -19,6 +20,7 @@ build-x86_64/
 build-ubuntu/
 wsl-build/
 build-pc104/
+debug/
 
 *.autosave
 .idea/

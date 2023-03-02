@@ -32,7 +32,7 @@
      <data>
         <input>
             <type>eventdriven::vBottle</type>
-            <port carrier="udp">/vCorner/vBottle:i</port>
+            <port carrier="fast_tcp">/vCorner/vBottle:i</port>
             <required>yes</required>
             <priority>no</priority>
             <description>
@@ -41,7 +41,7 @@
         </input>
         <output>
             <type>eventdriven::vBottle</type>
-            <port carrier="udp">/vCorner/vBottle:o</port>
+            <port carrier="fast_tcp">/vCorner/vBottle:o</port>
             <description>
                 Outputs corner events in the form of an
                 eventdriven::LabelledAE. The vBottle also contains all
@@ -50,7 +50,7 @@
         </output>
         <output>
             <type>yarp::os::Bottle</type>
-            <port carrier="udp">/vCorner/score:o</port>
+            <port carrier="fast_tcp">/vCorner/score:o</port>
             <description>
                 Outputs debug information for use with yarpscope. The gap
                 between the time required to get and process events

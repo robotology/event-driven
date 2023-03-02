@@ -16,14 +16,14 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef VIPT_H
-#define VIPT_H
+#pragma once
 
 #include <opencv2/opencv.hpp>
-#include <yarp/os/Bottle.h>
+#include <yarp/os/all.h>
 
 namespace ev {
 
+//event-based inverse pixel transform
 class vIPT {
 
 private:
@@ -51,12 +51,12 @@ public:
 
     vIPT();
 
-
     const cv::Mat& getQ();
     void setProjectedImageSize(int height, int width);
-    bool configure(const std::string calibContext, const std::string calibFile, int size_scaler = 2);
+    bool configure(const std::string &calib_file_path, int size_scaler = 2);
     bool showMapProjections(double seconds = 0);
     void showMonoProjections(int cam, double seconds);
+    void printValidCalibrationValues();
 
     bool sparseForwardTransform(int cam, int &y, int &x);
     bool sparseReverseTransform(int cam, int &y, int &x);
@@ -71,5 +71,11 @@ public:
 
 };
 
+cv::Mat drawRefAxis();
+cv::Mat drawRefAxis(std::array<double, 4> q);
+cv::Mat drawRefAxis(std::array<float, 3> r);
+cv::Mat drawRefAxis(std::array<float, 3> r, cv::Mat K);
+
+
 }
-#endif //vitp_h
+

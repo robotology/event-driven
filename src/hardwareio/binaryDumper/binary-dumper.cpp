@@ -68,7 +68,7 @@ public:
             return false;
         }
 
-        string path = rf.check("path", Value(yarp::os::getenv("HOME"))).asString();
+        string path = rf.check("path", Value(std::getenv("HOME"))).asString();
         string event_filename = path + "/binaryevents.log";
         string info_filename = path + "/info.log";
 

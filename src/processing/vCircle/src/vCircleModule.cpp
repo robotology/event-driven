@@ -39,38 +39,38 @@ bool vCircleModule::configure(yarp::os::ResourceFinder &rf)
     bool parallel = rf.check("parallel");
 
     //sensory size
-    int width = rf.check("width", yarp::os::Value(128)).asInt();
-    int height = rf.check("height", yarp::os::Value(128)).asInt();
+    int width = rf.check("width", yarp::os::Value(128)).asInt32();
+    int height = rf.check("height", yarp::os::Value(128)).asInt32();
 
 
     //observation parameters
     double inlierThreshold = rf.check("inlierThreshold",
-                                   yarp::os::Value(30)).asDouble() / 100.0;
+                                   yarp::os::Value(30)).asFloat64() / 100.0;
 
     std::string qType = rf.check("qType",
                                  yarp::os::Value("edge")).asString();
 
-    double fifolength = rf.check("fifo", yarp::os::Value(1000.0)).asDouble();
+    double fifolength = rf.check("fifo", yarp::os::Value(1000.0)).asFloat64();
 
     bool usedirected = rf.check("arc");
-    int arc = rf.check("arc", yarp::os::Value(1)).asInt();
+    int arc = rf.check("arc", yarp::os::Value(1)).asInt32();
     if(!arc) usedirected = false;
 
-    int radmin = rf.check("radmin", yarp::os::Value(10)).asInt();
-    int radmax = rf.check("radmax", yarp::os::Value(35)).asInt();
+    int radmin = rf.check("radmin", yarp::os::Value(10)).asInt32();
+    int radmax = rf.check("radmax", yarp::os::Value(35)).asInt32();
 
     //filter parameters
 //    double procNoisePos = rf.check("procNoisePos",
-//                                   yarp::os::Value(5)).asDouble();
+//                                   yarp::os::Value(5)).asFloat64();
 
 //    double procNoiseRad = rf.check("procNoiseRad",
-//                                   yarp::os::Value(5)).asDouble();
+//                                   yarp::os::Value(5)).asFloat64();
 
 //    double measNoisePos = rf.check("measNoisePos",
-//                                   yarp::os::Value(5)).asDouble();
+//                                   yarp::os::Value(5)).asFloat64();
 
 //    double measNoiseRad = rf.check("measNoiseRad",
-//                                   yarp::os::Value(5)).asDouble();
+//                                   yarp::os::Value(5)).asFloat64();
 
     //data for experiments
     circleReader.cObserverL =
@@ -261,13 +261,13 @@ void vCircleReader::onRead(ev::vBottle &inBot)
             if(dumpOut.getOutputCount()) {
                 yarp::os::Bottle &dumper = dumpOut.prepare();
                 dumper.clear();
-                dumper.addDouble(yarp::os::Time::now() - tsoffset);
-                dumper.addInt(singleQ[0]->stamp);
-                dumper.addInt(q[i]->getChannel());
-                dumper.addInt(bestx);
-                dumper.addInt(besty);
-                dumper.addInt(bestr);
-                dumper.addDouble(bestScore);
+                dumper.addFloat64(yarp::os::Time::now() - tsoffset);
+                dumper.addInt32(singleQ[0]->stamp);
+                dumper.addInt32(q[i]->getChannel());
+                dumper.addInt32(bestx);
+                dumper.addInt32(besty);
+                dumper.addInt32(bestr);
+                dumper.addFloat64(bestScore);
                 dumpOut.setEnvelope(st);
                 dumpOut.writeStrict();
             }
@@ -332,25 +332,25 @@ void vCircleReader::onRead(ev::vBottle &inBot)
 
         yarp::os::Bottle &dumperL = dumpOut.prepare();
         dumperL.clear();
-        dumperL.addDouble(offsetts);
-        dumperL.addInt(q.back()->stamp);
-        dumperL.addInt(0);
-        dumperL.addInt(bestxL);
-        dumperL.addInt(bestyL);
-        dumperL.addInt(bestrL);
-        dumperL.addDouble(bestScoreL);
+        dumperL.addFloat64(offsetts);
+        dumperL.addInt32(q.back()->stamp);
+        dumperL.addInt32(0);
+        dumperL.addInt32(bestxL);
+        dumperL.addInt32(bestyL);
+        dumperL.addInt32(bestrL);
+        dumperL.addFloat64(bestScoreL);
         dumpOut.setEnvelope(st);
         dumpOut.writeStrict();
 
         yarp::os::Bottle &dumperR = dumpOut.prepare();
         dumperR.clear();
-        dumperR.addDouble(offsetts);
-        dumperR.addInt(q.back()->stamp);
-        dumperR.addInt(1);
-        dumperR.addInt(bestxR);
-        dumperR.addInt(bestyR);
-        dumperR.addInt(bestrR);
-        dumperR.addDouble(bestScoreR);
+        dumperR.addFloat64(offsetts);
+        dumperR.addInt32(q.back()->stamp);
+        dumperR.addInt32(1);
+        dumperR.addInt32(bestxR);
+        dumperR.addInt32(bestyR);
+        dumperR.addInt32(bestrR);
+        dumperR.addFloat64(bestScoreR);
         dumpOut.setEnvelope(st);
         dumpOut.writeStrict();
     }
@@ -359,7 +359,7 @@ void vCircleReader::onRead(ev::vBottle &inBot)
     if(scopeOut.getOutputCount()) {
         yarp::os::Bottle &scopebottle = scopeOut.prepare();
         scopebottle.clear();
-        scopebottle.addInt(st.getCount() - pstampcounter);
+        scopebottle.addInt32(st.getCount() - pstampcounter);
         scopeOut.setEnvelope(st);
         scopeOut.write();
     }
