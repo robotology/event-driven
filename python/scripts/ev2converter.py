@@ -22,5 +22,5 @@ if os.path.exists(args.out_path):
         exit(0)
 
 data = importIitYarp(filePathOrName=args.in_path)
-exportIitYarp(data, exportFilePath=args.out_path, exportAsEv2=True, exportTimestamps=False, viewerApp=False, minTimeStepPerBottle=0.004)
+exportIitYarp(data, exportFilePath=args.out_path, exportAsEv2=True, exportTimestamps=False, viewerApp=False, minTimeStepPerBottle=0.0005)
 
