@@ -6,6 +6,10 @@ _YARP integration for event-cameras and other neuromorphic sensors_
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/xS-7xYRYSLc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=nTQUwghvy5Q" target="_blank">
+ <img src="http://img.youtube.com/vi/nTQUwghvy5Q/mqdefault.jpg" alt="Watch the video" width="240" height="180" border="10" />
+</a>
+
 Libraries that handle neuromorphic sensors, such as the dynamic vision sensor, installed on the iCub can be found here, along with algorithms to process the event-based data. Examples include, optical flow, corner detection and ball detection. Demo applications for the iCub robot, and tutorials for running them, include saccading and attention, gaze following a ball, and vergence control.
 ```
 @article{Glover2017b,
