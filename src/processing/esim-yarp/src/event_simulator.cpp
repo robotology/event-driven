@@ -119,6 +119,8 @@ public:
         config_.C = rf.check("C", Value(1e-6)).asFloat64();
         config_.noise_variance = rf.check("noise_variance", Value(0.25)).asFloat64();
         config_.use_log_image = rf.check("use_log_image", Value(true)).asBool();
+        config_.refractory_period = rf.check("refractory_period", Value(0.01)).asFloat64();
+        config_.ts_noise_range = rf.check("ts_noise_range", Value(0.01)).asFloat64();
         curr_stamp.update();
         first_time = curr_stamp.getTime();
         recording = false;
