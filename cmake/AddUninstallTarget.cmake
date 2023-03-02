@@ -1,41 +1,31 @@
-#.rst:
-# AddUninstallTarget
-# ------------------
-#
-# Add the "uninstall" target for your project::
-#
-#   include(AddUninstallTarget)
-#
-#
-# will create a file ``cmake_uninstall.cmake`` in the build directory and add a
-# custom target ``uninstall`` (or ``UNINSTALL`` on Visual Studio and Xcode) that
-# will remove the files installed by your package (using
-# ``install_manifest.txt``).
-# See also
-# https://gitlab.kitware.com/cmake/community/wikis/FAQ#can-i-do-make-uninstall-with-cmake
-#
-# The :module:`AddUninstallTarget` module must be included in your main
-# ``CMakeLists.txt``. If included in a subdirectory it does nothing.
-# This allows you to use it safely in your main ``CMakeLists.txt`` and include
-# your project using ``add_subdirectory`` (for example when using it with
-# :cmake:module:`FetchContent`).
-#
-# If the ``uninstall`` target already exists, the module does nothing.
+# SPDX-FileCopyrightText: 2012-2021 Istituto Italiano di Tecnologia (IIT)
+# SPDX-FileCopyrightText: 2008-2013 Kitware Inc.
+# SPDX-License-Identifier: BSD-3-Clause
 
-#=============================================================================
-# Copyright 2008-2013 Kitware, Inc.
-# Copyright 2013 Istituto Italiano di Tecnologia (IIT)
-#   Authors: Daniele E. Domenichelli <daniele.domenichelli@iit.it>
-#
-# Distributed under the OSI-approved BSD License (the "License");
-# see accompanying file Copyright.txt for details.
-#
-# This software is distributed WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the License for more information.
-#=============================================================================
-# (To distribute this file outside of CMake, substitute the full
-#  License text for the above reference.)
+#[=======================================================================[.rst:
+AddUninstallTarget
+------------------
+
+Add the "uninstall" target for your project::
+
+  include(AddUninstallTarget)
+
+
+will create a file ``cmake_uninstall.cmake`` in the build directory and add a
+custom target ``uninstall`` (or ``UNINSTALL`` on Visual Studio and Xcode) that
+will remove the files installed by your package (using
+``install_manifest.txt``).
+See also
+https://gitlab.kitware.com/cmake/community/wikis/FAQ#can-i-do-make-uninstall-with-cmake
+
+The :module:`AddUninstallTarget` module must be included in your main
+``CMakeLists.txt``. If included in a subdirectory it does nothing.
+This allows you to use it safely in your main ``CMakeLists.txt`` and include
+your project using ``add_subdirectory`` (for example when using it with
+:cmake:module:`FetchContent`).
+
+If the ``uninstall`` target already exists, the module does nothing.
+#]=======================================================================]
 
 
 # AddUninstallTarget works only when included in the main CMakeLists.txt
