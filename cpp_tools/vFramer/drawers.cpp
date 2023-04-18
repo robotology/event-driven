@@ -42,7 +42,7 @@ void drawerInterface::run()
         image_port.setEnvelope(canvas_stamp);
         image_port.write();
     } else {
-        cv::imshow(name, canvas);
+        //cv::imshow(name, canvas);
         cv::waitKey(1);
     }
 }
@@ -130,19 +130,23 @@ bool isoDrawer::initialise(const std::string &name, int height, int width, doubl
 
 void isoDrawer::updateImage()
 {
+    static double data_stamp = 0.0;
+    const static int max_events_to_draw = 5e6;
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
-    else
-        canvas = white;
 
     ev::info inf = input.readSlidingWinT(window_size, false);
-    canvas_stamp.update(inf.timestamp);
-
-    if (inf.count == 0)
+    if(data_stamp == inf.timestamp) {
         return;
-    int step = inf.count / 5000000;
+    }
+    data_stamp = inf.timestamp;
+    canvas_stamp.update(data_stamp);
+    
 
-    iso_drawer.time_draw< window<AE>::iterator >(canvas, input.begin(), input.end(), step);
+    canvas = white;
+    int step = inf.count / max_events_to_draw; // a maximum of events to draw
+
+    iso_drawer.time_draw< window<AE>::iterator >(canvas, input.begin(), input.end(), 0);
 }
 
 
