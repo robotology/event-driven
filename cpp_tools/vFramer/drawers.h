@@ -51,7 +51,7 @@ protected:
 
     void run() override;
     bool threadInit() override;
-    virtual void updateImage() = 0;
+    virtual bool updateImage() = 0;
 
 public:
 
@@ -74,14 +74,14 @@ public:
 
 class greyDrawer : public drawerInterfaceAE {
 protected:
-    void updateImage() override;
+    bool updateImage() override;
 public:
     greyDrawer(){window_size=0.1;}
 };
 
 class blackDrawer : public drawerInterfaceAE {
 protected:
-    void updateImage() override;
+    bool updateImage() override;
 public:
     blackDrawer(){window_size=0.033;}
 };
@@ -89,7 +89,7 @@ public:
 class isoDrawer : public drawerInterfaceAE {
 protected:
     ev::isoImager iso_drawer;
-    void updateImage() override;
+    bool updateImage() override;
     
 public:
     isoDrawer(){window_size=1.0;}
@@ -101,7 +101,7 @@ protected:
     int kernelSize {5};
     double decay {0.3};
     ev::EROS EROS_vis;
-    void updateImage() override;
+    bool updateImage() override;
     
 public:
     erosDrawer(int kernelSize, double decay): kernelSize(kernelSize), decay(decay), drawerInterfaceAE(){};
@@ -114,7 +114,7 @@ protected:
     std::deque<ev::AE> corner_q;
     ev::isoImager iso_drawer;
     ev::corner_detector cd;
-    void updateImage() override;
+    bool updateImage() override;
     void threadRelease() override;
     
 public:
