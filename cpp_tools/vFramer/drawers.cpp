@@ -42,8 +42,12 @@ void drawerInterface::run()
         image_port.setEnvelope(canvas_stamp);
         image_port.write();
     } else {
-        //cv::imshow(name, canvas);
-        cv::waitKey(1);
+        if(cv::getWindowProperty(name, cv::WND_PROP_ASPECT_RATIO) < 0) {
+             askToStop();
+         } else {
+            cv::imshow(name, canvas);
+            cv::waitKey(1);
+         }
     }
 }
 
@@ -132,8 +136,10 @@ void isoDrawer::updateImage()
 {
     static double data_stamp = 0.0;
     const static int max_events_to_draw = 5e6;
-    if(canvas.empty())
+    if(canvas.empty()) {
         canvas = cv::Mat(img_size, CV_8UC3);
+        canvas.setTo(white);
+    }
 
     ev::info inf = input.readSlidingWinT(window_size, false);
     if(data_stamp == inf.timestamp) {
@@ -143,7 +149,7 @@ void isoDrawer::updateImage()
     canvas_stamp.update(data_stamp);
     
 
-    canvas = white;
+    canvas.setTo(white);
     int step = inf.count / max_events_to_draw; // a maximum of events to draw
 
     iso_drawer.time_draw< window<AE>::iterator >(canvas, input.begin(), input.end(), 0);
@@ -185,7 +191,9 @@ void erosDrawer::updateImage()
     for (auto &v : input)
         EROS_vis.update(v.x, v.y);
 
-    cv::cvtColor(EROS_vis.getSurface(), canvas, cv::COLOR_GRAY2BGR);
+    static cv::Mat inter;
+    cv::GaussianBlur(EROS_vis.getSurface(), inter, {5, 5}, -1); 
+    cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
 }
 
 //    CORNER    //
