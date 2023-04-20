@@ -118,14 +118,24 @@ public:
 
     template <typename T>
     void time_draw(cv::Mat img, T begin, T end, int step = 1) {
+
+        //if there is nothing to draw, just draw the frame
+        if(begin == end) 
+        {
+            img -= base_image;
+            return;
+        }
+
+        //otherwise draw the events
         double t0 = begin.timestamp();
+        double tf = end.timestamp();
         if(step < 1) step = 1;
         int counter = 0;
         for (auto a = begin; a != end; a++) {
 
-            double dt = time_window - (a.timestamp() -t0);
+            double dt = tf - (a.timestamp());
             if (dt < 0)
-                return;
+                break;
 
             if (dt < 0.05) {
                 int x = a->x;
@@ -152,8 +162,6 @@ public:
                 img.at<cv::Vec3b>(y, x) -= naqua;
             else
                 img.at<cv::Vec3b>(y, x) -= nviolet;
-
-
         }
 
         img -= base_image;

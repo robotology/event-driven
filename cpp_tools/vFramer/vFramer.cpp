@@ -179,8 +179,10 @@ public:
 
     bool updateModule() override
     {
-        for (auto pub_i = publishers.begin(); pub_i != publishers.end(); pub_i++)
+        for (auto pub_i = publishers.begin(); pub_i != publishers.end(); pub_i++) {
+            if(!(*pub_i)->isRunning()) return false;
             (*pub_i)->connectToRemote();
+        }
         return !isStopping();
     }
 

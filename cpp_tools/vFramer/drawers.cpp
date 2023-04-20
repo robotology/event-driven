@@ -32,17 +32,30 @@ std::string drawerInterface::drawerName()
 
 void drawerInterface::run()
 {
-    canvas_stamp.update();
-    updateImage();
+    static int sequence_number = 0;
+    static double data_stamp = 0.0;
+
+    double nds = updateImage();
+    bool updated = (nds != data_stamp);
+    data_stamp = nds;
+
     if(yarp_publish) {
-        if(canvas.channels() == 3)
-            image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelRgb>(canvas));
-        else
-            image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelMono>(canvas));
-        image_port.setEnvelope(canvas_stamp);
-        image_port.write();
+        if (updated) {
+            if (canvas.channels() == 3)
+                image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelRgb>(canvas));
+            else
+                image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelMono>(canvas));
+            yarp::os::Stamp canvas_stamp = {++sequence_number, data_stamp};
+            image_port.setEnvelope(canvas_stamp);
+            image_port.write();
+        }
     } else {
-        cv::imshow(name, canvas);
+        if (cv::getWindowProperty(name, cv::WND_PROP_ASPECT_RATIO) < 0)
+            askToStop();
+
+        if (updated)
+            cv::imshow(name, canvas);
+
         cv::waitKey(1);
     }
 }
@@ -58,8 +71,9 @@ bool drawerInterface::threadInit()
     if(yarp_publish)
         return image_port.open(name + "/image:o");
     else{
-        cv::namedWindow(name, cv::WINDOW_NORMAL);
-        cv::resizeWindow(name, 960, 640);
+        cv::namedWindow(name, cv::WINDOW_KEEPRATIO);
+
+        cv::resizeWindow(name, {960, (int)(960.0 * img_size.height / (double)img_size.width)});
     }
 
     return true;
@@ -101,7 +115,7 @@ inline void draw_grey(const AE &v, cv::Mat &canvas)
     }
 }
 
-void greyDrawer::updateImage()
+double greyDrawer::updateImage()
 {
     //make sure the canvas is sized correctly
     if(canvas.empty())
@@ -111,11 +125,11 @@ void greyDrawer::updateImage()
 
     //get new events
     ev::info inf = input.readSlidingWinT(window_size, false);
-    canvas_stamp.update(inf.timestamp);
 
     //paint the events onto the canvas
     for (auto &v : input)
         draw_grey(v, canvas);
+    return inf.timestamp;
 
 }
 
@@ -128,27 +142,28 @@ bool isoDrawer::initialise(const std::string &name, int height, int width, doubl
     return success;
 }
 
-void isoDrawer::updateImage()
+double isoDrawer::updateImage()
 {
-    if(canvas.empty())
+    
+    const static int max_events_to_draw = 5e7;
+    if(canvas.empty()) {
         canvas = cv::Mat(img_size, CV_8UC3);
-    else
-        canvas = white;
+        canvas.setTo(white);
+    }
 
     ev::info inf = input.readSlidingWinT(window_size, false);
-    canvas_stamp.update(inf.timestamp);
+    int step = inf.count / max_events_to_draw; // a maximum of events to draw
 
-    if (inf.count == 0)
-        return;
-    int step = inf.count / 5000000;
+    canvas.setTo(white);
+    iso_drawer.time_draw< window<AE>::iterator >(canvas, input.begin(), input.end(), 0);
 
-    iso_drawer.time_draw< window<AE>::iterator >(canvas, input.begin(), input.end(), step);
+    return inf.timestamp;
 }
 
 
 // BLACK DRAW //
 // =========== //
-void blackDrawer::updateImage()
+double blackDrawer::updateImage()
 {
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
@@ -156,10 +171,10 @@ void blackDrawer::updateImage()
         canvas = black;
 
     ev::info inf = input.readSlidingWinT(window_size, false);
-    canvas_stamp.update(inf.timestamp);
 
     for (auto &v : input)
         canvas.at<cv::Vec3b>(v.y, v.x) = white;
+    return inf.timestamp;
 }
 
 // EROS DRAW //
@@ -170,18 +185,20 @@ bool erosDrawer::initialise(const std::string &name, int height, int width, doub
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
 
-void erosDrawer::updateImage()
+double erosDrawer::updateImage()
 {
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
 
     ev::info inf = input.readAll(false);
-    canvas_stamp.update(inf.timestamp);
 
     for (auto &v : input)
         EROS_vis.update(v.x, v.y);
 
-    cv::cvtColor(EROS_vis.getSurface(), canvas, cv::COLOR_GRAY2BGR);
+    static cv::Mat inter;
+    cv::GaussianBlur(EROS_vis.getSurface(), inter, {5, 5}, -1); 
+    cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
+    return inf.timestamp;
 }
 
 //    CORNER    //
@@ -194,7 +211,7 @@ bool cornerDrawer::initialise(const std::string &name, int height, int width, do
     return success;
 }
 
-void cornerDrawer::updateImage()
+double cornerDrawer::updateImage()
 {
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
@@ -202,7 +219,6 @@ void cornerDrawer::updateImage()
         canvas = white;
 
     ev::info inf = input.readAll(false);
-    canvas_stamp.update(inf.timestamp);
 
     cd.detect<window<AE>::iterator>(input.begin(), input.end(), corner_q);
 
@@ -211,6 +227,7 @@ void cornerDrawer::updateImage()
         corner_q.erase(corner_q.begin(), corner_q.begin() + number_to_erase);
 
     iso_drawer.count_draw< std::deque<AE>::iterator >(canvas, corner_q.begin(), corner_q.end(), corner_q.size());
+    return inf.timestamp;
     
 }
 
