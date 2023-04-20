@@ -32,21 +32,28 @@ std::string drawerInterface::drawerName()
 
 void drawerInterface::run()
 {
-    canvas_stamp.update();
+    static int sequence_number = 0;
+    static double data_stamp = 0.0;
+
+    double nds = updateImage();
+    bool updated = (nds != data_stamp);
+    data_stamp = nds;
+
     if(yarp_publish) {
-        if(!updateImage())
-            return;
-        if(canvas.channels() == 3)
-            image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelRgb>(canvas));
-        else
-            image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelMono>(canvas));
-        image_port.setEnvelope(canvas_stamp);
-        image_port.write();
+        if (updated) {
+            if (canvas.channels() == 3)
+                image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelRgb>(canvas));
+            else
+                image_port.prepare().copy(yarp::cv::fromCvMat<yarp::sig::PixelMono>(canvas));
+            yarp::os::Stamp canvas_stamp = {++sequence_number, data_stamp};
+            image_port.setEnvelope(canvas_stamp);
+            image_port.write();
+        }
     } else {
         if (cv::getWindowProperty(name, cv::WND_PROP_ASPECT_RATIO) < 0)
             askToStop();
 
-        if (updateImage())
+        if (updated)
             cv::imshow(name, canvas);
 
         cv::waitKey(1);
@@ -64,8 +71,9 @@ bool drawerInterface::threadInit()
     if(yarp_publish)
         return image_port.open(name + "/image:o");
     else{
-        cv::namedWindow(name, cv::WINDOW_NORMAL);
-        cv::resizeWindow(name, 960, 640);
+        cv::namedWindow(name, cv::WINDOW_KEEPRATIO);
+
+        cv::resizeWindow(name, {960, (int)(960.0 * img_size.height / (double)img_size.width)});
     }
 
     return true;
@@ -117,12 +125,11 @@ double greyDrawer::updateImage()
 
     //get new events
     ev::info inf = input.readSlidingWinT(window_size, false);
-    canvas_stamp.update(inf.timestamp);
 
     //paint the events onto the canvas
     for (auto &v : input)
         draw_grey(v, canvas);
-    return true;
+    return inf.timestamp;
 
 }
 
@@ -137,26 +144,20 @@ bool isoDrawer::initialise(const std::string &name, int height, int width, doubl
 
 double isoDrawer::updateImage()
 {
-    static double data_stamp = 0.0;
-    const static int max_events_to_draw = 5e6;
+    
+    const static int max_events_to_draw = 5e7;
     if(canvas.empty()) {
         canvas = cv::Mat(img_size, CV_8UC3);
         canvas.setTo(white);
     }
 
     ev::info inf = input.readSlidingWinT(window_size, false);
-    if(data_stamp == inf.timestamp) {
-        return false;
-    }
-    data_stamp = inf.timestamp;
-    canvas_stamp.update(data_stamp);
-    
-
-    canvas.setTo(white);
     int step = inf.count / max_events_to_draw; // a maximum of events to draw
 
+    canvas.setTo(white);
     iso_drawer.time_draw< window<AE>::iterator >(canvas, input.begin(), input.end(), 0);
-    return true;
+
+    return inf.timestamp;
 }
 
 
@@ -170,11 +171,10 @@ double blackDrawer::updateImage()
         canvas = black;
 
     ev::info inf = input.readSlidingWinT(window_size, false);
-    canvas_stamp.update(inf.timestamp);
 
     for (auto &v : input)
         canvas.at<cv::Vec3b>(v.y, v.x) = white;
-    return true;
+    return inf.timestamp;
 }
 
 // EROS DRAW //
@@ -191,7 +191,6 @@ double erosDrawer::updateImage()
         canvas = cv::Mat(img_size, CV_8UC3);
 
     ev::info inf = input.readAll(false);
-    canvas_stamp.update(inf.timestamp);
 
     for (auto &v : input)
         EROS_vis.update(v.x, v.y);
@@ -199,7 +198,7 @@ double erosDrawer::updateImage()
     static cv::Mat inter;
     cv::GaussianBlur(EROS_vis.getSurface(), inter, {5, 5}, -1); 
     cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
-    return true;
+    return inf.timestamp;
 }
 
 //    CORNER    //
@@ -220,7 +219,6 @@ double cornerDrawer::updateImage()
         canvas = white;
 
     ev::info inf = input.readAll(false);
-    canvas_stamp.update(inf.timestamp);
 
     cd.detect<window<AE>::iterator>(input.begin(), input.end(), corner_q);
 
@@ -229,7 +227,7 @@ double cornerDrawer::updateImage()
         corner_q.erase(corner_q.begin(), corner_q.begin() + number_to_erase);
 
     iso_drawer.count_draw< std::deque<AE>::iterator >(canvas, corner_q.begin(), corner_q.end(), corner_q.size());
-    return true;
+    return inf.timestamp;
     
 }
 
