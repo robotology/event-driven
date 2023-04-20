@@ -107,7 +107,7 @@ inline void draw_grey(const AE &v, cv::Mat &canvas)
     }
 }
 
-bool greyDrawer::updateImage()
+double greyDrawer::updateImage()
 {
     //make sure the canvas is sized correctly
     if(canvas.empty())
@@ -135,7 +135,7 @@ bool isoDrawer::initialise(const std::string &name, int height, int width, doubl
     return success;
 }
 
-bool isoDrawer::updateImage()
+double isoDrawer::updateImage()
 {
     static double data_stamp = 0.0;
     const static int max_events_to_draw = 5e6;
@@ -162,7 +162,7 @@ bool isoDrawer::updateImage()
 
 // BLACK DRAW //
 // =========== //
-bool blackDrawer::updateImage()
+double blackDrawer::updateImage()
 {
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
@@ -185,7 +185,7 @@ bool erosDrawer::initialise(const std::string &name, int height, int width, doub
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
 
-bool erosDrawer::updateImage()
+double erosDrawer::updateImage()
 {
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
@@ -212,7 +212,7 @@ bool cornerDrawer::initialise(const std::string &name, int height, int width, do
     return success;
 }
 
-bool cornerDrawer::updateImage()
+double cornerDrawer::updateImage()
 {
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
