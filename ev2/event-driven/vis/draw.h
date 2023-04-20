@@ -26,6 +26,8 @@ namespace ev {
 
 static const cv::Vec3b aqua{151, 174, 6};
 static const cv::Vec3b violet{180, 10, 155};
+static const cv::Vec3b blue{255, 0, 0};
+static const cv::Vec3b green{0, 255, 0};
 static const cv::Vec3b orange{9, 111, 255};
 static const cv::Vec3b lime{9, 250, 222};
 static const cv::Vec3b white{255, 255, 255};

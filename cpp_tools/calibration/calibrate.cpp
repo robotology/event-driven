@@ -125,6 +125,11 @@ public:
     bool updateModule() override
     {
         static cv::Mat black_img = cv::Mat(img_size, CV_8UC3);
+        static cv::Mat detected_img = cv::Mat(img_size, CV_8UC3, black);
+        static std::vector<int> bci = {0, 
+                                       board_size.width-1, 
+                                       board_size.area()-board_size.width, 
+                                       board_size.area()-1};
         black_img = ev::black;
         ev::info stats = input.readSlidingWinT(0.033, false);
         for (auto& v : input)
@@ -133,24 +138,31 @@ public:
         std::vector<cv::Point2f> corners;
         bool found = cv::findChessboardCorners(black_img, board_size, corners);
         cv::drawChessboardCorners(black_img, board_size, corners, found);
+        
 
         bool calibrated = !map1.empty() && !map2.empty();
         if(found && !calibrated) {
             image_points.push_back(corners);
+            cv::line(detected_img, corners[bci[0]], corners[bci[1]], violet);
+            cv::line(detected_img, corners[bci[0]], corners[bci[2]], violet);
+            cv::line(detected_img, corners[bci[3]], corners[bci[1]], violet);
+            cv::line(detected_img, corners[bci[3]], corners[bci[2]], violet);
         }
 
+        black_img *= 0.5;
         //blue green red
         if(calibrated) {
             remap(black_img, black_img, map1, map2, cv::INTER_LINEAR);
-            cv::rectangle(black_img, cv::Rect(0, 0, img_size.width, img_size.height), cv::Scalar(0, 255, 0), 10);
-            cv::putText(black_img, "ESC to finish", cv::Point(img_size.width*0.05, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(255, 0, 0));
+            cv::rectangle(black_img, cv::Rect(0, 0, img_size.width, img_size.height), green*0.5, 10);
+            cv::putText(black_img, "ESC to finish", cv::Point(img_size.width*0.05, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
         } else {
-            cv::rectangle(black_img, cv::Rect(0, 0, img_size.width, img_size.height), cv::Scalar(0, 0, 255), 10);
-            cv::putText(black_img, "press SPACE to calibrate", cv::Point(img_size.width*0.05, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(255, 0, 0));
-            cv::putText(black_img, board_info, cv::Point(img_size.width*0.05, img_size.height*0.05), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(255, 0, 0));
+            black_img += detected_img;
+            cv::rectangle(black_img, cv::Rect(0, 0, img_size.width, img_size.height), red*0.8, 10);
+            cv::putText(black_img, "Collecting images... press SPACE to perform calibration", cv::Point(img_size.width*0.05, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
+            cv::putText(black_img, board_info, cv::Point(img_size.width*0.05, img_size.height*0.05), cv::FONT_HERSHEY_PLAIN, 1.0, white);
             str_maker.str("");
             str_maker << image_points.size();
-            cv::putText(black_img, str_maker.str(), cv::Point(img_size.width*0.95, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(255, 0, 0));
+            cv::putText(black_img, str_maker.str(), cv::Point(img_size.width*0.95, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
         }
         cv::imshow("", black_img);
         char c = cv::waitKey(1);
