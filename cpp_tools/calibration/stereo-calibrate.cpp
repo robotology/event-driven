@@ -27,7 +27,8 @@ class calibration_module : public RFModule {
 
 private:
     //input port
-    ev::window<ev::AE> input;
+    ev::window<ev::AE> cam1;
+    ev::window<ev::AE> cam2;
 
     //provided parameters
     cv::Size img_size, board_size;
@@ -51,24 +52,24 @@ public:
 
     bool configure(yarp::os::ResourceFinder& rf) override
     {
-
+        //help output
         if(rf.check("h") || rf.check("help")) {
-            yInfo() << "Calibration of event-camera";
+            yInfo() << "Stereo calibration of event-camera";
             yInfo() << "--name <str>\t: internal port name prefix";
             yInfo() << "--fout <str>\t: full path to output file";
-            yInfo() << "--h <int> --w <int>\t: camera resolution";
             yInfo() << "--ch <int> --cw <int>\t: checkerboard corners height/width";
             yInfo() << "--cs <double>\t: checker square edge length in metres";
             return false;
         }
 
+        //check network
+        setName((rf.check("name", Value("/stereo-ev-calibrate")).asString()).c_str());
         if(!yarp::os::Network::checkNetwork(2.0)) {
             std::cout << "Could not connect to YARP" << std::endl;
             return false;
         }
 
-        setName((rf.check("name", Value("/ev-calibrate")).asString()).c_str());
-
+        //extrinsic parameters out
         if(!rf.check("fout")) {
             yError() << "please supply the full path to the output file in --fout <string>";
             return false;
@@ -80,24 +81,37 @@ public:
             return false;
         }
 
+        //supply checkerboard edge size and number of squares
         if (!rf.check("cs")) {
             yError() << "please supply the checker square edge length in metres with --cs <double>";
             return false;
         }
         edge_length = rf.find("cs").asFloat32();
-
-        img_size = cv::Size(rf.check("w", Value(640)).asInt32(), rf.check("h", Value(480)).asInt32());
         board_size = cv::Size(rf.check("cw", Value(8)).asInt32(), rf.check("ch", Value(6)).asInt32());
 
+        //get the intrinsic parameters
+        Bottle left_params  = rf.findGroup("LEFT_CAMERA_CALIBRATION");
+        Bottle right_params = rf.findGroup("RIGHT_CAMERA_CALIBRATION");
+        if(left_params.isNull() || right_params.isNull()) {
+            yError() << "Please supply intrinsic calibration file with [LEFT_CAMERA_CALIBRATION] "
+                        "and [RIGHT_CAMERA_CALIBRATION] using the '--from <string>' argument";
+            return false;
+        }
+
+
+
+
         yInfo() << "EVENT CAMERA CALIBRATION";
-        yInfo() << "saving calibration:" << fout;
+        yInfo() << "saving extrinsic calibration:" << fout;
         yInfo() << "board parameters:" << board_size.width << "x" << board_size.height << "at" << edge_length*1000 << "mm squares";
-        yInfo() << "image parameters:" << img_size.width << "x" << img_size.height;
         str_maker.str("");
         str_maker << board_size.width << "x" << board_size.height << " at " << edge_length*1000 << "mm";
         board_info = str_maker.str();
 
-
+        if(!input.open(getName("/AE:i"))) {
+            yError() << "could not open input port";
+            return false;
+        }
         if(!input.open(getName("/AE:i"))) {
             yError() << "could not open input port";
             return false;
@@ -116,7 +130,8 @@ public:
     {
         //when stop(), isStopping()=true and interruptModule() is called
         //black_thread.join();
-        input.stop();
+        cam1.stop();
+        cam2.stop();
         writer.close();
         return true;
     }
