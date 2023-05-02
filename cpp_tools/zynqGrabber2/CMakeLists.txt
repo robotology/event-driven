@@ -3,7 +3,7 @@ project(zynqGrabber2)
 #file(GLOB source *.cpp)
 #file(GLOB header *.h)
 
-add_executable(${PROJECT_NAME} zynqModule.cpp hpuInterface.cpp hpuInterface.h)
+add_executable(${PROJECT_NAME} zynqModule.cpp hpuInterface.h)
 
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-overflow)
 

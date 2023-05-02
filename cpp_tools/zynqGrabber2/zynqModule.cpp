@@ -89,35 +89,25 @@ class zynqGrabberModule : public yarp::os::RFModule {
             std::cout.flush();
             yInfo() << "===== HPU Controller =====";
 
-            string data_device = rf.find("dataDevice").asString();
-            bool use_spinnaker = rf.check("use_spinnaker") &&
-                                 rf.check("use_spinnaker", yarp::os::Value(true)).asBool();
-            bool loopback = rf.check("loopback_debug") &&
-                            rf.check("loopback_debug", yarp::os::Value(true)).asBool();
-            bool gtp = rf.check("gtp") &&
-                       rf.check("gtp", Value(true)).asBool();
-            bool record_mode = rf.check("record_mode") &&
-                               rf.check("record_mode", Value(true)).asBool();
+            hpu.params.module = getName();
+            hpu.params.device = rf.find("dataDevice").asString();
+            hpu.params.spinnaker = rf.check("use_spinnaker") &&
+                                   rf.check("use_spinnaker", yarp::os::Value(true)).asBool();
+            hpu.params.spin_loopback = rf.check("loopback_debug") &&
+                                       rf.check("loopback_debug", yarp::os::Value(true)).asBool();
+            hpu.params.gtp = rf.check("gtp") &&
+                             rf.check("gtp", Value(true)).asBool();
+            hpu.params.hpu_read = rf.check("hpu_read") &&
+                                  rf.check("hpu_read", yarp::os::Value(true)).asBool();
+            hpu.params.hpu_write = rf.check("hpu_write") &&
+                                   rf.check("hpu_write", yarp::os::Value(true)).asBool();
+            hpu.params.max_packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt32();
 
-            if (!hpu.configureDevice(data_device, use_spinnaker, loopback, gtp))
+            if(!hpu.configure())
+                return false;
+            if(!hpu.connectYARP())
                 return false;
 
-            bool read_flag = rf.check("hpu_read") &&
-                             rf.check("hpu_read", yarp::os::Value(true)).asBool();
-            bool write_flag = rf.check("hpu_write") &&
-                              rf.check("hpu_write", yarp::os::Value(true)).asBool();
-            int packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt32();
-
-            if (read_flag)
-                if (!hpu.openReadPort(getName(), packet_size, record_mode))
-                    return false;
-
-            if (write_flag)
-                if (!hpu.openWritePort(getName()))
-                    return false;
-
-            yInfo() << "Starting HPU read/write threads";
-            hpu.start();
             std::cout << std::endl;
             std::cout.flush();
         }
@@ -136,7 +126,8 @@ class zynqGrabberModule : public yarp::os::RFModule {
     }
 
     bool updateModule() override {
-        hpu.tryconnectToYARP();
+        hpu.connectYARP();
+        yInfo() << hpu.status_message();
         return true;
     }
 };
