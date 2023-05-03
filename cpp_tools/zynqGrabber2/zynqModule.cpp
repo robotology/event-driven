@@ -24,6 +24,7 @@
 #include <yarp/os/all.h>
 #include <event-driven/core.h>
 #include "hpuInterface.h"
+#include "vsctrlInterface.h"
 
 #include <iostream>
 #include <ctime>
@@ -45,6 +46,8 @@ class zynqGrabberModule : public yarp::os::RFModule {
 
         setName(rf.check("name", yarp::os::Value("/zynqGrabber")).asString().c_str());
 
+
+        readCameraTypes("/dev/i2c-0");
         // if (rf.check("i2cVision")) {
         //     std::cout << std::endl;
         //     std::cout.flush();
@@ -85,9 +88,6 @@ class zynqGrabberModule : public yarp::os::RFModule {
         // }
 
         if (rf.check("dataDevice")) {
-            std::cout << std::endl;
-            std::cout.flush();
-            yInfo() << "===== HPU Controller =====";
 
             hpu.params.module = getName();
             hpu.params.device = rf.find("dataDevice").asString();
@@ -107,9 +107,6 @@ class zynqGrabberModule : public yarp::os::RFModule {
                 return false;
             if(!hpu.connectYARP())
                 return false;
-
-            std::cout << std::endl;
-            std::cout.flush();
         }
 
         return true;
