@@ -134,6 +134,16 @@ public:
 
     bool configure()
     {
+        yInfo() << "===== HPU Interface =====";
+        yInfo() << params.module;
+        yInfo() << params.device;
+        if(params.hpu_read) yInfo() << "reading from device (d2y)";
+        if(params.hpu_write) yInfo() << "writing to device (y2d)";
+        if(params.gtp) yInfo() << "using gtp";
+        if(params.spinnaker) yInfo() << "Using Spinnaker";
+        if(params.spinnaker && params.spin_loopback) yWarning() << "Spinnaker in loopback mode";
+        yInfo() << "Maximum " << params.max_packet_size / 8 << "AE in a packet";
+
         // open the device
         fd = open(params.device.c_str(), O_RDWR);
         if (fd < 0) 

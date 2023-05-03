@@ -213,7 +213,7 @@ unsigned int readPoolSize(int fd)
 
 std::string HPUDeviceInfo(int fd)
 {
-    std::stringstream ss; ss.str("");
+    std::stringstream ss; ss.str("Reading Info from HPU Device ...\n");
     unsigned int version = 0;
     ioctl(fd, HPU_VERSION, &version);
 
@@ -231,10 +231,10 @@ std::string HPUDeviceInfo(int fd)
 
     unsigned int pool_count = -1;
     ioctl(fd, HPU_GET_RX_PN, &pool_count);
-    ss << "DMA pool count:" << pool_count;
+    ss << "DMA pool count:" << pool_count << std::endl;
 
-    ss << "DMA latency:" << DMA_LATENCY << "ms";
-    ss << "Mimumum driver read:" << MIN_DRIVER_READ << "bytes";
+    ss << "DMA latency:" << DMA_LATENCY << "ms" << std::endl;
+    ss << "Mimumum driver read:" << MIN_DRIVER_READ << "bytes" << std::endl;
 
     hpu_regs_t hpu_regs = {0, 0, 0};
     ioctl(fd, HPU_GEN_REG, &hpu_regs);
