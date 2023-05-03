@@ -203,17 +203,10 @@ typedef enum {
 #define DMA_LATENCY 1
 #define MIN_DRIVER_READ 8
 
-unsigned int readPoolSize(int fd)
-{
-    unsigned int pool_size = 0;
-    if(ioctl(fd, HPU_GET_RX_PS, &pool_size) < 0)
-        return -1;
-    return pool_size > 32768 ? 4096 : pool_size;
-}
-
 std::string HPUDeviceInfo(int fd)
 {
-    std::stringstream ss; ss.str("Reading Info from HPU Device ...\n");
+    std::stringstream ss; ss.str("");
+    ss << "Reading Info from HPU Device ..." << std::endl;
     unsigned int version = 0;
     ioctl(fd, HPU_VERSION, &version);
 
@@ -227,7 +220,9 @@ std::string HPUDeviceInfo(int fd)
        << "." << (int)((version >> 0) & 0xF) << std::endl;
 
     //read the pool size
-    ss << "Pool Size: " << readPoolSize(fd) << std::endl;
+    unsigned int pool_size = 0;
+    ioctl(fd, HPU_GET_RX_PS, &pool_size);
+    ss << "Pool Size: " << pool_size << std::endl;
 
     unsigned int pool_count = -1;
     ioctl(fd, HPU_GET_RX_PN, &pool_count);
@@ -246,6 +241,7 @@ std::string HPUDeviceInfo(int fd)
 
 bool configureHPURegisters(int fd, bool gtp, unsigned int ts_flag, std::string& msg) {
 
+    (void)gtp;
     msg.clear();
 
     //32 bit timestamp
@@ -264,12 +260,7 @@ bool configureHPURegisters(int fd, bool gtp, unsigned int ts_flag, std::string& 
         { msg =  "Could not write BLK_RX_THR"; return false; }
 
     //turn on and off internal FPGA data streams
-    hpu_interface_cfg_t trans_config;
     hpu_rx_interface_ioctl_t rx_config;
-    if(gtp)
-        trans_config = {{0, 0, 0, 0}, 1, 0, 0};
-    else
-        trans_config = {{1, 1, 1, 1}, 0, 0, 0};
         
     rx_config = {INTERFACE_EYE_R, {{0, 0, 0, 0}, 1, 0, 0}};
     if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
@@ -279,7 +270,7 @@ bool configureHPURegisters(int fd, bool gtp, unsigned int ts_flag, std::string& 
     if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
         { msg = "Could not write EYE_L config"; return false; }
 
-    rx_config = {INTERFACE_AUX, {{0, 0, 0, 0}, 0, 0, 0}};
+    rx_config = {INTERFACE_AUX, {{1, 1, 1, 1}, 0, 0, 0}};
     if(ioctl(fd, HPU_RX_INTERFACE, &rx_config) < 0)
         { msg = "Could not write AUX config"; return false; }
 

@@ -219,7 +219,7 @@ public:
     std::string status_message()
     {
         std::stringstream ss; ss.str("zynqGrabber running happily...\n");
-        static double previous_time = yarp::os::Time::now();
+        static double previous_time = 0;
         double dt = yarp::os::Time::now() - previous_time;
 
         if(params.hpu_write) {
