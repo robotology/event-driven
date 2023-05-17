@@ -90,33 +90,34 @@ public:
         board_size = cv::Size(rf.check("cw", Value(8)).asInt32(), rf.check("ch", Value(6)).asInt32());
 
         //get the intrinsic parameters
-        Bottle left_params  = rf.findGroup("LEFT_CAMERA_CALIBRATION");
-        Bottle right_params = rf.findGroup("RIGHT_CAMERA_CALIBRATION");
+        Bottle cam1_params = rf.findGroup("CAM1_CALIBRATION");
+        Bottle cam2_params = rf.findGroup("CAM2_CALIBRATION");
         if(left_params.isNull() || right_params.isNull()) {
-            yError() << "Please supply intrinsic calibration file with [LEFT_CAMERA_CALIBRATION] "
-                        "and [RIGHT_CAMERA_CALIBRATION] using the '--from <string>' argument";
+            yError() << "Please supply intrinsic calibration file with [CAM1_CALIBRATION] "
+                        "and [CAM2_CALIBRATION] using the '--from <string>' argument";
             return false;
         }
 
 
-
-
-        yInfo() << "EVENT CAMERA CALIBRATION";
+        yInfo() << "STEREO EVENT-CAMERA CALIBRATION";
         yInfo() << "saving extrinsic calibration:" << fout;
-        yInfo() << "board parameters:" << board_size.width << "x" << board_size.height << "at" << edge_length*1000 << "mm squares";
         str_maker.str("");
         str_maker << board_size.width << "x" << board_size.height << " at " << edge_length*1000 << "mm";
         board_info = str_maker.str();
+        yInfo() << "board parameters:" << board_info;
 
-        if(!input.open(getName("/AE:i"))) {
+        if(!cam1.open(getName("/cam1/AE:i"))) {
             yError() << "could not open input port";
             return false;
         }
-        if(!input.open(getName("/AE:i"))) {
+
+        if(!cam2.open(getName("/cam2/AE:i"))) {
             yError() << "could not open input port";
             return false;
         }
-        Network::connect("/atis3/AE:o", getName("/AE:i"), "fast_tcp");
+
+        Network::connect("/atis3/cam1/AE:o", getName("/cam1/AE:i"), "fast_tcp");
+        Network::connect("/atis3/cam2/AE:o", getName("/cam2/AE:i"), "fast_tcp");
         
         return true;
     }
