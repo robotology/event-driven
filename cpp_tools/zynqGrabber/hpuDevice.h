@@ -147,16 +147,6 @@ typedef struct {
     int auxspinn_rx_err;
 } hpu_hw_status_t;
 
-typedef enum {
-    TD,
-    EM,
-} tdorem_t;
-
-typedef enum {
-    X,
-    Y,
-} xory_t;
-
 // HPU CORE IOCTLS
 
 #define MAGIC_NUM 0

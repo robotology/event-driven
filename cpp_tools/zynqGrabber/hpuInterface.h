@@ -240,11 +240,10 @@ public:
         }
         
         if(params.hpu_read) {
-            ss << "[READ ]"
-                    << (int)(d2y_eventcount/(1000.0*dt))
-                    << "k events/s over"
-                    << d2y_packetcount
-                    << "packets" << std::endl;
+            ss << "[READ ] "
+                    << (int)(d2y_eventcount/(1000.0*dt)) << "k events/s over "
+                    << d2y_packetcount << " packets, in " 
+                    << dt << " seconds" << std::endl;
 
             d2y_eventcount = 0;
             d2y_packetcount = 0;

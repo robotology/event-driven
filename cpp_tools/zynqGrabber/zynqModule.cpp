@@ -36,9 +36,7 @@ using yarp::os::Value;
 using std::string;
 
 class zynqGrabberModule : public yarp::os::RFModule {
-    // HANDLES DEVICE CONFIGURATION
-    //autoVisionController visCtrlManager;
-    //vSkinCtrl skctrlMng;
+
     hpuInterface hpu;
 
    public:
@@ -46,46 +44,29 @@ class zynqGrabberModule : public yarp::os::RFModule {
 
         setName(rf.check("name", yarp::os::Value("/zynqGrabber")).asString().c_str());
 
-
-        readCameraTypes("/dev/i2c-0");
-        // if (rf.check("i2cVision")) {
-        //     std::cout << std::endl;
-        //     std::cout.flush();
-        //     yInfo() << "===== Vision Controller =====";
-        //     visCtrlManager.connect(rf.find("i2cVision").asString());
-        //     visCtrlManager.configureAndActivate(rf);
-        //     std::cout << std::endl;
-        //     std::cout.flush();
-        // }
-
-        // if (rf.check("skinCtrl")) {
-        //     std::cout << std::endl;
-        //     std::cout.flush();
-        //     yInfo() << "===== Skin Controller =====";
-
-        //     skctrlMng = vSkinCtrl(rf.find("skinCtrl").asString(), I2C_ADDRESS_AUX);
-
-        //     if (!skctrlMng.connect()) {
-        //         yError() << "Could not connect to skin controller";
-        //         return false;
-        //     }
-
-        //     if (!skctrlMng.configure()) {
-        //         yError() << "Could not set skin defaults";
-        //         return false;
-        //     }
-
-        //     // config values
-        //     yarp::os::Bottle &cnfglists = rf.findGroup("SKIN_CNFG");
-        //     if (cnfglists.isNull()) {
-        //         yWarning() << "No Skin Parameters Found";
-        //     } else if (!skctrlMng.configureRegisters(cnfglists)) {
-        //         yError() << "Could not configure ini parameters";
-        //         return false;
-        //     }
-        //     std::cout << std::endl;
-        //     std::cout.flush();
-        // }
+        if (rf.check("i2cVision"))
+        {
+            std::string i2cdev = rf.find("i2cVision").asString();
+            yInfo() << "=== VISION CONTORLLER" << i2cdev << "===";
+            if (readCameraTypes(i2cdev) != 3)
+            {
+                yInfo() << "This version of zynqGrabber only implemented for GEN3";
+                return false;
+            }
+            if (!rf.check("no_reset"))
+                resetFPGA(i2cdev);
+            turnOnATIS3GTP(i2cdev, 
+                           rf.check("sensitivity", Value(65)).asInt32(), 
+                           rf.check("refractory", Value(1)).asInt32());
+            if(rf.check("left_off")) {
+                atisLeftOff(i2cdev);
+                yInfo() << "[OFF] left camera";
+            }
+            if(rf.check("right_off")) {
+                atisRightOff(i2cdev);
+                yInfo() << "[OFF] right camera";
+            }
+        }
 
         if (rf.check("dataDevice")) {
 
@@ -114,7 +95,6 @@ class zynqGrabberModule : public yarp::os::RFModule {
 
     bool interruptModule() override {
         hpu.stop();
-        //visCtrlManager.disconnect();
         return true;
     }
 
