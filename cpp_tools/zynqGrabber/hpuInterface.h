@@ -97,11 +97,14 @@ private:
                 yError() << "[READ ] partial read. bad fault. get help.";
             
             //stats
-            d2y_eventcount += buffer.size();
+            int events_read = r / sizeof(ev::AE);
+            d2y_eventcount += events_read;
             d2y_packetcount++;
 
             //sort the events
-            for(auto &event : buffer) {
+            for(size_t i = 0; i < events_read; i++) {
+                ev::AE &event = buffer[i];
+                event.y = 479 - event.y;
                 if(event.channel == ev::CAMERA_LEFT)
                     packet_left->push_back(event);
                 else
@@ -109,9 +112,13 @@ private:
                     
             }
 
-            if(!d2y_port.isWriting() && packet_left->size() > 0)
+            if(d2y_port.isWriting() || d2y_port_2.isWriting())
+                continue;
+
+            double toc = yarp::os::Time::now();
+
+            if(packet_left->size()) 
             {
-                double toc = yarp::os::Time::now();
                 packet_left->duration(toc - tic_left);
                 tic_left = toc;
                 static int sequence_left = 0;
@@ -120,17 +127,15 @@ private:
                 packet_left = &d2y_port.prepare();
             }
 
-            if(!d2y_port_2.isWriting() && packet_right->size() > 0)
+            if(packet_right->size())
             {
-                double toc = yarp::os::Time::now();
                 packet_right->duration(toc - tic_right);
                 tic_right = toc;
                 static int sequence_right = 0;
-                packet_left->envelope() = {sequence_right++, toc};
+                packet_right->envelope() = {sequence_right++, toc};
                 d2y_port_2.write();
                 packet_right = &d2y_port_2.prepare();
-
-            }     
+            }   
         }
 
         d2y_port.unprepare();
@@ -185,8 +190,12 @@ private:
     {
         if(params.hpu_write)
             y2d_thread = std::thread([this]{y2d_run();});
-        if(params.hpu_read)
-            d2y_thread = std::thread([this]{d2y_run_stereo();});
+        if(params.hpu_read) {
+            if(params.stereo)
+                d2y_thread = std::thread([this]{d2y_run_stereo();});
+            else
+                d2y_thread = std::thread([this]{d2y_run();});
+        }
     }
 
 public:
