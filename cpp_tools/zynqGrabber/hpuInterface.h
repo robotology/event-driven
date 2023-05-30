@@ -101,6 +101,10 @@ private:
             d2y_eventcount += events_read;
             d2y_packetcount++;
 
+            //TODO:
+            //add filter
+            //add stereo as default
+
             //sort the events
             for(size_t i = 0; i < events_read; i++) {
                 ev::AE &event = buffer[i];
