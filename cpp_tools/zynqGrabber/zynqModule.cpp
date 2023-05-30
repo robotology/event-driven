@@ -83,6 +83,8 @@ class zynqGrabberModule : public yarp::os::RFModule {
             hpu.params.hpu_write = rf.check("hpu_write") &&
                                    rf.check("hpu_write", yarp::os::Value(true)).asBool();
             hpu.params.max_packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt32();
+            hpu.params.stereo = rf.check("stereo") &&
+                                rf.check("stereo", Value(true)).asBool();
 
             if(!hpu.configure())
                 return false;
