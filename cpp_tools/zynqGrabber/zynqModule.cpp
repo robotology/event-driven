@@ -55,6 +55,7 @@ class zynqGrabberModule : public yarp::os::RFModule {
             }
             if (!rf.check("no_reset"))
                 resetFPGA(i2cdev);
+            
             turnOnATIS3GTP(i2cdev, 
                            rf.check("sensitivity", Value(65)).asInt32(), 
                            rf.check("refractory", Value(1)).asInt32());
@@ -83,6 +84,9 @@ class zynqGrabberModule : public yarp::os::RFModule {
             hpu.params.hpu_write = rf.check("hpu_write") &&
                                    rf.check("hpu_write", yarp::os::Value(true)).asBool();
             hpu.params.max_packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt32();
+            hpu.params.stereo = rf.check("stereo") &&
+                                rf.check("stereo", Value(true)).asBool();
+            hpu.params.filter = rf.check("filter", Value(0.0)).asFloat64();
 
             if(!hpu.configure())
                 return false;

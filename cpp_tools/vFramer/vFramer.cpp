@@ -42,11 +42,8 @@ public:
         if(rf.check("h") || rf.check("help"))
         {
             yInfo() << "vFramer - visualisation of event data";
-            yInfo() << "======================";
-            yInfo() << "--iso   [remote] : iso view,  optionally connect to remote (string)";
-            yInfo() << "--eros  [remote] : eros view, optionally connect to remote (string)";
-            yInfo() << "--grey  [remote] : grey view, optionally connect to remote (string)";
-            yInfo() << "--black [remote] : black view (calibration), optionally connect to remote (string)";
+            yInfo() << "--<iso, grey, black, eros, corner> : drawer style";
+            yInfo() << "--src[1-9] : connect to up to 10 remotes";
             yInfo() << "======================";
             yInfo() << "--name : global module name for ports";
             yInfo() << "--height, --width : set resolution";
@@ -85,66 +82,40 @@ public:
         bool flip =
             rf.check("flip") && rf.check("flip", Value(true)).asBool();
 
-        if (rf.check("grey") || rf.check("gray")) {
-            string remote = rf.find("grey").asString();
-            if(!remote.size()) remote = rf.find("gray").asString();
-            publishers.push_back(new greyDrawer);
-            if (!publishers.back()->initialise(getName("/grey"), height, width, window_size, yarp_publish, remote)) {
-                yError() << "[GREY DRAW] failure";
-                return false;
-            } else {
-                yInfo() << "[GREY DRAW] success";
-            }
-            publishers.back()->setPeriod(period);
-        }
+        std::string style = "iso";
+        if(rf.check("eros")) style = "eros";
+        if(rf.check("grey")||rf.check("gray")) style = "grey";
+        if(rf.check("black")) style = "black";
+        if(rf.check("corner")) style = "corner";
 
-        if (rf.check("black")) {
-            string remote = rf.find("black").asString();
-            publishers.push_back(new blackDrawer);
-            if (!publishers.back()->initialise(getName("/black"), height, width, window_size, yarp_publish, remote)) {
-                yError() << "[BLACK DRAW] failure";
-                return false;
-            } else {
-                yInfo() << "[BLACK DRAW] success";
-            }
-            publishers.back()->setPeriod(period);
-        }
+        std::stringstream remote_id;
+        for(int i = 0; i < 10; i++) 
+        {
+            remote_id.str("src");
+            if(i > 0) remote_id << "src" << i;
+            if(!rf.check(remote_id.str())) continue; //srcN not supplied
 
-        if (rf.check("eros")) {
-            string remote = rf.find("eros").asString();
-            publishers.push_back(new erosDrawer(kernel_size, decay));
-            if (!publishers.back()->initialise(getName("/eros"), height, width, window_size, yarp_publish, remote)) {
-                yError() << "[EROS DRAW] failure";
-                return false;
-            } else {
-                yInfo() << "[EROS DRAW] success";
-            }
-            publishers.back()->setPeriod(period);
+            std::string remote = rf.find(remote_id.str()).asString();
             
-        }
-
-        if (rf.check("corner")) {
-            string remote = rf.find("corner").asString();
-            publishers.push_back(new cornerDrawer());
-            if (!publishers.back()->initialise(getName("/corner"), height, width, window_size, yarp_publish, remote)) {
-                yError() << "[CORNER DRAW] failure";
-                return false;
+            //add a drawer with the source
+            if(style=="iso") publishers.push_back(new isoDrawer);
+            if(style=="grey" || style=="gray") publishers.push_back(new greyDrawer);
+            if(style=="black") publishers.push_back(new blackDrawer);
+            if(style=="eros") publishers.push_back(new erosDrawer(kernel_size, decay));
+            if(style=="corner") publishers.push_back(new cornerDrawer);
+            
+            if(publishers.back()->initialise(remote, height, width, window_size, yarp_publish, remote))
+            {
+                yInfo() << "Drawing" << style << "from" << remote;
             } else {
-                yInfo() << "[CORNER DRAW] success";
+                yError() << "[" << style << "DRAW ] failure";
             }
             publishers.back()->setPeriod(period);
         }
 
-        if (rf.check("iso") || !publishers.size()) {
-            string remote = rf.find("iso").asString();
-            publishers.push_back(new isoDrawer);
-            if (!publishers.back()->initialise(getName("/iso"), height, width, window_size, yarp_publish, remote)) {
-                yError() << "[ISO DRAW] failure";
-                return false;
-            } else {
-                yInfo() << "[ISO DRAW] success";
-            }
-            publishers.back()->setPeriod(period);
+        if(publishers.empty()) {
+            yError() << "No sources provided --src, --src[1-9]";
+            return false;
         }
 
         yInfo() << "Starting publishers";
