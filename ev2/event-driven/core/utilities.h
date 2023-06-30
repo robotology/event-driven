@@ -24,10 +24,9 @@
 #include <fstream>
 #include <math.h>
 #include <vector>
+#include "codec.h"
 
 namespace ev {
-
-
 
 /// \brief camera values for stereo set-up
 enum { CAMERA_LEFT = 0, CAMERA_RIGHT = 1 } ;
@@ -205,6 +204,37 @@ public:
         return -1;
     }
 
+};
+
+class refractory_filter
+{
+private:
+
+    std::vector<double> times;
+    std::vector<bool>   pols;
+    double period;
+    int width;
+
+public:
+
+    void initialise(int width, int height, int seconds)
+    {
+        times.resize(width * height, 0.0);
+        pols.resize(width * height, 0.0);
+        period = seconds;
+    }
+
+    bool check(ev::AE &v)
+    {
+        int pass = true;
+        int i = v.y * width + v.x;
+        if((v.p == pols[i]) && (v.ts - times[i] < period))
+            pass = false;
+        pols[i] = v.p;
+        times[i] = v.ts;
+
+        return pass;
+    }
 };
 
 

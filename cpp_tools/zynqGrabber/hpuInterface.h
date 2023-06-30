@@ -83,6 +83,10 @@ private:
         packet_right->size(max_events_per_read);
         double tic_right = yarp::os::Time::now();
 
+        ev::refractory_filter rf;
+        if(params.filter > 0.0)
+            rf.initialise(640, 480, params.filter);
+
         while(params.hpu_read) {
 
             //read data
@@ -102,18 +106,19 @@ private:
             d2y_packetcount++;
 
             //TODO:
-            //add filter
             //add stereo as default
 
             //sort the events
             for(size_t i = 0; i < events_read; i++) {
                 ev::AE &event = buffer[i];
+                if(params.filter && !rf.check(event)) {
+                    continue;
+                }
                 event.y = 479 - event.y;
                 if(event.channel == ev::CAMERA_LEFT)
                     packet_left->push_back(event);
                 else
                     packet_right->push_back(event);
-                    
             }
 
             if(d2y_port.isWriting() || d2y_port_2.isWriting())
@@ -214,6 +219,7 @@ public:
         bool spin_loopback{false};
         unsigned int max_packet_size{8*7500};
         bool stereo{false};
+        double filter{0.0};
 
     } params;
 
@@ -229,6 +235,7 @@ public:
         if(params.spinnaker && params.spin_loopback) yWarning() << "Spinnaker in loopback mode";
         yInfo() << "Maximum " << params.max_packet_size / 8 << "AE in a packet";
         if(params.stereo) yInfo() << "Splitting stereo (d2y)";
+        if(params.filter > 0.0) yInfo() << "Artificial refractory period:" << params.filter << "seconds";
 
         // open the device
         fd = open(params.device.c_str(), O_RDWR);
