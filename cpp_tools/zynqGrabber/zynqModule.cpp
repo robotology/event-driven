@@ -55,7 +55,8 @@ class zynqGrabberModule : public yarp::os::RFModule {
             }
             if (!rf.check("no_reset"))
                 resetFPGA(i2cdev);
-                turnOnATIS3GTP(i2cdev, 
+            
+            turnOnATIS3GTP(i2cdev, 
                            rf.check("sensitivity", Value(65)).asInt32(), 
                            rf.check("refractory", Value(1)).asInt32());
             if(rf.check("left_off")) {
