@@ -211,27 +211,27 @@ class refractory_filter
 private:
 
     std::vector<double> times;
-    std::vector<bool>   pols;
+    std::vector<int>   pols;
     double period;
     int width;
 
 public:
 
-    void initialise(int width, int height, int seconds)
+    void initialise(int width, int height, double seconds)
     {
         times.resize(width * height, 0.0);
         pols.resize(width * height, 0.0);
         period = seconds;
     }
 
-    bool check(ev::AE &v)
+    bool check(const ev::AE &v, const double &ts)
     {
         int pass = true;
         int i = v.y * width + v.x;
-        if((v.p == pols[i]) && (v.ts - times[i] < period))
+        if((v.p == pols[i]) && (ts - times[i] < period))
             pass = false;
         pols[i] = v.p;
-        times[i] = v.ts;
+        times[i] = ts;
 
         return pass;
     }

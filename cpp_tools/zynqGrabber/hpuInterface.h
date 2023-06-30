@@ -49,6 +49,7 @@ private:
     int y2d_eventcount{0};
     int d2y_eventcount{0};
     int d2y_packetcount{0};
+    int d2y_filtered{0};
 
     //this thread runs constantly to write YARP data to the device (e.g. spinnaker)
     void y2d_run() 
@@ -83,9 +84,9 @@ private:
         packet_right->size(max_events_per_read);
         double tic_right = yarp::os::Time::now();
 
-        ev::refractory_filter rf;
+        ev::refractory_filter refrac;
         if(params.filter > 0.0)
-            rf.initialise(640, 480, params.filter);
+            refrac.initialise(640, 480, params.filter);
 
         while(params.hpu_read) {
 
@@ -105,13 +106,13 @@ private:
             d2y_eventcount += events_read;
             d2y_packetcount++;
 
-            //TODO:
-            //add stereo as default
+            double toc = yarp::os::Time::now();
 
             //sort the events
             for(size_t i = 0; i < events_read; i++) {
                 ev::AE &event = buffer[i];
-                if(params.filter && !rf.check(event)) {
+                if(params.filter > 0.0 && !refrac.check(event, toc)) {
+                    d2y_filtered++;
                     continue;
                 }
                 event.y = 479 - event.y;
@@ -124,7 +125,7 @@ private:
             if(d2y_port.isWriting() || d2y_port_2.isWriting())
                 continue;
 
-            double toc = yarp::os::Time::now();
+            
 
             if(packet_left->size()) 
             {
@@ -345,10 +346,12 @@ public:
             ss << "[READ ] "
                     << (int)(d2y_eventcount/(1000.0*dt)) << "k events/s over "
                     << d2y_packetcount << " packets, in " 
-                    << dt << " seconds" << std::endl;
+                    << dt << " seconds ("
+                    << (int)(100.0 * d2y_filtered / (double)d2y_eventcount) << "% filtered)" << std::endl;
 
             d2y_eventcount = 0;
             d2y_packetcount = 0;
+            d2y_filtered = 0;
         }
 
         previous_time += dt;
