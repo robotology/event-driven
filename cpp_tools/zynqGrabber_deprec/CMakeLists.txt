@@ -1,6 +1,13 @@
 project(zynqGrabber)
 
-add_executable(${PROJECT_NAME} zynqModule.cpp hpuInterface.h hpuDevice.h vsctrlInterface.h vsctrlDevice.h)
+file(GLOB source src/*.cpp)
+file(GLOB header include/*.h)
+file(GLOB biasfiles bias_files/*.ini)
+
+add_executable(${PROJECT_NAME} ${source} ${header})
+
+message(STATUS "${PROJECT_SOURCE_DIR}")
+target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-overflow)
 
