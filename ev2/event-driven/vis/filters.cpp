@@ -39,15 +39,15 @@
 namespace ev {
 
 
-vNoiseFilter::vNoiseFilter() : x_sfilter(false), x_tfilter(false), t_sfilter(0),
-    s_sfilter(1), t_tfilter(0) {}
+vNoiseFilter::vNoiseFilter() : x_sfilter(false), x_tfilter(false), t_sfilter(0), t_tfilter(0) {}
 
 void vNoiseFilter::initialise(unsigned int width, unsigned int height)
 {
     res.height = height;
     res.width = width;
-    SAE = cv::Mat::zeros(height, width, CV_64F);
-    POL = cv::Mat::zeros(height, width, CV_8U);
+    SAE = cv::Mat::zeros(height+2, width+2, CV_64F);
+    POL = cv::Mat::zeros(height+2, width+2, CV_8U);
+    SPAT = cv::Mat::zeros(height+2, width+2, CV_64F);
     initialised = true;
 }
 
@@ -62,47 +62,30 @@ void vNoiseFilter::use_temporal_filter(double t_param)
     t_tfilter = t_param;
 }
 
-void vNoiseFilter::use_spatial_filter(double t_param, unsigned int s_param)
+void vNoiseFilter::use_spatial_filter(double t_param)
 {
     x_sfilter = true;
     t_sfilter = t_param;
-    s_sfilter = s_param;
 }
 
 bool vNoiseFilter::check(int x, int y, int p, double t)
 {
-
+    x++; y++;
     auto add = true;
 
     if(x_tfilter) {
-        if(p == POL.at<uint8_t>(y, x)) {
-            if(t - SAE.at<double>(y, x) < t_tfilter) {
-                SAE.at<double>(y, x) = t;
-                return false;
-            }
-        }
+        if((p == POL.at<uint8_t>(y, x)) && (t - SAE.at<double>(y, x) < t_tfilter))
+            add = false;
+        SAE.at<double>(y, x) = t;
+        POL.at<uint8_t>(y, x) = p;
+        if(!add) return false;
     }
 
     if(x_sfilter) {
-        add = false;
-        auto xl = std::max(x-s_sfilter, 0);
-        auto xh = std::min(x+s_sfilter+1, (int)(res.width)); //+1 becuase I use < sign
-        auto yl = std::max(y-s_sfilter, 0);
-        auto yh = std::min(y+s_sfilter+1, (int)(res.height)); //+1 becuase I use < sign
-
-        for(auto xi = xl; xi < xh; ++xi) {
-            for(auto yi = yl; yi < yh; ++yi) {
-                double dt = t - SAE.at<double>(yi, xi);
-                if(dt < t_sfilter) {
-                    add = true;
-                    break;
-                }
-            }
-        }
+        if(t - SPAT.at<double>(y, x) > t_sfilter)
+            add = false;
+        SPAT({x-1, y-1, 3, 3}) = t;
     }
-
-    POL.at<uint8_t>(y, x) = p;
-    SAE.at<double>(y, x) = t;
 
     return add;
 }

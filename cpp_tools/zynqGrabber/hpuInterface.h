@@ -21,6 +21,7 @@
 
 #include <yarp/os/all.h>
 #include <event-driven/core.h>
+#include <event-driven/vis.h>
 #include <fcntl.h>
 #include <thread>
 #include <iostream>
@@ -84,9 +85,12 @@ private:
         packet_right->size(max_events_per_read);
         double tic_right = yarp::os::Time::now();
 
-        ev::refractory_filter refrac;
-        if(params.filter > 0.0)
-            refrac.initialise(640, 480, params.filter);
+        ev::vNoiseFilter refrac;
+        if(params.filter > 0.0) {
+            refrac.initialise(640, 480);
+            refrac.use_spatial_filter(params.filter);
+            refrac.use_temporal_filter(params.filter);
+        }
 
         while(params.hpu_read) {
 
@@ -111,7 +115,7 @@ private:
             //sort the events
             for(size_t i = 0; i < events_read; i++) {
                 ev::AE &event = buffer[i];
-                if(params.filter > 0.0 && !refrac.check(event, toc)) {
+                if(params.filter > 0.0 && !refrac.check(event.x, event.y, event.p, toc)) {
                     d2y_filtered++;
                     continue;
                 }

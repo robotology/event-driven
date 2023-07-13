@@ -32,11 +32,11 @@ private:
     bool x_tfilter;
 
     double t_sfilter;
-    int s_sfilter;
     double t_tfilter;
 
     cv::Mat SAE;
     cv::Mat POL;
+    cv::Mat SPAT;
 
     resolution res;
     bool initialised{false};
@@ -55,7 +55,7 @@ public:
     void use_temporal_filter(double t_param);
 
     /// \brief filter using spatial coincidence
-    void use_spatial_filter(double t_param, unsigned int s_param = 1);
+    void use_spatial_filter(double t_param);
 
     /// \brief classifies the event as noise or signal
     /// \returns false if the event is noise
