@@ -63,6 +63,7 @@ private:
     int buffer_size{0};
     int buffer_used{0};
     int b_sel{0};
+    double limit{-1};
     static constexpr void switch_buffer(int &buf_i) {buf_i = (buf_i + 1) % 2;};
 
 public:
@@ -76,6 +77,7 @@ public:
             yInfo() << "--name <str>\t: internal port name prefix";
             yInfo() << "--buffer_size <int>\t: set initial maximum buffer size";
             yInfo() << "--file <str>\t: (optional) provide file path otherwise search for camera to connect";
+            yInfo() << "--limit <int>\t: (optional) provide a hard limit on event rate (in 10^6 events/s)";
             return false;
         }
 
@@ -114,6 +116,10 @@ public:
 
         record_mode = rf.check("record_mode") && 
                       rf.check("record_mode", Value(true)).asBool();
+
+        limit = rf.check("limit", Value(-1)).asFloat64();
+        if(limit < 0) limit  = DBL_MAX;
+        else          limit *= 1e6;
 
         //yarp::os::Network::connect(getName("/AE:o"), "/vPreProcess/AE:i", "fast_tcp");
 
@@ -289,8 +295,11 @@ public:
             current_buffer.duration(yarp::os::Time::now() - tic);
             tic += current_buffer.duration();
             yarpstamp.update();
-            output_port.setEnvelope(yarpstamp);
-            output_port.write(current_buffer);
+            if(current_buffer.size() / current_buffer.duration() < limit) 
+            {
+                output_port.setEnvelope(yarpstamp);
+                output_port.write(current_buffer);
+            }
             counter_packets++;
             counter_events += current_buffer.size();
             current_buffer.clear();
