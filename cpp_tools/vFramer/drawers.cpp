@@ -155,7 +155,7 @@ double isoDrawer::updateImage()
     int step = inf.count / max_events_to_draw; // a maximum of events to draw
 
     canvas.setTo(white);
-    iso_drawer.time_draw< window<AE>::iterator >(canvas, input.begin(), input.end(), 0);
+    iso_drawer.time_draw< window<AE>::iterator >(canvas, input.begin(), input.end(), inf.count);
 
     return inf.timestamp;
 }
