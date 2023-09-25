@@ -87,7 +87,7 @@ public:
     {
         //first update the EROS
         for(auto &v = begin; v != end; v++) {
-            if(eros.update(v->x, v->y)) continue;
+            eros.update(v->x, v->y);
 
             float& score = LUT.at<float>(v->y, v->x);
             if(score > threshold)
