@@ -34,14 +34,13 @@ using TS = timeStamp;
 typedef struct addressEvent : public timeStamp {
     static const std::string tag;
     unsigned int p:1;
-    unsigned int x:10;
-    unsigned int _xfill:1;
-    unsigned int y:9;
-    unsigned int corner:1;
+    unsigned int x:11;
+    unsigned int y:10;
     unsigned int channel:1;
     unsigned int type:1;
     unsigned int skin:1;
-    unsigned int _fill:7;
+    unsigned int corner:1;
+    unsigned int _fill:6;
 } addressEvent;
 using AE = addressEvent;
 
