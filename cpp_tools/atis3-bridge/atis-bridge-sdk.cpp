@@ -54,6 +54,7 @@ private:
     int counter_events{0};
     static constexpr double period{1.0};
     bool record_mode{false};
+    bool gen3{false};
 
     ev::vNoiseFilter nf;
 
@@ -63,6 +64,7 @@ private:
     int buffer_size{0};
     int buffer_used{0};
     int b_sel{0};
+    double limit{-1};
     static constexpr void switch_buffer(int &buf_i) {buf_i = (buf_i + 1) % 2;};
 
 public:
@@ -76,6 +78,8 @@ public:
             yInfo() << "--name <str>\t: internal port name prefix";
             yInfo() << "--buffer_size <int>\t: set initial maximum buffer size";
             yInfo() << "--file <str>\t: (optional) provide file path otherwise search for camera to connect";
+            yInfo() << "--limit <int>\t: (optional) provide a hard limit on event rate (in 10^6 events/s)";
+            yInfo() << "--gen3      \t: (optional) must be set when using a ATIS gen3 camera";
             return false;
         }
 
@@ -114,6 +118,12 @@ public:
 
         record_mode = rf.check("record_mode") && 
                       rf.check("record_mode", Value(true)).asBool();
+        gen3 = rf.check("gen3") && 
+               rf.check("gen3", Value(true)).asBool();
+
+        limit = rf.check("limit", Value(-1)).asFloat64();
+        if(limit < 0) limit  = DBL_MAX;
+        else          limit *= 1e6;
 
         //yarp::os::Network::connect(getName("/AE:o"), "/vPreProcess/AE:i", "fast_tcp");
 
@@ -139,20 +149,28 @@ public:
 
 #if defined MetavisionSDK_FOUND     
         
-        I_LL_Biases* bias_control = bias.get_facility();
-        std::map<std::string, int> bias_vals = bias_control->get_all_biases();
-        yInfo() << "Default Biases:" << bias_vals["bias_diff_off"] << bias_vals["bias_diff_on"] << "[diff_off diff_on]";
-        //for(auto i : bias_vals) yInfo() << i.first << i.second;
-        if(bias_sens) {
-            int diff_on  = (66 - 350) * 0.01 * bias_sens + 650 - 66;
-            int diff_off = (66 + 200) * 0.01 * bias_sens + 100 - 66;
-            bias_control->set("bias_diff_on", diff_on);
-            bias_control->set("bias_diff_off", diff_off);
-            bias_vals = bias_control->get_all_biases();
-            yInfo() << "        Biases:" << bias_vals["bias_diff_off"] << bias_vals["bias_diff_on"] << "[diff_off diff_on]";
-        }
-        if(bias_pol) {
-            yWarning() << "polarity bias not implemented for VGA";
+        if(gen3) {
+            I_LL_Biases* bias_control = bias.get_facility();
+            std::map<std::string, int> bias_vals = bias_control->get_all_biases();
+            yInfo() << "Default Biases:" << bias_vals["bias_diff_off"] << bias_vals["bias_diff_on"] << "[diff_off diff_on]";
+            //for(auto i : bias_vals) yInfo() << i.first << i.second;
+            if(bias_sens) {
+                int diff_on  = (66 - 350) * 0.01 * bias_sens + 650 - 66;
+                int diff_off = (66 + 200) * 0.01 * bias_sens + 100 - 66;
+                bias_control->set("bias_diff_on", diff_on);
+                bias_control->set("bias_diff_off", diff_off);
+                bias_vals = bias_control->get_all_biases();
+                yInfo() << "        Biases:" << bias_vals["bias_diff_off"] << bias_vals["bias_diff_on"] << "[diff_off diff_on]";
+            }
+            if(bias_pol) {
+                yWarning() << "polarity bias not implemented for VGA";
+            }
+        } else { //gen4
+            if(bias_sens) {
+                I_LL_Biases* bias_control = bias.get_facility();
+                bias_control->set("bias_diff_on", 1.4*(100-bias_sens));
+                bias_control->set("bias_diff_off", 1.4*(100-bias_sens));
+            }
         }
 #else
         yInfo() << "Default Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
@@ -289,8 +307,11 @@ public:
             current_buffer.duration(yarp::os::Time::now() - tic);
             tic += current_buffer.duration();
             yarpstamp.update();
-            output_port.setEnvelope(yarpstamp);
-            output_port.write(current_buffer);
+            if(current_buffer.size() / current_buffer.duration() < limit) 
+            {
+                output_port.setEnvelope(yarpstamp);
+                output_port.write(current_buffer);
+            }
             counter_packets++;
             counter_events += current_buffer.size();
             current_buffer.clear();
