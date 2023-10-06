@@ -59,6 +59,7 @@ public:
             yInfo() << "--h <int> --w <int>\t: camera resolution";
             yInfo() << "--ch <int> --cw <int>\t: checkerboard corners height/width";
             yInfo() << "--cs <double>\t: checker square edge length in metres";
+            yInfo() << "--cam <string>\t: port name of event camera";
             return false;
         }
 
@@ -86,7 +87,7 @@ public:
         }
         edge_length = rf.find("cs").asFloat32();
 
-        img_size = cv::Size(rf.check("w", Value(640)).asInt32(), rf.check("h", Value(480)).asInt32());
+        img_size = cv::Size(rf.check("w", Value(1280)).asInt32(), rf.check("h", Value(720)).asInt32());
         board_size = cv::Size(rf.check("cw", Value(8)).asInt32(), rf.check("ch", Value(6)).asInt32());
 
         yInfo() << "EVENT CAMERA CALIBRATION";
@@ -102,7 +103,8 @@ public:
             yError() << "could not open input port";
             return false;
         }
-        Network::connect("/atis3/AE:o", getName("/AE:i"), "fast_tcp");
+
+        Network::connect(rf.check("cam", Value("/atis3/AE:o")).asString(), getName("/AE:i"), "fast_tcp");
         
         return true;
     }
