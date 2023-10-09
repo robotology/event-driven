@@ -33,14 +33,14 @@ private:
     //provided parameters
     cv::Size img_size_1, img_size_2, board_size;
     double edge_length;
+    cv::Mat camera_matrix_1, camera_matrix_2;
+    cv::Mat dist_coeffs_1, dist_coeffs_2;
 
     //calculated parameters
-    cv::Mat camera_matrix;
-    cv::Mat dist_coeffs;
-    cv::Mat map1, map2;
+    cv::Mat R, T, E, F;
 
     //internal storage
-    std::vector<std::vector<cv::Point2f>> image_points;
+    std::vector<std::vector<cv::Point2f>> image_points_1, image_points_2;
     std::stringstream str_maker;
     std::string board_info;
 
@@ -97,7 +97,7 @@ public:
         ResourceFinder calibfinder;
 
         if(!rf.check("cam1cal")) {
-            yError() << "please supply left camera parameters using --cam1cal <path>";
+            yError() << "please supply camera parameters using --cam1cal <path>";
             return false;
         }
         calibfinder.setDefault("from", rf.find("cam1cal").asString());
@@ -108,9 +108,14 @@ public:
             return false;
         }
         img_size_1 = {params_1.find("w").asInt32(), params_1.find("h").asInt32()};
+        camera_matrix_1 = (cv::Mat_<double>(3, 3) << params_1.find("fx").asFloat64(), 0, params_1.find("cx").asFloat64(), 
+                                                     0, params_1.find("fy").asFloat64(), params_1.find("cy").asFloat64(), 
+                                                     0, 0, 1);
+        dist_coeffs_1 = (cv::Mat_<double>(1, 5) << params_1.find("k1").asFloat64(), params_1.find("k2").asFloat64(), params_1.find("p1").asFloat64(), params_1.find("p2").asFloat64(), 0);
+        //camera_matrix_1 
 
         if(!rf.check("cam2cal")) {
-            yError() << "please supply left camera parameters using --cam2cal <path>";
+            yError() << "please supply camera parameters using --cam2cal <path>";
             return false;
         }
         calibfinder.setDefault("from", rf.find("cam2cal").asString());
@@ -121,6 +126,10 @@ public:
             return false;
         }
         img_size_2 = {params_2.find("w").asInt32(), params_2.find("h").asInt32()};
+        camera_matrix_2 = (cv::Mat_<double>(3, 3) << params_2.find("fx").asFloat64(), 0, params_2.find("cx").asFloat64(), 
+                                                     0, params_2.find("fy").asFloat64(), params_2.find("cy").asFloat64(), 
+                                                     0, 0, 1);
+        dist_coeffs_2 = (cv::Mat_<double>(1, 5) << params_2.find("k1").asFloat64(), params_2.find("k2").asFloat64(), params_2.find("p1").asFloat64(), params_2.find("p2").asFloat64(), 0);
 
         yInfo() << "STEREO EVENT-CAMERA CALIBRATION";
         yInfo() << "saving extrinsic calibration:" << fout;
@@ -191,12 +200,13 @@ public:
 
         // bool calibrated = !map1.empty() && !map2.empty();
         if(found_1 && found_2) {
-            //image_points.push_back(corners);
+            image_points_1.push_back(corners_1);
             cv::line(detected_img_1, corners_1[bci[0]], corners_1[bci[1]], violet);
             cv::line(detected_img_1, corners_1[bci[0]], corners_1[bci[2]], violet);
             cv::line(detected_img_1, corners_1[bci[3]], corners_1[bci[1]], violet);
             cv::line(detected_img_1, corners_1[bci[3]], corners_1[bci[2]], violet);
 
+            image_points_2.push_back(corners_2);
             cv::line(detected_img_2, corners_2[bci[0]], corners_2[bci[1]], violet);
             cv::line(detected_img_2, corners_2[bci[0]], corners_2[bci[2]], violet);
             cv::line(detected_img_2, corners_2[bci[3]], corners_2[bci[1]], violet);
@@ -211,12 +221,12 @@ public:
         // } else {
             black_img_1 += detected_img_1;
             black_img_2 += detected_img_2;
-            // cv::rectangle(black_img, cv::Rect(0, 0, img_size.width, img_size.height), red*0.8, 10);
-            // cv::putText(black_img, "Collecting images... press SPACE to perform calibration", cv::Point(img_size.width*0.05, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
-            // cv::putText(black_img, board_info, cv::Point(img_size.width*0.05, img_size.height*0.05), cv::FONT_HERSHEY_PLAIN, 1.0, white);
-            // str_maker.str("");
-            // str_maker << image_points.size();
-            // cv::putText(black_img, str_maker.str(), cv::Point(img_size.width*0.95, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
+             cv::rectangle(black_img_1, cv::Rect(0, 0, img_size_1.width, img_size_1.height), red*0.8, 10);
+             cv::putText(black_img_1, "Collecting images... press SPACE to perform calibration", cv::Point(img_size_1.width*0.05, img_size_1.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
+             cv::putText(black_img_1, board_info, cv::Point(img_size_1.width*0.05, img_size_1.height*0.05), cv::FONT_HERSHEY_PLAIN, 1.0, white);
+             str_maker.str("");
+             str_maker << image_points_1.size();
+             cv::putText(black_img_1, str_maker.str(), cv::Point(img_size_1.width*0.95, img_size_1.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
         // }
         cv::imshow("camera 1", black_img_1);
         cv::imshow("camera 2", black_img_2);
@@ -225,7 +235,7 @@ public:
             yInfo() << "calibrating...";
             calib_wrapper();
             yInfo() << "saving ... ";
-            save_file_wrapper();
+            //save_file_wrapper();
             yInfo() << "done .. ";
         }
         if(c == 27) 
@@ -253,41 +263,30 @@ public:
 
         object_points[0][board_size.width - 1].x = object_points[0][0].x + (edge_length * (board_size.width - 1));
         processed_object_points = object_points[0];
-        object_points.resize(image_points.size(), object_points[0]);
-
-        //initialise camera matrices
-        camera_matrix = cv::Mat::eye(3, 3, CV_64F);
-        dist_coeffs = cv::Mat::zeros(8, 1, CV_64F);
+        object_points.resize(image_points_1.size(), object_points[0]);
 
         // call calibrate camera
-        double rms = cv::calibrateCamera(object_points, image_points, img_size_1,
-                                         camera_matrix, dist_coeffs, rvecs, tvecs, cv::CALIB_USE_LU | cv::CALIB_FIX_K3);
+        cv::stereoCalibrate(object_points, image_points_1, image_points_2, camera_matrix_1, dist_coeffs_1, camera_matrix_2, dist_coeffs_2, img_size_1, R, T, E, F, cv::CALIB_FIX_INTRINSIC|cv::CALIB_ZERO_TANGENT_DIST);
 
-        cv::initUndistortRectifyMap(
-            camera_matrix, dist_coeffs, cv::Mat(),
-            cv::getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, img_size_1, 1, img_size_1, 0), img_size_1,
-            CV_16SC2, map1, map2);
-
-        std::cout << camera_matrix << std::endl;
-        std::cout << dist_coeffs << std::endl;
+        std::cout << R << std::endl << T << std::endl << E << std::endl << F << std::endl;
     }
 
-    void save_file_wrapper()
-    {
-        writer << "[CAMERA_CALIBRATION]" << std::endl;
-        writer << std::endl;
-        writer << "w " << img_size_1.width << std::endl;
-        writer << "h " << img_size_1.height << std::endl;
-        writer << "fx " << camera_matrix.at<double>(0, 0) << std::endl;
-        writer << "fy " << camera_matrix.at<double>(1, 1) << std::endl;
-        writer << "cx " << camera_matrix.at<double>(0, 2) << std::endl;
-        writer << "cy " << camera_matrix.at<double>(1, 2) << std::endl;
-        writer << "k1 " << dist_coeffs.at<double>(0, 0) << std::endl;
-        writer << "k2 " << dist_coeffs.at<double>(1, 0) << std::endl;
-        writer << "p1 " << dist_coeffs.at<double>(2, 0) << std::endl;
-        writer << "p2 " << dist_coeffs.at<double>(3, 0) << std::endl;
-        writer.flush();
-    }
+    // void save_file_wrapper()
+    // {
+    //     writer << "[CAMERA_CALIBRATION]" << std::endl;
+    //     writer << std::endl;
+    //     writer << "w " << img_size_1.width << std::endl;
+    //     writer << "h " << img_size_1.height << std::endl;
+    //     writer << "fx " << camera_matrix.at<double>(0, 0) << std::endl;
+    //     writer << "fy " << camera_matrix.at<double>(1, 1) << std::endl;
+    //     writer << "cx " << camera_matrix.at<double>(0, 2) << std::endl;
+    //     writer << "cy " << camera_matrix.at<double>(1, 2) << std::endl;
+    //     writer << "k1 " << dist_coeffs.at<double>(0, 0) << std::endl;
+    //     writer << "k2 " << dist_coeffs.at<double>(1, 0) << std::endl;
+    //     writer << "p1 " << dist_coeffs.at<double>(2, 0) << std::endl;
+    //     writer << "p2 " << dist_coeffs.at<double>(3, 0) << std::endl;
+    //     writer.flush();
+    // }
 
 };
 
