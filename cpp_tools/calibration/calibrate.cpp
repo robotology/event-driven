@@ -42,6 +42,7 @@ private:
     std::vector<std::vector<cv::Point2f>> image_points;
     std::stringstream str_maker;
     std::string board_info;
+    bool fishmode{false};
 
     //file output
     std::ofstream writer;
@@ -52,7 +53,7 @@ public:
     bool configure(yarp::os::ResourceFinder& rf) override
     {
 
-        if(rf.check("h") || rf.check("help")) {
+        if(rf.check("help")) {
             yInfo() << "Calibration of event-camera";
             yInfo() << "--name <str>\t: internal port name prefix";
             yInfo() << "--fout <str>\t: full path to output file";
@@ -60,6 +61,7 @@ public:
             yInfo() << "--ch <int> --cw <int>\t: checkerboard corners height/width";
             yInfo() << "--cs <double>\t: checker square edge length in metres";
             yInfo() << "--cam <string>\t: port name of event camera";
+            yInfo() << "--fisheye     \t: use fisheye calibration mode";
             return false;
         }
 
@@ -80,6 +82,8 @@ public:
             yError() << "could not open file (ensure path exists?):" << fout;
             return false;
         }
+
+        fishmode = rf.check("fisheye") && rf.check("fisheye", Value(true)).asBool();
 
         if (!rf.check("cs")) {
             yError() << "please supply the checker square edge length in metres with --cs <double>";
@@ -204,16 +208,25 @@ public:
 
         //initialise camera matrices
         camera_matrix = cv::Mat::eye(3, 3, CV_64F);
-        dist_coeffs = cv::Mat::zeros(8, 1, CV_64F);
+        dist_coeffs = cv::Mat::zeros(4, 1, CV_64F);
 
         // call calibrate camera
-        double rms = cv::calibrateCamera(object_points, image_points, img_size,
+        double rms = 0;
+        if(fishmode) {
+            rms = cv::fisheye::calibrate(object_points, image_points, img_size,
+                                         camera_matrix, dist_coeffs, rvecs, tvecs);
+            cv::fisheye::initUndistortRectifyMap(
+                    camera_matrix, dist_coeffs, cv::Mat(),
+                    cv::getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, img_size, 1, img_size, 0), img_size,
+                    CV_16SC2, map1, map2);
+        } else {
+            rms = cv::calibrateCamera(object_points, image_points, img_size,
                                          camera_matrix, dist_coeffs, rvecs, tvecs, cv::CALIB_USE_LU | cv::CALIB_FIX_K3);
-
-        cv::initUndistortRectifyMap(
-            camera_matrix, dist_coeffs, cv::Mat(),
-            cv::getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, img_size, 1, img_size, 0), img_size,
-            CV_16SC2, map1, map2);
+            cv::initUndistortRectifyMap(
+                camera_matrix, dist_coeffs, cv::Mat(),
+                cv::getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, img_size, 1, img_size, 0), img_size,
+                CV_16SC2, map1, map2);
+        }
 
         std::cout << camera_matrix << std::endl;
         std::cout << dist_coeffs << std::endl;
