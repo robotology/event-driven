@@ -43,6 +43,7 @@ private:
     std::stringstream str_maker;
     std::string board_info;
     bool fishmode{false};
+    double period{0.5};
 
     //file output
     std::ofstream writer;
@@ -98,6 +99,7 @@ public:
         yInfo() << "saving calibration:" << fout;
         yInfo() << "board parameters:" << board_size.width << "x" << board_size.height << "at" << edge_length*1000 << "mm squares";
         yInfo() << "image parameters:" << img_size.width << "x" << img_size.height;
+        yInfo() << "lens mode: " << (fishmode ? "fisheye" : "normal");
         str_maker.str("");
         str_maker << board_size.width << "x" << board_size.height << " at " << edge_length*1000 << "mm";
         board_info = str_maker.str();
@@ -115,7 +117,7 @@ public:
 
     double getPeriod() override
     {
-        return 0.2; //period of synchronous thread
+        return period; //period of synchronous thread
     }
 
     bool interruptModule() override
@@ -142,26 +144,26 @@ public:
             black_img.at<cv::Vec3b>(v.y, v.x) = white;
 
         std::vector<cv::Point2f> corners;
-        bool found = cv::findChessboardCorners(black_img, board_size, corners);
-        cv::drawChessboardCorners(black_img, board_size, corners, found);
-        
-
         bool calibrated = !map1.empty() && !map2.empty();
-        if(found && !calibrated) {
-            image_points.push_back(corners);
-            cv::line(detected_img, corners[bci[0]], corners[bci[1]], violet);
-            cv::line(detected_img, corners[bci[0]], corners[bci[2]], violet);
-            cv::line(detected_img, corners[bci[3]], corners[bci[1]], violet);
-            cv::line(detected_img, corners[bci[3]], corners[bci[2]], violet);
-        }
 
-        black_img *= 0.5;
+        //black_img *= 0.5;
         //blue green red
         if(calibrated) {
             remap(black_img, black_img, map1, map2, cv::INTER_LINEAR);
             cv::rectangle(black_img, cv::Rect(0, 0, img_size.width, img_size.height), green*0.5, 10);
             cv::putText(black_img, "ESC to finish", cv::Point(img_size.width*0.05, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
         } else {
+
+            bool found = cv::findChessboardCorners(black_img, board_size, corners);
+            cv::drawChessboardCorners(black_img, board_size, corners, found);
+
+            if(found && !calibrated) {
+                image_points.push_back(corners);
+                cv::line(detected_img, corners[bci[0]], corners[bci[1]], violet);
+                cv::line(detected_img, corners[bci[0]], corners[bci[2]], violet);
+                cv::line(detected_img, corners[bci[3]], corners[bci[1]], violet);
+                cv::line(detected_img, corners[bci[3]], corners[bci[2]], violet);
+            }
             black_img += detected_img;
             cv::rectangle(black_img, cv::Rect(0, 0, img_size.width, img_size.height), red*0.8, 10);
             cv::putText(black_img, "Collecting images... press SPACE to perform calibration", cv::Point(img_size.width*0.05, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
@@ -178,6 +180,7 @@ public:
             yInfo() << "saving ... ";
             save_file_wrapper();
             yInfo() << "done .. ";
+            period = 0.033;
         }
         if(c == 27) 
         {
