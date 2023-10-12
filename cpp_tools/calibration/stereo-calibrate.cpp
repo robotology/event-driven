@@ -38,11 +38,13 @@ private:
 
     //calculated parameters
     cv::Mat R, T, E, F;
+    cv::Mat map11, map12, map21, map22;
 
     //internal storage
     std::vector<std::vector<cv::Point2f>> image_points_1, image_points_2;
     std::stringstream str_maker;
     std::string board_info;
+    double period{0.5};
 
     //file output
     std::ofstream writer;
@@ -156,7 +158,7 @@ public:
 
     double getPeriod() override
     {
-        return 0.2; //period of synchronous thread
+        return period; //period of synchronous thread
     }
 
     bool interruptModule() override
@@ -187,47 +189,49 @@ public:
         black_img_1 = ev::black;
         black_img_2 = ev::black;
         for (auto& v : cam1)
-            black_img_1.at<cv::Vec3b>(v.y, v.x) = white*0.5;
+            black_img_1.at<cv::Vec3b>(v.y, v.x) = white;
         for (auto& v : cam2)
-            black_img_2.at<cv::Vec3b>(v.y, v.x) = white*0.5;
+            black_img_2.at<cv::Vec3b>(v.y, v.x) = white;
 
         std::vector<cv::Point2f> corners_1, corners_2;
-        bool found_1 = cv::findChessboardCorners(black_img_1, board_size, corners_1);
-        bool found_2 = cv::findChessboardCorners(black_img_2, board_size, corners_2);
-        cv::drawChessboardCorners(black_img_1, board_size, corners_1, found_1);
-        cv::drawChessboardCorners(black_img_2, board_size, corners_2, found_2);
+        bool calibrated = !R.empty();
+        if(!calibrated) {
+
+            bool found_1 = cv::findChessboardCorners(black_img_1, board_size, corners_1);
+            bool found_2 = cv::findChessboardCorners(black_img_2, board_size, corners_2);
+            cv::drawChessboardCorners(black_img_1, board_size, corners_1, found_1);
+            cv::drawChessboardCorners(black_img_2, board_size, corners_2, found_2);
         
+            if(found_1 && found_2) {
+                image_points_1.push_back(corners_1);
+                cv::line(detected_img_1, corners_1[bci[0]], corners_1[bci[1]], violet);
+                cv::line(detected_img_1, corners_1[bci[0]], corners_1[bci[2]], violet);
+                cv::line(detected_img_1, corners_1[bci[3]], corners_1[bci[1]], violet);
+                cv::line(detected_img_1, corners_1[bci[3]], corners_1[bci[2]], violet);
 
-        // bool calibrated = !map1.empty() && !map2.empty();
-        if(found_1 && found_2) {
-            image_points_1.push_back(corners_1);
-            cv::line(detected_img_1, corners_1[bci[0]], corners_1[bci[1]], violet);
-            cv::line(detected_img_1, corners_1[bci[0]], corners_1[bci[2]], violet);
-            cv::line(detected_img_1, corners_1[bci[3]], corners_1[bci[1]], violet);
-            cv::line(detected_img_1, corners_1[bci[3]], corners_1[bci[2]], violet);
+                image_points_2.push_back(corners_2);
+                cv::line(detected_img_2, corners_2[bci[0]], corners_2[bci[1]], violet);
+                cv::line(detected_img_2, corners_2[bci[0]], corners_2[bci[2]], violet);
+                cv::line(detected_img_2, corners_2[bci[3]], corners_2[bci[1]], violet);
+                cv::line(detected_img_2, corners_2[bci[3]], corners_2[bci[2]], violet);
+            }
 
-            image_points_2.push_back(corners_2);
-            cv::line(detected_img_2, corners_2[bci[0]], corners_2[bci[1]], violet);
-            cv::line(detected_img_2, corners_2[bci[0]], corners_2[bci[2]], violet);
-            cv::line(detected_img_2, corners_2[bci[3]], corners_2[bci[1]], violet);
-            cv::line(detected_img_2, corners_2[bci[3]], corners_2[bci[2]], violet);
-        }
-
-        //blue green red
-        // if(calibrated) {
-        //     remap(black_img, black_img, map1, map2, cv::INTER_LINEAR);
-        //     cv::rectangle(black_img, cv::Rect(0, 0, img_size.width, img_size.height), green*0.5, 10);
-        //     cv::putText(black_img, "ESC to finish", cv::Point(img_size.width*0.05, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
-        // } else {
             black_img_1 += detected_img_1;
             black_img_2 += detected_img_2;
-             cv::rectangle(black_img_1, cv::Rect(0, 0, img_size_1.width, img_size_1.height), red*0.8, 10);
-             cv::putText(black_img_1, "Collecting images... press SPACE to perform calibration", cv::Point(img_size_1.width*0.05, img_size_1.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
-             cv::putText(black_img_1, board_info, cv::Point(img_size_1.width*0.05, img_size_1.height*0.05), cv::FONT_HERSHEY_PLAIN, 1.0, white);
-             str_maker.str("");
-             str_maker << image_points_1.size();
-             cv::putText(black_img_1, str_maker.str(), cv::Point(img_size_1.width*0.95, img_size_1.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
-        // }
+            cv::rectangle(black_img_1, cv::Rect(0, 0, img_size_1.width, img_size_1.height), red*0.8, 10);
+            cv::putText(black_img_1, "Collecting images... press SPACE to perform calibration", cv::Point(img_size_1.width*0.05, img_size_1.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
+            cv::putText(black_img_1, board_info, cv::Point(img_size_1.width*0.05, img_size_1.height*0.05), cv::FONT_HERSHEY_PLAIN, 1.0, white);
+            str_maker.str("");
+            str_maker << image_points_1.size();
+            cv::putText(black_img_1, str_maker.str(), cv::Point(img_size_1.width*0.95, img_size_1.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
+        
+        } else {
+            cv::remap(black_img_1, black_img_1, map11, map12, cv::INTER_LINEAR);
+            cv::remap(black_img_2, black_img_2, map21, map22, cv::INTER_LINEAR);
+            cv::rectangle(black_img_1, cv::Rect(0, 0, img_size_1.width, img_size_1.height), green*0.5, 10);
+            cv::putText(black_img_1, "ESC to finish", cv::Point(img_size_1.width*0.05, img_size_1.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
+        }
+
         cv::imshow("camera 1", black_img_1);
         cv::imshow("camera 2", black_img_2);
         char c = cv::waitKey(1);
@@ -237,6 +241,7 @@ public:
             yInfo() << "saving ... ";
             //save_file_wrapper();
             yInfo() << "done .. ";
+            period = 0.033;
         }
         if(c == 27) 
         {
@@ -267,6 +272,12 @@ public:
 
         // call calibrate camera
         cv::stereoCalibrate(object_points, image_points_1, image_points_2, camera_matrix_1, dist_coeffs_1, camera_matrix_2, dist_coeffs_2, img_size_1, R, T, E, F, cv::CALIB_FIX_INTRINSIC|cv::CALIB_ZERO_TANGENT_DIST);
+        cv::Mat R1, R2, P1, P2;
+        cv::stereoRectify(camera_matrix_1, dist_coeffs_1, camera_matrix_2, dist_coeffs_2, 
+                    img_size_1, R, T, R1, R2, P1, P2, cv::noArray());
+        cv::initUndistortRectifyMap(camera_matrix_1, dist_coeffs_1, R1, P1, img_size_1, CV_32FC2, map11, map12);
+        cv::initUndistortRectifyMap(camera_matrix_2, dist_coeffs_2, R2, P2, img_size_2, CV_32FC2, map21, map22);
+        
 
         std::cout << R << std::endl << T << std::endl << E << std::endl << F << std::endl;
     }
