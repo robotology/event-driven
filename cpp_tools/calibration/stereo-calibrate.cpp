@@ -149,7 +149,7 @@ public:
             yError() << "could not open input port";
             return false;
         }
-
+        
         Network::connect(rf.check("cam1", Value("/atis4/cam1/AE:o")).asString(), getName("/cam1/AE:i"), "fast_tcp");
         Network::connect(rf.check("cam2", Value("/atis4/cam2/AE:o")).asString(), getName("/cam2/AE:i"), "fast_tcp");
         
@@ -282,22 +282,54 @@ public:
         std::cout << R << std::endl << T << std::endl << E << std::endl << F << std::endl;
     }
 
-    // void save_file_wrapper()
-    // {
-    //     writer << "[CAMERA_CALIBRATION]" << std::endl;
-    //     writer << std::endl;
-    //     writer << "w " << img_size_1.width << std::endl;
-    //     writer << "h " << img_size_1.height << std::endl;
-    //     writer << "fx " << camera_matrix.at<double>(0, 0) << std::endl;
-    //     writer << "fy " << camera_matrix.at<double>(1, 1) << std::endl;
-    //     writer << "cx " << camera_matrix.at<double>(0, 2) << std::endl;
-    //     writer << "cy " << camera_matrix.at<double>(1, 2) << std::endl;
-    //     writer << "k1 " << dist_coeffs.at<double>(0, 0) << std::endl;
-    //     writer << "k2 " << dist_coeffs.at<double>(1, 0) << std::endl;
-    //     writer << "p1 " << dist_coeffs.at<double>(2, 0) << std::endl;
-    //     writer << "p2 " << dist_coeffs.at<double>(3, 0) << std::endl;
-    //     writer.flush();
-    // }
+    void save_file_wrapper()
+    {
+        writer << "[CAMERA_CALIBRATION_CAM1]" << std::endl;
+        writer << std::endl;
+        writer << "w " << img_size_1.width << std::endl;
+        writer << "h " << img_size_1.height << std::endl;
+        writer << "fx " << camera_matrix_1.at<double>(0, 0) << std::endl;
+        writer << "fy " << camera_matrix_1.at<double>(1, 1) << std::endl;
+        writer << "cx " << camera_matrix_1.at<double>(0, 2) << std::endl;
+        writer << "cy " << camera_matrix_1.at<double>(1, 2) << std::endl;
+        writer << "k1 " << dist_coeffs_1.at<double>(0, 0) << std::endl;
+        writer << "k2 " << dist_coeffs_1.at<double>(1, 0) << std::endl;
+        writer << "p1 " << dist_coeffs_1.at<double>(2, 0) << std::endl;
+        writer << "p2 " << dist_coeffs_1.at<double>(3, 0) << std::endl;
+        writer << std::endl;
+        writer.flush();
+
+        writer << "[CAMERA_CALIBRATION_CAM2]" << std::endl;
+        writer << std::endl;
+        writer << "w " << img_size_2.width << std::endl;
+        writer << "h " << img_size_2.height << std::endl;
+        writer << "fx " << camera_matrix_2.at<double>(0, 0) << std::endl;
+        writer << "fy " << camera_matrix_2.at<double>(1, 1) << std::endl;
+        writer << "cx " << camera_matrix_2.at<double>(0, 2) << std::endl;
+        writer << "cy " << camera_matrix_2.at<double>(1, 2) << std::endl;
+        writer << "k1 " << dist_coeffs_2.at<double>(0, 0) << std::endl;
+        writer << "k2 " << dist_coeffs_2.at<double>(1, 0) << std::endl;
+        writer << "p1 " << dist_coeffs_2.at<double>(2, 0) << std::endl;
+        writer << "p2 " << dist_coeffs_2.at<double>(3, 0) << std::endl;
+        writer << std::endl;
+        writer.flush();
+
+        // writer << "[STEREO_DISPARITY]" << std::endl;
+        // writer << "HN (" << R.at<double>(0, 0) << " " << R.at<double>(0, 1) << " " << R.at<double>(0, 2)
+        //                  << R.at<double>(1, 0) << " " << R.at<double>(1, 1) << " " << R.at<double>(1, 2)
+        //                  << R.at<double>(2, 0) << " " << R.at<double>(2, 1) << " " << R.at<double>(2, 2)
+        //                  << ")" << std::endl;
+        // writer << "h " << img_size_1.height << std::endl;
+        // writer << "fx " << camera_matrix.at<double>(0, 0) << std::endl;
+        // writer << "fy " << camera_matrix.at<double>(1, 1) << std::endl;
+        // writer << "cx " << camera_matrix.at<double>(0, 2) << std::endl;
+        // writer << "cy " << camera_matrix.at<double>(1, 2) << std::endl;
+        // writer << "k1 " << dist_coeffs.at<double>(0, 0) << std::endl;
+        // writer << "k2 " << dist_coeffs.at<double>(1, 0) << std::endl;
+        // writer << "p1 " << dist_coeffs.at<double>(2, 0) << std::endl;
+        // writer << "p2 " << dist_coeffs.at<double>(3, 0) << std::endl;
+        // writer.flush();
+    }
 
 };
 
