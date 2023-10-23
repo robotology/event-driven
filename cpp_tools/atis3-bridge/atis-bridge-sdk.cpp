@@ -104,15 +104,25 @@ public:
                           "with a cmake parameter VLIB_CLOCK_PERIOD_NS=1000 for correct time scaling.";
 
         //set the module name used to name ports
-        setName((rf.check("name", Value("/atis3")).asString()).c_str());
-
-        if(!output_port.open(getName("/AE:o"))) {
-            yError() << "Could not open output port";
-            return false;
+        if(gen3) {
+            setName((rf.check("name", Value("/atis3")).asString()).c_str());
+        } else {
+            setName((rf.check("name", Value("/atis4")).asString()).c_str());
         }
 
-        if(!grayscale_port.open(getName("/img:o"))) {
-            yError() << "Could not open image port";
+        //automatically assign port numbers
+        std::stringstream ss;
+        ss.str(""); ss << getName() << "/AE:o";
+        if(yarp::os::Network::exists(ss.str())) {
+            int port_number = 1; 
+            do {
+                port_number++;
+                ss.str(""); ss << getName() << "-" << port_number << "/AE:o";
+            } while(yarp::os::Network::exists(ss.str()));
+        }
+
+        if(!output_port.open(ss.str())) {
+            yError() << "Could not open output port";
             return false;
         }
 
@@ -173,6 +183,10 @@ public:
             }
         }
 #else
+        if(!grayscale_port.open(getName("/img:o"))) {
+            yError() << "Could not open image port";
+            return false;
+        }
         yInfo() << "Default Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
         if(bias_sens) bias.set_contrast_sensitivity(bias_sens);
         if(bias_pol) bias.set_contrast_sensitivity_to_polarity(bias_pol);
@@ -316,8 +330,8 @@ public:
             counter_events += current_buffer.size();
             current_buffer.clear();
 
-            if (record_mode && current_buffer.duration() < packet_time)
-                Time::delay(packet_time - current_buffer.duration());
+            // if (record_mode && current_buffer.duration() < packet_time)
+            //     Time::delay(packet_time - current_buffer.duration());
         }
 
     }
