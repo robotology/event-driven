@@ -196,7 +196,10 @@ double erosDrawer::updateImage()
         EROS_vis.update(v.x, v.y);
 
     static cv::Mat inter;
-    cv::GaussianBlur(EROS_vis.getSurface(), inter, {5, 5}, -1); 
+    cv::medianBlur(EROS_vis.getSurface(), inter, 3);
+    cv::GaussianBlur(EROS_vis.getSurface(), inter, {3, 3}, -1);
+    cv::normalize(inter, inter, 0, 255, CV_MINMAX);
+    //inter = 255 - inter;
     cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
     return inf.timestamp;
 }
