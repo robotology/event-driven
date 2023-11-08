@@ -19,6 +19,7 @@
 #if defined MetavisionSDK_FOUND
     #include <metavision/sdk/driver/camera.h>
     #include <metavision/sdk/base/events/event_cd.h>
+    #include <metavision/hal/facilities/i_hw_identification.h>
     using namespace Metavision;
 #else
     #include <prophesee_driver/prophesee_driver.h>
@@ -74,12 +75,11 @@ public:
 
         if(rf.check("h") || rf.check("help")) {
 
-            yInfo() << "Bridge to push ATIS gen3 camera and raw files to YARP";
+            yInfo() << "Bridge to push ATIS camera and raw files to YARP";
             yInfo() << "--name <str>\t: internal port name prefix";
             yInfo() << "--buffer_size <int>\t: set initial maximum buffer size";
             yInfo() << "--file <str>\t: (optional) provide file path otherwise search for camera to connect";
             yInfo() << "--limit <int>\t: (optional) provide a hard limit on event rate (in 10^6 events/s)";
-            yInfo() << "--gen3      \t: (optional) must be set when using a ATIS gen3 camera";
             return false;
         }
 
@@ -103,42 +103,12 @@ public:
             yWarning() << "ATIS USB typically has a clock period of 1 ms. You may need to compile event-driven "
                           "with a cmake parameter VLIB_CLOCK_PERIOD_NS=1000 for correct time scaling.";
 
-        //set the module name used to name ports
-        if(gen3) {
-            setName((rf.check("name", Value("/atis3")).asString()).c_str());
-        } else {
-            setName((rf.check("name", Value("/atis4")).asString()).c_str());
-        }
-
-        //automatically assign port numbers
-        std::stringstream ss;
-        ss.str(""); ss << getName() << "/AE:o";
-        if(yarp::os::Network::exists(ss.str())) {
-            int port_number = 1; 
-            do {
-                port_number++;
-                ss.str(""); ss << getName() << "-" << port_number << "/AE:o";
-            } while(yarp::os::Network::exists(ss.str()));
-        }
-
-        if(!output_port.open(ss.str())) {
-            yError() << "Could not open output port";
-            return false;
-        }
-
-        record_mode = rf.check("record_mode") && 
-                      rf.check("record_mode", Value(true)).asBool();
-        gen3 = rf.check("gen3") && 
-               rf.check("gen3", Value(true)).asBool();
-
         limit = rf.check("limit", Value(-1)).asFloat64();
         if(limit < 0) limit  = DBL_MAX;
         else          limit *= 1e6;
 
-        //yarp::os::Network::connect(getName("/AE:o"), "/vPreProcess/AE:i", "fast_tcp");
-
         buffer.emplace_back();
-        buffer.emplace_back();        
+        buffer.emplace_back();
 
         Biases &bias = cam.biases();
         int bias_pol = 0;
@@ -157,8 +127,13 @@ public:
         if(bias_sens < 0) bias_sens = 1;
         if(bias_sens > 99) bias_sens = 99;
 
-#if defined MetavisionSDK_FOUND     
-        
+#if defined MetavisionSDK_FOUND
+
+        const I_HW_Identification::SensorInfo si = cam.get_device().get_facility<I_HW_Identification>()->get_sensor_info();
+        yInfo() << "Camera Version: " << si.major_version_ << "." << si.minor_version_;
+        gen3 = (si.major_version_ == 3);
+
+
         if(gen3) {
             I_LL_Biases* bias_control = bias.get_facility();
             std::map<std::string, int> bias_vals = bias_control->get_all_biases();
@@ -213,6 +188,29 @@ public:
 
         if(!cam.start()) {
             yError() << "Could not start the camera";
+            return false;
+        }
+
+        //set the module name used to name ports
+        if(gen3) {
+            setName((rf.check("name", Value("/atis3")).asString()).c_str());
+        } else {
+            setName((rf.check("name", Value("/atis4")).asString()).c_str());
+        }
+
+        //automatically assign port numbers
+        std::stringstream ss;
+        ss.str(""); ss << getName() << "/AE:o";
+        if(yarp::os::Network::exists(ss.str())) {
+            int port_number = 1; 
+            do {
+                port_number++;
+                ss.str(""); ss << getName() << "-" << port_number << "/AE:o";
+            } while(yarp::os::Network::exists(ss.str()));
+        }
+
+        if(!output_port.open(ss.str())) {
+            yError() << "Could not open output port";
             return false;
         }
 
@@ -329,9 +327,6 @@ public:
             counter_packets++;
             counter_events += current_buffer.size();
             current_buffer.clear();
-
-            // if (record_mode && current_buffer.duration() < packet_time)
-            //     Time::delay(packet_time - current_buffer.duration());
         }
 
     }

@@ -66,8 +66,8 @@ public:
         std::string moduleName = rf.check("name", Value("/vFramer")).asString();
         setName(moduleName.c_str());
 
-        int height = rf.check("height", Value(480)).asInt32();
-        int width = rf.check("width", Value(640)).asInt32();
+        int height = rf.check("height", Value(720)).asInt32();
+        int width = rf.check("width", Value(1280)).asInt32();
 
         double window_size = rf.check("window_size", Value(-1.0)).asFloat64();
 
