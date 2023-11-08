@@ -120,11 +120,14 @@ public:
     void time_draw(cv::Mat img, T begin, T end, int count) {
 
         //if there is nothing to draw, just draw the frame
-        if(begin == end) 
+        if(begin == end || begin.timestamp() > end.timestamp()) 
         {
             img -= base_image;
             return;
         }
+
+        static int threshold1 = img.size().area();
+        static int threshold2 = img.size().area() * 0.02;
 
         double tf = end.timestamp();
         int remaining = count;
@@ -133,7 +136,7 @@ public:
 
         //draw with skipping (2e6)
         auto a = begin;
-        while(remaining > 1e6) 
+        while(remaining > threshold1) 
         {
             double dt = tf - (a.timestamp());
             int x = a->x;
@@ -148,7 +151,7 @@ public:
         }
 
         //draw the most recent 2e6 without skipping
-        while(remaining > 10000) 
+        while(remaining > threshold2) 
         {
             double dt = tf - (a.timestamp());
             int x = a->x;
