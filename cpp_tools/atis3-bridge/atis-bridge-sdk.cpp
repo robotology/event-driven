@@ -130,7 +130,7 @@ public:
 #if defined MetavisionSDK_FOUND
 
         const I_HW_Identification::SensorInfo si = cam.get_device().get_facility<I_HW_Identification>()->get_sensor_info();
-        yInfo() << "Camera Version: " << si.major_version_ << "." << si.minor_version_ << "|" << si.name_;
+        yInfo() << "Camera Version: " << si.major_version_ << "." << si.minor_version_;
         gen3 = (si.major_version_ == 3);
 
 
