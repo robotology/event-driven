@@ -42,6 +42,8 @@ private:
     std::vector<std::vector<cv::Point2f>> image_points;
     std::stringstream str_maker;
     std::string board_info;
+    bool fishmode{false};
+    double period{0.5};
 
     //file output
     std::ofstream writer;
@@ -52,13 +54,15 @@ public:
     bool configure(yarp::os::ResourceFinder& rf) override
     {
 
-        if(rf.check("h") || rf.check("help")) {
+        if(rf.check("help")) {
             yInfo() << "Calibration of event-camera";
             yInfo() << "--name <str>\t: internal port name prefix";
             yInfo() << "--fout <str>\t: full path to output file";
             yInfo() << "--h <int> --w <int>\t: camera resolution";
             yInfo() << "--ch <int> --cw <int>\t: checkerboard corners height/width";
             yInfo() << "--cs <double>\t: checker square edge length in metres";
+            yInfo() << "--cam <string>\t: port name of event camera";
+            yInfo() << "--fisheye     \t: use fisheye calibration mode";
             return false;
         }
 
@@ -67,7 +71,7 @@ public:
             return false;
         }
 
-        setName((rf.check("name", Value("/eventcam_calib")).asString()).c_str());
+        setName((rf.check("name", Value("/ev-calibrate")).asString()).c_str());
 
         if(!rf.check("fout")) {
             yError() << "please supply the full path to the output file in --fout <string>";
@@ -80,19 +84,22 @@ public:
             return false;
         }
 
+        fishmode = rf.check("fisheye") && rf.check("fisheye", Value(true)).asBool();
+
         if (!rf.check("cs")) {
             yError() << "please supply the checker square edge length in metres with --cs <double>";
             return false;
         }
         edge_length = rf.find("cs").asFloat32();
 
-        img_size = cv::Size(rf.check("w", Value(640)).asInt32(), rf.check("h", Value(480)).asInt32());
+        img_size = cv::Size(rf.check("w", Value(1280)).asInt32(), rf.check("h", Value(720)).asInt32());
         board_size = cv::Size(rf.check("cw", Value(8)).asInt32(), rf.check("ch", Value(6)).asInt32());
 
         yInfo() << "EVENT CAMERA CALIBRATION";
         yInfo() << "saving calibration:" << fout;
         yInfo() << "board parameters:" << board_size.width << "x" << board_size.height << "at" << edge_length*1000 << "mm squares";
         yInfo() << "image parameters:" << img_size.width << "x" << img_size.height;
+        yInfo() << "lens mode: " << (fishmode ? "fisheye" : "normal");
         str_maker.str("");
         str_maker << board_size.width << "x" << board_size.height << " at " << edge_length*1000 << "mm";
         board_info = str_maker.str();
@@ -102,14 +109,15 @@ public:
             yError() << "could not open input port";
             return false;
         }
-        Network::connect("/atis3/AE:o", getName("/AE:i"), "fast_tcp");
+
+        Network::connect(rf.check("cam", Value("/atis3/AE:o")).asString(), getName("/AE:i"), "fast_tcp");
         
         return true;
     }
 
     double getPeriod() override
     {
-        return 0.2; //period of synchronous thread
+        return period; //period of synchronous thread
     }
 
     bool interruptModule() override
@@ -136,26 +144,26 @@ public:
             black_img.at<cv::Vec3b>(v.y, v.x) = white;
 
         std::vector<cv::Point2f> corners;
-        bool found = cv::findChessboardCorners(black_img, board_size, corners);
-        cv::drawChessboardCorners(black_img, board_size, corners, found);
-        
-
         bool calibrated = !map1.empty() && !map2.empty();
-        if(found && !calibrated) {
-            image_points.push_back(corners);
-            cv::line(detected_img, corners[bci[0]], corners[bci[1]], violet);
-            cv::line(detected_img, corners[bci[0]], corners[bci[2]], violet);
-            cv::line(detected_img, corners[bci[3]], corners[bci[1]], violet);
-            cv::line(detected_img, corners[bci[3]], corners[bci[2]], violet);
-        }
 
-        black_img *= 0.5;
+        //black_img *= 0.5;
         //blue green red
         if(calibrated) {
             remap(black_img, black_img, map1, map2, cv::INTER_LINEAR);
             cv::rectangle(black_img, cv::Rect(0, 0, img_size.width, img_size.height), green*0.5, 10);
             cv::putText(black_img, "ESC to finish", cv::Point(img_size.width*0.05, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
         } else {
+
+            bool found = cv::findChessboardCorners(black_img, board_size, corners);
+            cv::drawChessboardCorners(black_img, board_size, corners, found);
+
+            if(found && !calibrated) {
+                image_points.push_back(corners);
+                cv::line(detected_img, corners[bci[0]], corners[bci[1]], violet);
+                cv::line(detected_img, corners[bci[0]], corners[bci[2]], violet);
+                cv::line(detected_img, corners[bci[3]], corners[bci[1]], violet);
+                cv::line(detected_img, corners[bci[3]], corners[bci[2]], violet);
+            }
             black_img += detected_img;
             cv::rectangle(black_img, cv::Rect(0, 0, img_size.width, img_size.height), red*0.8, 10);
             cv::putText(black_img, "Collecting images... press SPACE to perform calibration", cv::Point(img_size.width*0.05, img_size.height*0.95), cv::FONT_HERSHEY_PLAIN, 1.0, white);
@@ -172,6 +180,7 @@ public:
             yInfo() << "saving ... ";
             save_file_wrapper();
             yInfo() << "done .. ";
+            period = 0.033;
         }
         if(c == 27) 
         {
@@ -202,16 +211,25 @@ public:
 
         //initialise camera matrices
         camera_matrix = cv::Mat::eye(3, 3, CV_64F);
-        dist_coeffs = cv::Mat::zeros(8, 1, CV_64F);
+        dist_coeffs = cv::Mat::zeros(4, 1, CV_64F);
 
         // call calibrate camera
-        double rms = cv::calibrateCamera(object_points, image_points, img_size,
+        double rms = 0;
+        if(fishmode) {
+            rms = cv::fisheye::calibrate(object_points, image_points, img_size,
+                                         camera_matrix, dist_coeffs, rvecs, tvecs);
+            cv::fisheye::initUndistortRectifyMap(
+                    camera_matrix, dist_coeffs, cv::Mat(),
+                    cv::getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, img_size, 1, img_size, 0), img_size,
+                    CV_16SC2, map1, map2);
+        } else {
+            rms = cv::calibrateCamera(object_points, image_points, img_size,
                                          camera_matrix, dist_coeffs, rvecs, tvecs, cv::CALIB_USE_LU | cv::CALIB_FIX_K3);
-
-        cv::initUndistortRectifyMap(
-            camera_matrix, dist_coeffs, cv::Mat(),
-            cv::getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, img_size, 1, img_size, 0), img_size,
-            CV_16SC2, map1, map2);
+            cv::initUndistortRectifyMap(
+                camera_matrix, dist_coeffs, cv::Mat(),
+                cv::getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, img_size, 1, img_size, 0), img_size,
+                CV_16SC2, map1, map2);
+        }
 
         std::cout << camera_matrix << std::endl;
         std::cout << dist_coeffs << std::endl;
