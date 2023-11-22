@@ -19,6 +19,7 @@
 #include "event-driven/core.h"
 #include "event-driven/vis.h"
 #include <thread>
+#include <iomanip>
 
 using namespace ev;
 using namespace yarp::os;
@@ -185,6 +186,9 @@ public:
 
         ev::info stats_1 = cam1.readSlidingWinT(0.033, false);
         ev::info stats_2 = cam2.readSlidingWinT(0.033, false);
+        //std::cout << std::fixed << std::setprecision(14);
+        //std::cout << stats_1.timestamp << " " << stats_2.timestamp << " " << stats_1.timestamp - stats_2.timestamp << " " << stats_1.count + stats_2.count << std::endl;
+        //std::cout.flush();
         
         black_img_1 = ev::black;
         black_img_2 = ev::black;
@@ -239,7 +243,7 @@ public:
             yInfo() << "calibrating...";
             calib_wrapper();
             yInfo() << "saving ... ";
-            //save_file_wrapper();
+            save_file_wrapper();
             yInfo() << "done .. ";
             period = 0.033;
         }
@@ -285,13 +289,15 @@ public:
     void save_file_wrapper()
     {
         writer << "[CAMERA_CALIBRATION_CAM1]" << std::endl;
-        writer << std::endl;
+        writer << std::endl << std::fixed << std::setprecision(0);
         writer << "w " << img_size_1.width << std::endl;
         writer << "h " << img_size_1.height << std::endl;
+        writer << std::setprecision(3);
         writer << "fx " << camera_matrix_1.at<double>(0, 0) << std::endl;
         writer << "fy " << camera_matrix_1.at<double>(1, 1) << std::endl;
         writer << "cx " << camera_matrix_1.at<double>(0, 2) << std::endl;
         writer << "cy " << camera_matrix_1.at<double>(1, 2) << std::endl;
+        writer << std::setprecision(6);
         writer << "k1 " << dist_coeffs_1.at<double>(0, 0) << std::endl;
         writer << "k2 " << dist_coeffs_1.at<double>(1, 0) << std::endl;
         writer << "p1 " << dist_coeffs_1.at<double>(2, 0) << std::endl;
@@ -300,13 +306,15 @@ public:
         writer.flush();
 
         writer << "[CAMERA_CALIBRATION_CAM2]" << std::endl;
-        writer << std::endl;
+        writer << std::endl << std::fixed << std::setprecision(0);
         writer << "w " << img_size_2.width << std::endl;
         writer << "h " << img_size_2.height << std::endl;
+        writer << std::setprecision(3);
         writer << "fx " << camera_matrix_2.at<double>(0, 0) << std::endl;
         writer << "fy " << camera_matrix_2.at<double>(1, 1) << std::endl;
         writer << "cx " << camera_matrix_2.at<double>(0, 2) << std::endl;
         writer << "cy " << camera_matrix_2.at<double>(1, 2) << std::endl;
+        writer << std::setprecision(6);
         writer << "k1 " << dist_coeffs_2.at<double>(0, 0) << std::endl;
         writer << "k2 " << dist_coeffs_2.at<double>(1, 0) << std::endl;
         writer << "p1 " << dist_coeffs_2.at<double>(2, 0) << std::endl;
@@ -314,21 +322,13 @@ public:
         writer << std::endl;
         writer.flush();
 
-        // writer << "[STEREO_DISPARITY]" << std::endl;
-        // writer << "HN (" << R.at<double>(0, 0) << " " << R.at<double>(0, 1) << " " << R.at<double>(0, 2)
-        //                  << R.at<double>(1, 0) << " " << R.at<double>(1, 1) << " " << R.at<double>(1, 2)
-        //                  << R.at<double>(2, 0) << " " << R.at<double>(2, 1) << " " << R.at<double>(2, 2)
-        //                  << ")" << std::endl;
-        // writer << "h " << img_size_1.height << std::endl;
-        // writer << "fx " << camera_matrix.at<double>(0, 0) << std::endl;
-        // writer << "fy " << camera_matrix.at<double>(1, 1) << std::endl;
-        // writer << "cx " << camera_matrix.at<double>(0, 2) << std::endl;
-        // writer << "cy " << camera_matrix.at<double>(1, 2) << std::endl;
-        // writer << "k1 " << dist_coeffs.at<double>(0, 0) << std::endl;
-        // writer << "k2 " << dist_coeffs.at<double>(1, 0) << std::endl;
-        // writer << "p1 " << dist_coeffs.at<double>(2, 0) << std::endl;
-        // writer << "p2 " << dist_coeffs.at<double>(3, 0) << std::endl;
-        // writer.flush();
+        writer << "[STEREO_DISPARITY]" << std::endl;
+        writer << std::fixed << std::setprecision(6);
+        writer << "HN (" << R.at<double>(0, 0) << " " << R.at<double>(0, 1) << " " << R.at<double>(0, 2) << " " << T.at<double>(0) << " "
+                         << R.at<double>(1, 0) << " " << R.at<double>(1, 1) << " " << R.at<double>(1, 2) << " " << T.at<double>(1) << " "
+                         << R.at<double>(2, 0) << " " << R.at<double>(2, 1) << " " << R.at<double>(2, 2) << " " << T.at<double>(2) << " "
+                         << std::setprecision(0) << 0 << " " << 0 << " " << 0 << " " << 1 << ")" << std::endl;
+        writer.flush();
     }
 
 };
