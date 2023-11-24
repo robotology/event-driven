@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <mutex>
 #include <condition_variable>
+#include <fstream>
 
 namespace ev {
 
@@ -125,7 +126,7 @@ public:
 
     typename std::vector<T>::iterator end()
     {
-        return buffer.begin() + n_elements; //is this dynamic?
+        return buffer.begin() + n_elements;
     }
 
     T& operator[](std::size_t index)
@@ -166,6 +167,14 @@ public:
     inline yarp::os::Stamp& envelope()
     {
         return e;
+    }
+
+    int fillFromMemory(char *s, int bytes)
+    {
+        n_elements = bytes / sizeof(T);
+        buffer.resize(n_elements);
+        memcpy((char *)buffer.data(), s, n_elements * sizeof(T));
+        return n_elements * sizeof(T);
     }
 
     int fillFromDevice(const int fd, const int min_packet_size, const int max_packet_size)
@@ -716,6 +725,50 @@ private:
     //thread synchronisation
     std::mutex m;
     std::condition_variable signal;
+
+};
+
+template <typename T>
+class offlineLoader
+{
+private:
+    std::list< ev::packet<T> > data;
+
+public:
+
+    bool load(std::string path)
+    {
+        data.clear();
+
+        std::ifstream reader;
+        reader.open(path.c_str());
+        if(!reader.is_open())
+            return false;
+
+        std::string data_line;
+        while(getline(reader, data_line)) 
+        {
+            yarp::os::Bottle b(data_line);
+            data.emplace_back(); ev::packet<T> &p = data.back();
+            p.envelope() = {b.get(0).asInt32(), b.get(1).asFloat64()};
+            p.duration(b.get(3).asInt32()*0.000001);
+            p.fillFromMemory(b.get(4).asString().data(), b.get(4).asString().size());
+        }
+
+        return true;
+    }
+
+    using iterator = typename std::list< ev::packet<T> >::iterator;
+
+    typename std::list< ev::packet<T> >::iterator begin()
+    {
+        return data.begin();
+    }
+
+    typename std::list< ev::packet<T> >::iterator end()
+    {
+        return data.end(); //is this dynamic?
+    }
 
 };
 
