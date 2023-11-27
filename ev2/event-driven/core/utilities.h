@@ -24,7 +24,6 @@
 #include <fstream>
 #include <math.h>
 #include <vector>
-#include <list>
 #include "codec.h"
 
 namespace ev {
@@ -237,6 +236,7 @@ public:
         return pass;
     }
 };
+
 
 }
 
