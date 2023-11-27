@@ -468,6 +468,44 @@ public:
         return in_window;
     }
 
+    info readSlidingWinT(double seconds, double exact_time)
+    {
+        //ensure that time has passed in this port
+        std::unique_lock<std::mutex> lk(m);
+        signal.wait(lk, [this, &exact_time]{return in_port.timestamp >= exact_time || isStopping();});
+        
+         //pop packets until we find the desired temporal window less than the exact time
+        while(!active.empty())
+        {
+            //get the first packet in the active queue stats
+            auto packet_duration = (**active.begin()).duration();
+            auto packet_count =  (**active.begin()).size();
+            auto packet_timestamp = (**active.begin()).timestamp();
+
+            //if we can remove the packet and stay in the correct time do it
+            if(packet_timestamp + seconds >= exact_time)
+                break;
+            in_port.duration -= packet_duration;
+            in_port.count -= packet_count;
+            inactive.push_back(*active.begin());
+            active.pop_front();
+        }
+
+        in_window = {0, 0.0, 0.0};
+        auto i = active.begin();
+        while((**i).timestamp() < exact_time) {
+            in_window.duration += (**i).duration();
+            in_window.count +=  (**i).size();
+            i++;
+        }
+        in_window.timestamp = (**i).timestamp();
+
+        //set the correct iterators
+        _resetIterators(active.begin(), i);
+
+        return in_window;
+    }
+
     info readSlidingWinN(unsigned int count, bool blocking = true)
     {
         std::unique_lock<std::mutex> lk(m);
