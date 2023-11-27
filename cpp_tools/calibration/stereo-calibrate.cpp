@@ -185,7 +185,7 @@ public:
                                        board_size.area()-1};
 
         ev::info stats_1 = cam1.readSlidingWinT(0.033, false);
-        ev::info stats_2 = cam2.readSlidingWinT(0.033, false);
+        ev::info stats_2 = cam2.readSlidingWinT(0.033, stats_1.timestamp);
         //std::cout << std::fixed << std::setprecision(14);
         //std::cout << stats_1.timestamp << " " << stats_2.timestamp << " " << stats_1.timestamp - stats_2.timestamp << " " << stats_1.count + stats_2.count << std::endl;
         //std::cout.flush();
