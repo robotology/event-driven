@@ -33,6 +33,7 @@
 #include <map>
 #include <mutex>
 #include <condition_variable>
+#include <sstream>
 
 #include "event-driven/core.h"
 #include "event-driven/vis.h"
@@ -53,7 +54,7 @@ private:
     
     int counter_packets{0};
     int counter_events{0};
-    static constexpr double period{1.0};
+    static constexpr double period{0.2};
     bool record_mode{false};
     bool gen3{false};
 
@@ -67,6 +68,7 @@ private:
     int b_sel{0};
     double limit{-1};
     static constexpr void switch_buffer(int &buf_i) {buf_i = (buf_i + 1) % 2;};
+    double clock_time{0};
 
 public:
 
@@ -186,11 +188,6 @@ public:
             nf.use_temporal_filter(nf_param);
         }
 
-        if(!cam.start()) {
-            yError() << "Could not start the camera";
-            return false;
-        }
-
         //set the module name used to name ports
         if(gen3) {
             setName((rf.check("name", Value("/atis3")).asString()).c_str());
@@ -213,6 +210,12 @@ public:
             yError() << "Could not open output port";
             return false;
         }
+
+        if(!cam.start()) {
+            yError() << "Could not start the camera";
+            return false;
+        }
+        clock_time = yarp::os::Time::now();
 
         return Thread::start();
     }
@@ -238,9 +241,21 @@ public:
     //synchronous thread
     bool updateModule() override
     {
-        yInfo() << counter_packets / period << "packets and"
-                << (counter_events * 0.001) / period << "k events sent per second";
+        //perform synchronisation between CPU and camera clock
+        double oos = yarp::os::Time::now() - clock_time;
+        static int i = 0;
+        if(i++ < 5) {
+            clock_time += oos*0.5;
+        } else {
+            clock_time += oos*0.005;
+        }
+
+        //output some nice info
+        if(i % (int)(1/period) == 0) {
+        yInfo() << counter_packets << "packets and"
+                << (counter_events * 0.001) << "k events sent per second";
         counter_packets = counter_events = 0;
+        }
 
         if(!cam.is_running())
             Thread::stop();
@@ -251,6 +266,7 @@ public:
     void fill_buffer(const EventCD *begin, const EventCD *end) 
     {
         std::unique_lock<std::mutex> lk(m);
+        static long long toc = begin->t;
         //fill up the buffer that will be sent over the port in the other thread
         AE ae;
         if (nf.active()) {
@@ -272,6 +288,8 @@ public:
                 buffer[b_sel].push_back(ae);
             }
         }
+        buffer[b_sel].duration(((end-1)->t - toc)*0.000001 + buffer[b_sel].duration());
+        toc = (end-1)->t;
         lk.unlock();
         signal.notify_one();
 
@@ -302,8 +320,6 @@ public:
     //asynchronous thread run forever
     void run() override
     {
-        const static constexpr double packet_time = 0.004;
-        double tic = yarp::os::Time::now();
         while(true) {
             // wait for data and then switch buffers so the callback can keep
             // filling the second buffer while we are sending
@@ -311,14 +327,14 @@ public:
             std::unique_lock<std::mutex> lk(m);
             signal.wait(lk, [this] { return buffer[b_sel].size() > 0 || Thread::isStopping(); });
             switch_buffer(b_sel);
+            buffer[b_sel].duration(0.0);
             lk.unlock();
 
             if(Thread::isStopping()) break;
 
             // send the data in the first buffer
-            current_buffer.duration(yarp::os::Time::now() - tic);
-            tic += current_buffer.duration();
-            yarpstamp.update();
+            clock_time += current_buffer.duration();
+            yarpstamp.update(clock_time);
             if(current_buffer.size() / current_buffer.duration() < limit) 
             {
                 output_port.setEnvelope(yarpstamp);
@@ -328,6 +344,38 @@ public:
             counter_events += current_buffer.size();
             current_buffer.clear();
         }
+    }
+    
+    void make_plot(double seconds)
+    {
+        static const int NX = 40;
+        static const int NY = 50;
+        static const int xx = 10;
+        static const int yx = 1;
+
+        static cv::Mat img(2*NY*yx, NX*xx, CV_8U);
+
+        static std::list<int> buffer;
+        double ms = seconds*1000;
+        if(ms > NY) ms = NY; if(ms < -NY) ms = -NY;
+        buffer.push_back((int)((NY - ms)*yx));
+        while(buffer.size() > NX) buffer.pop_front();
+
+        img.setTo(0); int i = 1;
+        auto p1 = buffer.begin(); auto p2 = buffer.begin(); p2++;
+        for(; p2 != buffer.end(); p1++, p2++, i++) {
+            cv::line(img, {xx*(i-1), *p1}, {xx*i, *p2}, 255, 1);
+        }
+
+        cv::line(img, {0, NY*yx}, {NX*xx, NY*yx}, 128);
+        std::stringstream ss;
+        ss.str(""); ss << NY << "ms";
+        cv::putText(img, ss.str(), {2, 20}, cv::FONT_HERSHEY_PLAIN, 1.0, 255);
+        ss.str(""); ss << -NY << "ms";
+        cv::putText(img, ss.str(), {2, img.rows - 2}, cv::FONT_HERSHEY_PLAIN, 1.0, 255);
+
+        cv::imshow("clock synch", img);
+        cv::waitKey(10);
 
     }
 };
