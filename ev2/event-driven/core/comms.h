@@ -379,7 +379,7 @@ public:
         friend bool operator== (const iterator& a, const iterator& b) { return a.m_ptr == b.m_ptr; };
         friend bool operator!= (const iterator& a, const iterator& b) { return a.m_ptr != b.m_ptr; };
 
-    private:
+        private:
         int _id{0};
         double _timestamp{0.0};
         typename packet<T>::iterator m_ptr;
@@ -769,10 +769,77 @@ private:
 template <typename T>
 class offlineLoader
 {
+public:
+struct iterator;
+
 private:
     std::list< ev::packet<T> > data;
+    iterator _begin{{nullptr, nullptr, -1, -1.0, nullptr}};
+    iterator _end{{nullptr, nullptr, -1, -1.0, nullptr}};
+    double time_sync_offset{0.0};
+
+    void setIterators(typename std::list< packet<T> >::iterator first_packet, typename std::list< packet<T> >::iterator last_packet)
+    {
+        //if the first packet is finished the data invalidate the pointers.
+        if(first_packet == data.end()) 
+        {
+            _begin = {nullptr, nullptr, -1, -1.0, nullptr}; 
+            _end   = {nullptr, nullptr, -1, -1.0, nullptr};
+        }
+
+        //if the last packet
+        if(last_packet == data.end()) last_packet = std::prev(last_packet);
+
+        _begin.packet_it = first_packet;
+        _begin.final = last_packet;
+        _begin._id = first_packet->id();
+        _begin._timestamp = first_packet->timestamp();
+        _begin.m_ptr = first_packet->begin();
+
+        _end.packet_it = last_packet;
+        _end.final = last_packet;
+        _end._id = last_packet->id();
+        _end._timestamp = last_packet->timestamp();
+        _end.m_ptr = last_packet->end();
+    }
 
 public:
+
+    struct iterator
+    {
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = T;
+        using pointer           = T*;
+        using reference         = T&;
+
+        inline double timestamp() {return _timestamp;}
+        inline double packetID() {return _id;}
+
+        T& operator*() const { return *m_ptr; }
+        T* operator->() { return &(*m_ptr); }
+        iterator& operator++()
+        {
+            m_ptr++;
+            if(m_ptr == packet_it->end() && packet_it != final) {
+                m_ptr = (++packet_it)->begin();
+                _timestamp = packet_it->timestamp();
+                _id = packet_it->id();
+            }
+            return *this;
+        }
+
+        friend bool operator== (const iterator& a, const iterator& b) { return a.m_ptr == b.m_ptr; };
+        friend bool operator!= (const iterator& a, const iterator& b) { return a.m_ptr != b.m_ptr; };
+        friend offlineLoader;
+
+        private:
+            int _id{0};
+            double _timestamp{0.0};
+            typename packet<T>::iterator m_ptr{nullptr};
+            typename std::list< packet<T> >::iterator packet_it;
+            typename std::list< packet<T> >::iterator final;
+    };
 
     bool load(std::string path)
     {
@@ -793,20 +860,29 @@ public:
             p.fillFromMemory(b.get(4).asString().data(), b.get(4).asString().size());
         }
 
+        tic = data.begin()->timestamp();
+        setIterators(data.begin(), data.end());
+
         return true;
     }
 
-    using iterator = typename std::list< ev::packet<T> >::iterator;
-
-    typename std::list< ev::packet<T> >::iterator begin()
+    void setInternalClock(double timestamp)
     {
-        return data.begin();
+        time_sync_offset = timestamp - data.begin()->timestamp();
     }
 
-    typename std::list< ev::packet<T> >::iterator end()
+    void incrementReadTill(double timestamp)
     {
-        return data.end(); //is this dynamic?
+        typename std::list< packet<T> >::iterator first_packet = std::next(_end.packet_it);
+        typename std::list< packet<T> >::iterator last_packet = first_packet;
+        while(last_packet != data.end() && std::next(last_packet)->timestamp() < timestamp - time_sync_offset)
+            std::advance(first_packet);
+        setIterators(first_packet, last_packet);
     }
+
+    iterator begin() { return _begin; }
+    iterator end()   { return _end; }
+
 
 };
 
