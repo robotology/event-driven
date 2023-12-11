@@ -464,8 +464,8 @@ public:
     {
         //ensure that time has passed in this port
         std::unique_lock<std::mutex> lk(m);
-        signal.wait(lk, [this, &exact_time]{return in_port.timestamp >= exact_time || isStopping();});
-        
+        signal.wait(lk, [this, &exact_time]{return (in_port.count && in_port.timestamp >= exact_time) || isStopping();});
+
          //pop packets until we find the desired temporal window less than the exact time
         while(!active.empty())
         {
@@ -485,12 +485,12 @@ public:
 
         in_window = {0, 0.0, 0.0};
         auto i = active.begin();
-        while((**i).timestamp() < exact_time) {
+        do {
             in_window.duration += (**i).duration();
             in_window.count +=  (**i).size();
+            in_window.timestamp = (**i).timestamp();
             i++;
-        }
-        in_window.timestamp = (**i).timestamp();
+        } while(i != active.end() && (**i).timestamp() < exact_time);
 
         //set the correct iterators
         _resetIterators(active.begin(), i);
