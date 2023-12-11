@@ -769,6 +769,7 @@ private:
     iterator _begin;//{{nullptr, nullptr, -1, -1.0, nullptr}};
     iterator _end;//{{nullptr, nullptr, -1, -1.0, nullptr}};
     double time_sync_offset{0.0};
+    int event_count{0};
 
     bool setIterators(typename std::list< packet<T> >::iterator same_packet)
     {
@@ -885,6 +886,7 @@ public:
             p.envelope() = {b.get(0).asInt32(), b.get(1).asFloat64()};
             p.duration(b.get(3).asInt32()*0.000001);
             p.fillFromMemory(b.get(4).asString().data(), b.get(4).asString().size());
+            event_count += p.size();
         }
 
         //set both pointing to first event
@@ -924,6 +926,17 @@ public:
 
     iterator begin() { return _begin; }
     iterator end()   { return _end; }
+
+    std::string getinfo() {
+        std::stringstream ss;
+        if(data.size() == 0)
+            return "no events loaded";
+        
+        ss << data.size() << " packets loaded with " << event_count << " total events. "
+           << "Timestamps range from " << data.begin()->timestamp() << " to " << std::prev(data.end())->timestamp();
+        
+        return ss.str();
+    }
 
 
 };
