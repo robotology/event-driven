@@ -207,7 +207,7 @@ double erosDrawer::updateImage()
     return inf.timestamp;
 }
 
-// EROS DRAW //
+// SCARF DRAW //
 // =========== //
 bool scarfDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
@@ -225,12 +225,12 @@ double scarfDrawer::updateImage()
     for (auto &v : input)
         scarf.update(v.x, v.y);
 
-    static cv::Mat inter;
-    // cv::medianBlur(scarf.getSurface(), inter, 3);
+    static cv::Mat inter1, inter2;
+    //cv::GaussianBlur(scarf.getSurface(), inter1, {3, 3}, -1);
     // cv::GaussianBlur(inter, inter, {3, 3}, -1);
     // cv::normalize(inter, inter, 0, 255, CV_MINMAX);
-    scarf.getSurface().convertTo(inter, CV_8U, 255);
-    cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
+    scarf.getSurface().convertTo(inter2, CV_8U, 255);
+    cv::cvtColor(inter2, canvas, cv::COLOR_GRAY2BGR);
     return inf.timestamp;
 }
 

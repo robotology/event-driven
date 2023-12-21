@@ -121,7 +121,6 @@ private:
 
     //variables
     int i{0};
-    int n{0};
     std::vector<pnt> points;
 
 public:
@@ -131,9 +130,8 @@ public:
         this->N = N;
     }
 
-    void add(int u, int v, int c)
+    inline void add(int u, int v, int c)
     {
-        n += (c - points[i].c);
         points[i] = {u, v, c};
         if(++i >= N) i = 0;
     }
@@ -199,11 +197,16 @@ public:
         }
     }
 
-    void update(int u, int v)
+    inline void update(int u, int v)
     {
-        for(size_t i = 0; i < cons[v][u].size(); i++) {
+        size_t s = cons[v][u].size();
+        if(s) {
+            auto &conx = cons[v][u][0];
+            rfs[conx.y][conx.x].add(u, v, 1);
+        }
+        for(size_t i = 1; i < s; i++) {
             auto &conx = cons[v][u][i];
-            rfs[conx.y][conx.x].add(u, v, i==0);
+            rfs[conx.y][conx.x].add(u, v, 0);
         }
     }
 
@@ -216,6 +219,18 @@ public:
                     if(p.c) img.at<float>(p.v, p.u) += 0.3; 
         return img;
     }
+
+    std::vector<cv::Point> getList(int u, int v)
+    {
+        std::vector<cv::Point> p;
+        for(auto &i : rfs[v][u].points)
+            if(i.c) p.push_back({i.u, i.v});
+        return p;
+    }
+
+
+
+    
 
 };
 
