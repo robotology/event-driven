@@ -56,7 +56,8 @@ void drawerInterface::run()
         if (updated)
             cv::imshow(name, canvas);
 
-        cv::waitKey(1);
+        if(cv::waitKey(1) == '\e')
+            askToStop();
     }
 }
 
@@ -85,7 +86,10 @@ bool drawerInterface::threadInit()
 bool drawerInterfaceAE::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote) 
 {
     this->name = name;
-    this->portName = name + "/AE:i";
+    srand (time(NULL));
+    std::stringstream ss;
+    ss << "/vFramer/" << rand()%10000 << "/AE:i";
+    this->portName = ss.str();
     this->sourceName = remote;
     this->yarp_publish = yarp_publish;
     this->img_size = {width, height};
@@ -199,6 +203,33 @@ double erosDrawer::updateImage()
     cv::medianBlur(EROS_vis.getSurface(), inter, 3);
     cv::GaussianBlur(inter, inter, {3, 3}, -1);
     cv::normalize(inter, inter, 0, 255, CV_MINMAX);
+    cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
+    return inf.timestamp;
+}
+
+// EROS DRAW //
+// =========== //
+bool scarfDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
+{
+    scarf.initialise(width, height, width/20, height/20, 1.5);
+    return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+}
+
+double scarfDrawer::updateImage()
+{
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+
+    ev::info inf = input.readAll(false);
+
+    for (auto &v : input)
+        scarf.update(v.x, v.y);
+
+    static cv::Mat inter;
+    // cv::medianBlur(scarf.getSurface(), inter, 3);
+    // cv::GaussianBlur(inter, inter, {3, 3}, -1);
+    // cv::normalize(inter, inter, 0, 255, CV_MINMAX);
+    scarf.getSurface().convertTo(inter, CV_8U, 255);
     cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
     return inf.timestamp;
 }
