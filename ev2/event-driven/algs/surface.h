@@ -156,7 +156,7 @@ public:
         img = cv::Mat(img_h, img_w, CV_32F);
         count = {rfs_x, rfs_y};
         dims = {img_w / rfs_x, img_h / rfs_y};
-        int N = (dims.height+dims.width)*3;
+        int N = (dims.height+dims.width)*4;
         rfs.resize(count.height);
         for(auto &rf : rfs)
             rf.resize(count.width, CARF(N));
