@@ -45,9 +45,6 @@ typedef struct
 template <typename T> class packet : public yarp::os::Portable {
 
 private:
-    //TODO: this buffer size should be set by a compile time variable (cmake)
-    //static const unsigned int initial_buffer_size{1048576};
-    static const unsigned int initial_buffer_size{1048576/16};
     unsigned int n_elements{0};
     std::vector<T> buffer;
     double _duration{0.0};
@@ -60,11 +57,6 @@ private:
     }
 
 public:
-
-    packet(void)
-    {
-        buffer.resize(initial_buffer_size);
-    }
 
     bool read(yarp::os::ConnectionReader &reader) override
     {
@@ -113,7 +105,7 @@ public:
     void push_back(const T &element)
     {
         if(buffer.size() <= n_elements)
-            buffer.resize(buffer.size() * 2);
+            buffer.resize(buffer.size() + 16384);
         buffer[n_elements++] = element;
     }
 
@@ -379,7 +371,7 @@ public:
         friend bool operator== (const iterator& a, const iterator& b) { return a.m_ptr == b.m_ptr; };
         friend bool operator!= (const iterator& a, const iterator& b) { return a.m_ptr != b.m_ptr; };
 
-    private:
+        private:
         int _id{0};
         double _timestamp{0.0};
         typename packet<T>::iterator m_ptr;
@@ -472,8 +464,8 @@ public:
     {
         //ensure that time has passed in this port
         std::unique_lock<std::mutex> lk(m);
-        signal.wait(lk, [this, &exact_time]{return in_port.timestamp >= exact_time || isStopping();});
-        
+        signal.wait(lk, [this, &exact_time]{return (in_port.count && in_port.timestamp >= exact_time) || isStopping();});
+
          //pop packets until we find the desired temporal window less than the exact time
         while(!active.empty())
         {
@@ -493,12 +485,12 @@ public:
 
         in_window = {0, 0.0, 0.0};
         auto i = active.begin();
-        while((**i).timestamp() < exact_time) {
+        do {
             in_window.duration += (**i).duration();
             in_window.count +=  (**i).size();
+            in_window.timestamp = (**i).timestamp();
             i++;
-        }
-        in_window.timestamp = (**i).timestamp();
+        } while(i != active.end() && (**i).timestamp() < exact_time);
 
         //set the correct iterators
         _resetIterators(active.begin(), i);
@@ -769,10 +761,112 @@ private:
 template <typename T>
 class offlineLoader
 {
+public:
+struct iterator;
+
 private:
     std::list< ev::packet<T> > data;
+    iterator _begin;//{{nullptr, nullptr, -1, -1.0, nullptr}};
+    iterator _end;//{{nullptr, nullptr, -1, -1.0, nullptr}};
+    double time_sync_offset{0.0};
+    int event_count{0};
+
+    bool setIterators(typename std::list< packet<T> >::iterator same_packet)
+    {
+        if(data.size() == 0) return false;
+        bool ret = true;
+
+        //if same_packet is the end of data set both pointers to point to the final packet end
+        //else set them to the same packet start
+        if(same_packet == data.end()) 
+        {
+            same_packet = std::prev(data.end());
+            _begin.m_ptr = same_packet->end();
+            ret = false;
+        } else {
+            _begin.m_ptr = same_packet->begin();
+        }
+        _begin.packet_it = same_packet;
+        _begin.final = same_packet;
+        _begin._id = same_packet->id();
+        _begin._timestamp = same_packet->timestamp();
+        _end = _begin;
+        return ret;
+    }
+
+    bool setIterators(typename std::list< packet<T> >::iterator first_packet, typename std::list< packet<T> >::iterator last_packet)
+    {
+        //if the first packet is finished the data invalidate the pointers.
+        if(first_packet == data.end()) 
+        {
+            return setIterators(first_packet);
+        }
+
+        //if the last packet
+        if(last_packet == data.end()) last_packet = std::prev(last_packet);
+
+        _begin.packet_it = first_packet;
+        _begin.final = last_packet;
+        _begin._id = first_packet->id();
+        _begin._timestamp = first_packet->timestamp();
+        _begin.m_ptr = first_packet->begin();
+
+        _end.packet_it = last_packet;
+        _end.final = last_packet;
+        _end._id = last_packet->id();
+        _end._timestamp = last_packet->timestamp();
+        _end.m_ptr = last_packet->end();
+        return true;
+    }
 
 public:
+
+    struct iterator
+    {
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = T;
+        using pointer           = T*;
+        using reference         = T&;
+
+        inline double timestamp() {return _timestamp;}
+        inline double packetID() {return _id;}
+
+        T& operator*() const { return *m_ptr; }
+        T* operator->() { return &(*m_ptr); }
+        iterator& operator++()
+        {
+            m_ptr++;
+            if(m_ptr == packet_it->end() && packet_it != final) {
+                m_ptr = (++packet_it)->begin();
+                _timestamp = packet_it->timestamp();
+                _id = packet_it->id();
+            }
+            return *this;
+        }
+
+        iterator& operator++(int k)
+        {
+            m_ptr++;
+            if(m_ptr == packet_it->end() && packet_it != final) {
+                m_ptr = (++packet_it)->begin();
+                _timestamp = packet_it->timestamp();
+                _id = packet_it->id();
+            }
+            return *this;
+        }
+
+        friend bool operator== (const iterator& a, const iterator& b) { return a.m_ptr == b.m_ptr; };
+        friend bool operator!= (const iterator& a, const iterator& b) { return a.m_ptr != b.m_ptr; };
+        friend offlineLoader;
+
+        private:
+            int _id{-1};
+            double _timestamp{0.0};
+            typename packet<T>::iterator m_ptr{nullptr};
+            typename std::list< packet<T> >::iterator packet_it;
+            typename std::list< packet<T> >::iterator final;
+    };
 
     bool load(std::string path)
     {
@@ -787,26 +881,63 @@ public:
         while(getline(reader, data_line)) 
         {
             yarp::os::Bottle b(data_line);
+            
             data.emplace_back(); ev::packet<T> &p = data.back();
             p.envelope() = {b.get(0).asInt32(), b.get(1).asFloat64()};
             p.duration(b.get(3).asInt32()*0.000001);
             p.fillFromMemory(b.get(4).asString().data(), b.get(4).asString().size());
+            event_count += p.size();
         }
+
+        //set both pointing to first event
+        setIterators(data.begin());
+        //time_sync_offset = -data.begin()->timestamp();
 
         return true;
     }
 
-    using iterator = typename std::list< ev::packet<T> >::iterator;
-
-    typename std::list< ev::packet<T> >::iterator begin()
+    void synchroniseRealtimeRead(double now)
     {
-        return data.begin();
+        time_sync_offset = now - data.begin()->timestamp();
     }
 
-    typename std::list< ev::packet<T> >::iterator end()
+    bool incrementReadTill(double timestamp)
     {
-        return data.end(); //is this dynamic?
+        if(data.size() == 0) return false;
+        timestamp -= time_sync_offset;
+
+        //firstly set both iterators to point to the next packet if needed
+        if(_end != _begin) {
+            std::advance(_end.packet_it, 1);
+            if(!setIterators(_end.packet_it))
+                return false;
+        }
+
+        //if timestamp is greater than the next packet increment the _end packet
+        while(std::next(_end.packet_it) != data.end() && std::next(_end.packet_it)->timestamp() < timestamp)
+            std::advance(_end.packet_it, 1);
+
+        //if the current packet is under timestamp, set the iterators to deliver this data
+        if(_begin.packet_it->timestamp() < timestamp)
+            setIterators(_begin.packet_it, _end.packet_it);
+
+        return true;
     }
+
+    iterator begin() { return _begin; }
+    iterator end()   { return _end; }
+
+    std::string getinfo() {
+        std::stringstream ss;
+        if(data.size() == 0)
+            return "no events loaded";
+        
+        ss << data.size() << " packets loaded with " << event_count << " total events. "
+           << "Timestamps range from " << data.begin()->timestamp() << " to " << std::prev(data.end())->timestamp();
+        
+        return ss.str();
+    }
+
 
 };
 
