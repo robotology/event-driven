@@ -87,6 +87,7 @@ public:
         if(rf.check("grey")||rf.check("gray")) style = "grey";
         if(rf.check("black")) style = "black";
         if(rf.check("corner")) style = "corner";
+        if(rf.check("scarf")) style = "scarf";
 
         std::stringstream remote_id;
         for(int i = 0; i < 10; i++) 
@@ -103,6 +104,7 @@ public:
             if(style=="black") publishers.push_back(new blackDrawer);
             if(style=="eros") publishers.push_back(new erosDrawer(kernel_size, decay));
             if(style=="corner") publishers.push_back(new cornerDrawer);
+            if(style=="scarf") publishers.push_back(new scarfDrawer);
             
             if(publishers.back()->initialise(remote, height, width, window_size, yarp_publish, remote))
             {

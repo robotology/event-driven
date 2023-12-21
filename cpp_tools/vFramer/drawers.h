@@ -108,6 +108,16 @@ public:
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
 
+class scarfDrawer : public drawerInterfaceAE {
+protected:
+    ev::SCARF scarf;
+    double updateImage() override;
+    
+public:
+    //scarfDrawer(int kernelSize, double decay): kernelSize(kernelSize), decay(decay), drawerInterfaceAE(){};
+    bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
+};
+
 class cornerDrawer : public drawerInterfaceAE {
 protected:
 
