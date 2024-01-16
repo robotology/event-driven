@@ -151,12 +151,17 @@ private:
 
 public:
 
-    void initialise(int img_w, int img_h, int rfs_x, int rfs_y, double ratio)
+    void initialise(int img_w, int img_h, int rf_size)
+    {
+        initialise(img_w, img_h, img_w/rf_size, img_h/rf_size);
+    }
+
+    void initialise(int img_w, int img_h, int rfs_x, int rfs_y)
     {
         img = cv::Mat(img_h, img_w, CV_32F);
         count = {rfs_x, rfs_y};
         dims = {img_w / rfs_x, img_h / rfs_y};
-        int N = (dims.height+dims.width)*4;
+        int N = dims.area();
         rfs.resize(count.height);
         for(auto &rf : rfs)
             rf.resize(count.width, CARF(N));
@@ -165,8 +170,7 @@ public:
         for(auto &con : cons)
             con.resize(img_w);
 
-        if(ratio > 1.0) ratio -= 1.0;
-        cv::Size ov = {(int)std::round(dims.width*ratio), (int)std::round(dims.height*ratio)};
+        cv::Size ov = {(int)std::round(dims.width*1.5), (int)std::round(dims.height*1.5)};
         
         for(int y = 0; y < img_h; y++) {
             for(int x = 0; x < img_w; x++) {
@@ -216,7 +220,7 @@ public:
         for(auto &row : rfs)
             for(auto &rf : row)
                 for(auto &p : rf.points)
-                    if(p.c) img.at<float>(p.v, p.u) += 0.3; 
+                    if(p.c) img.at<float>(p.v, p.u) += 0.2; 
         return img;
     }
 

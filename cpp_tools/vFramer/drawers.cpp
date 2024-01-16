@@ -202,7 +202,7 @@ double erosDrawer::updateImage()
     static cv::Mat inter;
     cv::medianBlur(EROS_vis.getSurface(), inter, 3);
     cv::GaussianBlur(inter, inter, {3, 3}, -1);
-    cv::normalize(inter, inter, 0, 255, CV_MINMAX);
+    cv::normalize(inter, inter, 0, 512, CV_MINMAX);
     cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
     return inf.timestamp;
 }
@@ -211,8 +211,19 @@ double erosDrawer::updateImage()
 // =========== //
 bool scarfDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
-    scarf.initialise(width, height, width/20, height/20, 1.5);
+    scarf.initialise(width, height, 20);
+    vt = std::thread([this]{updateScarfRep();});
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+}
+
+void scarfDrawer::updateScarfRep()
+{
+    input.readAll(true);
+    while (input.isRunning()) {
+        ev::info inf = input.readSlidingWinT(0.001, true);
+        for (auto &v : input) scarf.update(v.x, v.y);
+        scarf_time = inf.timestamp;
+    }
 }
 
 double scarfDrawer::updateImage()
@@ -220,18 +231,11 @@ double scarfDrawer::updateImage()
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
 
-    ev::info inf = input.readAll(false);
-
-    for (auto &v : input)
-        scarf.update(v.x, v.y);
-
     static cv::Mat inter1, inter2;
-    //cv::GaussianBlur(scarf.getSurface(), inter1, {3, 3}, -1);
-    // cv::GaussianBlur(inter, inter, {3, 3}, -1);
-    // cv::normalize(inter, inter, 0, 255, CV_MINMAX);
-    scarf.getSurface().convertTo(inter2, CV_8U, 255);
+    cv::GaussianBlur(scarf.getSurface(), inter1, {3, 3}, -1);
+    inter1.convertTo(inter2, CV_8U, 255);
     cv::cvtColor(inter2, canvas, cv::COLOR_GRAY2BGR);
-    return inf.timestamp;
+    return scarf_time;
 }
 
 //    CORNER    //
