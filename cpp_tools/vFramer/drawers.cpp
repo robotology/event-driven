@@ -220,10 +220,9 @@ void scarfDrawer::updateScarfRep()
 {
     input.readAll(true);
     while (input.isRunning()) {
-        ev::info inf = input.readAll(true);
+        ev::info inf = input.readSlidingWinT(0.00001, true);
         for (auto &v : input) scarf.update(v.x, v.y);
         scarf_time = inf.timestamp;
-        //yInfo() << ".";
     }
 }
 
@@ -231,10 +230,6 @@ double scarfDrawer::updateImage()
 {
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
-
-    // ev::info inf = input.readAll(true);
-    // for (auto &v : input) scarf.update(v.x, v.y);
-    // scarf_time = inf.timestamp;
 
     static cv::Mat inter1, inter2;
     cv::GaussianBlur(scarf.getSurface(), inter1, {3, 3}, -1);

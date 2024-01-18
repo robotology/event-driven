@@ -146,8 +146,7 @@ private:
 
     //variables
     cv::Mat img;
-    std::vector< std::vector < CARF> > rfs;
-    //std::vector< std::vector < std::vector <cv::Point> > > cons;
+    std::vector<CARF> rfs;
     std::vector<std::array<CARF::pnt, 4>> cons_map;
 
 public:
@@ -163,18 +162,9 @@ public:
         count = {rfs_x, rfs_y};
         dims = {img_w / rfs_x, img_h / rfs_y};
         int N = dims.area();
-        rfs.resize(count.height);
-        for(auto &rf : rfs)
-            rf.resize(count.width, CARF(N));
-        
-        // cons.resize(img_h);
-        // for(auto &con : cons)
-        //     con.resize(img_w);
 
         cons_map.resize(img_w*img_h);
-
-        //cv::Size ov = {(int)std::round(dims.width*1.5), (int)std::round(dims.height*1.5)};
-
+        rfs.resize(count.height*count.width, CARF(N));
         
         for(int y = 0; y < img_h; y++) {
             for(int x = 0; x < img_w; x++) {
@@ -182,7 +172,7 @@ public:
                 int rfy = y / dims.height;
                 if(rfx >= count.width || rfy >= count.height)
                     continue;
-                //cons[y][x].push_back({rfx, rfy});
+                
                 int i = 0;
                 auto &conxs = cons_map[y*img_w + x];
                 conxs[i++] = {rfx, rfy, 1};
@@ -199,23 +189,6 @@ public:
                     {if(rfx > 0) lef = true;}
                 else 
                     {if(rfx < count.width-1) rig = true;}
-                    
-                // if(ky < dims.height*0.5 && rfy != 0) top = true;
-                // if(ky >= dims.height*0.5 && rfy != count.height-1) bot = true;
-                // if(kx < dims.width*0.5
-                // //if(ky <= ov.height && rfy != 0) top = true;
-                // if(dims.height - ky <= ov.height && rfy != count.height-1) bot = true;
-                // if(kx <= ov.width && rfx != 0) lef = true;
-                // if(dims.width - kx <= ov.width && rfx != count.width-1) rig = true;
-
-                // if(top) cons[y][x].push_back({rfx, rfy-1});
-                // if(bot) cons[y][x].push_back({rfx, rfy+1});
-                // if(lef) cons[y][x].push_back({rfx-1, rfy});
-                // if(rig) cons[y][x].push_back({rfx+1, rfy});
-                // if(top && lef) cons[y][x].push_back({rfx-1, rfy-1});
-                // if(top && rig) cons[y][x].push_back({rfx+1, rfy-1});
-                // if(bot && lef) cons[y][x].push_back({rfx-1, rfy+1});
-                // if(bot && rig) cons[y][x].push_back({rfx+1, rfy+1});
 
                 if(top) conxs[i++] = {rfx, rfy-1, 0};
                 if(bot) conxs[i++] = {rfx, rfy+1, 0};
@@ -236,48 +209,27 @@ public:
         auto &conxs = cons_map[v*img.cols+u];
         for(auto &conx : conxs) {
             if(conx.c < 0) return;
-            rfs[conx.v][conx.u].add({u, v, conx.c});
+            rfs[conx.v * count.width + conx.u].add({u, v, conx.c});
         }
-
-        
-        //rfs[v/dims.height][u/dims.width].add({u, v, 1});
-
-        // static int i = 0;
-        // static int j = 0;
-        // rfs[j/count.height][i/count.width].add(i, j, 1);
-        // i = (i + 1) % count.width;
-        // j = (j + 2) % count.height;
-        //  auto &conx = cons[v][u][0];
-        //  rfs[conx.y][conx.x].add(u, v, 1);
-         //      }
-        // for(size_t i = 1; i < s; i++) {
-        //     auto &conx = cons[v][u][i];
-        //     rfs[conx.y][conx.x].add(u, v, 0);
-        // }
     }
 
     cv::Mat getSurface()
     {
         img.setTo(0.0);
-        for(auto &row : rfs)
-            for(auto &rf : row)
-                for(auto &p : rf.points)
-                    if(p.c) img.at<float>(p.v, p.u) += 0.2; 
+        for(int rf = 0; rf < count.area(); rf++)
+            for(auto &p : rfs[rf].points)
+                if(p.c) img.at<float>(p.v, p.u) += 0.2;
+                     
         return img;
     }
 
     std::vector<cv::Point> getList(int u, int v)
     {
         std::vector<cv::Point> p;
-        for(auto &i : rfs[v][u].points)
+        for(auto &i : rfs[v*count.width+u].points)
             if(i.c) p.push_back({i.u, i.v});
         return p;
     }
-
-
-
-    
-
 };
 
 
