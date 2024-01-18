@@ -113,9 +113,9 @@ friend class SCARF;
 private:
     //parameters
     struct pnt {
-        int u;
-        int v;
-        int c;
+        int u:14;
+        int v:14;
+        int c:4;
     };
     int N{0};
 
@@ -130,10 +130,10 @@ public:
         this->N = N;
     }
 
-    inline void add(int u, int v, int c)
+    inline void add(const CARF::pnt &p)
     {
-        points[i] = {u, v, c};
-        if(++i >= N) i = 0;
+         points[i] = p;
+         if(++i >= N) i = 0;
     }
 };
 
@@ -147,7 +147,8 @@ private:
     //variables
     cv::Mat img;
     std::vector< std::vector < CARF> > rfs;
-    std::vector< std::vector < std::vector <cv::Point> > > cons;
+    //std::vector< std::vector < std::vector <cv::Point> > > cons;
+    std::vector<std::array<CARF::pnt, 4>> cons_map;
 
 public:
 
@@ -166,11 +167,14 @@ public:
         for(auto &rf : rfs)
             rf.resize(count.width, CARF(N));
         
-        cons.resize(img_h);
-        for(auto &con : cons)
-            con.resize(img_w);
+        // cons.resize(img_h);
+        // for(auto &con : cons)
+        //     con.resize(img_w);
 
-        cv::Size ov = {(int)std::round(dims.width*1.5), (int)std::round(dims.height*1.5)};
+        cons_map.resize(img_w*img_h);
+
+        //cv::Size ov = {(int)std::round(dims.width*1.5), (int)std::round(dims.height*1.5)};
+
         
         for(int y = 0; y < img_h; y++) {
             for(int x = 0; x < img_w; x++) {
@@ -178,40 +182,78 @@ public:
                 int rfy = y / dims.height;
                 if(rfx >= count.width || rfy >= count.height)
                     continue;
-                cons[y][x].push_back({rfx, rfy});
+                //cons[y][x].push_back({rfx, rfy});
+                int i = 0;
+                auto &conxs = cons_map[y*img_w + x];
+                conxs[i++] = {rfx, rfy, 1};
 
                 int ky = y%dims.height;
                 int kx = x%dims.width;
 
                 bool top{false}, bot{false}, lef{false}, rig{false};
-                if(ky <= ov.height && rfy != 0) top = true;
-                if(dims.height - ky <= ov.height && rfy != count.height-1) bot = true;
-                if(kx <= ov.width && rfx != 0) lef = true;
-                if(dims.width - kx <= ov.width && rfx != count.width-1) rig = true;
+                if(ky < dims.height * 0.5) 
+                    {if(rfy > 0) top = true;}
+                else 
+                    {if(rfy < count.height-1) bot = true;}
+                if(kx < dims.width * 0.5) 
+                    {if(rfx > 0) lef = true;}
+                else 
+                    {if(rfx < count.width-1) rig = true;}
+                    
+                // if(ky < dims.height*0.5 && rfy != 0) top = true;
+                // if(ky >= dims.height*0.5 && rfy != count.height-1) bot = true;
+                // if(kx < dims.width*0.5
+                // //if(ky <= ov.height && rfy != 0) top = true;
+                // if(dims.height - ky <= ov.height && rfy != count.height-1) bot = true;
+                // if(kx <= ov.width && rfx != 0) lef = true;
+                // if(dims.width - kx <= ov.width && rfx != count.width-1) rig = true;
 
-                if(top) cons[y][x].push_back({rfx, rfy-1});
-                if(bot) cons[y][x].push_back({rfx, rfy+1});
-                if(lef) cons[y][x].push_back({rfx-1, rfy});
-                if(rig) cons[y][x].push_back({rfx+1, rfy});
-                if(top && lef) cons[y][x].push_back({rfx-1, rfy-1});
-                if(top && rig) cons[y][x].push_back({rfx+1, rfy-1});
-                if(bot && lef) cons[y][x].push_back({rfx-1, rfy+1});
-                if(bot && rig) cons[y][x].push_back({rfx+1, rfy+1});
+                // if(top) cons[y][x].push_back({rfx, rfy-1});
+                // if(bot) cons[y][x].push_back({rfx, rfy+1});
+                // if(lef) cons[y][x].push_back({rfx-1, rfy});
+                // if(rig) cons[y][x].push_back({rfx+1, rfy});
+                // if(top && lef) cons[y][x].push_back({rfx-1, rfy-1});
+                // if(top && rig) cons[y][x].push_back({rfx+1, rfy-1});
+                // if(bot && lef) cons[y][x].push_back({rfx-1, rfy+1});
+                // if(bot && rig) cons[y][x].push_back({rfx+1, rfy+1});
+
+                if(top) conxs[i++] = {rfx, rfy-1, 0};
+                if(bot) conxs[i++] = {rfx, rfy+1, 0};
+                if(lef) conxs[i++] = {rfx-1, rfy, 0};
+                if(rig) conxs[i++] = {rfx+1, rfy, 0};
+                if(top && lef) conxs[i++] = {rfx-1, rfy-1, 0};
+                if(top && rig) conxs[i++] = {rfx+1, rfy-1, 0};
+                if(bot && lef) conxs[i++] = {rfx-1, rfy+1, 0};
+                if(bot && rig) conxs[i++] = {rfx+1, rfy+1, 0};
+
+                while(i < 4) conxs[i++] = {-1, -1, -1};
             }
         }
     }
 
-    inline void update(int u, int v)
+    inline void update(const int &u, const int &v)
     {
-        size_t s = cons[v][u].size();
-        if(s) {
-            auto &conx = cons[v][u][0];
-            rfs[conx.y][conx.x].add(u, v, 1);
+        auto &conxs = cons_map[v*img.cols+u];
+        for(auto &conx : conxs) {
+            if(conx.c < 0) return;
+            rfs[conx.v][conx.u].add({u, v, conx.c});
         }
-        for(size_t i = 1; i < s; i++) {
-            auto &conx = cons[v][u][i];
-            rfs[conx.y][conx.x].add(u, v, 0);
-        }
+
+        
+        //rfs[v/dims.height][u/dims.width].add({u, v, 1});
+
+        // static int i = 0;
+        // static int j = 0;
+        // rfs[j/count.height][i/count.width].add(i, j, 1);
+        // i = (i + 1) % count.width;
+        // j = (j + 2) % count.height;
+        //  auto &conx = cons[v][u][0];
+        //  rfs[conx.y][conx.x].add(u, v, 1);
+         //      }
+        // for(size_t i = 1; i < s; i++) {
+        //     auto &conx = cons[v][u][i];
+        //     rfs[conx.y][conx.x].add(u, v, 0);
+        // }
     }
 
     cv::Mat getSurface()
