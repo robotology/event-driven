@@ -111,6 +111,9 @@ public:
 class scarfDrawer : public drawerInterfaceAE {
 protected:
     ev::SCARF scarf;
+    std::thread vt;
+    double scarf_time{0.0};
+    void updateScarfRep();
     double updateImage() override;
     
 public:
