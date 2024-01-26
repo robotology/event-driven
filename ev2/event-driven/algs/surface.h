@@ -230,6 +230,12 @@ public:
             if(i.c) p.push_back({i.u, i.v});
         return p;
     }
+
+    int getN(void)
+    {
+        if(rfs.size()) return rfs[0].N;
+        else return -1;
+    }
 };
 
 
