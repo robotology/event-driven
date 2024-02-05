@@ -868,8 +868,9 @@ public:
             typename std::list< packet<T> >::iterator final;
     };
 
-    bool load(std::string path)
+    bool load(std::string path, double seconds = DBL_MAX)
     {
+        if(seconds < 0.0) seconds = DBL_MAX;
         data.clear();
 
         std::ifstream reader;
@@ -887,6 +888,8 @@ public:
             p.duration(b.get(3).asInt32()*0.000001);
             p.fillFromMemory(b.get(4).asString().data(), b.get(4).asString().size());
             event_count += p.size();
+
+            if(p.timestamp() - data.begin()->timestamp() > seconds) break;
         }
 
         //set both pointing to first event
