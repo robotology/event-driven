@@ -113,9 +113,10 @@ friend class SCARF;
 private:
     //parameters
     struct pnt {
-        int u:14;
-        int v:14;
-        int c:4;
+        int u:13;
+        int v:13;
+        int p:3;
+        int c:3;
     };
     int N{0};
 
@@ -126,7 +127,7 @@ private:
 public:
 
     CARF(int N) {
-        points.resize(N, {0, 0, 0});
+        points.resize(N, {0, 0, 0, 0});
         this->N = N;
     }
 
@@ -151,31 +152,31 @@ private:
 
 public:
 
-    void initialise(int img_w, int img_h, int rf_size)
+    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0)
     {
-        initialise(img_w, img_h, img_w/rf_size, img_h/rf_size);
+        initialise(img_res, {img_res.width/rf_size, img_res.height/rf_size}, alpha);
     }
 
-    void initialise(int img_w, int img_h, int rfs_x, int rfs_y, double alpha = 1.0)
+    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0)
     {
-        img = cv::Mat(img_h, img_w, CV_32F);
-        count = {rfs_x, rfs_y};
-        dims = {img_w / rfs_x, img_h / rfs_y};
+        img = cv::Mat(img_res, CV_32F);
+        count = rf_res;
+        dims = {img_res.width / rf_res.width, img_res.height / rf_res.height};
         int N = dims.area() * alpha * 0.5;
 
-        cons_map.resize(img_w*img_h);
-        rfs.resize(count.height*count.width, CARF(N));
+        cons_map.resize(img_res.area());
+        rfs.resize(rf_res.area(), CARF(N));
         
-        for(int y = 0; y < img_h; y++) {
-            for(int x = 0; x < img_w; x++) {
+        for(int y = 0; y < img_res.height; y++) {
+            for(int x = 0; x < img_res.width; x++) {
                 int rfx = x / dims.width;
                 int rfy = y / dims.height;
                 if(rfx >= count.width || rfy >= count.height)
                     continue;
                 
                 int i = 0;
-                auto &conxs = cons_map[y*img_w + x];
-                conxs[i++] = {rfx, rfy, 1};
+                auto &conxs = cons_map[y*img_res.width + x];
+                conxs[i++] = {rfx, rfy, 1, 1};
 
                 int ky = y%dims.height;
                 int kx = x%dims.width;
@@ -190,36 +191,42 @@ public:
                 else 
                     {if(rfx < count.width-1) rig = true;}
 
-                if(top) conxs[i++] = {rfx, rfy-1, 0};
-                if(bot) conxs[i++] = {rfx, rfy+1, 0};
-                if(lef) conxs[i++] = {rfx-1, rfy, 0};
-                if(rig) conxs[i++] = {rfx+1, rfy, 0};
-                if(top && lef) conxs[i++] = {rfx-1, rfy-1, 0};
-                if(top && rig) conxs[i++] = {rfx+1, rfy-1, 0};
-                if(bot && lef) conxs[i++] = {rfx-1, rfy+1, 0};
-                if(bot && rig) conxs[i++] = {rfx+1, rfy+1, 0};
+                if(top) conxs[i++] = {rfx, rfy-1, 0, 0};
+                if(bot) conxs[i++] = {rfx, rfy+1, 0, 0};
+                if(lef) conxs[i++] = {rfx-1, rfy, 0, 0};
+                if(rig) conxs[i++] = {rfx+1, rfy, 0, 0};
+                if(top && lef) conxs[i++] = {rfx-1, rfy-1, 0, 0};
+                if(top && rig) conxs[i++] = {rfx+1, rfy-1, 0, 0};
+                if(bot && lef) conxs[i++] = {rfx-1, rfy+1, 0, 0};
+                if(bot && rig) conxs[i++] = {rfx+1, rfy+1, 0, 0};
 
-                while(i < 4) conxs[i++] = {-1, -1, -1};
+                while(i < 4) conxs[i++] = {-1, -1, -1, -1};
             }
         }
     }
 
-    inline void update(const int &u, const int &v)
+    inline void update(const int &u, const int &v, const int &p)
     {
         auto &conxs = cons_map[v*img.cols+u];
         for(auto &conx : conxs) {
             if(conx.c < 0) return;
-            rfs[conx.v * count.width + conx.u].add({u, v, conx.c});
+            rfs[conx.v * count.width + conx.u].add({u, v, p, conx.c});
         }
     }
 
-    cv::Mat getSurface()
+    cv::Mat getSurface(bool usePolarity = false)
     {
         img.setTo(0.0);
-        for(int rf = 0; rf < count.area(); rf++)
-            for(auto &p : rfs[rf].points)
-                if(p.c) img.at<float>(p.v, p.u) += 0.2;
-                     
+        if(usePolarity) {
+            for(int rf = 0; rf < count.area(); rf++)
+                for(auto &p : rfs[rf].points)
+                    if(p.c) img.at<float>(p.v, p.u) += (p.p > 0 ? -0.2 : 0.2);
+        } else {
+            for(int rf = 0; rf < count.area(); rf++)
+                for(auto &p : rfs[rf].points)
+                    if(p.c) img.at<float>(p.v, p.u) += 0.2;
+
+        }             
         return img;
     }
 
