@@ -16,9 +16,34 @@
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <opencv2/opencv.hpp>
 namespace ev {
 
+class pwtripletvelocity
+{
+private:
+    double tolerance{0.15};
+    
+    static const std::vector< std::vector<cv::Point> > is;
+    static const std::vector<cv::Point2d> vs;
 
+    typedef struct wjv {
+        cv::Point2d v;
+        int  c;
+        // wjv& operator+=(const wjv& rhs) {
+        //     this->c += rhs.c;
+        //     this->v = {this->v.u + rhs.v.u, this->v.v + rhs.v.v};
+        //     return *this;
+        // }
+    } wjv;
+
+    wjv point_velocity(const cv::Mat &local_sae);
+
+public:
+    double prev_update_ts;
+    cv::Point2d area_velocity(const cv::Mat &area_sae);
+
+};
 
 
 }
