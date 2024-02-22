@@ -181,6 +181,32 @@ double blackDrawer::updateImage()
     return inf.timestamp;
 }
 
+// FLOW DRAW //
+// =========== //
+bool flowDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
+{
+    sae = cv::Mat(height, width, CV_32F);
+    flow_rep.initialise(sae, 20);
+    return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+}
+
+double flowDrawer::updateImage()
+{
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+    else
+        canvas = black;
+
+    ev::info inf = input.readAll(true);
+
+    for(auto v = input.begin(); v != input.end(); v++)
+        sae.at<float>(v->y, v->x) = v.timestamp();
+    
+    flow_rep.update(inf.timestamp);
+
+    return inf.timestamp;
+}
+
 // EROS DRAW //
 // =========== //
 bool erosDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
