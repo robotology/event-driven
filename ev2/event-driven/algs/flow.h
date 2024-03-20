@@ -34,7 +34,7 @@ private:
     cv::Mat sae;
     double toc{0.0};
 
-    double tolerance{0.15};
+    double tolerance{0.1};
     int block_size;
     cv::Size n_blocks;
 
@@ -48,7 +48,7 @@ public:
     }
 
 
-    cv::Point2d block_update(double tic, cv::Rect block)
+    cv::Vec2f block_update(cv::Rect block)
     {
         static std::vector<double> x_dist;
         static std::vector<double> y_dist;
@@ -61,22 +61,27 @@ public:
 
         for(auto y = block.y; y < block.y + block.height; y++)
             for(auto x = block.x; x < block.x + block.width; x++)
-                point_velocity(sae({{x-ap, y-ap}, ap_region}), x_dist, y_dist);
+                if(sae.at<double>(y, x) > toc)
+                    point_velocity(sae({{x-ap, y-ap}, ap_region}), x_dist, y_dist);
 
+        if(x_dist.size() < 3) //THRESHOLD
+            return {0.0f, 0.0f};
+        
         std::sort(x_dist.begin(), x_dist.end());
         std::sort(y_dist.begin(), y_dist.end());
 
-        return {x_dist[x_dist.size()/2], y_dist[y_dist.size()/2]};
+        return {(float)(x_dist[x_dist.size()/2]), (float)(y_dist[y_dist.size()/2])};
     }
 
     void update(double tic)
     {
+        if(tic - toc < 0.1) toc = tic - 0.1;
         for(auto y = 0; y < n_blocks.height; y++) {
             for(auto x = 0; x < n_blocks.width; x++) {
-                flow.at<cv::Point2d>(y, x) = block_update(tic, 
-                    cv::Rect(x*block_size, y*block_size, block_size, block_size));
+                flow.at<cv::Vec2f>(y, x) = block_update(cv::Rect(x*block_size, y*block_size, block_size, block_size));
             }
         }
+        toc = tic;
     }
 
     void point_velocity(const cv::Mat &local_sae, std::vector<double> &flow_x, std::vector<double> &flow_y)
@@ -88,10 +93,10 @@ public:
             const double &t2 = local_sae.at<double>(is[i][0]);
             double dta = t0-t1;
             double dtb = t1-t2;
-            bool valid = dta > 0 && dtb > 0 && t1 > 0 && t2 > 0;
+            bool valid = dta > 0 && dtb > 0 && t1 > 0 && t2 > 0; //THRESHOLD
             if(!valid) continue;
             double error = fabs(1 - dtb/dta);
-            if(error > tolerance) continue;
+            if(error > tolerance) continue;          //THRESHOLD
             //valid triplet. calulate the velocity.
             double invt = 2.0 /  (dta + dtb);
             flow_x.push_back(vs[i].x * invt);
@@ -124,7 +129,7 @@ public:
         //convert to BGR
         cv::Mat small;
         cv::cvtColor(hsv, small, cv::COLOR_HSV2BGR);
-        cv::resize(small, img, sae.size());
+        cv::resize(small, img, sae.size(), 0.0, 0.0, cv::INTER_NEAREST);
 
     }
 

@@ -92,6 +92,7 @@ protected:
     ev::zflow flow_rep;
     double updateImage() override;
 public:
+    flowDrawer(){window_size=0.033;};
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
 
