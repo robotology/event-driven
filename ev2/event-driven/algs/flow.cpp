@@ -3,10 +3,10 @@
 
 namespace ev {
 
-const int zflow::ap = 2;
-const cv::Size zflow::ap_region = {ap*2+1, ap*2+1};
+const int zflowBlock::ap = 2;
+const cv::Size zflowBlock::ap_region = {ap*2+1, ap*2+1};
 
-const std::vector< std::vector<cv::Point> > zflow::is = {{{0,0},{1,1}},
+const std::vector< std::vector<cv::Point> > zflowBlock::is = {{{0,0},{1,1}},
                                                                     {{0,2},{1,2}}, 
                                                                     {{0,4},{1,3}}, 
                                                                     {{2,4},{2,3}}, 
@@ -15,7 +15,7 @@ const std::vector< std::vector<cv::Point> > zflow::is = {{{0,0},{1,1}},
                                                                     {{4,0},{3,1}}, 
                                                                     {{2,0},{2,1}}};
 
-const std::vector<cv::Point2d> zflow::vs ={{1,  1}, 
+const std::vector<cv::Point2d> zflowBlock::vs ={{1,  1}, 
                                                 {1,  0}, 
                                                 {1, -1}, 
                                                 {0, -1}, 

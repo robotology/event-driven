@@ -186,7 +186,7 @@ double blackDrawer::updateImage()
 bool flowDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
     sae = cv::Mat(height, width, CV_64F, 0.0);
-    flow_rep.initialise(sae, 10);
+    flow_rep.initialise(sae, 20);
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
 
@@ -199,20 +199,23 @@ double flowDrawer::updateImage()
 
     ev::info inf = input.readAll(true);
 
-    for(auto v = input.begin(); v != input.end(); v++)
+    for(auto v = input.begin(); v != input.end(); v++) {
         sae.at<double>(v->y, v->x) = v.timestamp();
+        //canvas.at<cv::Vec3b>(v->y, v->x) = flow_rep.flowbgr.at<cv::Vec3b>(v->y, v->x);
+    }
     
     // static double dur = 0;
     // static int count = 0;
     // double toc = yarp::os::Time::now();
     flow_rep.update(inf.timestamp);
+    flow_rep.makebgr().copyTo(canvas);
+    //yInfo() << canvas.type() << flow_rep.flowbgr.type();
     // dur += yarp::os::Time::now() - toc;
     // count++;
     // if(count % 100 == 0)
     //     yInfo() << dur / count;
+    //flow_rep.makebgr().copyTo(canvas);
 
-
-    flow_rep.visualise(canvas);
     //yarp::os::Time::delay(0.1);
     //cv::Mat temp;
     //sae.convertTo(temp, CV_8U);
