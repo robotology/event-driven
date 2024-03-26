@@ -208,7 +208,11 @@ double flowDrawer::updateImage()
     // static int count = 0;
     // double toc = yarp::os::Time::now();
     flow_rep.update(inf.timestamp);
-    flow_rep.makebgr().copyTo(canvas);
+    flow_rep.makebgr();//.copyTo(canvas);
+    for(auto v = input.begin(); v != input.end(); v++) {
+        //sae.at<double>(v->y, v->x) = v.timestamp();
+        canvas.at<cv::Vec3b>(v->y, v->x) = flow_rep.flowbgr.at<cv::Vec3b>(v->y, v->x);
+    }
     //yInfo() << canvas.type() << flow_rep.flowbgr.type();
     // dur += yarp::os::Time::now() - toc;
     // count++;
