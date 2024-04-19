@@ -88,8 +88,11 @@ public:
 
 class flowDrawer : public drawerInterfaceAE {
 protected:
-    cv::Mat sae;
-    ev::zflow flow_rep;
+    cv::Mat sae_p;
+    cv::Mat sae_n;
+    ev::vNoiseFilter nf;
+
+    ev::zcflow flow_rep;
     double updateImage() override;
 public:
     flowDrawer(){window_size=0.033;};
