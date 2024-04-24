@@ -88,9 +88,13 @@ public:
 
 class flowDrawer : public drawerInterfaceAE {
 protected:
-    cv::Mat sae_p;
-    cv::Mat sae_n;
+    cv::Mat sae_p, sae_p_live;
+    cv::Mat sae_n, sae_n_live;
+    cv::Mat mask, mask_live;
     ev::vNoiseFilter nf;
+    std::thread vt;
+    void updateSAE();
+    double tic, tic_live;
 
     ev::zcflow flow_rep;
     double updateImage() override;

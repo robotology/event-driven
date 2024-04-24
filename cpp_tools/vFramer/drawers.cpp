@@ -186,65 +186,70 @@ double blackDrawer::updateImage()
 // =========== //
 bool flowDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
-
     sae_p = cv::Mat(height, width, CV_64F, 0.0);
     sae_n = cv::Mat(height, width, CV_64F, 0.0);
+    sae_p_live = cv::Mat(height, width, CV_64F, 0.0);
+    sae_n_live = cv::Mat(height, width, CV_64F, 0.0);
+    mask = cv::Mat(height, width, CV_8U, cv::Scalar(0));
+    mask_live = cv::Mat(height, width, CV_8U, cv::Scalar(0));
     // initialize for sae and grid size by zc
     flow_rep.initialise(sae_p, sae_n, 20);
     nf.initialise(width, height);
     nf.use_temporal_filter(0.1);
+    vt = std::thread([this]{updateSAE();});
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+}
+
+void flowDrawer::updateSAE()
+{
+    input.readAll(true);
+    while (input.isRunning()) {
+        ev::info inf = input.readAll(true);
+        for (auto v = input.begin(); v != input.end(); v++)
+        {
+            if (v->p) // only check positive events
+                sae_p_live.at<double>(v->y, v->x) = v.timestamp();
+            else
+                sae_n_live.at<double>(v->y, v->x) = v.timestamp();
+            //canvas.at<cv::Vec3b>(v->y, v->x) = flow_rep.flowbgr.at<cv::Vec3b>(v->y, v->x);
+            mask_live.at<uchar>(v->y, v->x) = 1;
+        }
+        //mask_live.copyTo(mask);
+        //mask_live.setTo(0);
+        tic_live = inf.timestamp;
+    }
+    
+
 }
 
 double flowDrawer::updateImage()
 {
-    float start = clock();
-    std::stringstream  output_freq;
+
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
     else
         canvas = white;
 
-    ev::info inf = input.readAll(true);
+    double toc = yarp::os::Time::now();
+    sae_p_live.copyTo(sae_p);
+    sae_n_live.copyTo(sae_n);
+    mask_live.copyTo(mask);
+    mask_live.setTo(0);
+    tic = tic_live;
 
-    for(auto v = input.begin(); v != input.end(); v++) {
-        if(v->p) // only check positive events
-        // v->y [0,479] v->x [0, 639]
-        // if(nf.check(v->x, v->y, v->p, v.timestamp()))
-            sae_p.at<double>(v->y, v->x) = v.timestamp();
-        else
-            sae_n.at<double>(v->y, v->x) = v.timestamp();
 
-        //canvas.at<cv::Vec3b>(v->y, v->x) = flow_rep.flowbgr.at<cv::Vec3b>(v->y, v->x);
-    }
-    
-    // double minv, maxv;
-    // cv::minMaxLoc(sae({0, sae.rows/2, sae.cols, 1}), &minv, &maxv, nullptr, nullptr);
-    // minv = maxv - 0.2;
-    // if(maxv <= minv) return inf.timestamp;
-    // for(int i = 0; i < sae.cols; i++)
-    // {
-    //     double &t = sae.at<double>(sae.rows/2, i);
-    //     if(t < minv) continue;
-    //     int scaledt = canvas.size().height * (1.0 - (t - minv) / (maxv - minv));
-    //     canvas.at<cv::Vec3b>(scaledt, i) = white;
+    flow_rep.update(tic);
+    flow_rep.makebgr().copyTo(canvas, mask);
+    //canvas = canvas.mul(mask);
+    // for(auto v = input.begin(); v != input.end(); v++) {
+    //     //sae.at<double>(v->y, v->x) = v.timestamp();
+    //     canvas.at<cv::Vec3b>(v->y, v->x) = flow_rep.flowbgr.at<cv::Vec3b>(v->y, v->x);
     // }
-    // return inf.timestamp;
 
-
-    // static double dur = 0;
-    // static int count = 0;
-    // double toc = yarp::os::Time::now();
-    flow_rep.update(inf.timestamp);
-    flow_rep.makebgr();//.copyTo(canvas);
-    for(auto v = input.begin(); v != input.end(); v++) {
-        //sae.at<double>(v->y, v->x) = v.timestamp();
-        canvas.at<cv::Vec3b>(v->y, v->x) = flow_rep.flowbgr.at<cv::Vec3b>(v->y, v->x);
-    }
-    float end = clock();
 
     // std::cout<<float((end-start)/CLOCKS_PER_SEC)<<std::endl;
-    output_freq << std::fixed << std::setprecision(2) << 1/float((end-start)/CLOCKS_PER_SEC);
+    std::stringstream  output_freq;
+    output_freq << std::fixed << std::setprecision(2) << 1.0 / (yarp::os::Time::now() - toc);
     cv::putText(canvas, //target image
             output_freq.str()+"HZ", //text
             cv::Point(canvas.cols-150, canvas.rows), //top-left position
@@ -253,26 +258,8 @@ double flowDrawer::updateImage()
             CV_RGB(0, 0, 0), //font color
             0.5);
 
-    // for(size_t i = 0; i <sae.cols; i++)
-    //     for(size_t j = 0; j<sae.rows;j++) 
-    //     {
-    //     //sae.at<double>(v->y, v->x) = v.timestamp();
-    //     canvas.at<cv::Vec3b>(j, i) = flow_rep.flowbgr.at<cv::Vec3b>(j, i);
-    //     }
 
-    //yInfo() << canvas.type() << flow_rep.flowbgr.type();
-    // dur += yarp::os::Time::now() - toc;
-    // count++;
-    // if(count % 100 == 0)
-    //     yInfo() << dur / count;
-    //flow_rep.makebgr().copyTo(canvas);
-
-    //yarp::os::Time::delay(0.1);
-    //cv::Mat temp;
-    //sae.convertTo(temp, CV_8U);
-    //cv::cvtColor(temp, canvas, cv::COLOR_GRAY2BGR);
-
-    return inf.timestamp;
+    return tic;
 }
 
 // EROS DRAW //

@@ -326,9 +326,8 @@ public:
             int rows_range = int(y/block_size)+1;
             int cols_range = int(x/block_size)+1;
             // if(rows_range>0 && cols_range>0 && rows_range<23 &&  cols_range<31)
-            for(int j=rows_range-1; j<=rows_range+1; j++)
-                for(int i=cols_range-1; i<=cols_range+1; i++)
-                {
+            for(int j=rows_range-1; j<=rows_range+1; j++) {
+                for(int i=cols_range-1; i<=cols_range+1; i++) {
                     temp.x = fabs(flow_mat.at<cv::Vec2f>(j, i)[0]);
                     temp.y = fabs(flow_mat.at<cv::Vec2f>(j, i)[1]);
                     if(j==rows_range&&i==cols_range)
@@ -345,6 +344,7 @@ public:
                     }
                     flag = 1;
                 }
+            }
 
             temp_x += (float)(x_dist[x_dist.size()/2]);
             temp_y += (float)(y_dist[y_dist.size()/2]);
@@ -405,6 +405,7 @@ public:
                 const double dt12 = sae.at<double>(y, x) - sae.at<double>(j, i);
                 if(0 < dt12 && dt12 < dt)
                 {
+                        //
                         const int m = 2 * i - x;
                         const int n = 2 * j - y;
                         
@@ -496,7 +497,7 @@ public:
 
         // every time initialize flow
         for(auto &b : blocks) {
-            flow.at<cv::Vec2f>(b.index) = (0.0, 0.0);
+            flow.at<cv::Vec2f>(b.index) = {0.0, 0.0};
             b.x_dist.clear();
             b.y_dist.clear();
         }
