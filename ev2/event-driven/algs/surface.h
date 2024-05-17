@@ -226,7 +226,7 @@ public:
                 for(auto &p : rfs[rf].points)
                     if(p.c) img.at<float>(p.v, p.u) += 0.2;
 
-        }             
+        }
         return img;
     }
 
