@@ -63,5 +63,19 @@ public:
 
 };
 
+class spatialFilter
+{
+private:
+    std::array<cv::Mat, 2> saes;
+    double period;
+    double range;
+
+public:
+    spatialFilter() {};
+    void initialise(int height, int width, double period, int range);
+    bool check(const AE& v, const double ts);
+
+};
+
 
 }

@@ -211,7 +211,7 @@ double erosDrawer::updateImage()
 // =========== //
 bool scarfDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
-    scarf.initialise({width, height}, 14, 1.5);
+    scarf.initialise({width, height}, 14, 1.0);
     vt = std::thread([this]{updateScarfRep();});
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
@@ -227,15 +227,30 @@ void scarfDrawer::updateScarfRep()
     }
 }
 
+#include <numeric>
 double scarfDrawer::updateImage()
 {
+    static std::deque<double> timebuffer;
+    double toc = yarp::os::Time::now();
+
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
 
     static cv::Mat inter1, inter2;
     //cv::GaussianBlur(scarf.getSurface(false), inter1, {3, 3}, -1);
     scarf.getSurface(false).convertTo(inter2, CV_8U, 255);
+    timebuffer.push_back(yarp::os::Time::now() - toc);
     cv::cvtColor(inter2, canvas, cv::COLOR_GRAY2BGR);
+
+    while(timebuffer.size() > 100) {
+        timebuffer.pop_front();
+        //yInfo() << timebuffer.size();
+    }
+    std::stringstream ss;
+    ss << (int)(timebuffer.size() / std::accumulate(timebuffer.begin(), timebuffer.end(), 0.0)) << "Hz";
+
+    cv::putText(canvas, ss.str(), {10, canvas.rows-10}, cv::FONT_HERSHEY_PLAIN, 1.0, {255, 255, 255}); 
+
     return scarf_time;
 }
 
