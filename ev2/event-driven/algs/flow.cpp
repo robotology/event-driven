@@ -4,7 +4,7 @@
 namespace ev {
 
 
-const int zcflowBlock::d_coordinate = 3;
+const int zcflowBlock::d_coordinate = 2;
 
 // const int zflowBlock::ap = 2;
 // const int zflowBlock::d_coordinate = 5;

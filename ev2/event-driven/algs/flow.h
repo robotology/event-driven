@@ -253,13 +253,17 @@ private:
     cv::Vec3b color;
     cv::Point2i index;
     cv::Vec2f flow;
-    std::deque<double> x_dist;
-    std::deque<double> y_dist;
+    // std::deque<double> x_dist;
+    // std::deque<double> y_dist;
+
+    std::vector<double> x_dist;
+    std::vector<double> y_dist;
+
     // cv::Mat sae;
-    double tolerance{0.25};
+    double tolerance{0.125};
     double refracotry_period{0.003};
-    double dt{0.1};
-    size_t N{10};
+    double dt{0.05};
+    size_t N{30};
 
     // static const int ap;
     static const int d_coordinate;
@@ -274,6 +278,8 @@ public:
         index = i;
         flow = {0.0,0.0};
         color = {0, 0, 0};
+        x_dist.clear();
+        y_dist.clear();
         // sae = patch; // shallow reference
         // N = std::max(patch.cols, patch.rows);
     }
@@ -310,11 +316,12 @@ public:
     bool block_update_zc(const cv::Mat &sae, int x, int y, cv::Mat &flow_mat, int block_size, cv::Point2i b_index)
     {
         point_velocity_zc(sae, x, y, x_dist, y_dist);
-    
-
-        if(x_dist.size() > N) {
+        if(x_dist.size() > N && x_dist.size() < 10000) {
             // flow[0] = std::accumulate(x_dist.begin(), x_dist.end(), 0.0) / x_dist.size();
             // flow[1] = std::accumulate(y_dist.begin(), y_dist.end(), 0.0) / y_dist.size();
+            // std::cout << "x_dist_first:" << x_dist.at(1) << std::endl;            
+            // std::cout << x_dist.size() << std::endl;
+            // std::cout << y_dist.size() << std::endl;
 
             std::sort(x_dist.begin(), x_dist.end());
             std::sort(y_dist.begin(), y_dist.end());
@@ -332,12 +339,12 @@ public:
                     temp.y = fabs(flow_mat.at<cv::Vec2f>(j, i)[1]);
                     if(j==rows_range&&i==cols_range)
                         flag = 0;
-                    if(fabs(flow_mat.at<cv::Vec2f>(j, i)[0])>1 && flag)
+                    if(fabs(flow_mat.at<cv::Vec2f>(j, i)[0])>0.1 && flag)
                     {
                         temp_x += flow_mat.at<cv::Vec2f>(j, i)[0];
                         counter_x += 1;
                     }
-                    if(fabs(flow_mat.at<cv::Vec2f>(j, i)[1])>1 && flag)
+                    if(fabs(flow_mat.at<cv::Vec2f>(j, i)[1])>0.1 && flag)
                     {
                         temp_y += flow_mat.at<cv::Vec2f>(j, i)[1];
                         counter_y += 1;
@@ -352,8 +359,9 @@ public:
             counter_y += 1;
             temp_x /= counter_x;
             temp_y /= counter_y;
-            b_index.x += 1;
-            b_index.y += 1;
+            // b_index.x += 1;
+            // b_index.y += 1;
+            // std::cout<<"temp_x, temp_y:"<<temp_x<<","<<temp_y<<std::endl;
             flow_mat.at<cv::Vec2f>(b_index) = {temp_x, temp_y};
 
             // flow = {(float)(x_dist[x_dist.size()/2]), (float)(y_dist[y_dist.size()/2])};
@@ -390,7 +398,7 @@ public:
     //     }
     // }
 
-    void point_velocity_zc(const cv::Mat &sae, int x, int y, std::deque<double> &flow_x, std::deque<double> &flow_y)
+    void point_velocity_zc(const cv::Mat &sae, int x, int y, std::vector<double> &flow_x, std::vector<double> &flow_y)
     {
         // for(size_t i = 0; i < is.size(); i++) 
         // {
@@ -402,28 +410,33 @@ public:
         for(int j=y - d_coordinate; j <= y + d_coordinate; j++)
             for(int i= x - d_coordinate; i<= x + d_coordinate; i++)
             {   
-                const double dt12 = sae.at<double>(y, x) - sae.at<double>(j, i);
-                if(0 < dt12 && dt12 < dt)
-                {
-                        //
-                        const int m = 2 * i - x;
-                        const int n = 2 * j - y;
-                        
-                        // std::cout<<'m'<<m<<std::endl;
-                        // std::cout<<'n'<<n<<std::endl;
-                        // std::cout<<'i'<<i<<std::endl;
-                        // std::cout<<'j'<<j<<std::endl;
-                        if(0<=n && n<=sae.rows-1 &&0<=m && m<=sae.cols-1)
-                        {    
-                            const double dt23 = sae.at<double>(j, i)-sae.at<double>(n, m);
-                            double error = fabs(1 - dt23/dt12);
-                            if(error > tolerance) continue;          //THRESHOLD
-                            //valid triplet. calulate the velocity.
-                            double invt = 2.0 /  (dt12 + dt23);
-                            flow_x.push_back((x-m) * invt);
-                            flow_y.push_back((y-n) * invt);
-                        }
+                if(i!=x or j!=y){
+                    const double dt12 = sae.at<double>(y, x) - sae.at<double>(j, i);
+                    if(0 < dt12 && dt12 < dt)
+                    {
+                            //
+                            const int m = 2 * i - x;
+                            const int n = 2 * j - y;
+                            
+                            // std::cout<<'m'<<m<<std::endl;
+                            // std::cout<<'n'<<n<<std::endl;
+                            // std::cout<<'i'<<i<<std::endl;
+                            // std::cout<<'j'<<j<<std::endl;
+                            if(0<=n && n<=sae.rows-1 &&0<=m && m<=sae.cols-1)
+                            {    
+                                const double dt23 = sae.at<double>(j, i)-sae.at<double>(n, m);
+                                double error = fabs(1 - dt23/dt12);
+                                if(error > tolerance) continue;          //THRESHOLD
+                                //valid triplet. calulate the velocity.
+                                double invt = 1.0 /  (dt12 + dt23);
+                                // std::cout<<"(x-m) * invt:"<<(x-m) * invt<<std::endl;
+                                // std::cout<<"(y-m) * invt:"<<(y-n) * invt<<std::endl;
+                                flow_x.push_back(double(x-m) * invt);
+                                flow_y.push_back(double(y-n) * invt);
+                            }
+                    }
                 }
+                
                 // const double &t0 = grid_sae.at<double>(d_coordinate, d_coordinate);
                 // const double &t1 = grid_sae.at<double>(i, j);
                 // const double &t2 = grid_sae.at<double>(2*i-d_coordinate, 2*j-d_coordinate);
@@ -452,6 +465,8 @@ private:
 
     cv::Mat flow;
     cv::Mat flow_;
+    cv::Mat flow_x;
+    cv::Mat flow_y;
 
     cv::Mat sae_p;
     cv::Mat sae_n;
@@ -466,6 +481,9 @@ private:
 
 public:
     cv::Mat flowbgr;
+    cv::Mat xy[2]; //X,Y  
+    int camera_size_compensation = 1;
+    int boundary_compensation = 2;
 
     void initialise(const cv::Mat_<double> &sae_p, const cv::Mat_<double> &sae_n, int block_size)
     {
@@ -473,11 +491,18 @@ public:
         this->sae_n = sae_n;
         this->block_size = block_size;
         n_blocks = sae_p.size() / block_size;
-        flow_blocks.height = n_blocks.height+2;
-        flow_blocks.width = n_blocks.width+2;
-        flow = cv::Mat(flow_blocks, CV_32FC2);
+        n_blocks.width+=boundary_compensation;
+        n_blocks.height+=boundary_compensation;
+        n_blocks.width+=camera_size_compensation;
+        flow_blocks.height = n_blocks.height;
+        flow_blocks.width = n_blocks.width;
+        flow = cv::Mat::zeros(flow_blocks, CV_32FC2);
         blocks.resize(n_blocks.area());
         flowbgr = cv::Mat::zeros(sae_p.size(), CV_8UC3);
+        flow_x = cv::Mat::zeros(sae_p.size(), CV_32F);
+        flow_y = cv::Mat::zeros(sae_p.size(), CV_32F);
+
+
 
         for(int y = 0; y < n_blocks.height; y++) {
             for(int x = 0; x < n_blocks.width; x++) {
@@ -486,6 +511,23 @@ public:
             }
         }
 
+    }
+    
+
+    void update_sae(const cv::Mat_<double> &sae_p, const cv::Mat_<double> &sae_n)
+    {
+        this->sae_p = sae_p;
+        this->sae_n = sae_n;
+    }
+    
+    void clear_blocks()
+    {
+        for(auto &b : blocks){ 
+            flow.at<cv::Vec2f>(b.index) = {0.0, 0.0};
+            b.x_dist.clear();
+            b.y_dist.clear();
+            // std::cout<<""<<b.index<<std::endl;
+        }
     }
 
     void update(double tic)
@@ -496,14 +538,25 @@ public:
         // }
 
         // every time initialize flow
-        for(auto &b : blocks) {
-            flow.at<cv::Vec2f>(b.index) = {0.0, 0.0};
-            b.x_dist.clear();
-            b.y_dist.clear();
-        }
+        // for(auto &b : blocks) {
+        //     flow.at<cv::Vec2f>(b.index) = {0.0, 0.0};
+        //     b.x_dist.clear();
+        //     b.y_dist.clear();
+        // }
 
-        for(int y=0; y< sae_p.rows; y++)
-            for(int x=0; x<sae_p.cols; x++)
+        //for(int y=0; y< sae_p.rows; y++)
+            //for(int x=0; x<sae_p.cols; x++)
+        // double minVal, maxVal;
+        // cv::minMaxLoc(flow, &minVal, &maxVal);
+        // std::cout<<"maxVal"<<maxVal<<std::endl;
+        // for(int y=0;y<flow.rows;y++)
+        //     for(int x=0;x<flow.cols;x++)
+        //     {
+        //         std::cout<<flow.at<cv::Vec2f>(y, x)[0]<<";"<<flow.at<cv::Vec2f>(y, x)[1]<<std::endl;
+        //     }
+
+        for(int y=zcflowBlock::d_coordinate; y< sae_p.rows-zcflowBlock::d_coordinate; y++)
+            for(int x=zcflowBlock::d_coordinate; x<sae_p.cols-zcflowBlock::d_coordinate; x++)
             {
                 if(sae_p.at<double>(y, x) > toc)
                 {
@@ -512,16 +565,19 @@ public:
                 // considering code structure, here we could try to use all triplet connection
                 // in each grid in a special time period(the time gap of saving events) 
                 // locate the block using (x, y) coordinate
-                    b_index = blocks[int(y/block_size)*n_blocks.width+int(x/block_size)].index; 
+                    b_index = blocks[int(y/block_size)*n_blocks.width+int(x/block_size)].index;
+                    b_index.x += 1;
+                    b_index.y += 1; 
                     blocks[int(y/block_size)*n_blocks.width+int(x/block_size)].block_update_zc(sae_p, x, y, flow, block_size, b_index);
                 }
                 if(sae_n.at<double>(y, x) > toc)
                 {
-
                     b_index = blocks[int(y/block_size)*n_blocks.width+int(x/block_size)].index; 
+                    b_index.x += 1;
+                    b_index.y += 1; 
                     blocks[int(y/block_size)*n_blocks.width+int(x/block_size)].block_update_zc(sae_n, x, y, flow, block_size, b_index);
                 }
-
+                // std::cout<<"pixel_counter:"<<pixel_counter<<std::endl;
 
                     // if connection num> threshold
                     // calculate flow and update it to the buffer
@@ -541,10 +597,19 @@ public:
     cv::Mat makebgr()
     {
         //extraxt x and y channels
-        cv::Mat xy[2]; //X,Y
+        // cv::Mat xy[2]; //X,Y
 
+        // flow_ = flow(cv::Range(1, flow.rows-1), cv::Range(1,flow.cols-1));
+        // flow_ = flow(cv::Range(0, flow.rows-2), cv::Range(1,flow.cols-2));
         flow_ = flow(cv::Range(1, flow.rows-1), cv::Range(1,flow.cols-1));
+
+  
         cv::split(flow_, xy);
+
+        // cv::resize(xy[0], flow_x, sae_p.size(), 0.0, 0.0, cv::INTER_LINEAR);
+        // cv::resize(xy[1], flow_y, sae_p.size(), 0.0, 0.0, cv::INTER_LINEAR);
+
+        // save_results(flow_);
 
         //calculate angle and magnitude
         cv::Mat magnitude, angle;
@@ -572,6 +637,27 @@ public:
         // cv::bitwise_not(flowbgr, flowbgr);
         return flowbgr;
     }  
+
+    // void save_results(cv::Mat flow_result){
+    //     // double minVal; 
+    //     // double maxVal; 
+    //     // cv::Point minLoc; 
+    //     // cv::Point maxLoc;
+
+    //     // minMaxLoc(flow_result, &minVal, &maxVal, &minLoc, &maxLoc );
+    //     // std::cout<<'flow_result.max()'<<maxVal<<std::endl;
+    //     // std::cout<<'flow_result.min()'<<minVal<<std::endl;
+
+    //     cv::imwrite("/home/lzc/UE_dataset/real_time_flow_results/test.exr", flow_result);
+
+    //     // cv::FileStorage fs("/home/lzc/UE_dataset/real_time_flow_results/test.yml", cv::FileStorage::WRITE);
+    //     // fs<<"Image"<<flow_result;
+
+    
+
+    // }
+
+
 
 };
 
