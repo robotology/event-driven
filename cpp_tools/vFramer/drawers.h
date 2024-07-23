@@ -86,6 +86,23 @@ public:
     blackDrawer(){window_size=0.033;}
 };
 
+class flowDrawer : public drawerInterfaceAE {
+protected:
+    cv::Mat sae_p, sae_p_live;
+    cv::Mat sae_n, sae_n_live;
+    cv::Mat mask, mask_live;
+    ev::vNoiseFilter nf;
+    std::thread vt;
+    void updateSAE();
+    double tic, tic_live;
+
+    ev::zcflow flow_rep;
+    double updateImage() override;
+public:
+    flowDrawer(){window_size=0.033;};
+    bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
+};
+
 class isoDrawer : public drawerInterfaceAE {
 protected:
     ev::isoImager iso_drawer;
@@ -135,6 +152,8 @@ public:
     cornerDrawer(){window_size=1.0;}
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
+
+
 
 // class overlayStereoDraw : public vDraw {
 

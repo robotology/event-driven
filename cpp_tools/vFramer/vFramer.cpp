@@ -42,7 +42,7 @@ public:
         if(rf.check("h") || rf.check("help"))
         {
             yInfo() << "vFramer - visualisation of event data";
-            yInfo() << "--<iso, grey, black, eros, corner> : drawer style";
+            yInfo() << "--<iso, grey, black, eros, corner, flow, scarf> : drawer style";
             yInfo() << "--src[1-9] : connect to up to 10 remotes";
             yInfo() << "======================";
             yInfo() << "--name : global module name for ports";
@@ -88,6 +88,7 @@ public:
         if(rf.check("black")) style = "black";
         if(rf.check("corner")) style = "corner";
         if(rf.check("scarf")) style = "scarf";
+        if(rf.check("flow")) style = "flow";
 
         std::stringstream remote_id;
         for(int i = 0; i < 10; i++) 
@@ -105,6 +106,7 @@ public:
             if(style=="eros") publishers.push_back(new erosDrawer(kernel_size, decay));
             if(style=="corner") publishers.push_back(new cornerDrawer);
             if(style=="scarf") publishers.push_back(new scarfDrawer);
+            if(style=="flow") publishers.push_back(new flowDrawer);
             
             if(publishers.back()->initialise(remote, height, width, window_size, yarp_publish, remote))
             {
