@@ -221,9 +221,11 @@ void scarfDrawer::updateScarfRep()
     input.readAll(true);
     while (input.isRunning()) {
         //ev::info inf = input.readSlidingWinT(0.001, true);
+        double tic = yarp::os::Time::now();
         ev::info inf = input.readAll(true);
         for (auto &v : input) scarf.update(v.x, v.y, v.p);
         scarf_time = inf.timestamp;
+        vrate = inf.count / (yarp::os::Time::now() - tic);
     }
 }
 
@@ -233,9 +235,33 @@ double scarfDrawer::updateImage()
         canvas = cv::Mat(img_size, CV_8UC3);
 
     static cv::Mat inter1, inter2;
+    static std::stringstream ss;
     //cv::GaussianBlur(scarf.getSurface(false), inter1, {3, 3}, -1);
+    double tic = yarp::os::Time::now();
     scarf.getSurface(false).convertTo(inter2, CV_8U, 255);
+    double toc = yarp::os::Time::now();
     cv::cvtColor(inter2, canvas, cv::COLOR_GRAY2BGR);
+
+    static std::deque<double> mfs;
+    mfs.push_back(toc - tic);
+    while(mfs.size() > 100)
+        mfs.pop_front();
+    double mf = 0.0;
+    for(auto i : mfs) mf += i; 
+    ss.str("");
+    ss << (int)(mfs.size()/mf) << " hz";
+    cv::putText(canvas, ss.str(), {30,30}, cv::FONT_HERSHEY_PLAIN, 2.0, {255, 255, 0});
+
+    static std::deque<double> vrs;
+    vrs.push_back(vrate);
+    while(vrs.size() > 100)
+        vrs.pop_front();
+    double mr = 0.0;
+    for(auto i : vrs) mr += i;
+    ss.str("");
+    ss << (int)(0.000001*mr/vrs.size()) << " x10^6 v/s";
+    cv::putText(canvas, ss.str(), {30,60}, cv::FONT_HERSHEY_PLAIN, 2.0, {0, 255, 255});
+
     return scarf_time;
 }
 
