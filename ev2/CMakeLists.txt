@@ -59,7 +59,7 @@ set_target_properties(${EVENTDRIVEN_LIBRARY} PROPERTIES PUBLIC_HEADER "${public_
 target_include_directories(${EVENTDRIVEN_LIBRARY} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
                                                          "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>") # FIXME INSTALL PATH
 
-target_compile_definitions(${EVENTDRIVEN_LIBRARY} PRIVATE 
+target_compile_definitions(${EVENTDRIVEN_LIBRARY} PUBLIC 
     CLOCK_PERIOD=${VLIB_CLOCK_PERIOD_NS}
     TIMER_BITS=${VLIB_TIMER_BITS}
     $<$<BOOL:${VLIB_ENABLE_TS}>:ENABLE_TS=1>)
