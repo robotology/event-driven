@@ -221,8 +221,8 @@ void scarfDrawer::updateScarfRep()
     input.readAll(true);
     while (input.isRunning()) {
         //ev::info inf = input.readSlidingWinT(0.001, true);
-        double tic = yarp::os::Time::now();
         ev::info inf = input.readAll(true);
+        double tic = yarp::os::Time::now();
         for (auto &v : input) scarf.update(v.x, v.y, v.p);
         scarf_time = inf.timestamp;
         vrate = inf.count / (yarp::os::Time::now() - tic);

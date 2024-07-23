@@ -131,10 +131,14 @@ public:
         this->N = N;
     }
 
-    inline void add(const CARF::pnt &p)
+    inline void add(const CARF::pnt &p, cv::Mat* img = nullptr)
     {
-         points[i] = p;
-         if(++i >= N) i = 0;
+        if(++i >= N) i = 0;
+        if(img && points[i].c) img->at<float>(points[i].v, points[i].u) -= 0.2;
+        if(img && p.c) img->at<float>(p.v, p.u) += 0.2;
+        points[i] = p;
+        
+        
     }
 };
 
@@ -210,23 +214,23 @@ public:
         auto &conxs = cons_map[v*img.cols+u];
         for(auto &conx : conxs) {
             if(conx.c < 0) return;
-            rfs[conx.v * count.width + conx.u].add({u, v, p, conx.c});
+            rfs[conx.v * count.width + conx.u].add({u, v, p, conx.c}, &img);
         }
     }
 
     cv::Mat getSurface(bool usePolarity = false)
     {
-        img.setTo(0.0);
-        if(usePolarity) {
-            for(int rf = 0; rf < count.area(); rf++)
-                for(auto &p : rfs[rf].points)
-                    if(p.c) img.at<float>(p.v, p.u) += (p.p > 0 ? -0.2 : 0.2);
-        } else {
-            for(int rf = 0; rf < count.area(); rf++)
-                for(auto &p : rfs[rf].points)
-                    if(p.c) img.at<float>(p.v, p.u) += 0.2;
+        // img.setTo(0.0);
+        // if(usePolarity) {
+        //     for(int rf = 0; rf < count.area(); rf++)
+        //         for(auto &p : rfs[rf].points)
+        //             if(p.c) img.at<float>(p.v, p.u) += (p.p > 0 ? -0.2 : 0.2);
+        // } else {
+        //     for(int rf = 0; rf < count.area(); rf++)
+        //         for(auto &p : rfs[rf].centre_points)
+        //             img.at<float>(p->v, p->u) += 0.2;
 
-        }
+        // }
         return img;
     }
 

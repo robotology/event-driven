@@ -167,6 +167,7 @@ public:
 
 int main(int argc, char *argv[])
 {
+    yarp::os::Network::init();
     yarp::os::ResourceFinder rf;
     rf.configure(argc, argv);
 
