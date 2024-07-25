@@ -19,7 +19,7 @@ docker build --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t event-driven:l
 ```
 - Input current User ID and Group ID into Docker environment
 
-### Run and enter docker container with docker compose
+### Run and enter docker container
 ```
 docker run -it --privileged --network host -v /tmp/.X11-unix/:/tmp/.X11-unix -v /dev/bus/usb:/dev/bus/usb -e DISPLAY=unix$DISPLAY  --name event-driven event-driven:latest
 ```
