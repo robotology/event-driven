@@ -152,7 +152,7 @@ private:
     //variables
     cv::Mat img;
     std::vector<CARF> rfs;
-    std::vector<std::array<CARF::pnt, 4>> cons_map;
+    std::vector<std::array<int, 4>> cons_map;
 
 public:
 
@@ -180,7 +180,7 @@ public:
                 
                 int i = 0;
                 auto &conxs = cons_map[y*img_res.width + x];
-                conxs[i++] = {rfx, rfy, 1, 1};
+                conxs[i++] = rfy*rf_res.width+rfx;
 
                 int ky = y%dims.height;
                 int kx = x%dims.width;
@@ -195,16 +195,16 @@ public:
                 else 
                     {if(rfx < count.width-1) rig = true;}
 
-                if(top) conxs[i++] = {rfx, rfy-1, 0, 0};
-                if(bot) conxs[i++] = {rfx, rfy+1, 0, 0};
-                if(lef) conxs[i++] = {rfx-1, rfy, 0, 0};
-                if(rig) conxs[i++] = {rfx+1, rfy, 0, 0};
-                if(top && lef) conxs[i++] = {rfx-1, rfy-1, 0, 0};
-                if(top && rig) conxs[i++] = {rfx+1, rfy-1, 0, 0};
-                if(bot && lef) conxs[i++] = {rfx-1, rfy+1, 0, 0};
-                if(bot && rig) conxs[i++] = {rfx+1, rfy+1, 0, 0};
+                if(top) conxs[i++] = (rfy-1)*rf_res.width+rfx;
+                if(bot) conxs[i++] = (rfy+1)*rf_res.width+rfx;
+                if(lef) conxs[i++] = rfy*rf_res.width+rfx-1;
+                if(rig) conxs[i++] = rfy*rf_res.width+rfx+1;
+                if(top && lef) conxs[i++] = (rfy-1)*rf_res.width+rfx-1;
+                if(top && rig) conxs[i++] = (rfy-1)*rf_res.width+rfx+1;
+                if(bot && lef) conxs[i++] = (rfy+1)*rf_res.width+rfx-1;
+                if(bot && rig) conxs[i++] = (rfy+1)*rf_res.width+rfx+1;
 
-                while(i < 4) conxs[i++] = {-1, -1, -1, -1};
+                while(i < 4) conxs[i++] = -1;
             }
         }
     }
@@ -212,9 +212,10 @@ public:
     inline void update(const int &u, const int &v, const int &p)
     {
         auto &conxs = cons_map[v*img.cols+u];
-        for(auto &conx : conxs) {
-            if(conx.c < 0) return;
-            rfs[conx.v * count.width + conx.u].add({u, v, p, conx.c}, &img);
+        rfs[conxs[0]].add({u, v, p, 1}, &img);
+        for(int j = 1; j < 4; j++) {
+            if(conxs[j] < 0) return;
+            rfs[conxs[j]].add({u, v, p, 0}, &img);
         }
     }
 
