@@ -42,7 +42,7 @@ public:
         if(rf.check("h") || rf.check("help"))
         {
             yInfo() << "vFramer - visualisation of event data";
-            yInfo() << "--<iso, grey, black, eros, corner> : drawer style";
+            yInfo() << "--<iso, grey, black, eros, corner, scarf> : drawer style";
             yInfo() << "--src[1-9] : connect to up to 10 remotes";
             yInfo() << "======================";
             yInfo() << "--name : global module name for ports";
