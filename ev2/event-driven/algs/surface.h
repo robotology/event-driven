@@ -124,20 +124,22 @@ private:
     int i{0};
     std::vector<pnt> points;
     cv::Mat img;
+    float C;
 
 public:
 
-    CARF(int N, cv::Mat img) {
+    CARF(int N, cv::Mat img, float C = 0.3) {
         points.resize(N, {0, 0, 0, 0});
         this->N = N;
         this->img = img; //shallow reference
+        this->C = C;
     }
 
     inline void add(const CARF::pnt &p)
     {
         if(++i >= N) i = 0;
-        if(points[i].c) img.at<float>(points[i].v, points[i].u) -= 0.3;
-        if(p.c) img.at<float>(p.v, p.u) += 0.3;
+        if(points[i].c) img.at<float>(points[i].v, points[i].u) -= C;
+        if(p.c) img.at<float>(p.v, p.u) += C;
         points[i] = p;
     }
 };
@@ -156,12 +158,12 @@ private:
 
 public:
 
-    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0)
+    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3)
     {
-        initialise(img_res, {img_res.width/rf_size, img_res.height/rf_size}, alpha);
+        initialise(img_res, {img_res.width/rf_size, img_res.height/rf_size}, alpha, C);
     }
 
-    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0)
+    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3)
     {
         img = cv::Mat(img_res, CV_32F);
         count = rf_res;
@@ -169,7 +171,7 @@ public:
         int N = dims.area() * alpha * 0.5;
 
         cons_map.resize(img_res.area());
-        rfs.resize(rf_res.area(), CARF(N, img));
+        rfs.resize(rf_res.area(), CARF(N, img, C));
         
         for(int y = 0; y < img_res.height; y++) {
             for(int x = 0; x < img_res.width; x++) {

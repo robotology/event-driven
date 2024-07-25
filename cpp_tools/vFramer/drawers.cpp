@@ -211,7 +211,7 @@ double erosDrawer::updateImage()
 // =========== //
 bool scarfDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
-    scarf.initialise({width, height}, 10, 1.3);
+    scarf.initialise({width, height}, 10, 1.3, 0.1);
     vt = std::thread([this]{updateScarfRep();});
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
