@@ -136,8 +136,8 @@ public:
     inline void add(const CARF::pnt &p)
     {
         if(++i >= N) i = 0;
-        if(points[i].c) img.at<float>(points[i].v, points[i].u) -= 0.5;
-        if(p.c) img.at<float>(p.v, p.u) += 0.5;
+        if(points[i].c) img.at<float>(points[i].v, points[i].u) -= 0.3;
+        if(p.c) img.at<float>(p.v, p.u) += 0.3;
         points[i] = p;
     }
 };
