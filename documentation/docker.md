@@ -5,6 +5,7 @@ ls /etc/udev/rules.d　-alh
 
 # If you don't have `88-cyusb.rule` and `99-evkv2.rules` in this folder,
 # Add them with following commands
+# Otherwise, you can skip these commands
 sudo wget -P /etc/udev/rules.d https://raw.githubusercontent.com/prophesee-ai/openeb/main/hal_psee_plugins/resources/rules/88-cyusb.rules
 sudo wget -P /etc/udev/rules.d https://raw.githubusercontent.com/prophesee-ai/openeb/main/hal_psee_plugins/resources/rules/99-evkv2.rules
 
