@@ -84,9 +84,9 @@ private:
         packet_right->size(max_events_per_read);
         double tic_right = yarp::os::Time::now();
 
-        ev::refractory_filter refrac;
+        ev::refractoryFilter refrac;
         if(params.filter > 0.0)
-            refrac.initialise(640, 480, params.filter);
+            refrac.initialise(480, 640, params.filter);
 
         while(params.hpu_read) {
 

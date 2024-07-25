@@ -206,7 +206,7 @@ public:
 
 };
 
-class refractory_filter
+class refractoryFilter
 {
 private:
 
@@ -217,11 +217,12 @@ private:
 
 public:
 
-    void initialise(int width, int height, double seconds)
+    void initialise(int height, int width, double seconds)
     {
         times.resize(width * height, 0.0);
         pols.resize(width * height, 0.0);
         period = seconds;
+        this->width = width;
     }
 
     bool check(const ev::AE &v, const double &ts)
