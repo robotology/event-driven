@@ -38,6 +38,24 @@
 
 namespace ev {
 
+void spatialFilter::initialise(int height, int width, double period = 0.1, int range = 1)
+{
+    this->range = range;
+    this->period = period;
+    for(auto& sae : saes)
+        sae = cv::Mat::zeros(height +2*range, width+2*range, CV_64F);
+}
+
+bool spatialFilter::check(const AE& v, const double ts)
+{
+    static int fr = 2*range+1; 
+    bool pass = true;
+    if(ts - period > saes[v.p].at<double>(v.y+range, v.x+range))
+        pass = false;
+    saes[v.p]({(int)v.x, (int)v.y, fr, fr}) = ts;
+    return pass;
+}
+
 
 vNoiseFilter::vNoiseFilter() : x_sfilter(false), x_tfilter(false), t_sfilter(0),
     s_sfilter(1), t_tfilter(0) {}
@@ -47,7 +65,7 @@ void vNoiseFilter::initialise(unsigned int width, unsigned int height)
     res.height = height;
     res.width = width;
     SAE = cv::Mat::zeros(height, width, CV_64F);
-    POL = cv::Mat::zeros(height, width, CV_8U);
+    POL = cv::Mat::ones(height, width, CV_8U)*255;
     initialised = true;
 }
 
