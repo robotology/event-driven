@@ -123,22 +123,22 @@ private:
     //variables
     int i{0};
     std::vector<pnt> points;
+    cv::Mat img;
 
 public:
 
-    CARF(int N) {
+    CARF(int N, cv::Mat img) {
         points.resize(N, {0, 0, 0, 0});
         this->N = N;
+        this->img = img; //shallow reference
     }
 
-    inline void add(const CARF::pnt &p, cv::Mat* img = nullptr)
+    inline void add(const CARF::pnt &p)
     {
         if(++i >= N) i = 0;
-        if(img && points[i].c) img->at<float>(points[i].v, points[i].u) -= 0.2;
-        if(img && p.c) img->at<float>(p.v, p.u) += 0.2;
+        if(points[i].c) img.at<float>(points[i].v, points[i].u) -= 0.5;
+        if(p.c) img.at<float>(p.v, p.u) += 0.5;
         points[i] = p;
-        
-        
     }
 };
 
@@ -169,7 +169,7 @@ public:
         int N = dims.area() * alpha * 0.5;
 
         cons_map.resize(img_res.area());
-        rfs.resize(rf_res.area(), CARF(N));
+        rfs.resize(rf_res.area(), CARF(N, img));
         
         for(int y = 0; y < img_res.height; y++) {
             for(int x = 0; x < img_res.width; x++) {
@@ -212,26 +212,15 @@ public:
     inline void update(const int &u, const int &v, const int &p)
     {
         auto &conxs = cons_map[v*img.cols+u];
-        rfs[conxs[0]].add({u, v, p, 1}, &img);
+        rfs[conxs[0]].add({u, v, p, 1});
         for(int j = 1; j < 4; j++) {
             if(conxs[j] < 0) return;
-            rfs[conxs[j]].add({u, v, p, 0}, &img);
+            rfs[conxs[j]].add({u, v, p, 0});
         }
     }
 
-    cv::Mat getSurface(bool usePolarity = false)
+    cv::Mat getSurface()
     {
-        // img.setTo(0.0);
-        // if(usePolarity) {
-        //     for(int rf = 0; rf < count.area(); rf++)
-        //         for(auto &p : rfs[rf].points)
-        //             if(p.c) img.at<float>(p.v, p.u) += (p.p > 0 ? -0.2 : 0.2);
-        // } else {
-        //     for(int rf = 0; rf < count.area(); rf++)
-        //         for(auto &p : rfs[rf].centre_points)
-        //             img.at<float>(p->v, p->u) += 0.2;
-
-        // }
         return img;
     }
 

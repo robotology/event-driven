@@ -112,7 +112,8 @@ class scarfDrawer : public drawerInterfaceAE {
 protected:
     ev::SCARF scarf;
     std::thread vt;
-    double vrate{0.0};
+    int meas_c{0};
+    double meas_t{0.0};
     double scarf_time{0.0};
     void updateScarfRep();
     double updateImage() override;
