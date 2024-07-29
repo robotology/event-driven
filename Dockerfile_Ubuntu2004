@@ -1,4 +1,4 @@
-# base image
+# base image Ubuntu 20.04
 FROM ubuntu:focal
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -35,7 +35,7 @@ RUN apt update && apt install -y \
     gstreamer1.0-plugins-bad \
     gstreamer1.0-libav
 
-# Add metavision-sdk in sources.list
+# Add Metavision SDK 3.0 in sources.list
 RUN echo "deb [arch=amd64 trusted=yes] https://apt.prophesee.ai/dists/public/b4b3528d/ubuntu focal sdk" >> /etc/apt/sources.list &&\
     apt update
 
@@ -79,7 +79,7 @@ RUN cd $CODE_DIR &&\
     make -j `nproc` install
 
 # Add User ID and Group ID
-ARG UNAME=testuser
+ARG UNAME=event-driven
 ARG UID=1000
 ARG GID=1000
 RUN groupadd -g $GID -o $UNAME
