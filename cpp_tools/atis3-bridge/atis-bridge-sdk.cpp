@@ -82,6 +82,7 @@ public:
             yInfo() << "--buffer_size <int>\t: set initial maximum buffer size";
             yInfo() << "--file <str>\t: (optional) provide file path otherwise search for camera to connect";
             yInfo() << "--limit <int>\t: (optional) provide a hard limit on event rate (in 10^6 events/s)";
+            yInfo() << "--s   <int>\t: camera sensitivity (0->100)";
             return false;
         }
 

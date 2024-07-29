@@ -292,7 +292,7 @@ double erosDrawer::updateImage()
 // =========== //
 bool scarfDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
-    scarf.initialise({width, height}, 14, 1.5);
+    scarf.initialise({width, height}, 10, 1.3, 0.3);
     vt = std::thread([this]{updateScarfRep();});
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
@@ -301,9 +301,12 @@ void scarfDrawer::updateScarfRep()
 {
     input.readAll(true);
     while (input.isRunning()) {
-        //ev::info inf = input.readSlidingWinT(0.001, true);
+
+        double tic = yarp::os::Time::now();
         ev::info inf = input.readAll(true);
         for (auto &v : input) scarf.update(v.x, v.y, v.p);
+        meas_t += yarp::os::Time::now() - tic;
+        meas_c += inf.count;
         scarf_time = inf.timestamp;
     }
 }
@@ -313,10 +316,26 @@ double scarfDrawer::updateImage()
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
 
-    static cv::Mat inter1, inter2;
-    //cv::GaussianBlur(scarf.getSurface(false), inter1, {3, 3}, -1);
-    scarf.getSurface(false).convertTo(inter2, CV_8U, 255);
-    cv::cvtColor(inter2, canvas, cv::COLOR_GRAY2BGR);
+    static cv::Mat inter;
+    static std::stringstream ss;
+    scarf.getSurface().convertTo(inter, CV_8U, 255);
+    cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
+
+    //update the maximum rate
+    static double mr = 0.0;
+    if(meas_c/meas_t > mr) {
+        mr = meas_c/meas_t;
+        ss.str("");
+        ss << (int)(0.000001*mr) << " x10^6 v/s";
+    }
+    //reset the maximum rate every second
+    static int i = 0;
+    if(i++ * getPeriod() > 1) {
+        i = 0; meas_c = 0; meas_t = 0; mr = 0;
+    }
+
+    cv::putText(canvas, ss.str(), {30,30}, cv::FONT_HERSHEY_PLAIN, 2.0, {0, 255, 255});
+
     return scarf_time;
 }
 
