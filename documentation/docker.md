@@ -19,10 +19,6 @@ Firmware
 - To use later version of Metavision SDK than V3.1.2, the Firmware of EVK3 and EVK4 is required to be at least in version 3.9
   - Check this [Release Notes](https://docs.prophesee.ai/stable/release_notes.html#v3-1-2-change-logs-16-12-2022)
 
-How to upgrade EVK firmware
-- [EVK3](https://support.prophesee.ai/portal/en/kb/articles/evk3-upgrade-procedure)
-- [EVK4](https://support.prophesee.ai/portal/en/kb/articles/evk4-upgrade-procedure)
-
 Ubuntu version
 - To use Ubuntu 22.04, Metavision SDK should be at least in version 4.0
   - This means firmware should be at least in version 3.9
