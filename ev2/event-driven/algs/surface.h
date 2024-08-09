@@ -234,6 +234,14 @@ public:
         return p;
     }
 
+    std::vector<cv::Point> getInactiveList(int u, int v)
+    {
+        std::vector<cv::Point> p;
+        for(auto &i : rfs[v*count.width+u].points)
+            if(!i.c) p.push_back({i.u, i.v});
+        return p;
+    }
+
     int getN(void)
     {
         if(rfs.size()) return rfs[0].N;
