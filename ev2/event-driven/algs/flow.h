@@ -22,6 +22,24 @@
 
 namespace ev {
 
+class zrtFlow
+{
+private:
+
+    struct {} block;
+ 
+    cv::Mat sae;
+
+
+public:
+
+    cv::Vec2d add(int u, int v);
+
+
+
+
+};
+
 // class zflowBlock
 // {
 //     friend class zflow;
