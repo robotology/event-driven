@@ -106,7 +106,7 @@ class BIN : public surface
     }
 };
 
-// Set of Centre Active Retinal Fields
+// Set of Centre Active Receptive Fields
 class CARF
 {
 friend class SCARF;
@@ -154,59 +154,80 @@ private:
     //variables
     cv::Mat img;
     std::vector<CARF> rfs;
-    std::vector<std::array<int, 4>> cons_map;
+    std::vector<std::array<CARF*, 4>> cons_map;
 
 public:
 
     void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3)
     {
-        initialise(img_res, {img_res.width/rf_size, img_res.height/rf_size}, alpha, C);
+        if(rf_size % 2) rf_size++;
+        initialise(img_res, {(img_res.width/rf_size)-1, (img_res.height/rf_size)-1}, alpha, C);
     }
 
     void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3)
     {
         img = cv::Mat(img_res, CV_32F);
-        count = rf_res;
-        dims = {img_res.width / rf_res.width, img_res.height / rf_res.height};
+
+        //size of a receptive field removeing some pixels from the border, make sure the receptive field
+        //is an even number
+        dims = {img_res.width / (rf_res.width+1), img_res.height / (rf_res.height+1)};
+        if(dims.height%2) {dims.height--;} 
+        if(dims.width%2) {dims.width--;}
+
+        //N is the maximum amount of pixels in the FIFO
         int N = dims.area() * alpha * 0.5;
 
+        //make the connection map. One entry per pixel . each entry = [id id id id];
         cons_map.resize(img_res.area());
+        //make the CARF receptive fields
         rfs.resize(rf_res.area(), CARF(N, img, C));
         
+        //for each pixel
         for(int y = 0; y < img_res.height; y++) {
             for(int x = 0; x < img_res.width; x++) {
-                int rfx = x / dims.width;
-                int rfy = y / dims.height;
-                if(rfx >= count.width || rfy >= count.height)
-                    continue;
-                
+
+                auto &connection = cons_map[y*img_res.width + x];
                 int i = 0;
-                auto &conxs = cons_map[y*img_res.width + x];
-                conxs[i++] = rfy*rf_res.width+rfx;
+                int xm = x - dims.width/2; int ym = y - dims.height/2;
 
-                int ky = y%dims.height;
-                int kx = x%dims.width;
+                //as x/y can be negative we allow rfx and rfy to be negative indices.
+                int rfx = std::floor((double)xm/ dims.width);
+                int rfy = std::floor((double)ym/ dims.height);
+                if(rfx < 0 || rfy < 0 || rfx >= rf_res.width || rfy >= rf_res.height)
+                    connection[i++] = nullptr;
+                else
+                    connection[i++] = &rfs[rfy*rf_res.width+rfx];
+                
+                //fancy modulus to keep ky and kx positive values.
+                int ky = (dims.height+(ym%dims.height))%dims.height;
+                int kx = (dims.width+(xm%dims.width))%dims.width;
 
+                //first find potential suppression indicies
                 bool top{false}, bot{false}, lef{false}, rig{false};
-                if(ky < dims.height * 0.5) 
-                    {if(rfy > 0) top = true;}
-                else 
-                    {if(rfy < count.height-1) bot = true;}
-                if(kx < dims.width * 0.5) 
-                    {if(rfx > 0) lef = true;}
-                else 
-                    {if(rfx < count.width-1) rig = true;}
+                if(ky < dims.height/2) top = true;
+                else bot = true;
+                if(kx < dims.width/2) lef = true;
+                else rig = true;
 
-                if(top) conxs[i++] = (rfy-1)*rf_res.width+rfx;
-                if(bot) conxs[i++] = (rfy+1)*rf_res.width+rfx;
-                if(lef) conxs[i++] = rfy*rf_res.width+rfx-1;
-                if(rig) conxs[i++] = rfy*rf_res.width+rfx+1;
-                if(top && lef) conxs[i++] = (rfy-1)*rf_res.width+rfx-1;
-                if(top && rig) conxs[i++] = (rfy-1)*rf_res.width+rfx+1;
-                if(bot && lef) conxs[i++] = (rfy+1)*rf_res.width+rfx-1;
-                if(bot && rig) conxs[i++] = (rfy+1)*rf_res.width+rfx+1;
+                //get all the rf coordinates
+                std::vector<cv::Point> potentials;
+                if(top) potentials.push_back({rfx, rfy-1});
+                if(bot) potentials.push_back({rfx, rfy+1});
+                if(lef) potentials.push_back({rfx-1, rfy});
+                if(rig) potentials.push_back({rfx+1, rfy});
+                if(top && lef) potentials.push_back({rfx-1, rfy-1});
+                if(top && rig) potentials.push_back({rfx+1, rfy-1});
+                if(bot && lef) potentials.push_back({rfx-1, rfy+1});
+                if(bot && rig) potentials.push_back({rfx+1, rfy+1});
 
-                while(i < 4) conxs[i++] = -1;
+                //if the coordinate is valid add a connection;
+                for(auto &j : potentials) {
+                    if(j.x >= 0 && j.x < rf_res.width && j.y >= 0 && j.y < rf_res.height)
+                        connection[i++] = &rfs[j.y*rf_res.width+j.x];
+                    else
+                        connection[i++] = nullptr;
+                }
+
             }
         }
     }
@@ -214,11 +235,10 @@ public:
     inline void update(const int &u, const int &v, const int &p)
     {
         auto &conxs = cons_map[v*img.cols+u];
-        rfs[conxs[0]].add({u, v, p, 1});
-        for(int j = 1; j < 4; j++) {
-            if(conxs[j] < 0) return;
-            rfs[conxs[j]].add({u, v, p, 0});
-        }
+        if(conxs[0]) conxs[0]->add({u, v, p, 1});
+        if(conxs[1]) conxs[1]->add({u, v, p, 0});
+        if(conxs[2]) conxs[2]->add({u, v, p, 0});
+        if(conxs[3]) conxs[3]->add({u, v, p, 0});
     }
 
     cv::Mat getSurface()
@@ -231,6 +251,17 @@ public:
         std::vector<cv::Point> p;
         for(auto &i : rfs[v*count.width+u].points)
             if(i.c) p.push_back({i.u, i.v});
+        return p;
+    }
+
+    //THIS COULD BE IMPROVED.
+    //INDEXED BY <U, V> - MAYBE A MORE INTUITIVE WAY
+    //STORE DATA AS std::vector<cv::Point> would result in this being a straight copy 
+    std::vector<cv::Point> getAll(int u, int v)
+    {
+        std::vector<cv::Point> p;
+        for(auto &i : rfs[v*count.width+u].points)
+            p.push_back({i.u, i.v});
         return p;
     }
 

@@ -221,8 +221,8 @@ void scarfDrawer::updateScarfRep()
     input.readAll(true);
     while (input.isRunning()) {
 
-        double tic = yarp::os::Time::now();
         ev::info inf = input.readAll(true);
+        double tic = yarp::os::Time::now();
         for (auto &v : input) scarf.update(v.x, v.y, v.p);
         meas_t += yarp::os::Time::now() - tic;
         meas_c += inf.count;
@@ -245,7 +245,7 @@ double scarfDrawer::updateImage()
     if(meas_c/meas_t > mr) {
         mr = meas_c/meas_t;
         ss.str("");
-        ss << (int)(0.000001*mr) << " x10^6 v/s";
+        ss << std::fixed << std::setprecision(1) << (0.000001*mr) << " x10^6 v/s";
     }
     //reset the maximum rate every second
     static int i = 0;
