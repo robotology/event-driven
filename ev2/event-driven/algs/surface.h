@@ -182,7 +182,6 @@ public:
         //make the CARF receptive fields
         rfs.resize(rf_res.area(), CARF(N, img, C));
         
-        int tot_connections = 0; int tot_suppress = 0;
         //for each pixel
         for(int y = 0; y < img_res.height; y++) {
             for(int x = 0; x < img_res.width; x++) {
@@ -197,7 +196,7 @@ public:
                 if(rfx < 0 || rfy < 0 || rfx >= rf_res.width || rfy >= rf_res.height)
                     connection[i++] = nullptr;
                 else
-                    {connection[i++] = &rfs[rfy*rf_res.width+rfx]; tot_connections++;}
+                    connection[i++] = &rfs[rfy*rf_res.width+rfx];
                 
                 //fancy modulus to keep ky and kx positive values.
                 int ky = (dims.height+(ym%dims.height))%dims.height;
@@ -224,14 +223,13 @@ public:
                 //if the coordinate is valid add a connection;
                 for(auto &j : potentials) {
                     if(j.x >= 0 && j.x < rf_res.width && j.y >= 0 && j.y < rf_res.height)
-                        {connection[i++] = &rfs[j.y*rf_res.width+j.x]; tot_suppress++;}
+                        connection[i++] = &rfs[j.y*rf_res.width+j.x];
                     else
                         connection[i++] = nullptr;
                 }
 
             }
         }
-        std::cout << tot_connections << " " << tot_suppress;
     }
 
     inline void update(const int &u, const int &v, const int &p)
