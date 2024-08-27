@@ -1,6 +1,7 @@
 #pragma once
 
 #include <opencv2/opencv.hpp>
+#include <tuple>
 
 namespace ev {
 
@@ -270,6 +271,18 @@ public:
     {
         if(rfs.size()) return rfs[0].N;
         else return -1;
+    }
+
+    // Return Scarf private parameters
+    // count: Resolution of gamer blocks
+    // dims: Size of receptive field
+    std::tuple<cv::Size, cv::Size> getScarfParams(void)
+    {
+        std::tuple scarf_params = {
+            count,
+            dims
+        };
+        return scarf_params;
     }
 };
 
