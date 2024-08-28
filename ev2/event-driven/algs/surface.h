@@ -283,11 +283,11 @@ public:
      */
     std::tuple<cv::Size, cv::Size, cv::Size> getScarfParams(void)
     {
-        std::tuple scarf_params = {
+        std::tuple<cv::Size, cv::Size, cv::Size> scarf_params = std::make_tuple(
             count,
             dims,
-            {dims.width/2, dims.height/2}
-        };
+            cv::Size(dims.width/2, dims.height/2)
+        );
         return scarf_params;
     }
 };
