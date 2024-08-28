@@ -151,7 +151,6 @@ private:
     //parameters
     cv::Size count{{0, 0}};
     cv::Size dims{{0, 0}};
-    double border_size = 0.5;
 
     //variables
     cv::Mat img;
@@ -163,7 +162,7 @@ public:
     void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3)
     {
         if(rf_size % 2) rf_size++;
-        initialise(img_res, {(img_res.width/rf_size)-2*border_size, (img_res.height/rf_size)-2*border_size}, alpha, C);
+        initialise(img_res, {(img_res.width/rf_size)-1, (img_res.height/rf_size)-1}, alpha, C);
     }
 
     void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3)
@@ -173,7 +172,7 @@ public:
 
         //size of a receptive field removeing some pixels from the border, make sure the receptive field
         //is an even number
-        dims = {img_res.width / (rf_res.width+2*border_size), img_res.height / (rf_res.height+2*border_size)};
+        dims = {img_res.width / (rf_res.width+1), img_res.height / (rf_res.height+1)};
         if(dims.height%2) {dims.height--;} 
         if(dims.width%2) {dims.width--;}
 
@@ -280,14 +279,14 @@ public:
      * @return std::tuple<cv::Size count, cv::Size dims, double border_size>
      *         count        : Resolution of SCARF blocks
      *         dims         : Size of receptive field
-     *         border_size  : border size (Ex, 0.5 = half size of SCARF block)
+     *         border_shift : (HARD CORDED) pixel values for shift size to match origin of image and origin of scarf
      */
-    std::tuple<cv::Size, cv::Size, double> getScarfParams(void)
+    std::tuple<cv::Size, cv::Size, cv::Size> getScarfParams(void)
     {
         std::tuple scarf_params = {
             count,
             dims,
-            border_size
+            {dims.width/2, dims.height/2}
         };
         return scarf_params;
     }
