@@ -276,16 +276,20 @@ public:
     /**
      * @brief Get the Scarf Params object
      * 
-     * @return std::tuple<cv::Size count, cv::Size dims, double border_size>
+     * @return std::tuple<cv::Size count, cv::Size dims, int N, cv::Size border_shift>
      *         count        : Resolution of SCARF blocks
      *         dims         : Size of receptive field
+     *         N            : Size of ring buffer in each SCARF block
      *         border_shift : (HARD CORDED) pixel values for shift size to match origin of image and origin of scarf
      */
-    std::tuple<cv::Size, cv::Size, cv::Size> getScarfParams(void)
+    std::tuple<cv::Size, cv::Size, int, cv::Size> getScarfParams(void)
     {
+        int N = -1;
+        if (rfs.size()) N = rfs[0].N;
         std::tuple<cv::Size, cv::Size, cv::Size> scarf_params = std::make_tuple(
             count,
             dims,
+            N,
             cv::Size(dims.width/2, dims.height/2)
         );
         return scarf_params;
