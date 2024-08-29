@@ -70,7 +70,7 @@ RUN yarp check
 
 
 # event-driven
-ARG ED_VERSION=master
+ARG ED_VERSION=main
 RUN cd $CODE_DIR &&\
     git clone --depth 1 --branch $ED_VERSION https://github.com/robotology/event-driven.git &&\
     cd event-driven &&\
