@@ -1,6 +1,7 @@
 #pragma once
 
 #include <opencv2/opencv.hpp>
+#include <tuple>
 
 namespace ev {
 
@@ -167,6 +168,7 @@ public:
     void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3)
     {
         img = cv::Mat(img_res, CV_32F);
+        count = rf_res;
 
         //size of a receptive field removeing some pixels from the border, make sure the receptive field
         //is an even number
@@ -269,6 +271,28 @@ public:
     {
         if(rfs.size()) return rfs[0].N;
         else return -1;
+    }
+
+    /**
+     * @brief Get the Scarf Params object
+     * 
+     * @return std::tuple<cv::Size count, cv::Size dims, int N, cv::Size border_shift>
+     *         count        : Resolution of SCARF blocks
+     *         dims         : Size of receptive field
+     *         N            : Size of ring buffer in each SCARF block
+     *         border_shift : (HARD CORDED) pixel values for shift size to match origin of image and origin of scarf
+     */
+    std::tuple<cv::Size, cv::Size, int, cv::Size> getScarfParams(void)
+    {
+        int N = -1;
+        if (rfs.size()) N = rfs[0].N;
+        std::tuple<cv::Size, cv::Size, int, cv::Size> scarf_params = std::make_tuple(
+            count,
+            dims,
+            N,
+            cv::Size(dims.width/2, dims.height/2)
+        );
+        return scarf_params;
     }
 };
 
