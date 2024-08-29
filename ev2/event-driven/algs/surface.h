@@ -286,7 +286,7 @@ public:
     {
         int N = -1;
         if (rfs.size()) N = rfs[0].N;
-        std::tuple<cv::Size, cv::Size, cv::Size> scarf_params = std::make_tuple(
+        std::tuple<cv::Size, cv::Size, int, cv::Size> scarf_params = std::make_tuple(
             count,
             dims,
             N,
