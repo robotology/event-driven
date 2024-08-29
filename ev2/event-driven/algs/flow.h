@@ -22,18 +22,140 @@
 
 namespace ev {
 
+
+//so the new plan for zrt flow is to have the sae inside the class.when asking for neighbouring events to create the flow from, it won't be 
+//restricted to a block
+//each block instead has a list of recent events, a list of recent optical flows,
+//the list of recent events limits the number of events that can be processed for real-time operation
+//the list of recent optical flows is used to find the mean
+
+class zrtBlock {
+    friend class zrtFlow;
+private:
+    std::vector<double> x_dist;
+    std::vector<double> y_dist;
+    std::vector<cv::Point> pxs;
+    int i{0}, j{0};
+    int N{0};
+public:
+    zrtBlock(int N) {
+        this->N = N;
+        pxs.resize(N);
+    }
+
+    void add(cv::Point p){
+        if(++i == N) i = 0;
+        pxs[i] = p;
+        if(i == j) j++;
+        if(j == N) j = 0;
+    }
+
+    void setRead()
+    {
+        j = i;
+    }
+
+    //arren - i think that max_dt and triplet tolerance aren't both necessary and are doing 
+    //a similar job. double check
+    void singlePixConnections(cv::Mat &sae, int d, double max_dt, double triplet_tolerance, cv::Point2i p0)
+    {
+        for(int dy = -d; dy <= d; dy++) {
+            for(int dx = -d; dx <= d; dx++) {
+                cv::Point2i p1 = p0 + cv::Point2i(dx, dy);
+                cv::Point2i p2 = p0 + cv::Point2i(2*dx, 2*dy);
+                if(p2.x < 0 || p2.x >= sae.size().width || p2.y < 0 || p2.y >= sae.size().height)
+                    continue;
+                double dt12 = sae.at<double>(p0) - sae.at<double>(p1);
+                double dt23 = sae.at<double>(p1) - sae.at<double>(p2);
+                if(0 < dt12 && dt12 < max_dt && 0 < dt23 && dt23 < max_dt) { //THRESHOLD HERE
+                    double error = fabs(1 - dt23/dt12);
+                    if(error < triplet_tolerance) { //THRESHOLD HERE
+                        double invt = 1.0 /  (dt12 + dt23);
+                        x_dist.push_back(dx * invt);
+                        y_dist.push_back(dy * invt);
+                    }
+                }
+            }
+        }
+    }
+
+    void updateConnections(cv::Mat &sae, int d, double max_dt, double triplet_tolerance)
+    {
+
+        while (j != i) {
+            j++;
+            singlePixConnections(sae, d, max_dt, triplet_tolerance, pxs[j]);
+        }
+    }
+
+
+};
+
 class zrtFlow
 {
 private:
-
-    struct {} block;
  
     cv::Mat sae;
-
+    std::vector<zrtBlock> blocklist;
+    std::vector<zrtBlock*> blockmap;
+    cv::Size array_dims{{0, 0}};
+    cv::Size block_dims{{0, 0}};
+    cv::Size image_res{{0, 0}};
 
 public:
 
-    cv::Vec2d add(int u, int v);
+    void initialise(cv::Size res, int block_size, int kernel, int max_N)
+    {
+        //initialise the SAE
+        sae = cv::Mat(res, CV_64F);
+
+        //calculate blocks
+        block_dims = {block_size, block_size};
+        array_dims = res / block_size;
+
+        //initialise the blocks
+        blocklist.resize(array_dims.area(), zrtBlock(max_N));
+
+        //for speed initialise pointers to blocks for each pixel
+        blockmap.resize(res.area());
+        for(int y = 0; y < res.height; y++) {
+            for(int x = 0; x < res.width; x++) {
+                auto &bp = blockmap[y*block_dims.width+x];
+                int bx = x / block_dims.width;
+                int by = y / block_dims.height;
+                if(bx < array_dims.width && by < array_dims.height)
+                    bp = &blocklist[by*array_dims.width+bx];
+                else
+                    bp = nullptr;
+            }
+        }
+    }
+    
+    //add a new event to the SAE and record the new event with the
+    //corresponding block
+    void add(int u, int v, int t)
+    {
+        sae.at<double>(v, u) = t;
+        blockmap[v*block_dims.width+u]->add({v, u});
+    }
+
+    //go through each block and update the list of flow vectors
+    //update the final flow per pixel
+    void update()
+    {
+        //for each block
+        for(auto &b : blocklist) {
+            //make a copy so we can edit a non-mutable object
+            auto bcopy = b; 
+            //immediately declare we have updated this block in the live version 
+            b.setRead();
+
+            //calculate the connections for each new pixel and add to blocks flow set
+
+
+        }
+
+    }
 
 
 
