@@ -32,27 +32,48 @@ namespace ev {
 class zrtBlock {
     friend class zrtFlow;
 private:
-    std::vector<double> x_dist;
-    std::vector<double> y_dist;
-    std::vector<cv::Point> pxs;
+    cv::Point2d flow; //raw flow assigned to this block
+    std::deque<double> x_dist; //distribution of x connections
+    std::deque<double> y_dist; //distribution of y connections
+    std::vector<cv::Point> pxs_live; //live circular buffer
     int i{0}, j{0};
-    int N{0};
+    std::vector<cv::Point> pxs_snap; //offline circular buffer
+    int is{0}, js{0}; //positions in circular bufer
+    int N{0};         //this is the maximum number of events to update
+
 public:
+
     zrtBlock(int N) {
         this->N = N;
-        pxs.resize(N);
+        pxs_live.resize(N);
+        flow = {0.0, 0.0};
     }
 
+    //i points to current point in the circular buffer to add new data
+    //j points to the last event not yet processed up to the maximum of the circular buffer
     void add(cv::Point p){
         if(++i == N) i = 0;
-        pxs[i] = p;
+        pxs_live[i] = p;
         if(i == j) j++;
         if(j == N) j = 0;
     }
 
-    void setRead()
+    //snap saves a copy of the live block into the "snap" variables
+    void snap()
     {
-        j = i;
+        pxs_snap = pxs_live; //snap the event circular buffer
+        is = i; //snap the latest position in circular buffer
+        js = j; //snap the oldest position in circular buffer
+        j = i;  //set the oldest position to latest position (i.e. all data used)   
+    }
+
+    void updateConnections(cv::Mat &sae, int d, double max_dt, double triplet_tolerance)
+    {
+
+        while (js != is) {
+            js++;
+            singlePixConnections(sae, d, max_dt, triplet_tolerance, pxs_snap[js]);
+        }
     }
 
     //arren - i think that max_dt and triplet tolerance aren't both necessary and are doing 
@@ -79,21 +100,37 @@ public:
         }
     }
 
-    void updateConnections(cv::Mat &sae, int d, double max_dt, double triplet_tolerance)
+    void updateFlow(size_t n = 0, bool neighbour = false)
     {
+        //we only get observations of flow when there is flow
+        //however when there is no flow there is no new events.
+        //the flow should be decayed by how much time has passed
+        //given the previous estimate of flow
 
-        while (j != i) {
-            j++;
-            singlePixConnections(sae, d, max_dt, triplet_tolerance, pxs[j]);
+        if(x_dist.size() < 10) return; //PARAMETER!!
+
+        auto x_sorted = x_dist;
+        auto y_sorted = y_dist;
+
+        std::sort(x_sorted.begin(), x_sorted.end());
+        std::sort(y_sorted.begin(), y_sorted.end());
+
+        flow = {x_sorted[x_sorted.size()/2], y_sorted[y_sorted.size()/2]};
+
+        while(x_dist.size() > n) {
+            x_dist.pop_front();
+            y_dist.pop_front();
         }
-    }
 
+    }
 
 };
 
 class zrtFlow
 {
 private:
+
+    enum {X=0,Y=1};
  
     cv::Mat sae;
     std::vector<zrtBlock> blocklist;
@@ -101,6 +138,11 @@ private:
     cv::Size array_dims{{0, 0}};
     cv::Size block_dims{{0, 0}};
     cv::Size image_res{{0, 0}};
+
+    cv::Mat block_flow[2];
+    cv::Mat pixel_flow[2];
+    cv::Mat full_flow[2];
+    cv::Mat hsv, rgb;
 
 public:
 
@@ -129,6 +171,19 @@ public:
                     bp = nullptr;
             }
         }
+
+        //initialise the flow containers
+        //this is the flow 1 pixel per block
+        block_flow[X] = cv::Mat::zeros(array_dims, CV_64F);
+        block_flow[Y] = cv::Mat::zeros(array_dims, CV_64F);
+
+        //this is the flow at full image size
+        full_flow[X] = cv::Mat::zeros(res, CV_64F);
+        full_flow[Y] = cv::Mat::zeros(res, CV_64F);
+
+        //this is the flow which might have a 0 border if blocks don't fill the full image space
+        pixel_flow[X] = full_flow[X]({0, 0, array_dims.width*block_dims.width, array_dims.height*block_dims.height});
+        pixel_flow[Y] = full_flow[Y]({0, 0, array_dims.width*block_dims.width, array_dims.height*block_dims.height});
     }
     
     //add a new event to the SAE and record the new event with the
@@ -144,19 +199,54 @@ public:
     void update()
     {
         //for each block
-        for(auto &b : blocklist) {
-            //make a copy so we can edit a non-mutable object
-            auto bcopy = b; 
-            //immediately declare we have updated this block in the live version 
-            b.setRead();
-
-            //calculate the connections for each new pixel and add to blocks flow set
-
-
+        for(int by = 0; by < array_dims.height; by++) {
+            for(int bx = 0; bx < array_dims.width; bx++) {
+                
+                //get the block
+                auto &b = blocklist[by * array_dims.width + bx];
+                //snapshot the event list so we can process in parallel
+                b.snap();
+                //calculate the connections for each new pixel and add to blocks flow set
+                b.updateConnections(sae, 3, 0.05, 0.125);
+                //calculate the flow given the connections in
+                b.updateFlow(100, false);
+                 //asign flow to the array
+                block_flow[X].at<double>(by, bx) = b.flow.x;
+                block_flow[Y].at<double>(by, bx) = b.flow.y;
+            }
         }
+        //smooth flow - blockFilter on small image (according to zhichao)
+        cv::boxFilter(block_flow[X], block_flow[Y], -1, {3, 3});
+        cv::boxFilter(block_flow[X], block_flow[Y], -1, {3, 3});
+
+        //resize flow - with linear interpolation (more smoothing)
+        cv::resize(block_flow[X], pixel_flow[X], pixel_flow[X].size(), 0, 0, cv::INTER_LINEAR);
+        cv::resize(block_flow[Y], pixel_flow[Y], pixel_flow[Y].size(), 0, 0, cv::INTER_LINEAR);
 
     }
 
+    cv::Mat makebgr()
+    {
+        //calculate angle and magnitude
+        static cv::Mat magnitude, angle;
+        cv::cartToPolar(full_flow[X], full_flow[Y], magnitude, angle, true);
+
+        //translate magnitude to range [0;1]
+        cv::threshold(magnitude, magnitude, 20, 20, cv::THRESH_TRUNC);
+        magnitude *= 0.05;
+
+        //build hsv image
+        cv::Mat _hsv[3];
+        _hsv[0] = angle;
+        _hsv[1] = cv::Mat::ones(angle.size(), CV_64F);
+        _hsv[2] = magnitude;
+        cv::merge(_hsv, 3, hsv);
+
+        //convert to BGR
+        cv::Mat small;
+        cv::cvtColor(hsv, rgb, cv::COLOR_HSV2BGR);
+        return rgb;
+    } 
 
 
 
