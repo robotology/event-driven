@@ -214,6 +214,7 @@ void flowDrawer::updateSAE()
             //canvas.at<cv::Vec3b>(v->y, v->x) = flow_rep.flowbgr.at<cv::Vec3b>(v->y, v->x);
             mask_live.at<uchar>(v->y, v->x) = 1;
         }
+        
         //mask_live.copyTo(mask);
         //mask_live.setTo(0);
         tic_live = inf.timestamp;
@@ -260,6 +261,58 @@ double flowDrawer::updateImage()
 
 
     return tic;
+}
+
+bool rtFlowDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
+{
+    zrt_flow.initialise({width, height}, 20, 5, 100);
+    vt = std::thread([this]{updateSAE();});
+    return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+}
+
+void rtFlowDrawer::updateSAE()
+{
+    while(true) {
+        double tic = yarp::os::Time::now();
+        zrt_flow.update();
+        rate = ((yarp::os::Time::now() - tic) + rate)*0.5;
+    }
+
+}
+
+double rtFlowDrawer::updateImage()
+{
+
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+    else
+        canvas = white;
+
+    
+    ev::info inf = input.readAll(true);
+    for (auto v = input.begin(); v != input.end(); v++) {
+        zrt_flow.add(v->x, v->y, v.timestamp());
+    }
+
+    zrt_flow.makebgr().copyTo(canvas);
+
+    // cv::Mat sampler = zrt_flow.makebgr();
+    // for (auto v = input.begin(); v != input.end(); v++) {
+    //     canvas.at<cv::Vec3b>(v->y, v->x) = sampler.at<cv::Vec3b>(v->y, v->x);
+    // }
+
+    std::stringstream  output_freq;
+    output_freq << std::fixed << std::setprecision(2) << (1.0 / rate);
+    cv::putText(canvas, //target image
+            output_freq.str()+"HZ", //text
+            cv::Point(canvas.cols-150, canvas.rows), //top-left position
+            cv::FONT_HERSHEY_DUPLEX,
+            1.0,
+            CV_RGB(255, 255, 255), //font color
+            0.5);
+
+
+    return inf.timestamp;
 }
 
 // EROS DRAW //

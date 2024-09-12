@@ -72,18 +72,21 @@ public:
 
         while (js != is) {
             js++;
+            if(js == N) js = 0;
+            //std::cout << js << " ";
             singlePixConnections(sae, d, max_dt, triplet_tolerance, pxs_snap[js]);
         }
+        //std::cout << "-"<<is << std::endl;
     }
 
     //arren - i think that max_dt and triplet tolerance aren't both necessary and are doing 
     //a similar job. double check
-    void singlePixConnections(cv::Mat &sae, int d, double max_dt, double triplet_tolerance, cv::Point2i p0)
-    {
+    void singlePixConnections(cv::Mat &sae, int d, double max_dt, double triplet_tolerance, cv::Point p0)
+    {        
         for(int dy = -d; dy <= d; dy++) {
             for(int dx = -d; dx <= d; dx++) {
-                cv::Point2i p1 = p0 + cv::Point2i(dx, dy);
-                cv::Point2i p2 = p0 + cv::Point2i(2*dx, 2*dy);
+                cv::Point p1 = p0 + cv::Point(dx, dy);
+                cv::Point p2 = p0 + cv::Point(2*dx, 2*dy);
                 if(p2.x < 0 || p2.x >= sae.size().width || p2.y < 0 || p2.y >= sae.size().height)
                     continue;
                 double dt12 = sae.at<double>(p0) - sae.at<double>(p1);
@@ -97,7 +100,7 @@ public:
                     }
                 }
             }
-        }
+        }       
     }
 
     void updateFlow(size_t n = 0, bool neighbour = false)
@@ -106,8 +109,9 @@ public:
         //however when there is no flow there is no new events.
         //the flow should be decayed by how much time has passed
         //given the previous estimate of flow
+        //static double last_update_tic = yarp::os::Time::now();
+        if(x_dist.size() < 3) return;
 
-        if(x_dist.size() < 10) return; //PARAMETER!!
 
         auto x_sorted = x_dist;
         auto y_sorted = y_dist;
@@ -121,6 +125,7 @@ public:
             x_dist.pop_front();
             y_dist.pop_front();
         }
+        
 
     }
 
@@ -162,7 +167,7 @@ public:
         blockmap.resize(res.area());
         for(int y = 0; y < res.height; y++) {
             for(int x = 0; x < res.width; x++) {
-                auto &bp = blockmap[y*block_dims.width+x];
+                auto &bp = blockmap[y*res.width+x];
                 int bx = x / block_dims.width;
                 int by = y / block_dims.height;
                 if(bx < array_dims.width && by < array_dims.height)
@@ -174,12 +179,12 @@ public:
 
         //initialise the flow containers
         //this is the flow 1 pixel per block
-        block_flow[X] = cv::Mat::zeros(array_dims, CV_64F);
-        block_flow[Y] = cv::Mat::zeros(array_dims, CV_64F);
+        block_flow[X] = cv::Mat::zeros(array_dims, CV_32F);
+        block_flow[Y] = cv::Mat::zeros(array_dims, CV_32F);
 
         //this is the flow at full image size
-        full_flow[X] = cv::Mat::zeros(res, CV_64F);
-        full_flow[Y] = cv::Mat::zeros(res, CV_64F);
+        full_flow[X] = cv::Mat::zeros(res, CV_32F);
+        full_flow[Y] = cv::Mat::zeros(res, CV_32F);
 
         //this is the flow which might have a 0 border if blocks don't fill the full image space
         pixel_flow[X] = full_flow[X]({0, 0, array_dims.width*block_dims.width, array_dims.height*block_dims.height});
@@ -188,10 +193,10 @@ public:
     
     //add a new event to the SAE and record the new event with the
     //corresponding block
-    void add(int u, int v, int t)
+    void add(int u, int v, double t)
     {
         sae.at<double>(v, u) = t;
-        blockmap[v*block_dims.width+u]->add({v, u});
+        blockmap[v*sae.cols+u]->add({u, v});
     }
 
     //go through each block and update the list of flow vectors
@@ -206,22 +211,27 @@ public:
                 auto &b = blocklist[by * array_dims.width + bx];
                 //snapshot the event list so we can process in parallel
                 b.snap();
+                //std::cout << "snap";
                 //calculate the connections for each new pixel and add to blocks flow set
                 b.updateConnections(sae, 3, 0.05, 0.125);
+                //std::cout << "connections";
                 //calculate the flow given the connections in
-                b.updateFlow(100, false);
+                b.updateFlow(30, false);
+                //std::cout << "flow";
                  //asign flow to the array
-                block_flow[X].at<double>(by, bx) = b.flow.x;
-                block_flow[Y].at<double>(by, bx) = b.flow.y;
+                block_flow[X].at<float>(by, bx) = b.flow.x;
+                block_flow[Y].at<float>(by, bx) = b.flow.y;
+
+                //std::cout << "assigned";
             }
         }
         //smooth flow - blockFilter on small image (according to zhichao)
-        cv::boxFilter(block_flow[X], block_flow[Y], -1, {3, 3});
-        cv::boxFilter(block_flow[X], block_flow[Y], -1, {3, 3});
+        // cv::boxFilter(block_flow[X], block_flow[X], -1, {3, 3});
+        // cv::boxFilter(block_flow[Y], block_flow[Y], -1, {3, 3});
 
         //resize flow - with linear interpolation (more smoothing)
-        cv::resize(block_flow[X], pixel_flow[X], pixel_flow[X].size(), 0, 0, cv::INTER_LINEAR);
-        cv::resize(block_flow[Y], pixel_flow[Y], pixel_flow[Y].size(), 0, 0, cv::INTER_LINEAR);
+        cv::resize(block_flow[X], pixel_flow[X], pixel_flow[X].size(), 0, 0, cv::INTER_NEAREST);
+        cv::resize(block_flow[Y], pixel_flow[Y], pixel_flow[Y].size(), 0, 0, cv::INTER_NEAREST);
 
     }
 
@@ -238,7 +248,7 @@ public:
         //build hsv image
         cv::Mat _hsv[3];
         _hsv[0] = angle;
-        _hsv[1] = cv::Mat::ones(angle.size(), CV_64F);
+        _hsv[1] = cv::Mat::ones(angle.size(), CV_32F);
         _hsv[2] = magnitude;
         cv::merge(_hsv, 3, hsv);
 

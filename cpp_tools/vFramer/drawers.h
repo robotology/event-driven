@@ -96,10 +96,24 @@ protected:
     void updateSAE();
     double tic, tic_live;
 
+    ev::zrtFlow zrt_flow;
     ev::zcflow flow_rep;
     double updateImage() override;
 public:
     flowDrawer(){window_size=0.033;};
+    bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
+};
+
+class rtFlowDrawer : public drawerInterfaceAE {
+protected:
+    double rate{0.0};
+    std::thread vt;
+    void updateSAE();
+
+    ev::zrtFlow zrt_flow;
+    double updateImage() override;
+public:
+    rtFlowDrawer(){window_size=0.033;};
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
 
