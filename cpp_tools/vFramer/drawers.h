@@ -108,6 +108,7 @@ class rtFlowDrawer : public drawerInterfaceAE {
 protected:
     double rate{0.0};
     std::thread vt;
+    cv::Mat sample;
     void updateSAE();
 
     ev::zrtFlow zrt_flow;

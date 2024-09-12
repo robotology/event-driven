@@ -19,6 +19,7 @@
 #include <opencv2/opencv.hpp>
 #include <numeric>
 #include <iostream>
+#include <yarp/os/Time.h>
 
 namespace ev {
 
@@ -40,6 +41,7 @@ private:
     std::vector<cv::Point> pxs_snap; //offline circular buffer
     int is{0}, js{0}; //positions in circular bufer
     int N{0};         //this is the maximum number of events to update
+    double last_update_tic{0};
 
 public:
 
@@ -69,14 +71,11 @@ public:
 
     void updateConnections(cv::Mat &sae, int d, double max_dt, double triplet_tolerance)
     {
-
         while (js != is) {
             js++;
             if(js == N) js = 0;
-            //std::cout << js << " ";
             singlePixConnections(sae, d, max_dt, triplet_tolerance, pxs_snap[js]);
         }
-        //std::cout << "-"<<is << std::endl;
     }
 
     //arren - i think that max_dt and triplet tolerance aren't both necessary and are doing 
@@ -103,30 +102,21 @@ public:
         }       
     }
 
-    void updateFlow(size_t n = 0, bool neighbour = false)
+    void updateFlow(size_t n = 0)
     {
-        //we only get observations of flow when there is flow
-        //however when there is no flow there is no new events.
-        //the flow should be decayed by how much time has passed
-        //given the previous estimate of flow
-        //static double last_update_tic = yarp::os::Time::now();
-        if(x_dist.size() < 3) return;
-
-
-        auto x_sorted = x_dist;
-        auto y_sorted = y_dist;
-
-        std::sort(x_sorted.begin(), x_sorted.end());
-        std::sort(y_sorted.begin(), y_sorted.end());
-
-        flow = {x_sorted[x_sorted.size()/2], y_sorted[y_sorted.size()/2]};
-
-        while(x_dist.size() > n) {
-            x_dist.pop_front();
-            y_dist.pop_front();
-        }
-        
-
+        if(n < 3) n = 3;
+        if(x_dist.size() < n) {
+            double magnitude = sqrt(flow.x*flow.x+flow.y*flow.y);
+            double max_mag = 1.0 / (yarp::os::Time::now() - last_update_tic);
+            if(magnitude > max_mag) flow *= max_mag / magnitude;
+            return;
+        } else {
+            std::sort(x_dist.begin(), x_dist.end());
+            std::sort(y_dist.begin(), y_dist.end());
+            flow = {x_dist[x_dist.size()/2], y_dist[y_dist.size()/2]};
+            x_dist.clear(); y_dist.clear();
+            last_update_tic = yarp::os::Time::now();
+        }      
     }
 
 };
@@ -189,6 +179,7 @@ public:
         //this is the flow which might have a 0 border if blocks don't fill the full image space
         pixel_flow[X] = full_flow[X]({0, 0, array_dims.width*block_dims.width, array_dims.height*block_dims.height});
         pixel_flow[Y] = full_flow[Y]({0, 0, array_dims.width*block_dims.width, array_dims.height*block_dims.height});
+
     }
     
     //add a new event to the SAE and record the new event with the
@@ -216,7 +207,7 @@ public:
                 b.updateConnections(sae, 3, 0.05, 0.125);
                 //std::cout << "connections";
                 //calculate the flow given the connections in
-                b.updateFlow(30, false);
+                b.updateFlow(array_dims.width);
                 //std::cout << "flow";
                  //asign flow to the array
                 block_flow[X].at<float>(by, bx) = b.flow.x;
@@ -226,19 +217,18 @@ public:
             }
         }
         //smooth flow - blockFilter on small image (according to zhichao)
-        // cv::boxFilter(block_flow[X], block_flow[X], -1, {3, 3});
-        // cv::boxFilter(block_flow[Y], block_flow[Y], -1, {3, 3});
+        cv::boxFilter(block_flow[X], block_flow[X], -1, {3, 3});
+        cv::boxFilter(block_flow[Y], block_flow[Y], -1, {3, 3});
 
         //resize flow - with linear interpolation (more smoothing)
-        cv::resize(block_flow[X], pixel_flow[X], pixel_flow[X].size(), 0, 0, cv::INTER_NEAREST);
-        cv::resize(block_flow[Y], pixel_flow[Y], pixel_flow[Y].size(), 0, 0, cv::INTER_NEAREST);
-
+        cv::resize(block_flow[X], pixel_flow[X], pixel_flow[X].size(), 0, 0, cv::INTER_LINEAR);
+        cv::resize(block_flow[Y], pixel_flow[Y], pixel_flow[Y].size(), 0, 0, cv::INTER_LINEAR);
     }
 
     cv::Mat makebgr()
     {
         //calculate angle and magnitude
-        static cv::Mat magnitude, angle;
+        cv::Mat magnitude, angle;
         cv::cartToPolar(full_flow[X], full_flow[Y], magnitude, angle, true);
 
         //translate magnitude to range [0;1]
@@ -253,8 +243,9 @@ public:
         cv::merge(_hsv, 3, hsv);
 
         //convert to BGR
-        cv::Mat small;
-        cv::cvtColor(hsv, rgb, cv::COLOR_HSV2BGR);
+        cv::Mat rgb32;
+        cv::cvtColor(hsv, rgb32, cv::COLOR_HSV2BGR);
+        rgb32.convertTo(rgb, CV_8UC3, 255);
         return rgb;
     } 
 
