@@ -50,9 +50,9 @@ Connect to the port to stream events in the recording ports:
 `yarp connect /atis3/AE:o /left fast_tcp && yarp connect /atis3/AE:o /right fast_tcp`
 
 Disconnect or CTRL-C in the dumper:
-`yarp disconnect /atis3/AE:o /left fast_tcp && yarp connect /atis3/AE:o /right fast_tcp`
+`yarp disconnect /atis3/AE:o /left && yarp disconnect /atis3/AE:o /right`
 
-Playback data haing checked yarp was installed with Qt dapendency: 
+Playback data having checked yarp was installed with Qt dapendency: 
 `yarpdataplayer`
 
 Open the folder at the level it contains ATIS and ATIS2, not inside each folder. Once loaded, press play. 
