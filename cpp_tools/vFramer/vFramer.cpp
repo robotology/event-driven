@@ -54,6 +54,10 @@ public:
             yInfo() << "======================";
             yInfo() << "--eros_kernel : kernel size for eros view";
             yInfo() << "--eros_decay  : decay rate for eros view";
+            yInfo() << "======================";
+            yInfo() << "--block  : SCARF block size";
+            yInfo() << "--alpha  : SCARF accumulation factor";
+            yInfo() << "--C      : SCARF visualisation intensity";
             return false;
         }
 
@@ -75,9 +79,6 @@ public:
         double period = 1.0 / frameRate;
 
         bool yarp_publish = rf.check("yarp_publish") && rf.check("yarp_publish", Value(true)).asBool();
-
-        int kernel_size = rf.check("eros_kernel", Value(5)).asInt32();
-        double decay = rf.check("eros_decay", Value(0.3)).asFloat64();
 
         bool flip =
             rf.check("flip") && rf.check("flip", Value(true)).asBool();
@@ -104,12 +105,15 @@ public:
             if(style=="iso") publishers.push_back(new isoDrawer);
             if(style=="grey" || style=="gray") publishers.push_back(new greyDrawer);
             if(style=="black") publishers.push_back(new blackDrawer);
-            if(style=="eros") publishers.push_back(new erosDrawer(kernel_size, decay));
+            if(style=="eros") publishers.push_back(new erosDrawer(rf.check("eros_kernel", Value(5)).asInt32(), 
+                                                                  rf.check("eros_decay", Value(0.3)).asFloat64()));
             if(style=="corner") publishers.push_back(new cornerDrawer);
-            if(style=="scarf") publishers.push_back(new scarfDrawer);
+            if(style=="scarf") publishers.push_back(new scarfDrawer(rf.check("block", Value(10)).asInt32(), 
+                                                                    rf.check("alpha", Value(1.0)).asFloat64(), 
+                                                                    rf.check("C", Value(0.3)).asFloat64()));
             if(style=="flow") publishers.push_back(new flowDrawer);
             if(style=="flow2") publishers.push_back(new rtFlowDrawer);
-            
+
             if(publishers.back()->initialise(remote, height, width, window_size, yarp_publish, remote))
             {
                 yInfo() << "Drawing" << style << "from" << remote;

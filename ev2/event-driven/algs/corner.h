@@ -33,7 +33,7 @@ class corner_detector
 private:
 
     cv::Mat LUT;
-    ev::EROS eros;
+    ev::SCARF scarf;
     int harris_block_size{7};
 
     std::thread harris_thread;
@@ -55,8 +55,8 @@ private:
             // signal.wait(lk, [this]{return eros_updated;});
             // eros_updated = false;
             // lk.unlock();
-
-            cv::GaussianBlur(eros.getSurface(), blurred, cv::Size(5, 5), 0, 0);
+            scarf.getSurface().convertTo(blurred, CV_8U, 255);
+            cv::GaussianBlur(blurred, blurred, cv::Size(5, 5), 0, 0);
             cv::cornerHarris(blurred, LUT, harris_block_size, 3, 0.04);
         }
     }
@@ -70,14 +70,12 @@ public:
         harris_thread.join();
     }
 
-    void initialise(int height, int width, int eros_kernel_size, int harris_block_size)
+    void initialise(int height, int width, int harris_block_size)
     {
-        if (eros_kernel_size % 2 == 0)
-            eros_kernel_size += 1;
         if (harris_block_size % 2 == 0)
             harris_block_size += 1;
         this->harris_block_size = harris_block_size;
-        eros.init(width, height, eros_kernel_size, 0.3);
+        scarf.initialise({width, height}, 10);
         LUT = cv::Mat(height, width, CV_32F);
         harris_thread = std::thread([this]{updateLUT();});
     }
@@ -87,7 +85,7 @@ public:
     {
         //first update the EROS
         for(auto &v = begin; v != end; v++) {
-            eros.update(v->x, v->y);
+            scarf.update(v->x, v->y, v->p);
 
             float& score = LUT.at<float>(v->y, v->x);
             if(score > threshold)

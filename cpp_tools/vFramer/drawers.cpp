@@ -348,7 +348,7 @@ double erosDrawer::updateImage()
 // =========== //
 bool scarfDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
-    scarf.initialise({width, height}, 10, 1.3, 0.3);
+    scarf.initialise({width, height}, block, alpha, C);
     vt = std::thread([this]{updateScarfRep();});
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
@@ -401,7 +401,7 @@ bool cornerDrawer::initialise(const std::string &name, int height, int width, do
 {
     bool success = drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
     img_size = iso_drawer.init(height, width, this->window_size);
-    cd.initialise(height, width, 7, 7);
+    cd.initialise(height, width, 14);
     return success;
 }
 
@@ -416,7 +416,7 @@ double cornerDrawer::updateImage()
 
     cd.detect<window<AE>::iterator>(input.begin(), input.end(), corner_q);
 
-    int number_to_erase = corner_q.size() - 100000;
+    int number_to_erase = corner_q.size() - 300000;
     if(number_to_erase > 0)
         corner_q.erase(corner_q.begin(), corner_q.begin() + number_to_erase);
 
