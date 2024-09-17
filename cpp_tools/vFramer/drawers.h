@@ -115,11 +115,14 @@ protected:
     int meas_c{0};
     double meas_t{0.0};
     double scarf_time{0.0};
+    int block{10};
+    double alpha{1.0};
+    double C{0.3};
     void updateScarfRep();
     double updateImage() override;
     
 public:
-    //scarfDrawer(int kernelSize, double decay): kernelSize(kernelSize), decay(decay), drawerInterfaceAE(){};
+    scarfDrawer(int block, double alpha, double C): block(block), alpha(alpha), C(C), drawerInterfaceAE(){};
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
 
