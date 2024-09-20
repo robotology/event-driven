@@ -29,6 +29,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <mutex>
+#include <iomanip>
 #include <condition_variable>
 #include <fstream>
 
@@ -936,7 +937,7 @@ public:
             return "no events loaded";
         
         ss << data.size() << " packets loaded with " << event_count << " total events. "
-           << "Timestamps range from " << data.begin()->timestamp() << " to " << std::prev(data.end())->timestamp();
+           << "Timestamps range from " << std::fixed << std::setprecision(3) << data.begin()->timestamp() << " to " << std::prev(data.end())->timestamp();
         
         return ss.str();
     }
