@@ -6,6 +6,7 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <event-driven/core.h>
+#include <event-driven/algs.h>
 
 //using yarp::os::ResourceFinder;
 namespace fs = std::filesystem;
@@ -20,7 +21,27 @@ void helpfunction()
     yInfo() << "--height <int> video height [720]";
     yInfo() << "--width <int> video width [1280]";
     yInfo() << "--vis <bool> show conversion process [false]";
+    yInfo() << "METHOD: --iso";
+    yInfo() << "--parameters";
+    yInfo() << "METHOD: --tw";
+    yInfo() << "--window <double> seconds of window length [0.01]";
+    yInfo() << "METHOD: --scarf";
+    yInfo() << "--block_size <int> size of a array in pixels [14]";
+    yInfo() << "--alpha <double> ratio of events in block";
+    yInfo() << "--C <double> "
 }
+
+// cv::Mat createImageTW(ev::offlineLoader<ev::AE> &loader, double toc, double win_duration)
+// {
+//     static std::deque<ev::AE> buffer;
+//     for(auto &v : loader)
+//         buffer.push_back(v);
+
+//     while
+//             img.at<cv::Vec3b>(v.y, v.x) = {255, 255, 255};
+
+
+// }
 
 int main(int argc, char* argv[])
 {
@@ -46,9 +67,10 @@ int main(int argc, char* argv[])
                     rf.check("height", yarp::os::Value(720)).asInt32()};
     bool vis = rf.check("vis") &&
                rf.check("vis", yarp::os::Value(true)).asBool();
+    double duration = rf.check("window", yarp::os::Value(0.01)).asFloat64();
 
     ev::offlineLoader<ev::AE> loader;
-    yInfo() << "Loading left camera data ... ";
+    yInfo() << "Loading log file ... ";
     if(!loader.load(file_path)) {
         yError() << "Could not open log file";
         return false;
@@ -64,18 +86,43 @@ int main(int argc, char* argv[])
 
     double virtual_timer = period;
     loader.synchroniseRealtimeRead(0.0);
-    while(loader.incrementReadTill(virtual_timer)) {
-        cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
 
-        for(auto &v : loader)
-            img.at<cv::Vec3b>(v.y, v.x) = {255, 255, 255};
-        if(vis) {
-            cv::imshow("events-log2vid", img);
-            cv::waitKey(1);
+    if(rf.find("tw").asBool()) 
+    {
+
+        while(loader.windowedReadTill(virtual_timer, duration)) {
+            cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
+
+            for(auto &v : loader)
+                img.at<cv::Vec3b>(v.y, v.x) = {255, 255, 255};
+            if(vis) {
+                cv::imshow("events-log2vid", img);
+                cv::waitKey(1);
+            }
+            dw << img;
+            virtual_timer += period;
         }
-        dw << img;
-        virtual_timer += period;
-    }
+
+    } 
+    // else if(rf.find("scarf").asBool()) 
+    // {
+    //     ev::SCARF scarf;
+    //     scarf.initialise(res, )
+
+    //     while(loader.incrementReadTill(virtual_timer)) {
+    //         cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
+
+    //         for(auto &v : loader)
+    //             img.at<cv::Vec3b>(v.y, v.x) = {255, 255, 255};
+    //         if(vis) {
+    //             cv::imshow("events-log2vid", img);
+    //             cv::waitKey(1);
+    //         }
+    //         dw << img;
+    //         virtual_timer += period;
+    //     }
+
+    // }
 
     dw.release();
 

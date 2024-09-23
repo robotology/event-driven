@@ -1,4 +1,4 @@
-project(events-log2vid)
+project(vLog2vid)
 
 add_executable(${PROJECT_NAME} log2vid.cpp)
 
