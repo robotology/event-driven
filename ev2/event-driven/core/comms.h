@@ -928,6 +928,30 @@ public:
         return true;
     }
 
+    bool windowedReadTill(double timestamp, double duration)
+    {
+        if(data.size() == 0) return false;
+        timestamp -= time_sync_offset;
+
+        //if timestamp is greater than the next packet increment the _end packet
+        while(std::next(_end.packet_it) != data.end() && std::next(_end.packet_it)->timestamp() < timestamp)
+            std::advance(_end.packet_it, 1);
+
+        while(timestamp - _begin.packet_it->timestamp() > duration) {
+            if(std::next(_begin.packet_it) == data.end()) {
+                return false; //finish the dataset
+            } else {
+                std::advance(_begin.packet_it, 1); //increment the oldest packet
+            }
+            if(_begin.packet_it == _end.packet_it) break; //return atleast a single packet
+        }
+
+        setIterators(_begin.packet_it, _end.packet_it);
+
+        return true;
+
+    }
+
     iterator begin() { return _begin; }
     iterator end()   { return _end; }
 
