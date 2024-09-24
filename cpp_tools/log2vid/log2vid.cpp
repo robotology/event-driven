@@ -7,6 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <event-driven/core.h>
 #include <event-driven/algs.h>
+#include <event-driven/vis.h>
 
 //using yarp::os::ResourceFinder;
 namespace fs = std::filesystem;
@@ -28,7 +29,7 @@ void helpfunction()
     yInfo() << "METHOD: --scarf";
     yInfo() << "--block_size <int> size of a array in pixels [14]";
     yInfo() << "--alpha <double> ratio of events in block";
-    yInfo() << "--C <double> "
+    yInfo() << "--C <double> image intensity";
 }
 
 // cv::Mat createImageTW(ev::offlineLoader<ev::AE> &loader, double toc, double win_duration)
@@ -96,14 +97,43 @@ int main(int argc, char* argv[])
             for(auto &v : loader)
                 img.at<cv::Vec3b>(v.y, v.x) = {255, 255, 255};
             if(vis) {
-                cv::imshow("events-log2vid", img);
+                cv::imshow("vLog2vid", img);
                 cv::waitKey(1);
             }
             dw << img;
             virtual_timer += period;
+            std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
         }
 
-    } 
+    } else {
+
+        //initialise iso_drawer
+        ev::isoImager iso_drawer;
+        cv::Size base_size = iso_drawer.init(res.height, res.width, duration);
+        cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
+        cv::Mat base = cv::Mat::zeros(base_size, CV_8UC3);
+
+        while(loader.windowedReadTill(virtual_timer, duration)) {
+            
+            base.setTo(ev::white);
+            int count = 0;
+            for(auto &v : loader) count++;
+            iso_drawer.time_draw<ev::offlineLoader<ev::AE>::iterator>(base, loader.begin(), loader.end(), count);
+
+            cv::resize(base, img, res);
+            if(vis) {
+                cv::imshow("vLog2vid", img);
+                cv::waitKey(1);
+            }
+
+            dw << img;
+            virtual_timer += period;
+            std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
+            std::cout.flush();
+        }
+        
+    }
+    std::cout << std::endl;
     // else if(rf.find("scarf").asBool()) 
     // {
     //     ev::SCARF scarf;
