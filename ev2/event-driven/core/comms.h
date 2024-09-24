@@ -966,6 +966,11 @@ public:
         return ss.str();
     }
 
+    double getLength() 
+    {
+        return std::prev(data.end())->timestamp() - data.begin()->timestamp();
+    }
+
 
 };
 
