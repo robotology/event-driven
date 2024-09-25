@@ -60,11 +60,11 @@ public:
             yInfo() << "--C      : SCARF visualisation intensity";
             yInfo() << "======================";
             yInfo() << "--B <int>[40] : FLOW block size";
-            yInfo() << "--N <int>[80] : FLOW maximum events per block for triplets";
+            yInfo() << "--N <int>[40] : FLOW maximum events per block for triplets";
             yInfo() << "--D <int>[2]  : FLOW triplet connect (max) length";
             yInfo() << "--U <int>[20] : FLOW flow buffer update";
-            yInfo() << "--T <double>[0.125] : FLOW triplet tolerance";
-            yInfo() << "--S <int>[3]  : FLOW smooth";
+            yInfo() << "--T <double>[0.5] : FLOW triplet tolerance";
+            yInfo() << "--S <int>[5]  : FLOW smooth";
             return false;
         }
 
@@ -118,11 +118,11 @@ public:
                                                                     rf.check("alpha", Value(1.0)).asFloat64(), 
                                                                     rf.check("C", Value(0.3)).asFloat64()));
             if(style=="flow") publishers.push_back(new rtFlowDrawer( rf.check("B", Value(40)).asInt32(),
-                                                                     rf.check("N", Value(80)).asInt32(),
+                                                                     rf.check("N", Value(40)).asInt32(),
                                                                      rf.check("D", Value(2)).asInt32(),
                                                                      rf.check("U", Value(20)).asInt32(),
-                                                                     rf.check("T", Value(0.125)).asFloat64(),
-                                                                     rf.check("S", Value(3)).asInt32()));
+                                                                     rf.check("T", Value(0.5)).asFloat64(),
+                                                                     rf.check("S", Value(5)).asInt32()));
 
             if(publishers.back()->initialise(remote, height, width, window_size, yarp_publish, remote))
             {

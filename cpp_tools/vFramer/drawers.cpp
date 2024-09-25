@@ -293,21 +293,24 @@ double rtFlowDrawer::updateImage()
         canvas = white;
 
     
+    
     ev::info inf = input.readAll(true);
     for (auto v = input.begin(); v != input.end(); v++) {
         zrt_flow.add(v->x, v->y, v.timestamp());
         canvas.at<cv::Vec3b>(v->y, v->x) = sample.at<cv::Vec3b>(v->y, v->x);
     }
 
-    std::stringstream  output_freq;
-    output_freq << std::fixed << std::setprecision(0) << (1.0 / rate);
-    cv::putText(canvas, //target image
-            output_freq.str()+"HZ", //text
-            cv::Point(canvas.cols-160, canvas.rows-10), //top-left position
-            cv::FONT_HERSHEY_DUPLEX,
-            1.0,
-            CV_RGB(0, 0, 0), //font color
-            0.5);
+    //cv::imshow("dense flow", sample);
+
+    // std::stringstream  output_freq;
+    // output_freq << std::fixed << std::setprecision(0) << (1.0 / rate);
+    // cv::putText(canvas, //target image
+    //         output_freq.str()+"HZ", //text
+    //         cv::Point(canvas.cols-160, canvas.rows-10), //top-left position
+    //         cv::FONT_HERSHEY_DUPLEX,
+    //         1.0,
+    //         CV_RGB(0, 0, 0), //font color
+    //         0.5);
 
 
     return inf.timestamp;
