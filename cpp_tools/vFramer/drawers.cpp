@@ -265,7 +265,8 @@ double flowDrawer::updateImage()
 
 bool rtFlowDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
-    zrt_flow.initialise({width, height}, 20, 7, 50);
+    // BLOCK, n, d, update#, max_dt, tolerance, SMOOTH
+    zrt_flow.initialise({width, height}, 40, 40, 2, 20, 0.05, 0.125, 3);
     sample = cv::Mat(height, width, CV_8UC3);
     vt = std::thread([this]{updateSAE();});
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
@@ -276,8 +277,8 @@ void rtFlowDrawer::updateSAE()
     while(true) {
         double tic = yarp::os::Time::now();
         zrt_flow.update();
-        zrt_flow.makebgr().copyTo(sample);
         rate = ((yarp::os::Time::now() - tic) + rate)*0.5;
+        zrt_flow.makebgr().copyTo(sample);
     }
 
 }
@@ -296,13 +297,6 @@ double rtFlowDrawer::updateImage()
         zrt_flow.add(v->x, v->y, v.timestamp());
         canvas.at<cv::Vec3b>(v->y, v->x) = sample.at<cv::Vec3b>(v->y, v->x);
     }
-
-    // zrt_flow.makebgr().copyTo(canvas);
-
-    // //cv::Mat sampler = zrt_flow.makebgr();
-    // for (auto v = input.begin(); v != input.end(); v++) {
-    //     canvas.at<cv::Vec3b>(v->y, v->x) = {255, 255, 255};//sampler.at<cv::Vec3b>(v->y, v->x);
-    // }
 
     std::stringstream  output_freq;
     output_freq << std::fixed << std::setprecision(2) << (1.0 / rate);
