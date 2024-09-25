@@ -23,13 +23,6 @@
 
 namespace ev {
 
-
-//so the new plan for zrt flow is to have the sae inside the class.when asking for neighbouring events to create the flow from, it won't be 
-//restricted to a block
-//each block instead has a list of recent events, a list of recent optical flows,
-//the list of recent events limits the number of events that can be processed for real-time operation
-//the list of recent optical flows is used to find the mean
-
 class zrtBlock {
     friend class zrtFlow;
 private:
@@ -70,12 +63,12 @@ public:
     }
 
     //update connections for each new event
-    void updateConnections(cv::Mat &sae, int d, double max_dt, double triplet_tolerance)
+    void updateConnections(cv::Mat &sae, int d, double triplet_tolerance)
     {
         while (js != is) {
             js++;
             if(js == N) js = 0;
-            singlePixConnections(sae, d, max_dt, triplet_tolerance, pxs_snap[js]);
+            singlePixConnections(sae, d, triplet_tolerance, pxs_snap[js]);
         }
     }
 
@@ -83,7 +76,7 @@ public:
     //a similar job. double check
 
     //calculate connections for a single event on the SAE
-    void singlePixConnections(cv::Mat &sae, int d, double max_dt, double triplet_tolerance, cv::Point p0)
+    void singlePixConnections(cv::Mat &sae, int d, double triplet_tolerance, cv::Point p0)
     {        
         for(int dy = -d; dy <= d; dy++) {
             for(int dx = -d; dx <= d; dx++) {
@@ -93,7 +86,7 @@ public:
                     continue;
                 double dt12 = sae.at<double>(p0) - sae.at<double>(p1);
                 double dt23 = sae.at<double>(p1) - sae.at<double>(p2);
-                if(0 < dt12 && dt12 < max_dt && 0 < dt23 && dt23 < max_dt) { //THRESHOLD HERE
+                if(0 < dt12 && 0 < dt23) {
                     double error = fabs(1 - dt23/dt12);
                     if(error < triplet_tolerance) { //THRESHOLD HERE
                         double invt = 1.0 /  (dt12 + dt23);
@@ -145,20 +138,18 @@ private:
 
     //parameters
     int con_len{3};
-    double max_dt{0.05};
     double trip_tol{0.125};
     int con_buf_min{20};
     int smooth_factor{3};
 
 public:
 
-    void initialise(cv::Size res, int block_size, int max_N, int connection_length, int con_buf_min, double max_dt, double trip_tol, int smooth_factor)
+    void initialise(cv::Size res, int block_size, int max_N, int connection_length, int con_buf_min, double trip_tol, int smooth_factor)
     {
         //initialise the SAE
         sae = cv::Mat(res, CV_64F);
 
         this->con_len = connection_length;
-        this->max_dt = max_dt;
         this->trip_tol = trip_tol;
         this->con_buf_min = con_buf_min;
         this->smooth_factor = smooth_factor;
@@ -221,7 +212,7 @@ public:
                 b.snap();
 
                 //calculate the connections for each new pixel and add to blocks flow set
-                b.updateConnections(sae, con_len, max_dt, trip_tol);
+                b.updateConnections(sae, con_len, trip_tol);
 
                 //calculate the flow given the connections in
                 b.updateFlow(con_buf_min);

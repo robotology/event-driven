@@ -266,15 +266,16 @@ double flowDrawer::updateImage()
 bool rtFlowDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
     // BLOCK, n, d, update#, max_dt, tolerance, SMOOTH
-    zrt_flow.initialise({width, height}, 40, 40, 2, 20, 0.05, 0.125, 3);
+    zrt_flow.initialise({width, height}, block_size, max_n, con_d, con_upd, trip_tol, smooth);
     sample = cv::Mat(height, width, CV_8UC3);
-    vt = std::thread([this]{updateSAE();});
+    vt = std::thread([this]{updateFlowBuffer();});
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
 
-void rtFlowDrawer::updateSAE()
+void rtFlowDrawer::updateFlowBuffer()
 {
-    while(true) {
+    input.readPacket(true);
+    while(input.isRunning()) {
         double tic = yarp::os::Time::now();
         zrt_flow.update();
         rate = ((yarp::os::Time::now() - tic) + rate)*0.5;
@@ -299,10 +300,10 @@ double rtFlowDrawer::updateImage()
     }
 
     std::stringstream  output_freq;
-    output_freq << std::fixed << std::setprecision(2) << (1.0 / rate);
+    output_freq << std::fixed << std::setprecision(0) << (1.0 / rate);
     cv::putText(canvas, //target image
             output_freq.str()+"HZ", //text
-            cv::Point(canvas.cols-150, canvas.rows), //top-left position
+            cv::Point(canvas.cols-160, canvas.rows-10), //top-left position
             cv::FONT_HERSHEY_DUPLEX,
             1.0,
             CV_RGB(0, 0, 0), //font color
@@ -310,6 +311,11 @@ double rtFlowDrawer::updateImage()
 
 
     return inf.timestamp;
+}
+void rtFlowDrawer::threadRelease()
+{
+    input.stop();
+    vt.join();
 }
 
 // EROS DRAW //

@@ -106,16 +106,25 @@ public:
 
 class rtFlowDrawer : public drawerInterfaceAE {
 protected:
+    int block_size{40};
+    int max_n{80};
+    int con_d{2};
+    int con_upd{20};
+    double trip_tol{0.125};
+    int smooth{3};
     double rate{0.0};
     std::thread vt;
     cv::Mat sample;
-    void updateSAE();
+    void updateFlowBuffer();
 
     ev::zrtFlow zrt_flow;
     double updateImage() override;
 public:
-    rtFlowDrawer(){window_size=0.033;};
+    rtFlowDrawer(int blk_sz, int N, int D, int con_upd, double tol, int smooth): block_size(blk_sz), max_n(N), con_d(D), con_upd(con_upd), trip_tol(tol), smooth(smooth), drawerInterfaceAE(){};
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
+    void threadRelease() override;
+
+    
 };
 
 class isoDrawer : public drawerInterfaceAE {
