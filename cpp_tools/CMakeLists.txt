@@ -9,6 +9,7 @@ if(OpenCV_FOUND)
   add_subdirectory(vFramer)
   add_subdirectory(vPreProcess)
   add_subdirectory(calibration)
+  add_subdirectory(log2vid)
 endif()
 
 if(prophesee_core_FOUND OR MetavisionSDK_FOUND)
