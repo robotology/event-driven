@@ -42,7 +42,7 @@ public:
         if(rf.check("h") || rf.check("help"))
         {
             yInfo() << "vFramer - visualisation of event data";
-            yInfo() << "--<iso, grey, black, eros, corner, scarf> : drawer style";
+            yInfo() << "--<iso, grey, black, eros, corner, flow, scarf> : drawer style";
             yInfo() << "--src[1-9] : connect to up to 10 remotes";
             yInfo() << "======================";
             yInfo() << "--name : global module name for ports";
@@ -58,6 +58,13 @@ public:
             yInfo() << "--block  : SCARF block size";
             yInfo() << "--alpha  : SCARF accumulation factor";
             yInfo() << "--C      : SCARF visualisation intensity";
+            yInfo() << "======================";
+            yInfo() << "--B <int>[40] : FLOW block size";
+            yInfo() << "--N <int>[40] : FLOW maximum events per block for triplets";
+            yInfo() << "--D <int>[2]  : FLOW triplet connect (max) length";
+            yInfo() << "--U <int>[20] : FLOW flow buffer update";
+            yInfo() << "--T <double>[0.5] : FLOW triplet tolerance";
+            yInfo() << "--S <int>[5]  : FLOW smooth";
             return false;
         }
 
@@ -89,6 +96,7 @@ public:
         if(rf.check("black")) style = "black";
         if(rf.check("corner")) style = "corner";
         if(rf.check("scarf")) style = "scarf";
+        if(rf.check("flow")) style = "flow";
 
         std::stringstream remote_id;
         for(int i = 0; i < 10; i++) 
@@ -109,7 +117,13 @@ public:
             if(style=="scarf") publishers.push_back(new scarfDrawer(rf.check("block", Value(10)).asInt32(), 
                                                                     rf.check("alpha", Value(1.0)).asFloat64(), 
                                                                     rf.check("C", Value(0.3)).asFloat64()));
-            
+            if(style=="flow") publishers.push_back(new rtFlowDrawer( rf.check("B", Value(40)).asInt32(),
+                                                                     rf.check("N", Value(40)).asInt32(),
+                                                                     rf.check("D", Value(2)).asInt32(),
+                                                                     rf.check("U", Value(20)).asInt32(),
+                                                                     rf.check("T", Value(0.5)).asFloat64(),
+                                                                     rf.check("S", Value(5)).asInt32()));
+
             if(publishers.back()->initialise(remote, height, width, window_size, yarp_publish, remote))
             {
                 yInfo() << "Drawing" << style << "from" << remote;

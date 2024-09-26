@@ -73,8 +73,7 @@ bool drawerInterface::threadInit()
         return image_port.open(name + "/image:o");
     else{
         cv::namedWindow(name, cv::WINDOW_KEEPRATIO);
-
-        cv::resizeWindow(name, {960, (int)(960.0 * img_size.height / (double)img_size.width)});
+        cv::resizeWindow(name, 960, (int)(960.0 * img_size.height / (double)img_size.width));
     }
 
     return true;
@@ -179,6 +178,54 @@ double blackDrawer::updateImage()
     for (auto &v : input)
         canvas.at<cv::Vec3b>(v.y, v.x) = white;
     return inf.timestamp;
+}
+
+// FLOW DRAW //
+// =========== //
+
+
+bool rtFlowDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
+{
+    // BLOCK, n, d, update#, max_dt, tolerance, SMOOTH
+    zrt_flow.initialise({width, height}, block_size, max_n, con_d, con_upd, trip_tol, smooth);
+    sample = cv::Mat(height, width, CV_8UC3);
+    vt = std::thread([this]{updateFlowBuffer();});
+    return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+}
+
+void rtFlowDrawer::updateFlowBuffer()
+{
+    input.readPacket(true);
+    while(input.isRunning()) {
+        double tic = yarp::os::Time::now();
+        zrt_flow.update();
+        rate = ((yarp::os::Time::now() - tic) + rate)*0.5;
+        zrt_flow.makebgr().copyTo(sample);
+    }
+
+}
+
+double rtFlowDrawer::updateImage()
+{
+
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+    else
+        canvas = white;
+
+    ev::info inf = input.readAll(true);
+    for (auto v = input.begin(); v != input.end(); v++) {
+        zrt_flow.add(v->x, v->y, v.timestamp());
+        canvas.at<cv::Vec3b>(v->y, v->x) = sample.at<cv::Vec3b>(v->y, v->x);
+    }
+
+    return inf.timestamp;
+}
+
+void rtFlowDrawer::threadRelease()
+{
+    input.stop();
+    vt.join();
 }
 
 // EROS DRAW //
@@ -292,6 +339,85 @@ void cornerDrawer::threadRelease()
 {
     cd.stop();
 }
+
+// bool flowDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
+// {
+//     sae_p = cv::Mat(height, width, CV_64F, 0.0);
+//     sae_n = cv::Mat(height, width, CV_64F, 0.0);
+//     sae_p_live = cv::Mat(height, width, CV_64F, 0.0);
+//     sae_n_live = cv::Mat(height, width, CV_64F, 0.0);
+//     mask = cv::Mat(height, width, CV_8U, cv::Scalar(0));
+//     mask_live = cv::Mat(height, width, CV_8U, cv::Scalar(0));
+//     // initialize for sae and grid size by zc
+//     flow_rep.initialise(sae_p, sae_n, 20);
+//     nf.initialise(width, height);
+//     nf.use_temporal_filter(0.1);
+//     vt = std::thread([this]{updateSAE();});
+//     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+// }
+
+// void flowDrawer::updateSAE()
+// {
+//     input.readAll(true);
+//     while (input.isRunning()) {
+//         ev::info inf = input.readAll(true);
+//         for (auto v = input.begin(); v != input.end(); v++)
+//         {
+//             if (v->p) // only check positive events
+//                 sae_p_live.at<double>(v->y, v->x) = v.timestamp();
+//             else
+//                 sae_n_live.at<double>(v->y, v->x) = v.timestamp();
+//             //canvas.at<cv::Vec3b>(v->y, v->x) = flow_rep.flowbgr.at<cv::Vec3b>(v->y, v->x);
+//             mask_live.at<uchar>(v->y, v->x) = 1;
+//         }
+        
+//         //mask_live.copyTo(mask);
+//         //mask_live.setTo(0);
+//         tic_live = inf.timestamp;
+//     }
+    
+
+// }
+
+// double flowDrawer::updateImage()
+// {
+
+//     if(canvas.empty())
+//         canvas = cv::Mat(img_size, CV_8UC3);
+//     else
+//         canvas = white;
+
+//     double toc = yarp::os::Time::now();
+//     sae_p_live.copyTo(sae_p);
+//     sae_n_live.copyTo(sae_n);
+//     mask_live.copyTo(mask);
+//     mask_live.setTo(0);
+//     tic = tic_live;
+
+
+//     flow_rep.update(tic);
+//     flow_rep.makebgr().copyTo(canvas, mask);
+//     //canvas = canvas.mul(mask);
+//     // for(auto v = input.begin(); v != input.end(); v++) {
+//     //     //sae.at<double>(v->y, v->x) = v.timestamp();
+//     //     canvas.at<cv::Vec3b>(v->y, v->x) = flow_rep.flowbgr.at<cv::Vec3b>(v->y, v->x);
+//     // }
+
+
+//     // std::cout<<float((end-start)/CLOCKS_PER_SEC)<<std::endl;
+//     std::stringstream  output_freq;
+//     output_freq << std::fixed << std::setprecision(2) << 1.0 / (yarp::os::Time::now() - toc);
+//     cv::putText(canvas, //target image
+//             output_freq.str()+"HZ", //text
+//             cv::Point(canvas.cols-150, canvas.rows), //top-left position
+//             cv::FONT_HERSHEY_DUPLEX,
+//             1.0,
+//             CV_RGB(0, 0, 0), //font color
+//             0.5);
+
+
+//     return tic;
+// }
 
 // // BLOB DRAW //
 // // ========= //
