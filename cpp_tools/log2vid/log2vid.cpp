@@ -69,8 +69,9 @@ int main(int argc, char* argv[])
     }
 
     std::string defaultpath = std::string(std::getenv("HOME")) + "/Downloads/events.mp4";
+    std::string out_path = rf.check("out", Value(defaultpath)).asString();
     cv::VideoWriter dw;
-    dw.open(defaultpath,
+    dw.open(out_path,
             cv::VideoWriter::fourcc('a','v','c','1'),
             fps, res, true);
 
