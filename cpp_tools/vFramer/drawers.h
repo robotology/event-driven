@@ -86,24 +86,6 @@ public:
     blackDrawer(){window_size=0.033;}
 };
 
-class flowDrawer : public drawerInterfaceAE {
-protected:
-    cv::Mat sae_p, sae_p_live;
-    cv::Mat sae_n, sae_n_live;
-    cv::Mat mask, mask_live;
-    ev::vNoiseFilter nf;
-    std::thread vt;
-    void updateSAE();
-    double tic, tic_live;
-
-    ev::zrtFlow zrt_flow;
-    ev::zcflow flow_rep;
-    double updateImage() override;
-public:
-    flowDrawer(){window_size=0.033;};
-    bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
-};
-
 class rtFlowDrawer : public drawerInterfaceAE {
 protected:
     int block_size{40};
@@ -113,18 +95,18 @@ protected:
     double trip_tol{0.125};
     int smooth{3};
     double rate{0.0};
+
     std::thread vt;
-    cv::Mat sample;
     void updateFlowBuffer();
 
     ev::zrtFlow zrt_flow;
     double updateImage() override;
+    cv::Mat sample;
+
 public:
     rtFlowDrawer(int blk_sz, int N, int D, int con_upd, double tol, int smooth): block_size(blk_sz), max_n(N), con_d(D), con_upd(con_upd), trip_tol(tol), smooth(smooth), drawerInterfaceAE(){};
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
     void threadRelease() override;
-
-    
 };
 
 class isoDrawer : public drawerInterfaceAE {
@@ -182,7 +164,23 @@ public:
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
 
+// class flowDrawer : public drawerInterfaceAE {
+// protected:
+//     cv::Mat sae_p, sae_p_live;
+//     cv::Mat sae_n, sae_n_live;
+//     cv::Mat mask, mask_live;
+//     ev::vNoiseFilter nf;
+//     std::thread vt;
+//     void updateSAE();
+//     double tic, tic_live;
 
+//     ev::zrtFlow zrt_flow;
+//     ev::zcflow flow_rep;
+//     double updateImage() override;
+// public:
+//     flowDrawer(){window_size=0.033;};
+//     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
+// };
 
 // class overlayStereoDraw : public vDraw {
 
