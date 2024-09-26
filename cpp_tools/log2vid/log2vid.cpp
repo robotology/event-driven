@@ -11,6 +11,7 @@
 
 //using yarp::os::ResourceFinder;
 namespace fs = std::filesystem;
+using yarp::os::Value;
 
 void helpfunction() 
 {
@@ -22,27 +23,15 @@ void helpfunction()
     yInfo() << "--height <int> video height [720]";
     yInfo() << "--width <int> video width [1280]";
     yInfo() << "--vis <bool> show conversion process [false]";
-    yInfo() << "METHOD: --iso";
-    yInfo() << "--parameters";
+    yInfo() << "METHOD: iso [default]";
+    yInfo() << "--window <double> seconds of window length [0.5]";
     yInfo() << "METHOD: --tw";
     yInfo() << "--window <double> seconds of window length [0.01]";
     yInfo() << "METHOD: --scarf";
-    yInfo() << "--block_size <int> size of a array in pixels [14]";
-    yInfo() << "--alpha <double> ratio of events in block";
-    yInfo() << "--C <double> image intensity";
+    yInfo() << "--block_size <int> array dimension [14]";
+    yInfo() << "--alpha <double> events accumulation factor [1.0]";
+    yInfo() << "--C <double> intensity [0.3]";
 }
-
-// cv::Mat createImageTW(ev::offlineLoader<ev::AE> &loader, double toc, double win_duration)
-// {
-//     static std::deque<ev::AE> buffer;
-//     for(auto &v : loader)
-//         buffer.push_back(v);
-
-//     while
-//             img.at<cv::Vec3b>(v.y, v.x) = {255, 255, 255};
-
-
-// }
 
 int main(int argc, char* argv[])
 {
@@ -61,14 +50,14 @@ int main(int argc, char* argv[])
     }
     std::string file_path = rf.find("file").asString();
 
-    int fps = rf.check("fps", yarp::os::Value(240)).asInt32();
-    double rate = rf.check("rate", yarp::os::Value(1.0)).asFloat64();
+    int fps = rf.check("fps", Value(240)).asInt32();
+    double rate = rf.check("rate", Value(1.0)).asFloat64();
     double period = 1.0/fps;
-    cv::Size res = {rf.check("width", yarp::os::Value(1280)).asInt32(), 
-                    rf.check("height", yarp::os::Value(720)).asInt32()};
+    cv::Size res = {rf.check("width", Value(1280)).asInt32(), 
+                    rf.check("height", Value(720)).asInt32()};
     bool vis = rf.check("vis") &&
-               rf.check("vis", yarp::os::Value(true)).asBool();
-    double duration = rf.check("window", yarp::os::Value(0.01)).asFloat64();
+               rf.check("vis", Value(true)).asBool();
+    
 
     ev::offlineLoader<ev::AE> loader;
     yInfo() << "Loading log file ... ";
@@ -88,8 +77,9 @@ int main(int argc, char* argv[])
     double virtual_timer = period;
     loader.synchroniseRealtimeRead(0.0);
 
-    if(rf.find("tw").asBool()) 
+    if(rf.check("tw")) 
     {
+        double duration = rf.check("window", Value(0.01)).asFloat64();
 
         while(loader.windowedReadTill(virtual_timer, duration)) {
             cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
@@ -105,9 +95,34 @@ int main(int argc, char* argv[])
             std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
         }
 
+    } else if(rf.check("scarf")) {
+
+        ev::SCARF scarf;
+        scarf.initialise(res, rf.check("block_size", Value(14)).asInt32(), rf.check("alpha", Value(1.0)).asFloat64(), rf.check("C", Value(0.3)).asFloat64());
+
+        while(loader.incrementReadTill(virtual_timer)) {
+            cv::Mat img, img8U;
+
+            for(auto &v : loader)
+                scarf.update(v.x, v.y, v.p);
+
+            scarf.getSurface().convertTo(img8U, CV_8U, 255);
+            cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
+
+            if(vis) {
+                cv::imshow("vLog2vid", img);
+                cv::waitKey(1);
+            }
+            dw << img;
+            virtual_timer += period;
+            std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
+            std::cout.flush();
+        }
+    
     } else {
 
         //initialise iso_drawer
+        double duration = rf.check("window", Value(0.5)).asFloat64();
         ev::isoImager iso_drawer;
         cv::Size base_size = iso_drawer.init(res.height, res.width, duration);
         cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
@@ -134,25 +149,6 @@ int main(int argc, char* argv[])
         
     }
     std::cout << std::endl;
-    // else if(rf.find("scarf").asBool()) 
-    // {
-    //     ev::SCARF scarf;
-    //     scarf.initialise(res, )
-
-    //     while(loader.incrementReadTill(virtual_timer)) {
-    //         cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
-
-    //         for(auto &v : loader)
-    //             img.at<cv::Vec3b>(v.y, v.x) = {255, 255, 255};
-    //         if(vis) {
-    //             cv::imshow("events-log2vid", img);
-    //             cv::waitKey(1);
-    //         }
-    //         dw << img;
-    //         virtual_timer += period;
-    //     }
-
-    // }
 
     dw.release();
 
