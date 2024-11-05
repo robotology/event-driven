@@ -285,6 +285,7 @@ double scarfDrawer::updateImage()
     static cv::Mat inter;
     static std::stringstream ss;
     scarf.getSurface().convertTo(inter, CV_8U, 255);
+    inter = 255 - inter;
     cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
 
     //update the maximum rate
@@ -300,7 +301,7 @@ double scarfDrawer::updateImage()
         i = 0; meas_c = 0; meas_t = 0; mr = 0;
     }
 
-    cv::putText(canvas, ss.str(), {30,30}, cv::FONT_HERSHEY_PLAIN, 2.0, {0, 255, 255});
+    cv::putText(canvas, ss.str(), {30,30}, cv::FONT_HERSHEY_PLAIN, 2.0, {100, 100, 100});
 
     return scarf_time;
 }

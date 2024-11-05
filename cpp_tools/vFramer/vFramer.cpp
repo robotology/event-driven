@@ -55,9 +55,9 @@ public:
             yInfo() << "--eros_kernel : kernel size for eros view";
             yInfo() << "--eros_decay  : decay rate for eros view";
             yInfo() << "======================";
-            yInfo() << "--block  : SCARF block size";
-            yInfo() << "--alpha  : SCARF accumulation factor";
-            yInfo() << "--C      : SCARF visualisation intensity";
+            yInfo() << "--block <int>[10]     : SCARF block size";
+            yInfo() << "--alpha <double>[1.0] : SCARF accumulation factor";
+            yInfo() << "--C     <double>[0.2]  : SCARF visualisation intensity";
             yInfo() << "======================";
             yInfo() << "--B <int>[40] : FLOW block size";
             yInfo() << "--N <int>[40] : FLOW maximum events per block for triplets";
@@ -116,7 +116,7 @@ public:
             if(style=="corner") publishers.push_back(new cornerDrawer);
             if(style=="scarf") publishers.push_back(new scarfDrawer(rf.check("block", Value(10)).asInt32(), 
                                                                     rf.check("alpha", Value(1.0)).asFloat64(), 
-                                                                    rf.check("C", Value(0.3)).asFloat64()));
+                                                                    rf.check("C", Value(0.2)).asFloat64()));
             if(style=="flow") publishers.push_back(new rtFlowDrawer( rf.check("B", Value(40)).asInt32(),
                                                                      rf.check("N", Value(40)).asInt32(),
                                                                      rf.check("D", Value(2)).asInt32(),

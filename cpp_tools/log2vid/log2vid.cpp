@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
     cv::VideoWriter dw;
     dw.open(out_path,
             cv::VideoWriter::fourcc('a','v','c','1'),
-            fps, res, true);
+            fps*rate, res, true);
 
     double virtual_timer = period;
     loader.synchroniseRealtimeRead(0.0);
@@ -108,6 +108,7 @@ int main(int argc, char* argv[])
                 scarf.update(v.x, v.y, v.p);
 
             scarf.getSurface().convertTo(img8U, CV_8U, 255);
+            img8U = 255 - img8U;
             cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
 
             if(vis) {
