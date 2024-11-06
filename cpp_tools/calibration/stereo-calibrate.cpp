@@ -97,15 +97,15 @@ public:
         board_size = cv::Size(rf.check("cw", Value(8)).asInt32(), rf.check("ch", Value(6)).asInt32());
 
         //get the intrinsic parameters
-        ResourceFinder calibfinder;
+        ResourceFinder calibfinder1, calibfinder2;
 
         if(!rf.check("cam1cal")) {
             yError() << "please supply camera parameters using --cam1cal <path>";
             return false;
         }
-        calibfinder.setDefault("from", rf.find("cam1cal").asString());
-        calibfinder.configure(0, 0);
-        yarp::os::Bottle params_1 = calibfinder.findGroup("CAMERA_CALIBRATION");
+        calibfinder1.setDefault("from", rf.find("cam1cal").asString());
+        calibfinder1.configure(0, 0);
+        yarp::os::Bottle params_1 = calibfinder1.findGroup("CAMERA_CALIBRATION");
         if(params_1.isNull()) {
             yError() << "Could not find [CAMERA_CALIBRATION] in camera 1 file";
             return false;
@@ -121,9 +121,9 @@ public:
             yError() << "please supply camera parameters using --cam2cal <path>";
             return false;
         }
-        calibfinder.setDefault("from", rf.find("cam2cal").asString());
-        calibfinder.configure(0, 0);
-        yarp::os::Bottle params_2 = calibfinder.findGroup("CAMERA_CALIBRATION");
+        calibfinder2.setDefault("from", rf.find("cam2cal").asString());
+        calibfinder2.configure(0, 0);
+        yarp::os::Bottle params_2 = calibfinder2.findGroup("CAMERA_CALIBRATION");
         if(params_2.isNull()) {
             yError() << "Could not find [CAMERA_CALIBRATION] in camera 2 file";
             return false;
