@@ -1,5 +1,3 @@
-| Read the [Documentation](http://robotology.github.io/event-driven/doxygen/doc/html/index.html) | Download the [Code](https://github.com/robotology/event-driven) |
-
 # event-driven
 
 _YARP integration for event-cameras and other neuromorphic sensors_
@@ -37,23 +35,35 @@ Event-driven libraries provide basic functionality for handling events in a YARP
 
 ## TOOLS
 
- * [**vFramer**](https://github.com/robotology/event-driven/tree/ev2-dev/cpp_tools/atis3-bridge) - visualisation of events streamed over a YARP port. Various methods for visualisation are available.
- * [**calibration**](https://github.com/robotology/event-driven/tree/ev2-dev/cpp_tools/calibration) - estimating the camera intrinsic parameters
- * [**vPreProcess**](https://github.com/robotology/event-driven/tree/ev2-dev/cpp_tools/vPreProcess) - splitting different event-types into separate event-streams, performing filtering, and simple augmentations (flipping etc.)
- * [**atis-bridge**](https://github.com/robotology/event-driven/tree/ev2-dev/cpp_tools/atis3-bridge) - bridge between the Prophesee ATIS cameras and YARP
- * [**zynqGrabber**](https://github.com/robotology/event-driven/tree/ev2-dev/cpp_tools/zynqGrabber) - bridge between zynq-based FPGA sensor interface and YARP
+ * [**vFramer**](https://github.com/robotology/event-driven/tree/main/cpp_tools/vFramer) - visualisation of events streamed over a YARP port. Various methods for visualisation are available.
+ * [**calibration**](https://github.com/robotology/event-driven/tree/main/cpp_tools/calibration) - estimating the camera intrinsic parameters
+ * [**vPreProcess**](https://github.com/robotology/event-driven/tree/main/cpp_tools/vPreProcess) - splitting different event-types into separate event-streams, performing filtering, and simple augmentations (flipping etc.)
+ * [**atis-bridge**](https://github.com/robotology/event-driven/tree/main/cpp_tools/atis3-bridge) - bridge between the Prophesee ATIS cameras and YARP
+ * [**zynqGrabber**](https://github.com/robotology/event-driven/tree/main/cpp_tools/zynqGrabber) - bridge between zynq-based FPGA sensor interface and YARP
+ * [**log2vid**](https://github.com/robotology/event-driven/tree/main/cpp_tools/log2vid) - produce videos from datasets
  
 ## Applications
 
-Applications that implement the algorithms available in `event-driven` are found in our companion repository
+Applications that implement the algorithms available in `event-driven` are found in our organisation:
 
-[event-driven-demos](https://github.com/event-driven-robotics/event-driven-demos)
+ * [event-driven-demos](https://github.com/event-driven-robotics/event-driven-demos)
+ * [human-pose-estimation](https://github.com/event-driven-robotics/hpe-core)
+ * [Fruit Ninja](https://github.com/event-driven-robotics/fruit-ninja-hpe)
+ * [affine-tracking-and-control](https://github.com/event-driven-robotics/four-dof-affine-tracking)
+ * [batch input, manipulation, visualisation, and export](https://github.com/event-driven-robotics/bimvee)
+ * [6-DoF Tracking - EDOPT](https://github.com/event-driven-robotics/EDOPT)
+ * [Visual Fault Button](https://github.com/event-driven-robotics/visual-fault-button)
 
-## How to Install:
 
-[Comprehensive instructions available for installation](http://robotology.github.io/event-driven/doxygen/doc/html/pages.html).
+## Installation and Documentation:
+
+[Documentation Home](https://github.com/robotology/event-driven/blob/main/documentation/home.md)
 
 ## References
+
+Glover, A., Gava, L., Li, Z. and Bartolozzi, C., 2024, May. *EDOPT: Event-camera 6-DoF Dynamic Object Pose Tracking*. In 2024 IEEE International Conference on Robotics and Automation (ICRA) (pp. 18200-18206). IEEE.
+
+Goyal, G., Di Pietro, F., Carissimi, N., Glover, A. and Bartolozzi, C., 2023. *MoveEnet: Online high-frequency human pose estimation with an event camera*. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (pp. 4024-4033).
 
 Glover, A., and Bartolozzi C. (2016) *Event-driven ball detection and gaze fixation in clutter*. In IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), October 2016, Daejeon, Korea. **Finalist for RoboCup Best Paper Award**
 
