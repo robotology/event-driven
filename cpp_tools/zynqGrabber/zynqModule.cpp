@@ -59,7 +59,7 @@ class zynqGrabberModule : public yarp::os::RFModule {
             yInfo() << "--hpu_read <bool>[false]: read from hpu device";
             yInfo() << "--hpu_write <bool>[false]: write to hpu device";
             yInfo() << "--packet_size <int>[5120]: standard events in packet (not enforced)";
-            yInfo() << "--stereo <bool>[false]: split data in channels";
+            yInfo() << "--split <bool>[false]: split data in channels";
             yInfo() << "--filter <double>[0.0]: temporal filter of vision (ms) 0.0 = off";
         }
 
@@ -105,8 +105,8 @@ class zynqGrabberModule : public yarp::os::RFModule {
             hpu.params.hpu_write = rf.check("hpu_write") &&
                                    rf.check("hpu_write", yarp::os::Value(true)).asBool();
             hpu.params.max_packet_size = 8 * rf.check("packet_size", yarp::os::Value("5120")).asInt32();
-            hpu.params.stereo = rf.check("stereo") &&
-                                rf.check("stereo", Value(true)).asBool();
+            hpu.params.split = rf.check("split") &&
+                                rf.check("split", Value(true)).asBool();
             hpu.params.filter = rf.check("filter", Value(0.0)).asFloat64();
 
             if(!hpu.configure())

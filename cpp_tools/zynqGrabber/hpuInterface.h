@@ -71,7 +71,7 @@ private:
     }
 
 
-    void d2y_run_stereo()
+    void d2y_run_split()
     {
         int max_events_per_read = params.max_packet_size / sizeof(ev::AE) + (params.max_packet_size % sizeof(ev::AE) ? 1 : 0);
         int max_bytes_per_read = max_events_per_read * sizeof(ev::AE);
@@ -219,8 +219,8 @@ private:
         if(params.hpu_write)
             y2d_thread = std::thread([this]{y2d_run();});
         if(params.hpu_read) {
-            if(params.stereo)
-                d2y_thread = std::thread([this]{d2y_run_stereo();});
+            if(params.split)
+                d2y_thread = std::thread([this]{d2y_run_split();});
             else
                 d2y_thread = std::thread([this]{d2y_run();});
         }
@@ -237,7 +237,7 @@ public:
         bool spinnaker{false};
         bool spin_loopback{false};
         unsigned int max_packet_size{8*7500};
-        bool stereo{false};
+        bool split{false};
         double filter{0.0};
 
     } params;
@@ -253,7 +253,7 @@ public:
         if(params.spinnaker) yInfo() << "Using Spinnaker";
         if(params.spinnaker && params.spin_loopback) yWarning() << "Spinnaker in loopback mode";
         yInfo() << "Maximum " << params.max_packet_size / 8 << "AE in a packet";
-        if(params.stereo) yInfo() << "Splitting stereo (d2y)";
+        if(params.split) yInfo() << "Splitting stereo and skin (d2y)";
         if(params.filter > 0.0) yInfo() << "Artificial refractory period:" << params.filter << "seconds";
 
         // open the device
@@ -303,16 +303,24 @@ public:
 
         if(params.hpu_read && d2y_port.isClosed()) {
             std::string port_name = params.module + "/AE:o";
-            if(params.stereo) port_name = params.module + "/left/AE:o";
+            if(params.split) port_name = params.module + "/left/AE:o";
             if(!d2y_port.open(port_name)) {
                 yError() << "Could not open" << port_name;
                 return false;
             }
         }
 
-        if(params.hpu_read && params.stereo && d2y_port_2.isClosed()) {
+        if(params.hpu_read && params.split && d2y_port_2.isClosed()) {
             std::string port_name = params.module + "/right/AE:o";
             if(!d2y_port_2.open(port_name)) {
+                yError() << "Could not open" << port_name;
+                return false;
+            }
+        }
+
+        if(params.hpu_read && params.split && d2y_port_skin.isClosed()) {
+            std::string port_name = params.module + "/skin/AE:o";
+            if(!d2y_port_skin.open(port_name)) {
                 yError() << "Could not open" << port_name;
                 return false;
             }
@@ -332,7 +340,7 @@ public:
     void stop()
     {
         if(params.hpu_read) 
-            { params.hpu_read = false; d2y_port.close(); d2y_port_2.close(); d2y_thread.join(); }
+            { params.hpu_read = false; d2y_port.close(); d2y_port_2.close(); d2y_port_skin.close(); d2y_thread.join(); }
         if(params.hpu_write)
             { params.hpu_write = false; y2d_port.close(); y2d_thread.join(); }
     }
