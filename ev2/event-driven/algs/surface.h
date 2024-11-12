@@ -2,6 +2,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <tuple>
+#include <deque>
 
 namespace ev {
 
@@ -114,34 +115,50 @@ friend class SCARF;
 private:
     //parameters
     struct pnt {
-        int u:13;
-        int v:13;
-        int p:3;
-        int c:3;
+        int p:4;
+        int c:4;
     };
     int N{0};
 
     //variables
     int i{0};
-    std::vector<pnt> points;
+    std::vector<pnt> meta;
+    std::vector<cv::Point> all;
+    std::vector<cv::Point>::iterator f1, f2;
+    std::vector<cv::Point> active;
     cv::Mat img;
     float C;
 
 public:
 
     CARF(int N, cv::Mat img, float C = 0.3) {
-        points.resize(N, {0, 0, 0, 0});
+        meta.resize(N, {0, 0});
+        all.resize(N, {0, 0});
+        active.resize(N+1, {0, 0});
         this->N = N;
         this->img = img; //shallow reference
         this->C = C;
+        f1 = active.begin(); f2 = active.begin();
     }
 
-    inline void add(const CARF::pnt &p)
+    inline void add(const cv::Point &p, const CARF::pnt &m)
     {
+        //if the overwritten point is central
+        if(meta[i].c) {
+            img.at<float>(all[i]) -= C;
+            if(++f1 == active.end()) f1 = active.begin();
+        }
+
+        //if the new point is central
+        if(m.c) {
+            img.at<float>(p) += C;
+            *f2 = p;
+            if(++f2 == active.end()) f2 = active.begin();
+            
+        }
+        all[i] = p;
+        meta[i] = m;
         if(++i >= N) i = 0;
-        if(points[i].c) img.at<float>(points[i].v, points[i].u) -= C;
-        if(p.c) img.at<float>(p.v, p.u) += C;
-        points[i] = p;
     }
 };
 
@@ -237,10 +254,10 @@ public:
     inline void update(const int &u, const int &v, const int &p)
     {
         auto &conxs = cons_map[v*img.cols+u];
-        if(conxs[0]) conxs[0]->add({u, v, p, 1});
-        if(conxs[1]) conxs[1]->add({u, v, p, 0});
-        if(conxs[2]) conxs[2]->add({u, v, p, 0});
-        if(conxs[3]) conxs[3]->add({u, v, p, 0});
+        if(conxs[0]) conxs[0]->add({u, v}, {p, 1});
+        if(conxs[1]) conxs[1]->add({u, v}, {p, 0});
+        if(conxs[2]) conxs[2]->add({u, v}, {p, 0});
+        if(conxs[3]) conxs[3]->add({u, v}, {p, 0});
     }
 
     cv::Mat getSurface()
@@ -248,22 +265,42 @@ public:
         return img;
     }
 
-    std::vector<cv::Point> getList(int u, int v)
+    std::vector<cv::Point> getActive(int rf_ix, int rf_iy)
     {
+        auto &rf = rfs[rf_iy*count.width+rf_ix];
+        if(rf.f1 > rf.f2) {
+            std::vector<cv::Point> temp = {rf.f1, rf.active.end()};
+            temp.insert(temp.end(), rf.active.begin(), rf.f2);
+            return temp;
+        } else {
+            return {rf.f1, rf.f2};
+        }
+    }
+
+    std::vector<cv::Point> getAll(int rf_ix, int rf_iy)
+    {
+        return rfs[rf_iy*count.width+rf_ix].all;
+    }
+
+    std::vector<cv::Point> getListOld(int u, int v)
+    {
+
         std::vector<cv::Point> p;
-        for(auto &i : rfs[v*count.width+u].points)
-            if(i.c) p.push_back({i.u, i.v});
+        auto &rf = rfs[v*count.width+u];
+        for(size_t i = 0; i < rf.all.size(); i++)
+            if(rf.meta[i].c) p.push_back(rf.all[i]);
         return p;
     }
 
     //THIS COULD BE IMPROVED.
     //INDEXED BY <U, V> - MAYBE A MORE INTUITIVE WAY
     //STORE DATA AS std::vector<cv::Point> would result in this being a straight copy 
-    std::vector<cv::Point> getAll(int u, int v)
+    std::vector<cv::Point> getAllOld(int u, int v)
     {
         std::vector<cv::Point> p;
-        for(auto &i : rfs[v*count.width+u].points)
-            p.push_back({i.u, i.v});
+        auto &rf = rfs[v*count.width+u];
+        for(size_t i = 0; i < rf.all.size(); i++)
+            p.push_back(rf.all[i]);
         return p;
     }
 
