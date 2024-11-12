@@ -42,6 +42,27 @@ class zynqGrabberModule : public yarp::os::RFModule {
    public:
     bool configure(yarp::os::ResourceFinder &rf) {
 
+        if(rf.check("help")) {
+            yInfo() << "ZYNQGRABBER: DIRECT FROM PROPHESEE TO YOU!";
+            yInfo() << "==========================================";
+            yInfo() << "--name <string>[/zynqGrabber]: port base name";
+            yInfo() << "--i2cVision <string>[/dev/i2c-0]: i2c device for vision controllers";
+            yInfo() << "--no_reset <bool>[false]: do not try to reset the chip before turning on";
+            yInfo() << "--sensitivity <int>[65]: camera sensitivity 0 to 100";
+            yInfo() << "--refractory <int>[1]: camera refractory period >=1";
+            yInfo() << "--left_off <bool>[false]: turn off left camera";
+            yInfo() << "--right_off <bool>[false]: turn off right camera";
+            yInfo() << "--dataDevice <string>[/dev/iit-hpu0]: name of device to read data from";
+            yInfo() << "--use_spinnaker <bool>[false]: turn on spinnaker device";
+            yInfo() << "--loopback_debug <bool>[false]: spinnaker in loopback mode";
+            yInfo() << "--gtp <bool>[false]: use gtp protocol";
+            yInfo() << "--hpu_read <bool>[false]: read from hpu device";
+            yInfo() << "--hpu_write <bool>[false]: write to hpu device";
+            yInfo() << "--packet_size <int>[5120]: standard events in packet (not enforced)";
+            yInfo() << "--stereo <bool>[false]: split data in channels";
+            yInfo() << "--filter <double>[0.0]: temporal filter of vision (ms) 0.0 = off";
+        }
+
         setName(rf.check("name", yarp::os::Value("/zynqGrabber")).asString().c_str());
 
         if (rf.check("i2cVision"))
