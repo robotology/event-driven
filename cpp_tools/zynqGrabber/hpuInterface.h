@@ -44,6 +44,7 @@ private:
     ev::BufferedPort<ev::AE> y2d_port;
     ev::BufferedPort<ev::AE> d2y_port;
     ev::BufferedPort<ev::AE> d2y_port_2;
+    ev::BufferedPort<ev::AE> d2y_port_skin;
     std::thread y2d_thread;
     std::thread d2y_thread;
     int y2d_eventcount{0};
@@ -84,6 +85,9 @@ private:
         packet_right->size(max_events_per_read);
         double tic_right = yarp::os::Time::now();
 
+        ev::packet<ev::AE>* packet_skin = &d2y_port_skin.prepare();
+        double tic_skin = yarp::os::Time::now();
+
         ev::refractoryFilter refrac;
         if(params.filter > 0.0)
             refrac.initialise(480, 640, params.filter);
@@ -111,21 +115,25 @@ private:
             //sort the events
             for(size_t i = 0; i < events_read; i++) {
                 ev::AE &event = buffer[i];
-                if(params.filter > 0.0 && !refrac.check(event, toc)) {
-                    d2y_filtered++;
-                    continue;
+                if(event.skin) {
+                    //SKIN
+                    packet_skin->push_back(event);
+                } else {
+                    //VISION
+                    if(params.filter > 0.0 && !refrac.check(event, toc)) {
+                        d2y_filtered++;
+                        continue;
+                    }
+                    event.y = 479 - event.y;
+                    if(event.channel == ev::CAMERA_LEFT)
+                        packet_left->push_back(event);
+                    else
+                        packet_right->push_back(event);
                 }
-                event.y = 479 - event.y;
-                if(event.channel == ev::CAMERA_LEFT)
-                    packet_left->push_back(event);
-                else
-                    packet_right->push_back(event);
             }
 
-            if(d2y_port.isWriting() || d2y_port_2.isWriting())
+            if(d2y_port.isWriting() || d2y_port_2.isWriting() || d2y_port_skin.isWriting())
                 continue;
-
-            
 
             if(packet_left->size()) 
             {
@@ -145,12 +153,22 @@ private:
                 packet_right->envelope() = {sequence_right++, toc};
                 d2y_port_2.write();
                 packet_right = &d2y_port_2.prepare();
+            }
+
+            if(packet_skin->size())
+            {
+                packet_skin->duration(toc - tic_skin);
+                tic_skin = toc;
+                static int sequence_skin = 0;
+                packet_skin->envelope() = {sequence_skin++, toc};
+                d2y_port_skin.write();
+                packet_skin = &d2y_port_skin.prepare();
             }   
         }
 
         d2y_port.unprepare();
         d2y_port_2.unprepare();
-
+        d2y_port_skin.unprepare();
     }
 
     //this thread runs constantly to read device (e.g. camera) data and send to YARP 
