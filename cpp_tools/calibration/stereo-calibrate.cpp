@@ -275,7 +275,7 @@ public:
         object_points.resize(image_points_1.size(), object_points[0]);
 
         // call calibrate camera
-        cv::stereoCalibrate(object_points, image_points_1, image_points_2, camera_matrix_1, dist_coeffs_1, camera_matrix_2, dist_coeffs_2, img_size_1, R, T, E, F, cv::CALIB_FIX_INTRINSIC|cv::CALIB_ZERO_TANGENT_DIST);
+        cv::stereoCalibrate(object_points, image_points_1, image_points_2, camera_matrix_1, dist_coeffs_1, camera_matrix_2, dist_coeffs_2, img_size_1, R, T, E, F, cv::CALIB_FIX_INTRINSIC);
         cv::Mat R1, R2, P1, P2;
         cv::stereoRectify(camera_matrix_1, dist_coeffs_1, camera_matrix_2, dist_coeffs_2, 
                     img_size_1, R, T, R1, R2, P1, P2, cv::noArray());
