@@ -299,9 +299,9 @@ public:
         writer << "cy " << camera_matrix_1.at<double>(1, 2) << std::endl;
         writer << std::setprecision(6);
         writer << "k1 " << dist_coeffs_1.at<double>(0, 0) << std::endl;
-        writer << "k2 " << dist_coeffs_1.at<double>(1, 0) << std::endl;
-        writer << "p1 " << dist_coeffs_1.at<double>(2, 0) << std::endl;
-        writer << "p2 " << dist_coeffs_1.at<double>(3, 0) << std::endl;
+        writer << "k2 " << dist_coeffs_1.at<double>(0, 1) << std::endl;
+        writer << "p1 " << dist_coeffs_1.at<double>(0, 2) << std::endl;
+        writer << "p2 " << dist_coeffs_1.at<double>(0, 3) << std::endl;
         writer << std::endl;
         writer.flush();
 
@@ -316,9 +316,9 @@ public:
         writer << "cy " << camera_matrix_2.at<double>(1, 2) << std::endl;
         writer << std::setprecision(6);
         writer << "k1 " << dist_coeffs_2.at<double>(0, 0) << std::endl;
-        writer << "k2 " << dist_coeffs_2.at<double>(1, 0) << std::endl;
-        writer << "p1 " << dist_coeffs_2.at<double>(2, 0) << std::endl;
-        writer << "p2 " << dist_coeffs_2.at<double>(3, 0) << std::endl;
+        writer << "k2 " << dist_coeffs_2.at<double>(0, 1) << std::endl;
+        writer << "p1 " << dist_coeffs_2.at<double>(0, 2) << std::endl;
+        writer << "p2 " << dist_coeffs_2.at<double>(0, 3) << std::endl;
         writer << std::endl;
         writer.flush();
 
