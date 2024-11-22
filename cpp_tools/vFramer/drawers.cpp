@@ -288,25 +288,25 @@ double scarfDrawer::updateImage()
     inter = 255 - inter;
     cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
 
-    auto[s1, s2, n, s3] = scarf.getScarfParams();
-    double tic1 = yarp::os::Time::now();
-    for(auto y = 0; y < s1.height; y++) {
-        for(auto x = 0; x < s1.width; x++) {
-            scarf.getAll(x, y);
-        }
-    }
-    double toc1 = yarp::os::Time::now();
+    // auto[s1, s2, n, s3] = scarf.getScarfParams();
+    // double tic1 = yarp::os::Time::now();
+    // for(auto y = 0; y < s1.height; y++) {
+    //     for(auto x = 0; x < s1.width; x++) {
+    //         scarf.getAll(x, y);
+    //     }
+    // }
+    // double toc1 = yarp::os::Time::now();
 
-    double tic2 = yarp::os::Time::now();
-    for(auto y = 0; y < s1.height; y++) {
-        for(auto x = 0; x < s1.width; x++) {
-            //scarf.getActive(x, y);
-        }
-    }
-    double toc2 = yarp::os::Time::now();
+    // double tic2 = yarp::os::Time::now();
+    // for(auto y = 0; y < s1.height; y++) {
+    //     for(auto x = 0; x < s1.width; x++) {
+    //         //scarf.getActive(x, y);
+    //     }
+    // }
+    // double toc2 = yarp::os::Time::now();
     
 
-    yInfo() << int((toc1 - tic1)*1e6) << int((toc2 - tic2)*1e6)  << "microseconds";
+    // yInfo() << int((toc1 - tic1)*1e6) << int((toc2 - tic2)*1e6)  << "microseconds";
 
     //update the maximum rate
     static double mr = 0.0;

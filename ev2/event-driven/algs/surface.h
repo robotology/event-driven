@@ -115,6 +115,8 @@ friend class SCARF;
 private:
     //parameters
     struct pnt {
+        int u:12;
+        int v:12;
         int p:4;
         int c:4;
     };
@@ -123,7 +125,7 @@ private:
     //variables
     int i{0};
     std::vector<pnt> meta;
-    std::vector<cv::Point> all;
+    std::vector<cv::Point_<short> > all;
     std::vector<cv::Point>::iterator f1, f2;
     std::vector<cv::Point> active;
     cv::Mat img;
@@ -132,7 +134,7 @@ private:
 public:
 
     CARF(int N, cv::Mat img, float C = 0.3) {
-        meta.resize(N, {0, 0});
+        meta.resize(N, {0, 0, 0, 0});
         all.resize(N, {0, 0});
         active.resize(N+1, {0, 0});
         this->N = N;
@@ -141,22 +143,22 @@ public:
         f1 = active.begin(); f2 = active.begin();
     }
 
-    inline void add(const cv::Point &p, const CARF::pnt &m)
+    inline void add(const CARF::pnt &m)
     {
         //if the overwritten point is central
         if(meta[i].c) {
-            img.at<float>(all[i]) -= C;
-            if(++f1 == active.end()) f1 = active.begin();
+            img.at<float>(meta[i].v, meta[i].u) -= C;
+            //if(++f1 == active.end()) f1 = active.begin();
         }
 
         //if the new point is central
         if(m.c) {
-            img.at<float>(p) += C;
-            *f2 = p;
-            if(++f2 == active.end()) f2 = active.begin();
+            img.at<float>({m.u, m.v}) += C;
+            //*f2 = p;
+            //if(++f2 == active.end()) f2 = active.begin();
             
         }
-        all[i] = p;
+        //all[i] = {m.u, m.v};
         meta[i] = m;
         if(++i >= N) i = 0;
     }
@@ -254,10 +256,10 @@ public:
     inline void update(const int &u, const int &v, const int &p)
     {
         auto &conxs = cons_map[v*img.cols+u];
-        if(conxs[0]) conxs[0]->add({u, v}, {p, 1});
-        if(conxs[1]) conxs[1]->add({u, v}, {p, 0});
-        if(conxs[2]) conxs[2]->add({u, v}, {p, 0});
-        if(conxs[3]) conxs[3]->add({u, v}, {p, 0});
+        if(conxs[0]) conxs[0]->add({u, v, p, 1});
+        if(conxs[1]) conxs[1]->add({u, v, p, 0});
+        if(conxs[2]) conxs[2]->add({u, v, p, 0});
+        if(conxs[3]) conxs[3]->add({u, v, p, 0});
     }
 
     cv::Mat getSurface()
@@ -277,7 +279,7 @@ public:
         }
     }
 
-    std::vector<cv::Point> getAll(int rf_ix, int rf_iy)
+    std::vector<cv::Point_<short>> getAll(int rf_ix, int rf_iy)
     {
         return rfs[rf_iy*count.width+rf_ix].all;
     }
