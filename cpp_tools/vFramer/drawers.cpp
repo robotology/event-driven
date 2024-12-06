@@ -190,6 +190,21 @@ bool rtFlowDrawer::initialise(const std::string &name, int height, int width, do
     zrt_flow.initialise({width, height}, block_size, max_n, con_d, con_upd, trip_tol, smooth);
     sample = cv::Mat(height, width, CV_8UC3);
     vt = std::thread([this]{updateFlowBuffer();});
+    webcam.open(-1);
+    if(!webcam.isOpened()) {
+        yError() << "Could not open webcam";
+        return false;
+    }
+    webcam.set(cv::CAP_PROP_FRAME_HEIGHT, height/2);
+    webcam.set(cv::CAP_PROP_FRAME_WIDTH, width/2);
+    saver.open("/home/aglover-iit.local/Downloads/flow_demo.mp4",
+               cv::VideoWriter::fourcc('a','v','c','1'),
+               1.0/getPeriod(), {width*2, height}, true);
+    if(!saver.isOpened()) {
+        yError() << "Could not open output video";
+        return false;
+    }
+    yInfo() << webcam.get(cv::CAP_PROP_FRAME_HEIGHT) << webcam.get(cv::CAP_PROP_FRAME_WIDTH);
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
 
@@ -207,23 +222,36 @@ void rtFlowDrawer::updateFlowBuffer()
 
 double rtFlowDrawer::updateImage()
 {
+    static cv::Mat wc;
+    webcam >> wc;
+    
 
     if(canvas.empty())
-        canvas = cv::Mat(img_size, CV_8UC3);
+        canvas = cv::Mat(cv::Size(img_size.width*2, img_size.height), CV_8UC3);
     else
         canvas = white;
 
-    ev::info inf = input.readAll(true);
+    cv::resize(wc, canvas({img_size.width, 0, img_size.width, img_size.height}), img_size);
+
+    ev::info inf = input.readAll(false);
     for (auto v = input.begin(); v != input.end(); v++) {
         zrt_flow.add(v->x, v->y, v.timestamp());
-        canvas.at<cv::Vec3b>(v->y, v->x) = sample.at<cv::Vec3b>(v->y, v->x);
+        //auto &s = sample.at<cv::Vec3b>(v->y, v->x);
+        canvas.at<cv::Vec3b>(v->y, v->x) = white - sample.at<cv::Vec3b>(v->y, v->x);
     }
+    frames.emplace_back(cv::Mat());
+    cv::copyTo(canvas, frames.back(), cv::Mat());
+    //saver << canvas;
 
-    return inf.timestamp;
+    return yarp::os::Time::now(); //inf.timestamp;
 }
 
 void rtFlowDrawer::threadRelease()
 {
+    yInfo() << "saving frames";
+    for(auto &f : frames)
+        saver << f;
+    saver.release();
     input.stop();
     vt.join();
 }
