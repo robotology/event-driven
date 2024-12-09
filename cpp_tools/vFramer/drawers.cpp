@@ -187,9 +187,11 @@ double blackDrawer::updateImage()
 bool rtFlowDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 {
     // BLOCK, n, d, update#, max_dt, tolerance, SMOOTH
+    sample_sparse = cv::Mat(height, width, CV_8UC3, cv::Vec3b(255, 255, 255));
     zrt_flow.initialise({width, height}, block_size, max_n, con_d, con_upd, trip_tol, smooth);
     sample = cv::Mat(height, width, CV_8UC3);
     vt = std::thread([this]{updateFlowBuffer();});
+    et = std::thread([this]{updateEvents();});
     webcam.open(-1);
     if(!webcam.isOpened()) {
         yError() << "Could not open webcam";
@@ -220,30 +222,36 @@ void rtFlowDrawer::updateFlowBuffer()
 
 }
 
+void rtFlowDrawer::updateEvents()
+{
+    
+    //input.readPacket(true);
+    while(true) {
+        inf = input.readAll(false);
+        for (auto v = input.begin(); v != input.end(); v++) {
+            zrt_flow.add(v->x, v->y, v.timestamp());
+            sample_sparse.at<cv::Vec3b>(v->y, v->x) = white - sample.at<cv::Vec3b>(v->y, v->x);
+        }
+    }
+}
+
 double rtFlowDrawer::updateImage()
 {
     static cv::Mat wc;
     webcam >> wc;
-    
-
     if(canvas.empty())
         canvas = cv::Mat(cv::Size(img_size.width*2, img_size.height), CV_8UC3);
-    else
-        canvas = white;
 
+    sample_sparse.copyTo(canvas({{0, 0}, img_size}));
+    sample_sparse = white;
     cv::resize(wc, canvas({img_size.width, 0, img_size.width, img_size.height}), img_size);
 
-    ev::info inf = input.readAll(false);
-    for (auto v = input.begin(); v != input.end(); v++) {
-        zrt_flow.add(v->x, v->y, v.timestamp());
-        //auto &s = sample.at<cv::Vec3b>(v->y, v->x);
-        canvas.at<cv::Vec3b>(v->y, v->x) = white - sample.at<cv::Vec3b>(v->y, v->x);
-    }
     frames.emplace_back(cv::Mat());
-    cv::copyTo(canvas, frames.back(), cv::Mat());
-    //saver << canvas;
+    canvas.copyTo(frames.back());
 
-    return yarp::os::Time::now(); //inf.timestamp;
+    yInfo() << int(inf.duration * 1e6) << "us|" << int(1.0/rate) << "hz";
+ 
+    return yarp::os::Time::now();//inf.timestamp;
 }
 
 void rtFlowDrawer::threadRelease()

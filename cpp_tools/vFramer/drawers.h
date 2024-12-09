@@ -97,12 +97,15 @@ protected:
     int smooth{3};
     double rate{0.0};
 
-    std::thread vt;
+    std::thread vt, et;
     void updateFlowBuffer();
+    void updateEvents();
+    ev::info inf;
 
     ev::zrtFlow zrt_flow;
     double updateImage() override;
     cv::Mat sample;
+    cv::Mat sample_sparse;
 
     cv::VideoCapture webcam;
     cv::VideoWriter saver;
