@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 
     double virtual_timer = period;
     if(stampfile.is_open()) stampfile >> virtual_timer;
-    loader.synchroniseRealtimeRead(0.0);
+    else loader.synchroniseRealtimeRead(0.0);
 
     if(rf.check("tw")) 
     {
@@ -132,7 +132,30 @@ int main(int argc, char* argv[])
             std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
             std::cout.flush();
         }
-    
+    } else if(rf.check("eros")) {
+        ev::EROS eros;
+        eros.init(res.width, res.height, rf.check("block_size", Value(14)).asInt32()/2, rf.check("alpha", Value(0.3)).asFloat64());
+
+        while(loader.incrementReadTill(virtual_timer)) {
+            cv::Mat img, img8U;
+
+            for(auto &v : loader)
+                eros.update(v.x, v.y);
+
+            eros.getSurface().copyTo(img8U);
+            img8U = 255 - img8U;
+            cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
+
+            if(vis) {
+                cv::imshow("vLog2vid", img);
+                cv::waitKey(1);
+            }
+            dw << img;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
+            std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
+            std::cout.flush();
+        }
     } else {
 
         //initialise iso_drawer
