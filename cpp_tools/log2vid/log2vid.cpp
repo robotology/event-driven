@@ -18,6 +18,7 @@ void helpfunction()
     yInfo() << "USAGE:";
     yInfo() << "--file <string> logfile path";
     yInfo() << "--out <string> output video [~/Downloads/events.mp4]";
+    yInfo() << "--timestamps <string> input timestamps filepath [optional]";
     yInfo() << "--fps <int> frames per second of output video [240]";
     yInfo() << "--rate <double> speed-up/slow-down factor [1.0]";
     yInfo() << "--height <int> video height [720]";
@@ -57,7 +58,15 @@ int main(int argc, char* argv[])
                     rf.check("height", Value(720)).asInt32()};
     bool vis = rf.check("vis") &&
                rf.check("vis", Value(true)).asBool();
-    
+    std::ifstream stampfile;
+    if(rf.check("timestamps")) 
+    {
+        stampfile.open(rf.find("stamps").asString());
+        if(!stampfile.is_open()) 
+        {
+            yError() << "--timestamps provided but the file could not be opened" << rf.find("stamps").asString();
+        }
+    }    
 
     ev::offlineLoader<ev::AE> loader;
     yInfo() << "Loading log file ... ";
@@ -76,6 +85,7 @@ int main(int argc, char* argv[])
             fps*rate, res, true);
 
     double virtual_timer = period;
+    if(stampfile.is_open()) stampfile >> virtual_timer;
     loader.synchroniseRealtimeRead(0.0);
 
     if(rf.check("tw")) 
@@ -92,7 +102,8 @@ int main(int argc, char* argv[])
                 cv::waitKey(1);
             }
             dw << img;
-            virtual_timer += period;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
             std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
         }
 
@@ -116,7 +127,8 @@ int main(int argc, char* argv[])
                 cv::waitKey(1);
             }
             dw << img;
-            virtual_timer += period;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
             std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
             std::cout.flush();
         }
@@ -144,7 +156,8 @@ int main(int argc, char* argv[])
             }
 
             dw << img;
-            virtual_timer += period;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
             std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
             std::cout.flush();
         }
