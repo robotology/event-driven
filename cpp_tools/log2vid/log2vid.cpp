@@ -61,10 +61,11 @@ int main(int argc, char* argv[])
     std::ifstream stampfile;
     if(rf.check("timestamps")) 
     {
-        stampfile.open(rf.find("stamps").asString());
-        if(!stampfile.is_open()) 
-        {
+        stampfile.open(rf.find("timestamps").asString());
+        if(!stampfile.is_open()) {
             yError() << "--timestamps provided but the file could not be opened" << rf.find("stamps").asString();
+        } else {
+            yInfo() << "Using timestamp file for frame timing";
         }
     }    
 
@@ -85,14 +86,17 @@ int main(int argc, char* argv[])
             fps*rate, res, true);
 
     double virtual_timer = period;
-    if(stampfile.is_open()) stampfile >> virtual_timer;
-    else loader.synchroniseRealtimeRead(0.0);
+    if(stampfile.is_open()) {
+        stampfile >> virtual_timer;
+    } else {
+        loader.synchroniseRealtimeRead(0.0);
+    }
 
     if(rf.check("tw")) 
     {
         double duration = rf.check("window", Value(0.01)).asFloat64();
 
-        while(loader.windowedReadTill(virtual_timer, duration)) {
+        while(loader.windowedReadTill(virtual_timer, duration) && !stampfile.eof()) {
             cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
 
             for(auto &v : loader)
@@ -112,7 +116,7 @@ int main(int argc, char* argv[])
         ev::SCARF scarf;
         scarf.initialise(res, rf.check("block_size", Value(14)).asInt32(), rf.check("alpha", Value(1.0)).asFloat64(), rf.check("C", Value(0.3)).asFloat64());
 
-        while(loader.incrementReadTill(virtual_timer)) {
+        while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
             cv::Mat img, img8U;
 
             for(auto &v : loader)
@@ -136,7 +140,7 @@ int main(int argc, char* argv[])
         ev::EROS eros;
         eros.init(res.width, res.height, rf.check("block_size", Value(14)).asInt32()/2, rf.check("alpha", Value(0.3)).asFloat64());
 
-        while(loader.incrementReadTill(virtual_timer)) {
+        while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
             cv::Mat img, img8U;
 
             for(auto &v : loader)
@@ -165,7 +169,7 @@ int main(int argc, char* argv[])
         cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
         cv::Mat base = cv::Mat::zeros(base_size, CV_8UC3);
 
-        while(loader.windowedReadTill(virtual_timer, duration)) {
+        while(loader.windowedReadTill(virtual_timer, duration) && !stampfile.eof()) {
             
             base.setTo(ev::white);
             int count = 0;
