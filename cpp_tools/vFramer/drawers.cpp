@@ -227,11 +227,19 @@ void rtFlowDrawer::updateEvents()
     
     //input.readPacket(true);
     while(true) {
-        inf = input.readAll(false);
+        auto this_inf = input.readAll(true);
+        
+        inf.duration += this_inf.duration*0.3; 
+        
+        double tic = yarp::os::Time::now();
         for (auto v = input.begin(); v != input.end(); v++) {
             zrt_flow.add(v->x, v->y, v.timestamp());
             sample_sparse.at<cv::Vec3b>(v->y, v->x) = white - sample.at<cv::Vec3b>(v->y, v->x);
         }
+        proc_time += (yarp::os::Time::now() - tic)*0.3;
+        inf.count += this_inf.count*0.3;
+        packets += 1 * 0.3;
+        inf.timestamp = this_inf.timestamp;
     }
 }
 
@@ -246,12 +254,36 @@ double rtFlowDrawer::updateImage()
     sample_sparse = white;
     cv::resize(wc, canvas({img_size.width, 0, img_size.width, img_size.height}), img_size);
 
+    static int bar_h = img_size.height/2 - 20;
+
+    int pix_rate = (int)(bar_h * (inf.count / inf.duration) / 50.0e6);
+    cv::rectangle(canvas, {10, 10+bar_h-pix_rate, 20, pix_rate}, blue, cv::FILLED);
+    int pix_late = (int)(bar_h * proc_time / (packets * 0.005)); //0.01 is 10 ms
+    cv::rectangle(canvas, {10, img_size.height/2+10 + bar_h-pix_late, 20, pix_late}, orange, cv::FILLED);
+
+    cv::rectangle(canvas, {10, 10, 20, bar_h}, {0, 0, 0}, 2);
+    cv::putText(canvas, "50M ev/s", {35, 30}, cv::FONT_HERSHEY_PLAIN, 2.0, {0, 0, 0}, 2, cv::LINE_AA, false);
+    cv::putText(canvas, "Event Rate", {35, img_size.height/2-10}, cv::FONT_HERSHEY_PLAIN, 2.0, {0, 0, 0}, 2, cv::LINE_AA, false);
+    for(int i = 10; i < bar_h; i+=bar_h/5)
+        cv::line(canvas, {10, i}, {30, i}, {0, 0, 0});
+
+    cv::rectangle(canvas, {10, img_size.height/2+10, 20, bar_h}, {0, 0, 0}, 2);
+    cv::putText(canvas, "5 ms", {35, img_size.height/2+30}, cv::FONT_HERSHEY_PLAIN, 2.0, {0, 0, 0}, 2, cv::LINE_AA, false);
+    cv::putText(canvas, "Latency", {35, img_size.height-10}, cv::FONT_HERSHEY_PLAIN, 2.0, {0, 0, 0}, 2, cv::LINE_AA, false);
+    for(int i = img_size.height/2+10; i < img_size.height/2+10+bar_h; i+=bar_h/5)
+        cv::line(canvas, {10, i}, {30, i}, {0, 0, 0});
+    
+
     frames.emplace_back(cv::Mat());
     canvas.copyTo(frames.back());
 
-    yInfo() << int(inf.duration * 1e6) << "us|" << int(1.0/rate) << "hz";
+    yInfo() << int(inf.duration * 1.0e6 / packets) << "us|" << int(1.0/rate) << "hz|" << packets << " packets|" << inf.count / inf.duration << "events/second";
+    inf.duration *= 0.7;
+    inf.count *= 0.7;
+    packets *= 0.7;
+    proc_time *= 0.7;
  
-    return yarp::os::Time::now();//inf.timestamp;
+    return inf.timestamp;//::os::Time::now();//inf.timestamp;
 }
 
 void rtFlowDrawer::threadRelease()

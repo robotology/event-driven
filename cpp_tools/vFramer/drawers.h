@@ -100,7 +100,7 @@ protected:
     std::thread vt, et;
     void updateFlowBuffer();
     void updateEvents();
-    ev::info inf;
+    ev::info inf; double packets{0.0}; double proc_time{0.0};
 
     ev::zrtFlow zrt_flow;
     double updateImage() override;
