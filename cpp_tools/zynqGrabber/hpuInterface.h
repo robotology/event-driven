@@ -44,6 +44,7 @@ private:
     ev::BufferedPort<ev::AE> y2d_port;
     ev::BufferedPort<ev::AE> d2y_port;
     ev::BufferedPort<ev::AE> d2y_port_2;
+    ev::BufferedPort<ev::AE> d2y_port_skin;
     std::thread y2d_thread;
     std::thread d2y_thread;
     int y2d_eventcount{0};
@@ -70,7 +71,7 @@ private:
     }
 
 
-    void d2y_run_stereo()
+    void d2y_run_split()
     {
         int max_events_per_read = params.max_packet_size / sizeof(ev::AE) + (params.max_packet_size % sizeof(ev::AE) ? 1 : 0);
         int max_bytes_per_read = max_events_per_read * sizeof(ev::AE);
@@ -83,6 +84,9 @@ private:
         ev::packet<ev::AE>* packet_right = &d2y_port_2.prepare();
         packet_right->size(max_events_per_read);
         double tic_right = yarp::os::Time::now();
+
+        ev::packet<ev::AE>* packet_skin = &d2y_port_skin.prepare();
+        double tic_skin = yarp::os::Time::now();
 
         ev::refractoryFilter refrac;
         if(params.filter > 0.0)
@@ -111,21 +115,25 @@ private:
             //sort the events
             for(size_t i = 0; i < events_read; i++) {
                 ev::AE &event = buffer[i];
-                if(params.filter > 0.0 && !refrac.check(event, toc)) {
-                    d2y_filtered++;
-                    continue;
+                if(event.skin) {
+                    //SKIN
+                    packet_skin->push_back(event);
+                } else {
+                    //VISION
+                    if(params.filter > 0.0 && !refrac.check(event, toc)) {
+                        d2y_filtered++;
+                        continue;
+                    }
+                    event.y = 479 - event.y;
+                    if(event.channel == ev::CAMERA_LEFT)
+                        packet_left->push_back(event);
+                    else
+                        packet_right->push_back(event);
                 }
-                event.y = 479 - event.y;
-                if(event.channel == ev::CAMERA_LEFT)
-                    packet_left->push_back(event);
-                else
-                    packet_right->push_back(event);
             }
 
-            if(d2y_port.isWriting() || d2y_port_2.isWriting())
+            if(d2y_port.isWriting() || d2y_port_2.isWriting() || d2y_port_skin.isWriting())
                 continue;
-
-            
 
             if(packet_left->size()) 
             {
@@ -145,12 +153,22 @@ private:
                 packet_right->envelope() = {sequence_right++, toc};
                 d2y_port_2.write();
                 packet_right = &d2y_port_2.prepare();
+            }
+
+            if(packet_skin->size())
+            {
+                packet_skin->duration(toc - tic_skin);
+                tic_skin = toc;
+                static int sequence_skin = 0;
+                packet_skin->envelope() = {sequence_skin++, toc};
+                d2y_port_skin.write();
+                packet_skin = &d2y_port_skin.prepare();
             }   
         }
 
         d2y_port.unprepare();
         d2y_port_2.unprepare();
-
+        d2y_port_skin.unprepare();
     }
 
     //this thread runs constantly to read device (e.g. camera) data and send to YARP 
@@ -201,8 +219,8 @@ private:
         if(params.hpu_write)
             y2d_thread = std::thread([this]{y2d_run();});
         if(params.hpu_read) {
-            if(params.stereo)
-                d2y_thread = std::thread([this]{d2y_run_stereo();});
+            if(params.split)
+                d2y_thread = std::thread([this]{d2y_run_split();});
             else
                 d2y_thread = std::thread([this]{d2y_run();});
         }
@@ -219,7 +237,7 @@ public:
         bool spinnaker{false};
         bool spin_loopback{false};
         unsigned int max_packet_size{8*7500};
-        bool stereo{false};
+        bool split{false};
         double filter{0.0};
 
     } params;
@@ -235,7 +253,7 @@ public:
         if(params.spinnaker) yInfo() << "Using Spinnaker";
         if(params.spinnaker && params.spin_loopback) yWarning() << "Spinnaker in loopback mode";
         yInfo() << "Maximum " << params.max_packet_size / 8 << "AE in a packet";
-        if(params.stereo) yInfo() << "Splitting stereo (d2y)";
+        if(params.split) yInfo() << "Splitting stereo and skin (d2y)";
         if(params.filter > 0.0) yInfo() << "Artificial refractory period:" << params.filter << "seconds";
 
         // open the device
@@ -285,16 +303,24 @@ public:
 
         if(params.hpu_read && d2y_port.isClosed()) {
             std::string port_name = params.module + "/AE:o";
-            if(params.stereo) port_name = params.module + "/left/AE:o";
+            if(params.split) port_name = params.module + "/left/AE:o";
             if(!d2y_port.open(port_name)) {
                 yError() << "Could not open" << port_name;
                 return false;
             }
         }
 
-        if(params.hpu_read && params.stereo && d2y_port_2.isClosed()) {
+        if(params.hpu_read && params.split && d2y_port_2.isClosed()) {
             std::string port_name = params.module + "/right/AE:o";
             if(!d2y_port_2.open(port_name)) {
+                yError() << "Could not open" << port_name;
+                return false;
+            }
+        }
+
+        if(params.hpu_read && params.split && d2y_port_skin.isClosed()) {
+            std::string port_name = params.module + "/skin/AE:o";
+            if(!d2y_port_skin.open(port_name)) {
                 yError() << "Could not open" << port_name;
                 return false;
             }
@@ -314,7 +340,7 @@ public:
     void stop()
     {
         if(params.hpu_read) 
-            { params.hpu_read = false; d2y_port.close(); d2y_port_2.close(); d2y_thread.join(); }
+            { params.hpu_read = false; d2y_port.close(); d2y_port_2.close(); d2y_port_skin.close(); d2y_thread.join(); }
         if(params.hpu_write)
             { params.hpu_write = false; y2d_port.close(); y2d_thread.join(); }
     }
