@@ -971,6 +971,10 @@ public:
         return std::prev(data.end())->timestamp() - data.begin()->timestamp();
     }
 
+    double getStartTime()
+    {
+        return data.begin()->timestamp();
+    }
 
 };
 
