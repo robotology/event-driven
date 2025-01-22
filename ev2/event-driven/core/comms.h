@@ -968,9 +968,19 @@ public:
 
     double getLength() 
     {
-        return std::prev(data.end())->timestamp() - data.begin()->timestamp();
+        if(data.size())
+            return std::prev(data.end())->timestamp() - data.begin()->timestamp();
+        else
+            return 0.0;
     }
 
+    double getStartTime()
+    {
+        if(data.size())
+            return data.begin()->timestamp();
+        else
+            return 0.0;
+    }
 
 };
 
