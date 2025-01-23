@@ -18,6 +18,7 @@ void helpfunction()
     yInfo() << "USAGE:";
     yInfo() << "--file <string> logfile path";
     yInfo() << "--out <string> output video [~/Downloads/events.mp4]";
+    yInfo() << "--timestamps <string> input timestamps filepath [optional]";
     yInfo() << "--fps <int> frames per second of output video [240]";
     yInfo() << "--rate <double> speed-up/slow-down factor [1.0]";
     yInfo() << "--height <int> video height [720]";
@@ -31,6 +32,9 @@ void helpfunction()
     yInfo() << "--block_size <int> array dimension [14]";
     yInfo() << "--alpha <double> events accumulation factor [1.0]";
     yInfo() << "--C <double> intensity [0.3]";
+    yInfo() << "METHOD: --eros";
+    yInfo() << "--block_size <int> array dimension [7]";
+    yInfo() << "--alpha <double> events decay factor [0.3]";
 }
 
 int main(int argc, char* argv[])
@@ -57,7 +61,16 @@ int main(int argc, char* argv[])
                     rf.check("height", Value(720)).asInt32()};
     bool vis = rf.check("vis") &&
                rf.check("vis", Value(true)).asBool();
-    
+    std::ifstream stampfile;
+    if(rf.check("timestamps")) 
+    {
+        stampfile.open(rf.find("timestamps").asString());
+        if(!stampfile.is_open()) {
+            yError() << "--timestamps provided but the file could not be opened" << rf.find("stamps").asString();
+        } else {
+            yInfo() << "Using timestamp file for frame timing";
+        }
+    }    
 
     ev::offlineLoader<ev::AE> loader;
     yInfo() << "Loading log file ... ";
@@ -76,13 +89,17 @@ int main(int argc, char* argv[])
             fps*rate, res, true);
 
     double virtual_timer = period;
-    loader.synchroniseRealtimeRead(0.0);
+    if(stampfile.is_open()) {
+        stampfile >> virtual_timer;
+    } else {
+        loader.synchroniseRealtimeRead(0.0);
+    }
 
     if(rf.check("tw")) 
     {
         double duration = rf.check("window", Value(0.01)).asFloat64();
 
-        while(loader.windowedReadTill(virtual_timer, duration)) {
+        while(loader.windowedReadTill(virtual_timer, duration) && !stampfile.eof()) {
             cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
 
             for(auto &v : loader)
@@ -92,7 +109,8 @@ int main(int argc, char* argv[])
                 cv::waitKey(1);
             }
             dw << img;
-            virtual_timer += period;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
             std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
         }
 
@@ -101,7 +119,7 @@ int main(int argc, char* argv[])
         ev::SCARF scarf;
         scarf.initialise(res, rf.check("block_size", Value(14)).asInt32(), rf.check("alpha", Value(1.0)).asFloat64(), rf.check("C", Value(0.3)).asFloat64());
 
-        while(loader.incrementReadTill(virtual_timer)) {
+        while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
             cv::Mat img, img8U;
 
             for(auto &v : loader)
@@ -116,11 +134,35 @@ int main(int argc, char* argv[])
                 cv::waitKey(1);
             }
             dw << img;
-            virtual_timer += period;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
             std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
             std::cout.flush();
         }
-    
+    } else if(rf.check("eros")) {
+        ev::EROS eros;
+        eros.init(res.width, res.height, rf.check("block_size", Value(7)).asInt32(), rf.check("alpha", Value(0.3)).asFloat64());
+
+        while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
+            cv::Mat img, img8U;
+
+            for(auto &v : loader)
+                eros.update(v.x, v.y);
+
+            eros.getSurface().copyTo(img8U);
+            img8U = 255 - img8U;
+            cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
+
+            if(vis) {
+                cv::imshow("vLog2vid", img);
+                cv::waitKey(1);
+            }
+            dw << img;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
+            std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
+            std::cout.flush();
+        }
     } else {
 
         //initialise iso_drawer
@@ -130,7 +172,7 @@ int main(int argc, char* argv[])
         cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
         cv::Mat base = cv::Mat::zeros(base_size, CV_8UC3);
 
-        while(loader.windowedReadTill(virtual_timer, duration)) {
+        while(loader.windowedReadTill(virtual_timer, duration) && !stampfile.eof()) {
             
             base.setTo(ev::white);
             int count = 0;
@@ -144,7 +186,8 @@ int main(int argc, char* argv[])
             }
 
             dw << img;
-            virtual_timer += period;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
             std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
             std::cout.flush();
         }
