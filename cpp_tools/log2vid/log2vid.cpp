@@ -32,6 +32,9 @@ void helpfunction()
     yInfo() << "--block_size <int> array dimension [14]";
     yInfo() << "--alpha <double> events accumulation factor [1.0]";
     yInfo() << "--C <double> intensity [0.3]";
+    yInfo() << "METHOD: --eros";
+    yInfo() << "--block_size <int> array dimension [7]";
+    yInfo() << "--alpha <double> events decay factor [0.3]";
 }
 
 int main(int argc, char* argv[])
@@ -138,7 +141,7 @@ int main(int argc, char* argv[])
         }
     } else if(rf.check("eros")) {
         ev::EROS eros;
-        eros.init(res.width, res.height, rf.check("block_size", Value(14)).asInt32()/2, rf.check("alpha", Value(0.3)).asFloat64());
+        eros.init(res.width, res.height, rf.check("block_size", Value(7)).asInt32(), rf.check("alpha", Value(0.3)).asFloat64());
 
         while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
             cv::Mat img, img8U;
