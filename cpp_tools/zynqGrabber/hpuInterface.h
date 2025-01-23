@@ -112,13 +112,21 @@ private:
 
             double toc = yarp::os::Time::now();
 
+            unsigned int coded;
             //sort the events
             for(size_t i = 0; i < events_read; i++) {
                 ev::AE &event = buffer[i];
                 if(event.skin) {
                     //SKIN
                     packet_skin->push_back(event);
+                // } else if(event.corner || event.type || event._fill || event.x > 640 || event.y > 480) {
+                //     memcpy(&coded, &event, sizeof(unsigned int));
+                //     std::cout << std::hex << coded;
                 } else {
+                    if(event.corner || event.type || event._fill || event.x > 640 || event.y > 480) {
+                        memcpy(&coded, &event, sizeof(unsigned int));
+                        std::cout << std::hex << coded;
+                    }
                     //VISION
                     if(params.filter > 0.0 && !refrac.check(event, toc)) {
                         d2y_filtered++;
