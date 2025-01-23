@@ -45,7 +45,7 @@ class TOS : public surface
         static cv::Rect roi = {0, 0, kernel_size, kernel_size};
 
         roi.x = x; roi.y = y;
-        static cv::Mat region = surf(roi);
+        cv::Mat region = surf(roi);
 
         for (auto xi = 0; xi < region.cols; xi++) {
             for (auto yi = 0; yi < region.rows; yi++) {
@@ -65,13 +65,13 @@ class SITS : public surface {
         static cv::Rect roi = {0, 0, kernel_size, kernel_size};
 
         roi.x = x; roi.y = y;
-        static cv::Mat region = surf(roi);
+        cv::Mat region = surf(roi);
 
         double &c = surf.at<double>(y+half_kernel, x+half_kernel);
         for (auto xi = 0; xi < region.cols; xi++) {
             for (auto yi = 0; yi < region.rows; yi++) {
                 double &p = region.at<double>(yi, xi);
-                if (p > c) p--;
+                if (p >= c) p--;
             }
         }
         c = maximum_value;
