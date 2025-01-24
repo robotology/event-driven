@@ -122,11 +122,14 @@ private:
                 // } else if(event.corner || event.type || event._fill || event.x > 640 || event.y > 480) {
                 //     memcpy(&coded, &event, sizeof(unsigned int));
                 //     std::cout << std::hex << coded;
+	    	} else if(event.x > 640 || event.y > 480) {
+			yWarning() << "[" << event.x << "," << event.y << "]";
                 } else {
-                    if(event.corner || event.type || event._fill || event.x > 640 || event.y > 480) {
-                        memcpy(&coded, &event, sizeof(unsigned int));
-                        std::cout << std::hex << coded;
-                    }
+                    //if(event.corner || event.type || event._fill || event.x > 640 || event.y > 480) {
+                    //    memcpy(&coded, &event, sizeof(unsigned int));
+                    //   std::cout << "0x" << std::hex << coded << " " << std::endl;
+                    //}
+
                     //VISION
                     if(params.filter > 0.0 && !refrac.check(event, toc)) {
                         d2y_filtered++;
