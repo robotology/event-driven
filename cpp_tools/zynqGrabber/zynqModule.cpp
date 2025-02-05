@@ -40,7 +40,7 @@ class zynqGrabberModule : public yarp::os::RFModule {
     hpuInterface hpu;
 
    public:
-    bool configure(yarp::os::ResourceFinder &rf) {
+    bool configure(yarp::os::ResourceFinder &rf) override {
 
         if(rf.check("help")) {
             yInfo() << "ZYNQGRABBER: DIRECT FROM PROPHESEE TO YOU!";
@@ -61,6 +61,7 @@ class zynqGrabberModule : public yarp::os::RFModule {
             yInfo() << "--packet_size <int>[5120]: standard events in packet (not enforced)";
             yInfo() << "--split <bool>[false]: split data in channels";
             yInfo() << "--filter <double>[0.0]: temporal filter of vision (ms) 0.0 = off";
+            return false;
         }
 
         setName(rf.check("name", yarp::os::Value("/zynqGrabber")).asString().c_str());

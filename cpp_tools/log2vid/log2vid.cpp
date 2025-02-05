@@ -2,15 +2,12 @@
 #include <string>
 #include <fstream>
 #include <iostream>
-#include <filesystem>
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <event-driven/core.h>
 #include <event-driven/algs.h>
 #include <event-driven/vis.h>
 
-//using yarp::os::ResourceFinder;
-namespace fs = std::filesystem;
 using yarp::os::Value;
 
 void helpfunction() 
@@ -76,7 +73,7 @@ int main(int argc, char* argv[])
     yInfo() << "Loading log file ... ";
     if(!loader.load(file_path)) {
         yError() << "Could not open log file";
-        return false;
+        return -1;
     } else {
         yInfo() << loader.getinfo();
     }
