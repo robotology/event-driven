@@ -118,6 +118,8 @@ private:
                 if(event.skin) {
                     //SKIN
                     packet_skin->push_back(event);
+	    	    } else if(event.x > params.roi_max_x || event.y > params.roi_max_y) {
+			        yWarning() << "[" << event.x << "," << event.y << "]";
                 } else {
                     //VISION
                     if(params.filter > 0.0 && !refrac.check(event, toc)) {
@@ -239,6 +241,8 @@ public:
         unsigned int max_packet_size{8*7500};
         bool split{false};
         double filter{0.0};
+        int roi_max_x{640};
+        int roi_max_y{480};
 
     } params;
 

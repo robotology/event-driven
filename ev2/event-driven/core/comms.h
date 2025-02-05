@@ -162,7 +162,7 @@ public:
         return e;
     }
 
-    int fillFromMemory(char *s, int bytes)
+    int fillFromMemory(const char *s, int bytes)
     {
         n_elements = bytes / sizeof(T);
         buffer.resize(n_elements);

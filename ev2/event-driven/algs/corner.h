@@ -39,7 +39,6 @@ private:
     std::thread harris_thread;
     std::mutex m;
     std::condition_variable signal;
-    bool eros_updated;
     
     double threshold{0.0};
     double score_mean{0.0};
