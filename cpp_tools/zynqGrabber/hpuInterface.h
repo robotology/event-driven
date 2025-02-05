@@ -112,7 +112,6 @@ private:
 
             double toc = yarp::os::Time::now();
 
-            unsigned int coded;
             //sort the events
             for(size_t i = 0; i < events_read; i++) {
                 ev::AE &event = buffer[i];
