@@ -85,9 +85,9 @@ bool drawerInterface::threadInit()
 bool drawerInterfaceAE::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote) 
 {
     this->name = name;
-    srand (time(NULL));
     std::stringstream ss;
-    ss << "/vFramer/" << rand()%10000 << "/AE:i";
+    ss << "/vFramer/" << (int)(yarp::os::Time::now())<< "/AE:i";
+    yarp::os::Time::delay(1);
     this->portName = ss.str();
     this->sourceName = remote;
     this->yarp_publish = yarp_publish;
