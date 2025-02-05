@@ -45,7 +45,7 @@ class TOS : public surface
         static cv::Rect roi = {0, 0, kernel_size, kernel_size};
 
         roi.x = x; roi.y = y;
-        static cv::Mat region = surf(roi);
+        cv::Mat region = surf(roi);
 
         for (auto xi = 0; xi < region.cols; xi++) {
             for (auto yi = 0; yi < region.rows; yi++) {
