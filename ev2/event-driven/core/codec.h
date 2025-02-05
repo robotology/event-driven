@@ -52,17 +52,9 @@ typedef struct encoded : public timeStamp {
 typedef struct skinAE : public timeStamp {
     static const std::string tag;
     unsigned int polarity:1;
-    unsigned int taxel:10;
-    unsigned int _reserved1:2;
-    unsigned int cross_base:1;
-    unsigned int _sample:1;
-    unsigned int _error:1;
-    unsigned int body_part:3;
-    unsigned int _reserved2:3;
-    unsigned int side:1;
-    unsigned int type:1;
-    unsigned int skin:1;
-    unsigned int _fill:7;
+    unsigned int taxel:4;
+    unsigned int device:4;
+    unsigned int constant:23;
 } skinAE;
 
 typedef struct skinValue {
