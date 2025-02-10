@@ -133,7 +133,7 @@ public:
 
 class scarfDrawer : public drawerInterfaceAE {
 protected:
-    ev::SCARF scarf;
+    ev::SCARFflex scarf;
     std::thread vt;
     int meas_c{0};
     double meas_t{0.0};
@@ -141,11 +141,13 @@ protected:
     int block{10};
     double alpha{1.0};
     double C{0.3};
+    double r{0.5};
+    int b{10};
     void updateScarfRep();
     double updateImage() override;
     
 public:
-    scarfDrawer(int block, double alpha, double C): block(block), alpha(alpha), C(C), drawerInterfaceAE(){};
+    scarfDrawer(int block, double alpha, double C, double r, int b): block(block), alpha(alpha), C(C), r(r), b(b), drawerInterfaceAE(){};
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
 
