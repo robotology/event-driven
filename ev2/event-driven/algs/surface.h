@@ -111,7 +111,7 @@ class BIN : public surface
 class CARF
 {
 friend class SCARF;
-private:
+protected:
     //parameters
     struct pnt {
         int u:13;
@@ -147,7 +147,7 @@ public:
 
 class SCARF
 {
-private:
+protected:
     //parameters
     cv::Size count{{0, 0}};
     cv::Size dims{{0, 0}};
@@ -159,13 +159,13 @@ private:
 
 public:
 
-    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3)
+    virtual void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3)
     {
         if(rf_size % 2) rf_size++;
         initialise(img_res, {(img_res.width/rf_size)-1, (img_res.height/rf_size)-1}, alpha, C);
     }
 
-    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3)
+    virtual void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3)
     {
         img = cv::Mat(img_res, CV_32F);
         count = rf_res;
@@ -234,7 +234,7 @@ public:
         }
     }
 
-    inline void update(const int &u, const int &v, const int &p)
+    inline virtual void update(const int &u, const int &v, const int &p)
     {
         auto &conxs = cons_map[v*img.cols+u];
         if(conxs[0]) conxs[0]->add({u, v, p, 1});
@@ -294,6 +294,92 @@ public:
         );
         return scarf_params;
     }
+};
+
+class SCARFflex : public SCARF
+{
+protected:
+    std::vector< std::vector<CARF*> > cons_map;
+
+public:
+
+    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3) override
+    {
+        initialise(img_res, {(img_res.width-(2*10))/rf_size, (img_res.height-(2*10))/rf_size}, alpha, C, 0.5, 10);
+    }
+
+    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3) override
+    {
+        initialise(img_res, rf_res, alpha, C, 0.5, 10);
+    }
+
+    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3, double r = 0.5, int b = 10)
+    {
+        initialise(img_res, {(img_res.width-(2*b))/rf_size, (img_res.height-(2*b))/rf_size}, alpha, C, r, b);
+    }
+
+    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3, double r = 0.5, int b = 10) 
+    {
+        img = cv::Mat(img_res, CV_32F);
+        count = rf_res;
+
+        //size of a receptive field removing some pixels from the border
+        dims = {(img_res.width-(2*b)) / rf_res.width, (img_res.height-(2*b)) / rf_res.height};
+
+        //N is the maximum amount of pixels in the FIFO. Scaled based on active region
+        int N = dims.area() * alpha * 0.5;
+
+        //make the CARF receptive fields
+        rfs.resize(rf_res.area(), CARF(N, img, C));
+
+        //make the connection map. One entry per pixel
+        // pixel -> vector of CARF*
+        cons_map.resize(img_res.area()); 
+
+        //for each pixel add in the positive area
+        for(int y = 0; y < img_res.height; y++) {
+            for(int x = 0; x < img_res.width; x++) {
+
+                //this is the connections from a given pixel
+                auto &connection = cons_map[y*img_res.width + x];
+
+                //as we have a border some connections don't have a positive region
+                int rfx = std::floor((double)(x-b)/ dims.width);
+                int rfy = std::floor((double)(y-b)/ dims.height);
+                if(rfx < 0 || rfy < 0 || rfx >= rf_res.width || rfy >= rf_res.height)
+                    connection.push_back(nullptr);
+                else
+                    connection.push_back(&rfs[rfy*rf_res.width+rfx]);
+            }
+        }
+
+        //for each block add in the negative area
+        for(int rfy = 0; rfy < count.height; rfy++) {
+            for(int rfx = 0; rfx < count.width; rfx++) {
+
+                CARF* cp = &rfs[rfy*rf_res.width+rfx];
+
+                int yp_start = std::max(b + rfy*dims.height - (int)(dims.height*r), 0);
+                int yp_end = std::min(b + (1+rfy)*dims.height + (int)(dims.height*r), img_res.height);
+                int xp_start = std::max(b + rfx*dims.width - (int)(dims.width*r), 0);
+                int xp_end = std::min(b + (1+rfx)*dims.width + (int)(dims.width*r), img_res.width);
+                
+                for(int y = yp_start; y < yp_end; y++)
+                    for(int x = xp_start; x < xp_end; x++)
+                        cons_map[y*img_res.width + x].push_back(cp);
+            }
+        }
+        
+    };
+    
+    inline void update(const int &u, const int &v, const int &p) override
+    {
+        auto &conxs = cons_map[v*img.cols+u];
+        if(conxs[0]) conxs[0]->add({u, v, p, 1});
+        for(size_t i = 1; i < conxs.size(); i++)
+            if(conxs[i]) conxs[i]->add({u, v, p, 0});
+    };
+
 };
 
 
