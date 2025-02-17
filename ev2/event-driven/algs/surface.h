@@ -305,20 +305,20 @@ public:
 
     void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3) override
     {
-        initialise(img_res, {(img_res.width-(2*10))/rf_size, (img_res.height-(2*10))/rf_size}, alpha, C, 0.5, 10);
+        initialise(img_res, {(img_res.width-(2*10))/rf_size, (img_res.height-(2*10))/rf_size}, alpha, C, 10, 0.5);
     }
 
     void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3) override
     {
-        initialise(img_res, rf_res, alpha, C, 0.5, 10);
+        initialise(img_res, rf_res, alpha, C, 10, 0.5);
     }
 
-    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3, double r = 0.5, int b = 10)
+    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3, int b = 10, double r = 0.5)
     {
-        initialise(img_res, {(img_res.width-(2*b))/rf_size, (img_res.height-(2*b))/rf_size}, alpha, C, r, b);
+        initialise(img_res, {(img_res.width-(2*b))/rf_size, (img_res.height-(2*b))/rf_size}, alpha, C, b, r);
     }
 
-    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3, double r = 0.5, int b = 10) 
+    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3, int b = 10, double r = 0.5) 
     {
         img = cv::Mat(img_res, CV_32F);
         count = rf_res;
