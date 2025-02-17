@@ -118,7 +118,7 @@ public:
                                                                     rf.check("alpha", Value(1.0)).asFloat64(), 
                                                                     rf.check("C", Value(0.2)).asFloat64(),
                                                                     rf.check("r", Value(0.5)).asFloat64(),
-                                                                    rf.check("b", Value(10)).asInt32())); 
+                                                                    rf.check("b", Value(0)).asInt32())); 
             if(style=="flow") publishers.push_back(new rtFlowDrawer( rf.check("B", Value(40)).asInt32(),
                                                                      rf.check("N", Value(40)).asInt32(),
                                                                      rf.check("D", Value(2)).asInt32(),

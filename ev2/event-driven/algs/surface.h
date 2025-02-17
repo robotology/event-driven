@@ -151,6 +151,7 @@ protected:
     //parameters
     cv::Size count{{0, 0}};
     cv::Size dims{{0, 0}};
+    int b{0};
 
     //variables
     cv::Mat img;
@@ -159,38 +160,37 @@ protected:
 
 public:
 
-    virtual void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3)
+    virtual void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3, int b = 0)
     {
-        if(rf_size % 2) rf_size++;
-        initialise(img_res, {(img_res.width/rf_size)-1, (img_res.height/rf_size)-1}, alpha, C);
+        initialise(img_res, {(img_res.width - (2*b))/rf_size, (img_res.height - (2*b))/rf_size}, alpha, C, b);
     }
 
-    virtual void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3)
+    virtual void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3, int b = 0)
     {
         img = cv::Mat(img_res, CV_32F);
         count = rf_res;
+        this->b = b;
 
-        //size of a receptive field removeing some pixels from the border, make sure the receptive field
-        //is an even number
-        dims = {img_res.width / (rf_res.width+1), img_res.height / (rf_res.height+1)};
-        if(dims.height%2) {dims.height--;} 
-        if(dims.width%2) {dims.width--;}
+        //size of a receptive field removing some pixels from the border
+        dims = {(img_res.width - (2*b)) / rf_res.width, (img_res.height - (2*b)) / rf_res.height};
 
         //N is the maximum amount of pixels in the FIFO
+        int hkx = dims.width * 0.5;
+        int hky = dims.height * 0.5;
         int N = dims.area() * alpha * 0.5;
+
+        //make the CARF receptive fields
+        rfs.resize(rf_res.area(), CARF(N, img, C));
 
         //make the connection map. One entry per pixel . each entry = [id id id id];
         cons_map.resize(img_res.area());
-        //make the CARF receptive fields
-        rfs.resize(rf_res.area(), CARF(N, img, C));
-        
         //for each pixel
         for(int y = 0; y < img_res.height; y++) {
             for(int x = 0; x < img_res.width; x++) {
 
                 auto &connection = cons_map[y*img_res.width + x];
                 int i = 0;
-                int xm = x - dims.width/2; int ym = y - dims.height/2;
+                int xm = x - b; int ym = y - b;
 
                 //as x/y can be negative we allow rfx and rfy to be negative indices.
                 int rfx = std::floor((double)xm/ dims.width);
@@ -206,10 +206,10 @@ public:
 
                 //first find potential suppression indicies
                 bool top{false}, bot{false}, lef{false}, rig{false};
-                if(ky < dims.height/2) top = true;
-                else bot = true;
-                if(kx < dims.width/2) lef = true;
-                else rig = true;
+                if(ky - hky < 0) top = true;
+                else if(ky + hky >= dims.height) bot = true;
+                if(kx - hkx < 0) lef = true;
+                else if(kx + hkx >= dims.width) rig = true;
 
                 //get all the rf coordinates
                 std::vector<cv::Point> potentials;
@@ -290,7 +290,7 @@ public:
             count,
             dims,
             N,
-            cv::Size(dims.width/2, dims.height/2)
+            cv::Size(b, b)
         );
         return scarf_params;
     }
@@ -303,22 +303,23 @@ protected:
 
 public:
 
-    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3) override
+    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3, int b = 0) override
     {
-        initialise(img_res, {(img_res.width-(2*10))/rf_size, (img_res.height-(2*10))/rf_size}, alpha, C, 10, 0.5);
+        int r = 0.5;
+        initialise(img_res, {(img_res.width-(2*b))/rf_size, (img_res.height-(2*b))/rf_size}, alpha, C, b, r);
     }
 
-    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3) override
+    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3, int b = 0) override
     {
-        initialise(img_res, rf_res, alpha, C, 10, 0.5);
+        initialise(img_res, rf_res, alpha, C, b, 0.5);
     }
 
-    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3, int b = 10, double r = 0.5)
+    void initialise(cv::Size img_res, int rf_size, double alpha = 1.0, double C = 0.3, int b = 0, double r = 0.5)
     {
         initialise(img_res, {(img_res.width-(2*b))/rf_size, (img_res.height-(2*b))/rf_size}, alpha, C, b, r);
     }
 
-    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3, int b = 10, double r = 0.5) 
+    void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3, int b = 0, double r = 0.5) 
     {
         img = cv::Mat(img_res, CV_32F);
         count = rf_res;
