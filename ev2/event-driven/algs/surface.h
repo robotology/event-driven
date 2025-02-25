@@ -328,7 +328,7 @@ public:
         dims = {(img_res.width-(2*b)) / rf_res.width, (img_res.height-(2*b)) / rf_res.height};
 
         //N is the maximum amount of pixels in the FIFO. Scaled based on active region
-        int N = dims.area() * alpha * 0.5;
+        int N = dims.width*(1+r)*dims.height*(1+r) * alpha / 4.5;
 
         //make the CARF receptive fields
         rfs.resize(rf_res.area(), CARF(N, img, C));
