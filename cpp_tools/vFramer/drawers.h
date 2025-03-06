@@ -133,7 +133,7 @@ public:
 
 class scarfDrawer : public drawerInterfaceAE {
 protected:
-    ev::SCARF scarf;
+    ev::SCARFflex scarf;
     std::thread vt;
     int meas_c{0};
     double meas_t{0.0};

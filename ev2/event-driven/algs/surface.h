@@ -367,7 +367,8 @@ public:
                 
                 for(int y = yp_start; y < yp_end; y++)
                     for(int x = xp_start; x < xp_end; x++)
-                        cons_map[y*img_res.width + x].push_back(cp);
+                        if(cons_map[y*img_res.width + x][0] != cp)
+                            cons_map[y*img_res.width + x].push_back(cp);  
             }
         }
         
