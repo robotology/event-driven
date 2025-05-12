@@ -167,7 +167,7 @@ public:
 
     void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3)
     {
-        img = cv::Mat(img_res, CV_32F);
+        img = cv::Mat::zeros(img_res, CV_32F);
         count = rf_res;
 
         //size of a receptive field removeing some pixels from the border, make sure the receptive field

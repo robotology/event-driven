@@ -308,7 +308,7 @@ public:
         using pointer           = T*;
         using reference         = T&;
 
-        iterator() : m_ptr(nullptr) {}
+        iterator() : m_ptr() {}
         void setAsEnd(typename std::list< packet<T>* >::iterator last)
         {
             m_ptr = (**last).end();
@@ -864,7 +864,7 @@ public:
         private:
             int _id{-1};
             double _timestamp{0.0};
-            typename packet<T>::iterator m_ptr{nullptr};
+            typename packet<T>::iterator m_ptr{};
             typename std::list< packet<T> >::iterator packet_it;
             typename std::list< packet<T> >::iterator final;
     };
