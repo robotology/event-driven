@@ -1,5 +1,5 @@
 ## Setup docker environment
-### Check udev rules in your host environment
+### For Ubuntu - Check udev rules in your host environment
 ```
 ls /etc/udev/rules.d　-alh
 
@@ -12,6 +12,15 @@ sudo wget -P /etc/udev/rules.d https://raw.githubusercontent.com/prophesee-ai/op
 # Reload udev rules in your host environment
 sudo udevadm control --reload-rules
 sudo udevadm trigger
+```
+### For Windows - install camera plugins
+1. Download [wdi-simple.exe from our file server](https://kdrive.infomaniak.com/app/share/975517/4f59e852-af5e-4e00-90fc-f213aad20edd)
+2. Execute the following commands in a Command Prompt launched as an administrator:
+
+```bash
+wdi-simple.exe -n "EVK" -m "Prophesee" -v 0x04b4 -p 0x00f4
+wdi-simple.exe -n "EVK" -m "Prophesee" -v 0x04b4 -p 0x00f5
+wdi-simple.exe -n "EVK" -m "Prophesee" -v 0x04b4 -p 0x00f3
 ```
 
 ### Check hardware configuration
