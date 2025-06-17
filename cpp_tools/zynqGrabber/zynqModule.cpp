@@ -109,6 +109,7 @@ class zynqGrabberModule : public yarp::os::RFModule {
             hpu.params.split = rf.check("split") &&
                                 rf.check("split", Value(true)).asBool();
             hpu.params.filter = rf.check("filter", Value(0.0)).asFloat64();
+            hpu.params.rate_limit = rf.check("limit", Value(40e6)).asFloat64();
 
             if(!hpu.configure())
                 return false;

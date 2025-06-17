@@ -90,7 +90,7 @@ private:
 
         ev::refractoryFilter refrac;
         if(params.filter > 0.0)
-            refrac.initialise(480, 640, params.filter);
+            refrac.initialise(params.roi_max_y, params.roi_max_x, params.filter);
 
         while(params.hpu_read) {
 
@@ -118,7 +118,7 @@ private:
                 if(event.skin) {
                     //SKIN
                     packet_skin->push_back(event);
-	    	    } else if(event.x > params.roi_max_x || event.y > params.roi_max_y) {
+	    	    } else if(event.x >= params.roi_max_x || event.y >= params.roi_max_y) {
 			        yWarning() << "[" << event.x << "," << event.y << "]";
                 } else {
                     //VISION
@@ -126,7 +126,8 @@ private:
                         d2y_filtered++;
                         continue;
                     }
-                    event.y = 479 - event.y;
+                    event.y = params.roi_max_y - 1 - event.y;
+                    event.x = params.roi_max_x - 1 - event.x;
                     if(event.channel == ev::CAMERA_LEFT)
                         packet_left->push_back(event);
                     else
@@ -143,8 +144,13 @@ private:
                 tic_left = toc;
                 static int sequence_left = 0;
                 packet_left->envelope() = {sequence_left++, toc};
-                d2y_port.write();
-                packet_left = &d2y_port.prepare();
+                if(packet_left->size() / packet_left->duration() < params.rate_limit) {
+                    d2y_port.write();
+                    packet_left = &d2y_port.prepare();
+                } else {
+                    packet_left->clear();
+                    yWarning() << "Dropped packet left";
+                } 
             }
 
             if(packet_right->size())
@@ -153,8 +159,13 @@ private:
                 tic_right = toc;
                 static int sequence_right = 0;
                 packet_right->envelope() = {sequence_right++, toc};
-                d2y_port_2.write();
-                packet_right = &d2y_port_2.prepare();
+                if(packet_right->size() / packet_right->duration() < params.rate_limit) {
+                    d2y_port_2.write();
+                    packet_right = &d2y_port_2.prepare();
+                } else {
+                    packet_right->clear();
+                    yWarning() << "Dropped packet right";
+                }
             }
 
             if(packet_skin->size())
@@ -243,6 +254,7 @@ public:
         double filter{0.0};
         int roi_max_x{640};
         int roi_max_y{480};
+        double rate_limit{40e6};
 
     } params;
 
@@ -259,6 +271,7 @@ public:
         yInfo() << "Maximum " << params.max_packet_size / 8 << "AE in a packet";
         if(params.split) yInfo() << "Splitting stereo and skin (d2y)";
         if(params.filter > 0.0) yInfo() << "Artificial refractory period:" << params.filter << "seconds";
+        if(params.rate_limit > 0.0) yInfo() << "Limiting each camera to " << params.rate_limit << "events / second";
 
         // open the device
         fd = open(params.device.c_str(), O_RDWR);
