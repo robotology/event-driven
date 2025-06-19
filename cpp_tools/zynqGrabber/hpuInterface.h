@@ -293,7 +293,6 @@ public:
         yInfo() << "Maximum " << params.max_packet_size / 8 << "AE in a packet";
         if(params.split) yInfo() << "Splitting stereo and skin (d2y)";
         if(params.filter > 0.0) yInfo() << "Artificial refractory period:" << params.filter << "seconds";
-        if(params.rate_limit > 0.0) yInfo() << "Limiting each camera to " << params.rate_limit << "events / second";
 
         // open the device
         fd = open(params.device.c_str(), O_RDWR);
