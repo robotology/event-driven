@@ -246,7 +246,7 @@ double erosDrawer::updateImage()
     for (auto &v : input)
         EROS_vis.update(v.x, v.y);
 
-    static cv::Mat inter;
+    cv::Mat inter;
     cv::medianBlur(EROS_vis.getSurface(), inter, 3);
     cv::GaussianBlur(inter, inter, {3, 3}, -1);
     cv::normalize(inter, inter, 0, 512, CV_MINMAX);
@@ -282,7 +282,7 @@ double scarfDrawer::updateImage()
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
 
-    static cv::Mat inter;
+    cv::Mat inter;
     static std::stringstream ss;
     scarf.getSurface().convertTo(inter, CV_8U, 255);
     inter = 255 - inter;
