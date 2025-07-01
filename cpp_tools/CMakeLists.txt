@@ -1,4 +1,6 @@
-add_subdirectory(zynqGrabber)
+if(BUILD_ZYNQGRABBER)
+  add_subdirectory(zynqGrabber)
+endif()
 add_subdirectory(hexViewer)
 
 #add_subdirectory(binaryDumper)
