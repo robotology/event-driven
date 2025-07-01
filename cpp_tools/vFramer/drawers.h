@@ -70,6 +70,7 @@ protected:
 public:
     virtual bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
     void connectToRemote() override;
+    void threadRelease() override;
 };
 
 class greyDrawer : public drawerInterfaceAE {
