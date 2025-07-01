@@ -72,7 +72,7 @@ bool drawerInterface::threadInit()
     if(yarp_publish)
         return image_port.open(name + "/image:o");
     else{
-        cv::namedWindow(name, cv::WINDOW_KEEPRATIO);
+        cv::namedWindow(name, cv::WINDOW_NORMAL);
         cv::resizeWindow(name, 960, (int)(960.0 * img_size.height / (double)img_size.width));
     }
 
@@ -103,6 +103,11 @@ void drawerInterfaceAE::connectToRemote()
 {
     if(input.getInputCount() == 0 && !sourceName.empty())
         yarp::os::Network::connect(sourceName, portName, "fast_tcp");
+}
+
+void drawerInterfaceAE::threadRelease()
+{
+    input.stop();
 }
 
 //    GREY   //
