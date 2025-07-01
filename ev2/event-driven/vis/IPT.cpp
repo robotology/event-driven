@@ -62,6 +62,9 @@ bool vIPT::importIntrinsics(int cam, Bottle &parameters)
     cam_matrix[cam].at<double>(2, 2) = 1.0;
     cam_matrix[cam].at<double>(0, 2) = parameters.find("cx").asFloat64();
     cam_matrix[cam].at<double>(1, 2) = parameters.find("cy").asFloat64();
+    if(cam == 0) {
+        distortion_model = parameters.find("distortion_model").asString();
+    }
 
     dist_coeff[cam] = cv::Mat(4, 1, CV_64FC1);
     dist_coeff[cam].at<double>(0, 0) = parameters.find("k1").asFloat64();
@@ -104,9 +107,19 @@ bool vIPT::computeForwardReverseMaps(int cam)
     mat_reverse_map[cam] = cv::Mat(size_shared, CV_32FC2);
 
     //mat_reverse_map fill
-    cv::initUndistortRectifyMap(cam_matrix[cam], dist_coeff[cam], rotation[cam],
-                                projection[cam], size_shared, CV_32FC2,
-                                mat_reverse_map[cam], cv::noArray());
+
+    if(distortion_model == "b'radtan'") {
+        cv::initUndistortRectifyMap(cam_matrix[cam], dist_coeff[cam], rotation[cam],
+                                    projection[cam], size_shared, CV_32FC2,
+                                    mat_reverse_map[cam], cv::noArray());
+    } else if (distortion_model == "equidistant") {
+        std::vector<cv::Mat> maps(2);
+        cv::split(mat_reverse_map[cam], maps);
+        cv::fisheye::initUndistortRectifyMap(cam_matrix[cam], dist_coeff[cam], rotation[cam],
+                                    projection[cam], size_shared, CV_32F,
+                                    maps[0], maps[1]);
+        cv::merge(maps, mat_reverse_map[cam]);
+    }
 
     if(mat_reverse_map[cam].empty()) {
         yError() << "Camera Calibration failed";
@@ -164,6 +177,20 @@ const cv::Mat& vIPT::getQ(){
     return Q;
 }
 
+const cv::Mat& vIPT::getK(int cam) {
+    if(cam == 1) {
+        return cam_matrix[1];
+    }
+    return cam_matrix[0];
+}
+
+const cv::Size& vIPT::getRes(int cam) {
+    if(cam == 1) {
+        return size_cam[1];
+    }
+    return size_cam[0];
+}
+
 bool vIPT::configure(const string &calib_file_path, int size_scaler)
 
 {
@@ -192,12 +219,19 @@ bool vIPT::configure(const string &calib_file_path, int size_scaler)
         //compute stereo + rectification
 
         Q = cv::Mat(4, 4, CV_64FC1);
-
         //Computing homographies for left and right image
-        cv::stereoRectify(cam_matrix[0], dist_coeff[0], cam_matrix[1],
-                dist_coeff[1], size_cam[0], stereo_rotation, stereo_translation,
-                rotation[0], rotation[1], projection[0],projection[1], Q,
-                CALIB_ZERO_DISPARITY, 1, size_shared);
+        if(distortion_model == "b'radtan'") {
+            cv::stereoRectify(cam_matrix[0], dist_coeff[0], cam_matrix[1],
+                    dist_coeff[1], size_cam[0], stereo_rotation, stereo_translation,
+                    rotation[0], rotation[1], projection[0],projection[1], Q,
+                    CALIB_ZERO_DISPARITY, 1, size_shared);
+        }
+        else if(distortion_model == "equidistant") {
+            cv::fisheye::stereoRectify(cam_matrix[0], dist_coeff[0], cam_matrix[1],
+                    dist_coeff[1], size_cam[0], stereo_rotation, stereo_translation,
+                    rotation[0], rotation[1], projection[0],projection[1], Q,
+                    CALIB_ZERO_DISPARITY, size_shared);
+        }
 
     } else {
         if(valid_cam1)
