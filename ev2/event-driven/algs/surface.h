@@ -317,14 +317,13 @@ public:
 class chainSAE
 {
 private:
-    //cv::Mat normed_sae;
+    cv::Mat normed_sae;
     cv::Size resolution;
     int num_pixels;
     double per_weight;
     struct ae_ {int x; int y; double ts;};
     struct node_ {double *wp; double time; int polarity; node_* next; node_* prev;};
 
-    std::vector<double> global_weight;
     std::vector<node_> node_list;
     node_* head;
     node_* tail;

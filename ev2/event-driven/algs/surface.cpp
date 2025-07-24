@@ -172,22 +172,23 @@ cv::Mat AEDSAE::getSurface()
 
 void chainSAE::initialise(cv::Size resolution)
 {
-    //normed_sae = cv::Mat(resolution, CV_64F, 0.0);
+    normed_sae = cv::Mat(resolution, CV_64F, 0.0);
     this->resolution = resolution;
     num_pixels = resolution.area();
     per_weight = 1.0/num_pixels;
-    global_weight.resize(num_pixels, 0.0);
+
     node_list.resize(num_pixels, {NULL, 0.0, 0, NULL, NULL});
    
     for(int i = 0;i < num_pixels - 1; i++)
     {
+        int y = i / resolution.width; int x = i % resolution.width; 
         node_list[i].next = &node_list[i+1];
         node_list[i+1].prev = &node_list[i];
-        node_list[i].wp = &global_weight[i];
+        node_list[i].wp = &normed_sae.at<double>(y, x);
         node_list[i].time = 0.0;
     }
     node_list[num_pixels-1].next = NULL;
-    node_list[num_pixels-1].wp = &global_weight[num_pixels-1];
+    node_list[num_pixels-1].wp = &normed_sae.at<double>();
     node_list[num_pixels-1].time = 0.0;
     node_list[0].prev = NULL;
 
@@ -252,12 +253,12 @@ cv::Mat chainSAE::getSurface()
     }
     *tail->wp = w + per_weight;
 
-    cv::Mat image(resolution, CV_64F);
-    for(int y = 0; y < resolution.height; y++)
-        for(int x = 0; x < resolution.width; x++)
-            image.at<double>(y, x) = global_weight[y*resolution.width+x];
+    // cv::Mat image(resolution, CV_64F);
+    // for(int y = 0; y < resolution.height; y++)
+    //     for(int x = 0; x < resolution.width; x++)
+    //         image.at<double>(y, x) = global_weight[y*resolution.width+x];
 
-    return image;
+    return normed_sae;
 }
 
 
