@@ -318,15 +318,12 @@ class chainSAE
 {
 private:
     cv::Mat normed_sae;
-    cv::Size resolution;
-    int num_pixels;
-    double per_weight;
-    struct ae_ {int x; int y; double ts;};
     struct node_ {double *wp; double time; int polarity; node_* next; node_* prev;};
-
     std::vector<node_> node_list;
-    node_* head;
-    node_* tail;
+    node_* head; //this is the oldest pixel location
+    node_* tail; //this is the newest pixel location
+
+    std::vector<double> precompweight;
 
 public:
     void initialise(cv::Size resolution);

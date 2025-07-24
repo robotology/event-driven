@@ -390,7 +390,7 @@ double chainsaeDrawer::updateImage()
 
     cv::Mat inter;
     chainsae.getSurface().convertTo(inter, CV_8U, 255.0);
-    cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
+    cv::cvtColor(255 - inter, canvas, cv::COLOR_GRAY2BGR);
     return inf.timestamp;
 }
 

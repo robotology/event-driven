@@ -173,12 +173,10 @@ cv::Mat AEDSAE::getSurface()
 void chainSAE::initialise(cv::Size resolution)
 {
     normed_sae = cv::Mat(resolution, CV_64F, 0.0);
-    this->resolution = resolution;
-    num_pixels = resolution.area();
-    per_weight = 1.0/num_pixels;
+    int num_pixels = resolution.area();
 
     node_list.resize(num_pixels, {NULL, 0.0, 0, NULL, NULL});
-   
+
     for(int i = 0;i < num_pixels - 1; i++)
     {
         int y = i / resolution.width; int x = i % resolution.width; 
@@ -192,72 +190,49 @@ void chainSAE::initialise(cv::Size resolution)
     node_list[num_pixels-1].time = 0.0;
     node_list[0].prev = NULL;
 
-   head = &node_list[0];
-   tail = &node_list[num_pixels-1];
+    head = &node_list[0];
+    tail = &node_list[num_pixels-1];
+
+    //precompute the surface shape
+    precompweight.resize(num_pixels);
+    for(int i = 0; i < num_pixels; i++)
+        precompweight[i] = pow(1.0-(double)i/num_pixels, 10);
 }
 
 void chainSAE::update(int x, int y, double ts, int p)
 {
-    int pixel_index = y*resolution.width+x;
+    int pixel_index = y*normed_sae.cols+x;
     node_* cur_position = &node_list[pixel_index];
     cur_position->time = ts;
-    //if tail, do noting
-    if(cur_position->next == NULL)
-    {
-      // cout<<"tail!";
-      *cur_position->wp = 1; //mark valid
-    }
-    else
-    { 
-      // head, worse case
-      if(cur_position->prev == NULL)
-      {
-        // cout<<"head";
-        // before: NULL <-- A <--> B
-        // after: NULL <-- B
+    *cur_position->wp = 1;
+
+    if(cur_position == tail) return; //do nothing
+
+    //update the nodes that were linking to cur_position
+    if(cur_position == head) {
+        // before: NULL <-- A <--> B after: NULL <-- B
         cur_position->next->prev = NULL;
         head = cur_position->next;
-        
-      }
-      else
-      {
-        // before: A <--> B <--> C
-        // after:  A <----> C
+    } else {
+        // before: A <--> B <--> C after:  A <----> C
         cur_position->next->prev = cur_position->prev;
         cur_position->prev->next = cur_position->next;
-
-      }
-      //change tail
-      cur_position->next = NULL;
-      cur_position->prev = tail;
-      *cur_position->wp = 1; //mark vaild
-      //point tail next to the new one
-      tail->next = &node_list[pixel_index];
-      //modify the tail to current position
-      tail = &node_list[pixel_index];
     }
+    //update the cur_position
+    cur_position->next = NULL;
+    cur_position->prev = tail;
+    //update the tail
+    tail->next = &node_list[pixel_index];
+    tail = &node_list[pixel_index];
 }
 
 cv::Mat chainSAE::getSurface()
 {
-    //order updating
-    node_* loop_pointer = head;
-    double w = 0;
-    while (loop_pointer->next != NULL) {  
-        if(*loop_pointer->wp > 0)
-        {
-            w += per_weight;
-        }
-        *loop_pointer->wp = w;
-        loop_pointer = loop_pointer->next;
+    int i = 0;
+    for(node_* n = tail; n->prev != NULL; n = n->prev) {
+        if(*n->wp < 0) break;
+        *n->wp = precompweight[i++];
     }
-    *tail->wp = w + per_weight;
-
-    // cv::Mat image(resolution, CV_64F);
-    // for(int y = 0; y < resolution.height; y++)
-    //     for(int x = 0; x < resolution.width; x++)
-    //         image.at<double>(y, x) = global_weight[y*resolution.width+x];
-
     return normed_sae;
 }
 
