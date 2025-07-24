@@ -170,4 +170,95 @@ cv::Mat AEDSAE::getSurface()
     return normalised_sae;
 }
 
+void chainSAE::initialise(cv::Size resolution)
+{
+    //normed_sae = cv::Mat(resolution, CV_64F, 0.0);
+    this->resolution = resolution;
+    num_pixels = resolution.area();
+    per_weight = 1.0/num_pixels;
+    global_weight.resize(num_pixels, 0.0);
+    node_list.resize(num_pixels, {NULL, 0.0, 0, NULL, NULL});
+   
+    for(int i = 0;i < num_pixels - 1; i++)
+    {
+        node_list[i].next = &node_list[i+1];
+        node_list[i+1].prev = &node_list[i];
+        node_list[i].wp = &global_weight[i];
+        node_list[i].time = 0.0;
+    }
+    node_list[num_pixels-1].next = NULL;
+    node_list[num_pixels-1].wp = &global_weight[num_pixels-1];
+    node_list[num_pixels-1].time = 0.0;
+    node_list[0].prev = NULL;
+
+   head = &node_list[0];
+   tail = &node_list[num_pixels-1];
+}
+
+void chainSAE::update(int x, int y, double ts, int p)
+{
+    int pixel_index = y*resolution.width+x;
+    node_* cur_position = &node_list[pixel_index];
+    cur_position->time = ts;
+    //if tail, do noting
+    if(cur_position->next == NULL)
+    {
+      // cout<<"tail!";
+      *cur_position->wp = 1; //mark valid
+    }
+    else
+    { 
+      // head, worse case
+      if(cur_position->prev == NULL)
+      {
+        // cout<<"head";
+        // before: NULL <-- A <--> B
+        // after: NULL <-- B
+        cur_position->next->prev = NULL;
+        head = cur_position->next;
+        
+      }
+      else
+      {
+        // before: A <--> B <--> C
+        // after:  A <----> C
+        cur_position->next->prev = cur_position->prev;
+        cur_position->prev->next = cur_position->next;
+
+      }
+      //change tail
+      cur_position->next = NULL;
+      cur_position->prev = tail;
+      *cur_position->wp = 1; //mark vaild
+      //point tail next to the new one
+      tail->next = &node_list[pixel_index];
+      //modify the tail to current position
+      tail = &node_list[pixel_index];
+    }
+}
+
+cv::Mat chainSAE::getSurface()
+{
+    //order updating
+    node_* loop_pointer = head;
+    double w = 0;
+    while (loop_pointer->next != NULL) {  
+        if(*loop_pointer->wp > 0)
+        {
+            w += per_weight;
+        }
+        *loop_pointer->wp = w;
+        loop_pointer = loop_pointer->next;
+    }
+    *tail->wp = w + per_weight;
+
+    cv::Mat image(resolution, CV_64F);
+    for(int y = 0; y < resolution.height; y++)
+        for(int x = 0; x < resolution.width; x++)
+            image.at<double>(y, x) = global_weight[y*resolution.width+x];
+
+    return image;
+}
+
+
 

@@ -179,6 +179,17 @@ public:
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
 
+class chainsaeDrawer : public drawerInterfaceAE {
+protected:
+
+    ev::chainSAE chainsae;
+    double updateImage() override;
+    
+public:
+    chainsaeDrawer(): drawerInterfaceAE(){};
+    bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
+};
+
 // class flowDrawer : public drawerInterfaceAE {
 // protected:
 //     cv::Mat sae_p, sae_p_live;
