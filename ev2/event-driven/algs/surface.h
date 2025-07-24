@@ -296,6 +296,26 @@ public:
     }
 };
 
+class AEDSAE
+{
+private:
+    cv::Mat sae;
+    struct ae_ {int x; int y; double ts;};
+    std::deque<ae_> event_list;
+    double deltat{0.1}; //100 ms
+    double lambda{0.2}; //tuning scaler
+
+    cv::Mat filter;
+
+public:
+    void initialise(cv::Size resolution, double deltat, double lambda);
+    void update(int x, int y, double ts, int p);
+    cv::Mat getSurface();
+
+};
+
+
+
 
 
 }

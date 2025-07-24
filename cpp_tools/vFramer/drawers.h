@@ -165,6 +165,20 @@ public:
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
 };
 
+class aedsaeDrawer : public drawerInterfaceAE {
+protected:
+
+    double lambda;
+    double deltat;
+
+    ev::AEDSAE aedsae;
+    double updateImage() override;
+    
+public:
+    aedsaeDrawer(double lambda, double deltat): lambda(lambda), deltat(deltat), drawerInterfaceAE(){};
+    bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
+};
+
 // class flowDrawer : public drawerInterfaceAE {
 // protected:
 //     cv::Mat sae_p, sae_p_live;
