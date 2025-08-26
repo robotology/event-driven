@@ -236,5 +236,57 @@ cv::Mat chainSAE::getSurface()
     return normed_sae;
 }
 
+void AAE::initialise(cv::Size resolution, int bs)
+{
+    this->bs = bs;
+    nbs = {resolution.width/bs,resolution.height/bs};
+    Ne.resize(nbs.area());
+
+    p2Nej = cv::Mat(resolution, CV_32S);
+    for(int y = 0; y < resolution.height; y++) {
+        for(int x = 0; x < resolution.width; x++) {
+            int Ny = y / bs;
+            int Nx = x / bs;
+            if(Ny >= nbs.height || Nx >= nbs.width)
+                p2Nej.at<int>(y, x) = -1;
+            else
+                p2Nej.at<int>(y, x) = Ny*nbs.width + Nx;
+        }
+    }
+}
+
+void AAE::update(int x, int y, double ts, int p)
+{
+    //collect events in each regions queue
+    int j = p2Nej.at<int>(y, x);
+    if(j < 0) return;
+
+    Ne[j].push_back({x, y, ts});
+}
+
+cv::Mat AAE::getSurface()
+{
+    cv::Mat A = cv::Mat(p2Nej.size(), CV_64F, 0.0);
+    for(size_t j = 0; j < Ne.size(); j++) {
+        double b = 0;
+        for(size_t v = 1; v < Ne[j].size(); v++)
+            b += Ne[j][v].ts - Ne[j][v-1].ts; 
+        b /= (Ne[j].size() - 1);
+        double a_conv = b > 0 ? 1 / sqrt(b) : 0.0;
+
+        double a = 0;
+        for(int v = (int)Ne[j].size()-1; v > 0; v--) {
+            double dt = Ne[j][v].ts - Ne[j][v-1].ts;
+            a = a / (1 + a*dt) + 1;
+            A.at<double>(Ne[j][v].y, Ne[j][v].x) += 0.4;
+            if(fabs(a - a_conv) / a_conv < 0.02) {
+                break;
+            }
+        }
+        Ne[j].clear();
+    }
+    return A;
+}
+
 
 

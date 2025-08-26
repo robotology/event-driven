@@ -394,6 +394,30 @@ double chainsaeDrawer::updateImage()
     return inf.timestamp;
 }
 
+// AAE DRAW //
+// =========== //
+bool aaeDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
+{
+    aae.initialise({width, height}, bs);
+    return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+}
+
+double aaeDrawer::updateImage()
+{
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+
+    ev::info inf = input.readAll();
+
+    for(auto v = input.begin(); v != input.end(); v++)
+        aae.update(v->x, v->y, v.timestamp(), v->p);
+
+    cv::Mat inter;
+    aae.getSurface().convertTo(inter, CV_8U, 255.0);
+    cv::cvtColor(255 - inter, canvas, cv::COLOR_GRAY2BGR);
+    return inf.timestamp;
+}
+
 // bool flowDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
 // {
 //     sae_p = cv::Mat(height, width, CV_64F, 0.0);
