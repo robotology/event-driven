@@ -1,10 +1,9 @@
 #include <event-driven/algs/surface.h>
 using namespace ev;
 
-cv::Mat surface::getSurface() 
+cv::Mat_<double> surface::getSurface()
 {
-    cv::Mat output; surf(actual_region).convertTo(output, CV_8U);
-    return output;
+    return surf(actual_region);
 }
 
 void surface::init(int width, int height, int kernel_size, double parameter) 
@@ -108,7 +107,7 @@ void filtering(cv::Mat &scr, cv::Mat &dst, cv::Mat &H)
 
 }
 
-cv::Mat AEDSAE::getSurface()
+cv::Mat_<double> AEDSAE::getSurface()
 {
     
     
@@ -226,7 +225,7 @@ void chainSAE::update(int x, int y, double ts, int p)
     tail = &node_list[pixel_index];
 }
 
-cv::Mat chainSAE::getSurface()
+cv::Mat_<double> chainSAE::getSurface()
 {
     int i = 0;
     for(node_* n = tail; n->prev != NULL; n = n->prev) {
@@ -264,7 +263,7 @@ void AAE::update(int x, int y, double ts, int p)
     Ne[j].push_back({x, y, ts});
 }
 
-cv::Mat AAE::getSurface()
+cv::Mat_<double> AAE::getSurface()
 {
     cv::Mat A = cv::Mat(p2Nej.size(), CV_64F, 0.0);
     for(size_t j = 0; j < Ne.size(); j++) {

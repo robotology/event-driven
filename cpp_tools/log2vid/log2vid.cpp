@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
             for(auto &v : loader)
                 eros.update(v.x, v.y);
 
-            eros.getSurface().copyTo(img8U);
+            eros.getSurface().convertTo(img8U, CV_8U, 255);
             img8U = 255 - img8U;
             cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
 
