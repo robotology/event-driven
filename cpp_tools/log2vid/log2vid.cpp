@@ -32,6 +32,11 @@ void helpfunction()
     yInfo() << "METHOD: --eros";
     yInfo() << "--block_size <int> array dimension [7]";
     yInfo() << "--alpha <double> events decay factor [0.3]";
+    yInfo() << "METHOD: --chainsae";
+    yInfo() << "METHOD: --aedsae";
+    yInfo() << "--window <double> seconds of window length [0.3]";
+    yInfo() << "METHOD: --aae";
+    yInfo() << "--block_size <int> array dimension [15]";
 }
 
 int main(int argc, char* argv[])
@@ -190,7 +195,7 @@ int main(int argc, char* argv[])
     } else if(rf.check("aedsae")) {
 
         ev::AEDSAE aedsae;
-        aedsae.initialise(res, rf.check("deltat", Value(0.3)).asFloat64(), rf.check("lambda", Value(0.3)).asFloat64()); 
+        aedsae.initialise(res, rf.check("window", Value(0.3)).asFloat64(), rf.check("lambda", Value(0.3)).asFloat64()); 
         while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
             cv::Mat img, img8U;
 
@@ -217,7 +222,7 @@ int main(int argc, char* argv[])
     } else if(rf.check("aae")) {
 
         ev::AAE aae;
-        aae.initialise(res, rf.check("bs", Value(15)).asInt32()); 
+        aae.initialise(res, rf.check("block_size", Value(15)).asInt32()); 
         while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
             cv::Mat img, img8U;
 
