@@ -176,7 +176,7 @@ int main(int argc, char* argv[])
             base.setTo(ev::white);
             int count = 0;
             for(auto &v : loader) count++;
-            iso_drawer.time_draw<ev::offlineLoader<ev::AE>::iterator>(base, loader.begin(), loader.end(), count, faceblur);
+            iso_drawer.time_draw<ev::offlineLoader<ev::AE>::iterator>(base, loader.begin(), loader.end(), count, frontblur);
 
             cv::resize(base, img, res);
             if(vis) {
