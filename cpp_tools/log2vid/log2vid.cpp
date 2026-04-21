@@ -33,6 +33,11 @@ void helpfunction()
     yInfo() << "METHOD: --eros";
     yInfo() << "--block_size <int> array dimension [7]";
     yInfo() << "--alpha <double> events decay factor [0.3]";
+    yInfo() << "METHOD: --chainsae";
+    yInfo() << "METHOD: --aedsae";
+    yInfo() << "--window <double> seconds of window length [0.3]";
+    yInfo() << "METHOD: --aae";
+    yInfo() << "--block_size <int> array dimension [15]";
 }
 
 int main(int argc, char* argv[])
@@ -147,7 +152,7 @@ int main(int argc, char* argv[])
             for(auto &v : loader)
                 eros.update(v.x, v.y);
 
-            eros.getSurface().copyTo(img8U);
+            eros.getSurface().convertTo(img8U, CV_8U, 255);
             img8U = 255 - img8U;
             cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
 
@@ -161,7 +166,89 @@ int main(int argc, char* argv[])
             std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
             std::cout.flush();
         }
-    } else {
+    } else if(rf.check("chainsae")) {
+        ev::chainSAE chainsae;
+        chainsae.initialise(res); 
+
+        while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
+            cv::Mat img, img8U;
+
+            for (ev::offlineLoader<ev::AE>::iterator v = loader.begin(); v != loader.end(); v++) {
+                chainsae.update(v->x, v->y, v.timestamp(), v->p);
+            }
+            
+            cv::Mat img64f = chainsae.getSurface();
+            img64f.convertTo(img8U, CV_8U, 255);
+
+            img8U = 255 - img8U;
+            cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
+
+            if(vis) {
+                cv::imshow("vLog2vid", img);
+                cv::waitKey(1);
+            }
+            dw << img;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
+            std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
+            std::cout.flush();
+        }
+    } else if(rf.check("aedsae")) {
+
+        ev::AEDSAE aedsae;
+        aedsae.initialise(res, rf.check("window", Value(0.3)).asFloat64(), rf.check("lambda", Value(0.3)).asFloat64()); 
+        while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
+            cv::Mat img, img8U;
+
+            for (ev::offlineLoader<ev::AE>::iterator v = loader.begin(); v != loader.end(); v++) {
+                aedsae.update(v->x, v->y, v.timestamp(), v->p);
+            }
+            
+            cv::Mat img64f = aedsae.getSurface();
+            img64f.convertTo(img8U, CV_8U, 255);
+
+            img8U = 255 - img8U;
+            cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
+
+            if(vis) {
+                cv::imshow("vLog2vid", img);
+                cv::waitKey(1);
+            }
+            dw << img;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
+            std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
+            std::cout.flush();
+        }
+    } else if(rf.check("aae")) {
+
+        ev::AAE aae;
+        aae.initialise(res, rf.check("block_size", Value(15)).asInt32()); 
+        while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
+            cv::Mat img, img8U;
+
+            for (ev::offlineLoader<ev::AE>::iterator v = loader.begin(); v != loader.end(); v++) {
+                aae.update(v->x, v->y, v.timestamp(), v->p);
+            }
+            
+            cv::Mat img64f = aae.getSurface();
+            img64f.convertTo(img8U, CV_8U, 255);
+
+            img8U = 255 - img8U;
+            cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
+
+            if(vis) {
+                cv::imshow("vLog2vid", img);
+                cv::waitKey(1);
+            }
+            dw << img;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
+            std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
+            std::cout.flush();
+        }
+    }
+    else {
 
         //initialise iso_drawer
         double duration = rf.check("window", Value(0.5)).asFloat64();
