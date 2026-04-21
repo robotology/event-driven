@@ -117,7 +117,7 @@ public:
     }
 
     template <typename T>
-    void time_draw(cv::Mat img, T begin, T end, int count) {
+    void time_draw(cv::Mat img, T begin, T end, int count, double frontblur = 0.02) {
 
         //if there is nothing to draw, just draw the frame
         if(begin == end || begin.timestamp() > end.timestamp()) 
@@ -127,7 +127,7 @@ public:
         }
 
         static int threshold1 = img.size().area();
-        static int threshold2 = img.size().area() * 0.02;
+        static int threshold2 = img.size().area() * frontblur;
 
         double tf = end.timestamp();
         int remaining = count;
