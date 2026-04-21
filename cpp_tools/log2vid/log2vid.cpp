@@ -16,13 +16,14 @@ void helpfunction()
     yInfo() << "--file <string> logfile path";
     yInfo() << "--out <string> output video [~/Downloads/events.mp4]";
     yInfo() << "--timestamps <string> input timestamps filepath [optional]";
-    yInfo() << "--fps <int> frames per second of output video [240]";
+    yInfo() << "--fps <int> frames per second of output video [30]";
     yInfo() << "--rate <double> speed-up/slow-down factor [1.0]";
     yInfo() << "--height <int> video height [720]";
     yInfo() << "--width <int> video width [1280]";
     yInfo() << "--vis <bool> show conversion process [false]";
     yInfo() << "METHOD: iso [default]";
-    yInfo() << "--window <double> seconds of window length [0.5]";
+    yInfo() << "--window <double> seconds of window length [2]";
+    yInfo() << "--frontblur <double> frontal event buildup [0.02]";
     yInfo() << "METHOD: --tw";
     yInfo() << "--window <double> seconds of window length [0.01]";
     yInfo() << "METHOD: --scarf";
@@ -51,7 +52,7 @@ int main(int argc, char* argv[])
     }
     std::string file_path = rf.find("file").asString();
 
-    int fps = rf.check("fps", Value(240)).asInt32();
+    int fps = rf.check("fps", Value(30)).asInt32();
     double rate = rf.check("rate", Value(1.0)).asFloat64();
     double period = 1.0/fps;
     cv::Size res = {rf.check("width", Value(1280)).asInt32(), 
@@ -164,6 +165,7 @@ int main(int argc, char* argv[])
 
         //initialise iso_drawer
         double duration = rf.check("window", Value(0.5)).asFloat64();
+        double frontblur = rf.check("frontblur", Value(0.02)).asFloat64();
         ev::isoImager iso_drawer;
         cv::Size base_size = iso_drawer.init(res.height, res.width, duration);
         cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
@@ -174,7 +176,7 @@ int main(int argc, char* argv[])
             base.setTo(ev::white);
             int count = 0;
             for(auto &v : loader) count++;
-            iso_drawer.time_draw<ev::offlineLoader<ev::AE>::iterator>(base, loader.begin(), loader.end(), count);
+            iso_drawer.time_draw<ev::offlineLoader<ev::AE>::iterator>(base, loader.begin(), loader.end(), count, frontblur);
 
             cv::resize(base, img, res);
             if(vis) {
