@@ -127,7 +127,7 @@ public:
         }
         
         startX320();
-        synchX320();
+        //synchX320();
 
         device_thread = std::thread([this]{deviceToBuffer();});
         port_thread = std::thread([this]{bufferToPort();});
@@ -170,120 +170,51 @@ public:
 
     void deviceToBuffer()
     {
-        const static int rb_size = 128*4;
+        const static int rb_size = 1024*4; //max seems to be 1024 (we'll make it bigger and always multiple of 4)
         bool should_notify{false};
         std::array<uchar, rb_size> rb;
         //int toc = -1;
         ev::AE ae;
+        microXAE mae;
         while(fd > 0) {
 
             //pseduo read =
             double tic = yarp::os::Time::now();
 
-            for (int i = 0; i < 100; i++) {
-                uint8_t raw[4];
-                do {
-                    auto n = ::read(fd, raw, 1);
-                    if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-                        yError() << "Error reading from device";
-                        interruptModule();
-                        break;
-                    }
-                } while (!(raw[0] & 0x80));
-                auto n = ::read(fd, raw + 1, 3);
-                if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-                    yError() << "Error reading from device";
-                    interruptModule();
-                    break;
-                }
+            //fill_buffer->fillFromDevice(fd, 128, 1024*4);
 
-                uint32_t word =
-                    (static_cast<uint32_t>(raw[0]) << 24) |
-                    (static_cast<uint32_t>(raw[1]) << 16) |
-                    (static_cast<uint32_t>(raw[2]) << 8) |
-                    static_cast<uint32_t>(raw[3]);
-
-                // e.t = (word >> 19) & 0xFFFu;
-                ae.p = (word >> 18) & 0x1u;
-                ae.x = (word >> 9) & 0x1FFu;
-                ae.y = (word >> 0) & 0x1FFu;
-
-                // if(!rb[i].sync) yError() << "data sync issue";
-                // ae.x = rb[i].x; ae.y = rb[i].y; ae.p = rb[i].p;
-                if(ae.x > 320) {
-                    //yWarning() << "x:" << ae.x;
-                    continue;
-                }
-                if(ae.y > 320) {
-                    //yWarning() << "y:" << ae.y;
-                    continue;
-                }
-
-                fill_buffer->push_back(ae);
+            auto n = ::read(fd, rb.data(), rb_size);
+            if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+                yError() << "Error reading from device";
+                interruptModule();
+                break;
             }
 
-            // // for (int i = 0; i < 100; i++) {
-            // //     ae.x = 320*(double)rand()/RAND_MAX; ae.y = 320*(double)rand()/RAND_MAX; ae.p = 1*(double)rand()/RAND_MAX;
-            // //     fill_buffer->push_back(ae);
-            // // }
-            
-            // auto n = ::read(fd, rb.data(), rb_size);
-            // if(n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-            //     yError() << "Error reading from device";
-            //     interruptModule();
-            //     break;
+            // for (int i = 0; i < n; i+=4) {
+            //     ae.x = 320*(double)rand()/RAND_MAX; ae.y = 320*(double)rand()/RAND_MAX; ae.p = 1*(double)rand()/RAND_MAX;
+            //     fill_buffer->push_back(ae);
             // }
 
-            // //first find the best synchronisation boundary
-            // int sync_shift = 0;
-            // for(; sync_shift < 4; sync_shift++) {
-            //     if(rb[sync_shift]&0x80 && rb[sync_shift+4]&0x80 && rb[sync_shift+8]&0x80 && rb[sync_shift+12]&0x80)
-            //         break;
-            // }
-            // if(sync_shift) yInfo() << "synchronised at byte" << sync_shift;
-            // if(sync_shift == 4) {
-            //     yError() << "Could not find a correct synchronisation";
-            //     continue;
-            // }
-
-
-            // //find a multiple of 4 bytes for 
-            // int sync_stop = n - ((n - sync_shift) % 4);
-            // //if((sync_stop - sync_shift)%4) yError() << "incorrect calulcation";
-        
-
-
-            // if(n % 4 != 0)
-            //     yError() << "misaligned event boundry read" << n;
-
-            //int i = sync_shift;
-            // for(;i < n; i++)
-            //     if(rb[i] & 0x80 == 1) 
-            //         break;
-
-
-            // for(int i = sync_shift; i < sync_stop; i+=4) {
-            //     uint32_t word =
-            //     (static_cast<uint32_t>(rb[i+0]) << 24) |
-            //     (static_cast<uint32_t>(rb[i+1]) << 16) |
-            //     (static_cast<uint32_t>(rb[i+2]) << 8) |
-            //     static_cast<uint32_t>(rb[i+3]);
-
-            //     int k = 0;
-            //     int sync = (word >> 31) & 0x1u;
-            //     if(sync != 1) yError() << "invalid event";
-            //     //e.t = (word >> 19) & 0xFFFu;
-            //     ae.p = (word >> 18+k) & 0x1u;
-            //     ae.x = (word >> 9+k) & 0x1FFu;
-            //     ae.y = (word >> 0+k) & 0x1FFu;
-
-            //     //if(!rb[i].sync) yError() << "data sync issue";
-            //     //ae.x = rb[i].x; ae.y = rb[i].y; ae.p = rb[i].p;
-            //     //if(ae.x > 320) yWarning() << "x:" << ae.x;
-            //     //if(ae.y > 320) yWarning() << "y:" << ae.y;
-            //     if(sync)
-            //         fill_buffer->push_back(ae);
-            //}
+            auto i = 0;
+            while(i < n) {
+                if (rb[i] & 0x80) { // sync bit detected
+                    uint32_t word =
+                        (static_cast<uint32_t>(rb[i+0]) << 24) |
+                        (static_cast<uint32_t>(rb[i+1]) << 16) |
+                        (static_cast<uint32_t>(rb[i+2]) << 8) |
+                         static_cast<uint32_t>(rb[i+3]);
+                    ae.p = (word >> 18) & 0x1u;
+                    ae.x = (word >> 9) & 0x1FFu;
+                    ae.y = (word >> 0) & 0x1FFu;
+                    if(ae.x < 320 && ae.y < 320)
+                        fill_buffer->push_back(ae);
+                    // else
+                    //     yWarning() << "invalid event";
+                    i += 4;
+                } else {
+                    i += 1;
+                }
+            }
 
 
             double toc = yarp::os::Time::now();
