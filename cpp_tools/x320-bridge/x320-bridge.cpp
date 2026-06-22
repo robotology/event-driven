@@ -36,7 +36,7 @@ private:
 
     //ports and devices
     yarp::os::Port output_port;
-    int fd;
+    int fd{-1};
 
     //thread protection and synchronisation
     std::thread device_thread;
@@ -57,6 +57,14 @@ private:
     int counter_packets{0};
     int counter_events{0};
     static constexpr double period{0.2};
+
+    typedef struct {
+        unsigned int y:9;
+        unsigned int x:9;
+        unsigned int p:1;
+        unsigned int t:12;
+        unsigned int sync:1;
+    } microXAE;
 
 public:
 
@@ -101,8 +109,8 @@ public:
         ::cfsetospeed(&tio, B115200);
 
         // Read returns as soon as ≥1 byte arrives, no timeout
-        tio.c_cc[VMIN]  = 1;
-        tio.c_cc[VTIME] = 0;
+        tio.c_cc[VMIN]  = 0;
+        tio.c_cc[VTIME] = 10;
 
         if (::tcsetattr(fd, TCSANOW, &tio) < 0) {
             yError() << "Could not set " << path << " attributes. Is it read-only?";
@@ -117,32 +125,171 @@ public:
             yError() << "Could not open output port" << getName() + "/AE:o";
             return false;
         }
+        
+        startX320();
+        synchX320();
 
         device_thread = std::thread([this]{deviceToBuffer();});
         port_thread = std::thread([this]{bufferToPort();});
+
+        
         
         return true;
     }
 
-void deviceToBuffer()
+    void startX320()
     {
+        if(fd > 0) {
+            auto x = ::write(fd, "+\r", 2);
+        } else {
+            yWarning() << "closed device asked to start";
+        }
+    }
+
+    void stopX320()
+    {
+        if(fd > 0) {
+            auto x = ::write(fd, "-\r", 2);
+        } else {
+            yWarning() << "closed device asked to stop";
+        }
+    }
+
+    void synchX320()
+    {
+        char x = 0;
+        do {
+            auto n = ::read(fd, &x, 1);
+            if(n != 1) break;
+        } while (!(x & 0x80));
+        auto n = ::read(fd, &x, 1);
+        n = ::read(fd, &x, 1);
+        n = ::read(fd, &x, 1);
+
+    }
+
+    void deviceToBuffer()
+    {
+        const static int rb_size = 128*4;
         bool should_notify{false};
-        double toc = 0;
+        std::array<uchar, rb_size> rb;
+        //int toc = -1;
+        ev::AE ae;
         while(fd > 0) {
 
             //pseduo read =
             double tic = yarp::os::Time::now();
-            ev::AE ae;
+
             for (int i = 0; i < 100; i++) {
-                ae.x = 320*(double)rand()/RAND_MAX; ae.y = 320*(double)rand()/RAND_MAX; ae.p = 1*(double)rand()/RAND_MAX;
+                uint8_t raw[4];
+                do {
+                    auto n = ::read(fd, raw, 1);
+                    if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+                        yError() << "Error reading from device";
+                        interruptModule();
+                        break;
+                    }
+                } while (!(raw[0] & 0x80));
+                auto n = ::read(fd, raw + 1, 3);
+                if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+                    yError() << "Error reading from device";
+                    interruptModule();
+                    break;
+                }
+
+                uint32_t word =
+                    (static_cast<uint32_t>(raw[0]) << 24) |
+                    (static_cast<uint32_t>(raw[1]) << 16) |
+                    (static_cast<uint32_t>(raw[2]) << 8) |
+                    static_cast<uint32_t>(raw[3]);
+
+                // e.t = (word >> 19) & 0xFFFu;
+                ae.p = (word >> 18) & 0x1u;
+                ae.x = (word >> 9) & 0x1FFu;
+                ae.y = (word >> 0) & 0x1FFu;
+
+                // if(!rb[i].sync) yError() << "data sync issue";
+                // ae.x = rb[i].x; ae.y = rb[i].y; ae.p = rb[i].p;
+                if(ae.x > 320) {
+                    //yWarning() << "x:" << ae.x;
+                    continue;
+                }
+                if(ae.y > 320) {
+                    //yWarning() << "y:" << ae.y;
+                    continue;
+                }
+
                 fill_buffer->push_back(ae);
             }
+
+            // // for (int i = 0; i < 100; i++) {
+            // //     ae.x = 320*(double)rand()/RAND_MAX; ae.y = 320*(double)rand()/RAND_MAX; ae.p = 1*(double)rand()/RAND_MAX;
+            // //     fill_buffer->push_back(ae);
+            // // }
+            
+            // auto n = ::read(fd, rb.data(), rb_size);
+            // if(n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+            //     yError() << "Error reading from device";
+            //     interruptModule();
+            //     break;
+            // }
+
+            // //first find the best synchronisation boundary
+            // int sync_shift = 0;
+            // for(; sync_shift < 4; sync_shift++) {
+            //     if(rb[sync_shift]&0x80 && rb[sync_shift+4]&0x80 && rb[sync_shift+8]&0x80 && rb[sync_shift+12]&0x80)
+            //         break;
+            // }
+            // if(sync_shift) yInfo() << "synchronised at byte" << sync_shift;
+            // if(sync_shift == 4) {
+            //     yError() << "Could not find a correct synchronisation";
+            //     continue;
+            // }
+
+
+            // //find a multiple of 4 bytes for 
+            // int sync_stop = n - ((n - sync_shift) % 4);
+            // //if((sync_stop - sync_shift)%4) yError() << "incorrect calulcation";
+        
+
+
+            // if(n % 4 != 0)
+            //     yError() << "misaligned event boundry read" << n;
+
+            //int i = sync_shift;
+            // for(;i < n; i++)
+            //     if(rb[i] & 0x80 == 1) 
+            //         break;
+
+
+            // for(int i = sync_shift; i < sync_stop; i+=4) {
+            //     uint32_t word =
+            //     (static_cast<uint32_t>(rb[i+0]) << 24) |
+            //     (static_cast<uint32_t>(rb[i+1]) << 16) |
+            //     (static_cast<uint32_t>(rb[i+2]) << 8) |
+            //     static_cast<uint32_t>(rb[i+3]);
+
+            //     int k = 0;
+            //     int sync = (word >> 31) & 0x1u;
+            //     if(sync != 1) yError() << "invalid event";
+            //     //e.t = (word >> 19) & 0xFFFu;
+            //     ae.p = (word >> 18+k) & 0x1u;
+            //     ae.x = (word >> 9+k) & 0x1FFu;
+            //     ae.y = (word >> 0+k) & 0x1FFu;
+
+            //     //if(!rb[i].sync) yError() << "data sync issue";
+            //     //ae.x = rb[i].x; ae.y = rb[i].y; ae.p = rb[i].p;
+            //     //if(ae.x > 320) yWarning() << "x:" << ae.x;
+            //     //if(ae.y > 320) yWarning() << "y:" << ae.y;
+            //     if(sync)
+            //         fill_buffer->push_back(ae);
+            //}
+
+
             double toc = yarp::os::Time::now();
 
             fill_buffer->duration(toc-tic + fill_buffer->duration());
-
-            //we should only be here if the fd read failed or returned early. maybe with a timeout it is possible. check
-            if(fill_buffer->size() == 0) break;
+            if(fill_buffer->size() == 0) continue;
 
             {
                 std::unique_lock<std::mutex> lk(m);
@@ -164,6 +311,8 @@ void deviceToBuffer()
                 should_notify = false;
             }
          }
+
+         yInfo() << "Device thread finished";
 
     }
 
@@ -194,6 +343,7 @@ void deviceToBuffer()
                 signal.wait(lk, [this] { return !buffer_switching || fd < 0;});
             }
         }
+        yInfo() << "Port thread finished";
     }
 
      double getPeriod() override
@@ -203,30 +353,30 @@ void deviceToBuffer()
 
     bool interruptModule() override
     {
-        {
-            std::unique_lock<std::mutex> lk(m);
-            ::close(fd);
-            fd = -1;
-        }
+        stopX320();
+        ::close(fd);
+        fd = -1;
         yInfo() << getName() << "closed. Device released.";
+        signal.notify_all();
         return true; 
     }
 
     bool close() override
     {   
+        yInfo() << "Finally thread cleanup...";
+        signal.notify_all();
         if(fd > 0) {
-            {
-                std::unique_lock<std::mutex> lk(m);
-                ::close(fd);
-                fd = -1;
-            }
+            stopX320();
+            ::close(fd);
+            fd = -1;
             yInfo() << getName() << "closed. Device released.";
+            signal.notify_all();
         }
         
         device_thread.join();
         yInfo() << getName() << "device thread closed";
         port_thread.join();
-        yInfo() << getName() << "prot thread closed";
+        yInfo() << getName() << "port thread closed";
         output_port.close();
         return true;
     }
