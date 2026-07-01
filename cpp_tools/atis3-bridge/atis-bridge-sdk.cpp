@@ -203,7 +203,7 @@ public:
 
             if(nf_param > 0.0) {
                  yInfo() << "[REFR FILTER] ON";
-                yInfo() << "  refractory filter:" << nf_param << "seconds";
+                yInfo() << "  refractory filter: " << nf_param << " seconds";
                 nf.use_temporal_filter(nf_param);
             }
 
