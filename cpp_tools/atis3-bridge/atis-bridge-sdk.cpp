@@ -209,7 +209,7 @@ public:
 
             if(sppt_filter > 0.0) {
                 yInfo() << "[SPPT FILTER] ON";
-                yInfo() << "  support filter:" << sppt_filter << "seconds";
+                yInfo() << "  support filter: " << sppt_filter << " seconds";
                 nf.use_spatial_filter(sppt_filter);
             }
         }
