@@ -428,8 +428,16 @@ public:
         } catch(const std::exception& e) {
             yWarning() << "Could not read camera biases:" << e.what();
         }
+    #else
+        try {
+            Biases &bias = cam.biases();
+            yInfo() << "Camera biases:";
+            yInfo() << "  Sensitivity=" << bias.get_contrast_sensitivity();
+            yInfo() << "  PolaritySwing=" << bias.get_contrast_sensitivity_to_polarity();
+        } catch(const std::exception& e) {
+            yWarning() << "Could not read camera biases:" << e.what();
+        }
     #endif
-    
     }
 };
 
