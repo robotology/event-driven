@@ -83,9 +83,11 @@ public:
             yInfo() << "--file <str>\t: (optional) provide file path otherwise search for camera to connect";
             yInfo() << "--limit <int>\t: (optional) provide a hard limit on event rate (in 10^6 events/s)";
             yInfo() << "--s   <int>\t: camera sensitivity (0->100)";
-            yInfo() << "--refr_filter <float>\t: temporal filter (seconds) to limit event rate";
-            yInfo() << "--sppt_filter <float>\t: spatial filter (seconds) to limit event rate";
-            yInfo() << "--print_biases\t: show  ALL camera biases";
+            yInfo() << "--refr_filter <float>\t: temporal (refractory) filter window (seconds)";
+            yInfo() << "--filter <float>\t: (deprecated) alias for --refr_filter";
+            yInfo() << "--f <float>\t: (deprecated) alias for --refr_filter";
+            yInfo() << "--sppt_filter <float>\t: spatial support filter window (seconds)";
+            yInfo() << "--print_biases\t: show all available camera biases"
             return false;
         }
 
