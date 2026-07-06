@@ -82,11 +82,13 @@ public:
             yInfo() << "--buffer_size <int>\t: set initial maximum buffer size";
             yInfo() << "--file <str>\t: (optional) provide file path otherwise search for camera to connect";
             yInfo() << "--limit <int>\t: (optional) provide a hard limit on event rate (in 10^6 events/s)";
-            yInfo() << "--s   <int>\t: camera sensitivity (0->100)";
-            yInfo() << "--refr_filter <float>\t: temporal filter (seconds) to limit event rate";
-            yInfo() << "--sppt_filter <float>\t: spatial filter (seconds) to limit event rate";
-            yInfo() << "--hpf <float>\t: high-pass filter bias (0->100)";
-            yInfo() << "--print_biases\t: show  ALL camera biases";
+            yInfo() << "--s   <int>\t: camera sensitivity (1->100)";
+            yInfo() << "--hpf <int>\t: high pass filter bias (1->99)";
+            yInfo() << "--refr_filter <float>\t: temporal (refractory) filter window (seconds)";
+            yInfo() << "--filter <float>\t: (deprecated) alias for --refr_filter";
+            yInfo() << "--f <float>\t: (deprecated) alias for --refr_filter";
+            yInfo() << "--sppt_filter <float>\t: spatial support filter window (seconds)";
+            yInfo() << "--print_biases\t: show all available camera biases"
             return false;
         }
 
@@ -118,6 +120,10 @@ public:
         buffer.emplace_back();
 
         Biases &bias = cam.biases();
+
+        if(rf.check("print_biases")) {
+            show_biases();
+        }
 
         int bias_pol = 0;
         if(rf.check("polarity"))
@@ -219,14 +225,14 @@ public:
             nf.initialise(geo.width(), geo.height());
 
             if(nf_param > 0.0) {
-                 yInfo() << "[REFR FILTER] ON";
-                yInfo() << "  refractory filter:" << nf_param << "seconds";
+                yInfo() << "[REFR FILTER] ON";
+                yInfo() << "  refractory filter: " << nf_param << " seconds";
                 nf.use_temporal_filter(nf_param);
             }
 
             if(sppt_filter > 0.0) {
                 yInfo() << "[SPPT FILTER] ON";
-                yInfo() << "  support filter:" << sppt_filter << "seconds";
+                yInfo() << "  support filter: " << sppt_filter << " seconds";
                 nf.use_spatial_filter(sppt_filter);
             }
         }
@@ -445,8 +451,16 @@ public:
         } catch(const std::exception& e) {
             yWarning() << "Could not read camera biases:" << e.what();
         }
+    #else
+        try {
+            Biases &bias = cam.biases();
+            yInfo() << "Camera biases:";
+            yInfo() << "  Sensitivity=" << bias.get_contrast_sensitivity();
+            yInfo() << "  PolaritySwing=" << bias.get_contrast_sensitivity_to_polarity();
+        } catch(const std::exception& e) {
+            yWarning() << "Could not read camera biases:" << e.what();
+        }
     #endif
-    
     }
 };
 

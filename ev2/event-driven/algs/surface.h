@@ -14,11 +14,11 @@ protected:
     double time_now{0};
 
     cv::Rect actual_region;
-    cv::Mat surf;
+    cv::Mat_<double> surf;
 
 public:
    
-    virtual cv::Mat getSurface();
+    virtual cv::Mat_<double> getSurface();
     virtual void init(int width, int height, int kernel_size = 5, double parameter = 0.0);
     virtual inline void update(int x, int y, double ts, int p) = 0;
     void temporalDecay(double ts, double alpha);
@@ -31,7 +31,7 @@ class EROS : public surface {
     {
         static double odecay = pow(parameter, 1.0 / kernel_size);
         surf({x, y, kernel_size, kernel_size}) *= odecay;
-        surf.at<double>(y+half_kernel, x+half_kernel) = 255.0;
+        surf(y+half_kernel, x+half_kernel) = 1.0;
     }
 };
 
@@ -45,16 +45,21 @@ class TOS : public surface
         static cv::Rect roi = {0, 0, kernel_size, kernel_size};
 
         roi.x = x; roi.y = y;
-        cv::Mat region = surf(roi);
+        cv::Mat_<double> region = surf(roi);
 
         for (auto xi = 0; xi < region.cols; xi++) {
             for (auto yi = 0; yi < region.rows; yi++) {
-                double &p = region.at<double>(yi, xi);
+                double &p = region(yi, xi);
                 if (p < threshold) p = 0;
                 else p--;
             }
         }
-        surf.at<double>(y+half_kernel, x+half_kernel) = 255.0;
+        surf(y+half_kernel, x+half_kernel) = 255.0;
+    }
+
+    virtual cv::Mat_<double> getSurface() override
+    {
+        return surf(actual_region) / 255.0;
     }
 };
 
@@ -65,16 +70,21 @@ class SITS : public surface {
         static cv::Rect roi = {0, 0, kernel_size, kernel_size};
 
         roi.x = x; roi.y = y;
-        cv::Mat region = surf(roi);
+        cv::Mat_<double> region = surf(roi);
 
-        double &c = surf.at<double>(y+half_kernel, x+half_kernel);
+        double &c = surf(y+half_kernel, x+half_kernel);
         for (auto xi = 0; xi < region.cols; xi++) {
             for (auto yi = 0; yi < region.rows; yi++) {
-                double &p = region.at<double>(yi, xi);
+                double &p = region(yi, xi);
                 if (p >= c) p--;
             }
         }
         c = maximum_value;
+    }
+
+    virtual cv::Mat_<double> getSurface() override
+    {
+        return surf(actual_region) / 255.0;
     }
 };
 
@@ -82,10 +92,11 @@ class PIM : public surface {
    public:
     inline void update(int x, int y, double t = 0, int p = 0) override
     {
+        static const double C = 1.0/255.0;
         if (p)
-            surf.at<double>(y+half_kernel, x+half_kernel) -= 1.0f;
+            surf(y+half_kernel, x+half_kernel) -= C;
         else
-            surf.at<double>(y+half_kernel, x+half_kernel) += 1.0f;
+            surf(y+half_kernel, x+half_kernel) += C;
     }
 };
 
@@ -94,7 +105,7 @@ class SAE : public surface
    public:
     inline void update(int x, int y, double t = 0, int p = 0) override
     {
-        surf.at<double>(y+half_kernel, x+half_kernel) = t;
+        surf(y+half_kernel, x+half_kernel) = t;
     }
 };
 
@@ -103,7 +114,7 @@ class BIN : public surface
    public:
     inline void update(int x, int y, double t = 0, int p = 0) override
     {
-        surf.at<double>(y+half_kernel, x+half_kernel) = 255.0;
+        surf(y+half_kernel, x+half_kernel) = 1.0;
     }
 };
 
@@ -124,7 +135,7 @@ private:
     //variables
     int i{0};
     std::vector<pnt> points;
-    cv::Mat img;
+    cv::Mat_<double> img;
     float C;
 
 public:
@@ -139,8 +150,8 @@ public:
     inline void add(const CARF::pnt &p)
     {
         if(++i >= N) i = 0;
-        if(points[i].c) img.at<float>(points[i].v, points[i].u) -= C;
-        if(p.c) img.at<float>(p.v, p.u) += C;
+        if(points[i].c) img(points[i].v, points[i].u) -= C;
+        if(p.c) img(p.v, p.u) += C;
         points[i] = p;
     }
 };
@@ -153,7 +164,7 @@ private:
     cv::Size dims{{0, 0}};
 
     //variables
-    cv::Mat img;
+    cv::Mat_<double> img;
     std::vector<CARF> rfs;
     std::vector<std::array<CARF*, 4>> cons_map;
 
@@ -167,7 +178,7 @@ public:
 
     void initialise(cv::Size img_res, cv::Size rf_res, double alpha = 1.0, double C = 0.3)
     {
-        img = cv::Mat::zeros(img_res, CV_32F);
+        img = cv::Mat::zeros(img_res, CV_64F);
         count = rf_res;
 
         //size of a receptive field removeing some pixels from the border, make sure the receptive field
@@ -243,7 +254,7 @@ public:
         if(conxs[3]) conxs[3]->add({u, v, p, 0});
     }
 
-    cv::Mat getSurface()
+    cv::Mat_<double> getSurface()
     {
         return img;
     }
@@ -294,6 +305,57 @@ public:
         );
         return scarf_params;
     }
+};
+
+class AEDSAE
+{
+private:
+    cv::Mat sae;
+    struct ae_ {int x; int y; double ts;};
+    std::deque<ae_> event_list;
+    double deltat{0.1}; //100 ms
+    double lambda{0.2}; //tuning scaler
+
+    cv::Mat filter;
+
+public:
+    void initialise(cv::Size resolution, double deltat, double lambda);
+    void update(int x, int y, double ts, int p);
+    cv::Mat_<double> getSurface();
+
+};
+
+class chainSAE
+{
+private:
+    cv::Mat normed_sae;
+    struct node_ {double *wp; double time; int polarity; node_* next; node_* prev;};
+    std::vector<node_> node_list;
+    node_* head; //this is the oldest pixel location
+    node_* tail; //this is the newest pixel location
+
+    std::vector<double> precompweight;
+
+public:
+    void initialise(cv::Size resolution);
+    void update(int x, int y, double ts, int p);
+    cv::Mat_<double> getSurface();
+
+};
+
+class AAE
+{
+private:
+    int bs;
+    cv::Size nbs;
+    struct ae_ {int x; int y; double ts;};
+    std::vector<std::deque<ae_>> Ne;
+    cv::Mat p2Nej;
+
+public:
+    void initialise(cv::Size resolution, int bs);
+    void update(int x, int y, double ts, int p);
+    cv::Mat_<double> getSurface();
 };
 
 

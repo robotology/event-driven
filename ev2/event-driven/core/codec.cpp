@@ -28,3 +28,4 @@ const std::string ev::gaussianEvent::tag = "GAE";
 const std::string ev::IMUS::tag = "IMU";
 const std::string ev::neuronEvent::tag = "NEU";
 const std::string ev::earEvent::tag = "EAR";
+const std::string ev::PMCortex4C::tag = "PMC4C";

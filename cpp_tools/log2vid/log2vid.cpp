@@ -16,13 +16,14 @@ void helpfunction()
     yInfo() << "--file <string> logfile path";
     yInfo() << "--out <string> output video [~/Downloads/events.mp4]";
     yInfo() << "--timestamps <string> input timestamps filepath [optional]";
-    yInfo() << "--fps <int> frames per second of output video [240]";
+    yInfo() << "--fps <int> frames per second of output video [30]";
     yInfo() << "--rate <double> speed-up/slow-down factor [1.0]";
     yInfo() << "--height <int> video height [720]";
     yInfo() << "--width <int> video width [1280]";
     yInfo() << "--vis <bool> show conversion process [false]";
     yInfo() << "METHOD: iso [default]";
-    yInfo() << "--window <double> seconds of window length [0.5]";
+    yInfo() << "--window <double> seconds of window length [2]";
+    yInfo() << "--frontblur <double> frontal event buildup [0.02]";
     yInfo() << "METHOD: --tw";
     yInfo() << "--window <double> seconds of window length [0.01]";
     yInfo() << "METHOD: --scarf";
@@ -32,6 +33,11 @@ void helpfunction()
     yInfo() << "METHOD: --eros";
     yInfo() << "--block_size <int> array dimension [7]";
     yInfo() << "--alpha <double> events decay factor [0.3]";
+    yInfo() << "METHOD: --chainsae";
+    yInfo() << "METHOD: --aedsae";
+    yInfo() << "--window <double> seconds of window length [0.3]";
+    yInfo() << "METHOD: --aae";
+    yInfo() << "--block_size <int> array dimension [15]";
 }
 
 int main(int argc, char* argv[])
@@ -51,7 +57,7 @@ int main(int argc, char* argv[])
     }
     std::string file_path = rf.find("file").asString();
 
-    int fps = rf.check("fps", Value(240)).asInt32();
+    int fps = rf.check("fps", Value(30)).asInt32();
     double rate = rf.check("rate", Value(1.0)).asFloat64();
     double period = 1.0/fps;
     cv::Size res = {rf.check("width", Value(1280)).asInt32(), 
@@ -146,7 +152,7 @@ int main(int argc, char* argv[])
             for(auto &v : loader)
                 eros.update(v.x, v.y);
 
-            eros.getSurface().copyTo(img8U);
+            eros.getSurface().convertTo(img8U, CV_8U, 255);
             img8U = 255 - img8U;
             cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
 
@@ -160,10 +166,93 @@ int main(int argc, char* argv[])
             std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
             std::cout.flush();
         }
-    } else {
+    } else if(rf.check("chainsae")) {
+        ev::chainSAE chainsae;
+        chainsae.initialise(res); 
+
+        while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
+            cv::Mat img, img8U;
+
+            for (ev::offlineLoader<ev::AE>::iterator v = loader.begin(); v != loader.end(); v++) {
+                chainsae.update(v->x, v->y, v.timestamp(), v->p);
+            }
+            
+            cv::Mat img64f = chainsae.getSurface();
+            img64f.convertTo(img8U, CV_8U, 255);
+
+            img8U = 255 - img8U;
+            cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
+
+            if(vis) {
+                cv::imshow("vLog2vid", img);
+                cv::waitKey(1);
+            }
+            dw << img;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
+            std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
+            std::cout.flush();
+        }
+    } else if(rf.check("aedsae")) {
+
+        ev::AEDSAE aedsae;
+        aedsae.initialise(res, rf.check("window", Value(0.3)).asFloat64(), rf.check("lambda", Value(0.3)).asFloat64()); 
+        while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
+            cv::Mat img, img8U;
+
+            for (ev::offlineLoader<ev::AE>::iterator v = loader.begin(); v != loader.end(); v++) {
+                aedsae.update(v->x, v->y, v.timestamp(), v->p);
+            }
+            
+            cv::Mat img64f = aedsae.getSurface();
+            img64f.convertTo(img8U, CV_8U, 255);
+
+            img8U = 255 - img8U;
+            cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
+
+            if(vis) {
+                cv::imshow("vLog2vid", img);
+                cv::waitKey(1);
+            }
+            dw << img;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
+            std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
+            std::cout.flush();
+        }
+    } else if(rf.check("aae")) {
+
+        ev::AAE aae;
+        aae.initialise(res, rf.check("block_size", Value(15)).asInt32()); 
+        while(loader.incrementReadTill(virtual_timer) && !stampfile.eof()) {
+            cv::Mat img, img8U;
+
+            for (ev::offlineLoader<ev::AE>::iterator v = loader.begin(); v != loader.end(); v++) {
+                aae.update(v->x, v->y, v.timestamp(), v->p);
+            }
+            
+            cv::Mat img64f = aae.getSurface();
+            img64f.convertTo(img8U, CV_8U, 255);
+
+            img8U = 255 - img8U;
+            cv::cvtColor(img8U, img, cv::COLOR_GRAY2BGR);
+
+            if(vis) {
+                cv::imshow("vLog2vid", img);
+                cv::waitKey(1);
+            }
+            dw << img;
+            if(stampfile.is_open()) stampfile >> virtual_timer;
+            else virtual_timer += period;
+            std::cout << "\r" << std::fixed << std::setprecision(1) << virtual_timer << " s / " << loader.getLength() << " s       ";
+            std::cout.flush();
+        }
+    }
+    else {
 
         //initialise iso_drawer
         double duration = rf.check("window", Value(0.5)).asFloat64();
+        double frontblur = rf.check("frontblur", Value(0.02)).asFloat64();
         ev::isoImager iso_drawer;
         cv::Size base_size = iso_drawer.init(res.height, res.width, duration);
         cv::Mat img = cv::Mat::zeros(res, CV_8UC3);
@@ -174,7 +263,7 @@ int main(int argc, char* argv[])
             base.setTo(ev::white);
             int count = 0;
             for(auto &v : loader) count++;
-            iso_drawer.time_draw<ev::offlineLoader<ev::AE>::iterator>(base, loader.begin(), loader.end(), count);
+            iso_drawer.time_draw<ev::offlineLoader<ev::AE>::iterator>(base, loader.begin(), loader.end(), count, frontblur);
 
             cv::resize(base, img, res);
             if(vis) {

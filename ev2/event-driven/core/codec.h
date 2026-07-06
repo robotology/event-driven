@@ -70,6 +70,14 @@ typedef struct skinSample {
     skinValue value;
 } skinSample;
 
+typedef struct PMCortex4C : public timeStamp {
+    static const std::string tag;
+    unsigned int A1N:8;
+    unsigned int A1P:8;
+    unsigned int A2N:8;
+    unsigned int A2P:8;
+} PMCortex4C;
+
 /// \brief an AddressEvent with a velocity in visual space
 typedef struct flowEvent : public AE {
     static const std::string tag;
