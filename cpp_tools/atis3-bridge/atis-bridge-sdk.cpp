@@ -82,7 +82,8 @@ public:
             yInfo() << "--buffer_size <int>\t: set initial maximum buffer size";
             yInfo() << "--file <str>\t: (optional) provide file path otherwise search for camera to connect";
             yInfo() << "--limit <int>\t: (optional) provide a hard limit on event rate (in 10^6 events/s)";
-            yInfo() << "--s   <int>\t: camera sensitivity (0->100)";
+            yInfo() << "--s   <int>\t: camera sensitivity (1->99)";
+            yInfo() << "--hpf <int>\t: high pass filter bias (1->99)";
             yInfo() << "--refr_filter <float>\t: temporal (refractory) filter window (seconds)";
             yInfo() << "--filter <float>\t: (deprecated) alias for --refr_filter";
             yInfo() << "--f <float>\t: (deprecated) alias for --refr_filter";
@@ -140,6 +141,12 @@ public:
         if(bias_sens < 0) bias_sens = 1;
         if(bias_sens > 99) bias_sens = 99;
 
+        int hpf = 0;
+        if (rf.check("hpf"))
+            hpf = rf.find("hpf").asInt32();
+        if(hpf < 0) hpf = 1;
+        if(hpf > 99) hpf = 99;
+
 #if defined MetavisionSDK_FOUND
 
         const I_HW_Identification::SensorInfo si = cam.get_device().get_facility<I_HW_Identification>()->get_sensor_info();
@@ -163,11 +170,24 @@ public:
             if(bias_pol) {
                 yWarning() << "polarity bias not implemented for VGA";
             }
+            if(hpf) {
+                int bias_hpf = (int)(1400 + ((hpf*0.01)*(1499-1400)));
+                yInfo() << "After calculation:" << bias_hpf;
+                bias_control->set("bias_hpf", bias_hpf);
+                bias_vals = bias_control->get_all_biases();
+                yInfo() << "        Biases:" << bias_vals["bias_hpf"] << "[hpf]";
+            }
         } else { //gen4
             if(bias_sens) {
                 I_LL_Biases* bias_control = bias.get_facility();
                 bias_control->set("bias_diff_on", 1.4*(100-bias_sens));
                 bias_control->set("bias_diff_off", 1.4*(100-bias_sens));
+            }
+            if(bias_pol) {
+                yWarning() << "polarity bias not implemented for Gen4";
+            }
+            if(hpf) {
+                yWarning() << "high-pass filter bias not implemented for Gen4";
             }
         }
 #else
@@ -181,6 +201,10 @@ public:
         yInfo() << "        Biases:" <<  bias.get_contrast_sensitivity() << bias.get_contrast_sensitivity_to_polarity() << "[Sensitivity PolaritySwing]";
         cam.set_exposure_frame_callback(10, [this](timestamp ts, const cv::Mat &image){this->frameToPort(ts, image);});
 #endif  
+
+        if(rf.check("print_biases")) {
+            show_biases();
+        }
 
         cam.cd().add_callback([this](const EventCD *ev_begin, const EventCD *ev_end) {
             this->fill_buffer(ev_begin, ev_end);
@@ -196,13 +220,12 @@ public:
 
         if(rf.check("sppt_filter")) sppt_filter = rf.find("sppt_filter").asFloat64();
 
-        
         if(nf_param > 0.0 || sppt_filter > 0.0)
         {
             nf.initialise(geo.width(), geo.height());
 
             if(nf_param > 0.0) {
-                 yInfo() << "[REFR FILTER] ON";
+                yInfo() << "[REFR FILTER] ON";
                 yInfo() << "  refractory filter: " << nf_param << " seconds";
                 nf.use_temporal_filter(nf_param);
             }
