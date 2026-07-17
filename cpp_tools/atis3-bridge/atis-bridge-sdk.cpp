@@ -88,7 +88,7 @@ public:
             yInfo() << "--filter <float>\t: (deprecated) alias for --refr_filter";
             yInfo() << "--f <float>\t: (deprecated) alias for --refr_filter";
             yInfo() << "--sppt_filter <float>\t: spatial support filter window (seconds)";
-            yInfo() << "--print_biases\t: show all available camera biases"
+            yInfo() << "--print_biases\t: show all available camera biases";
             return false;
         }
 

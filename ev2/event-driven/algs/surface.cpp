@@ -235,9 +235,10 @@ cv::Mat_<double> chainSAE::getSurface()
     return normed_sae;
 }
 
-void AAE::initialise(cv::Size resolution, int bs)
+void AAE::initialise(cv::Size resolution, int bs, int Nej_max)
 {
     this->bs = bs;
+    this->Nej_max = Nej_max;
     nbs = {resolution.width/bs,resolution.height/bs};
     Ne.resize(nbs.area());
 
@@ -261,6 +262,8 @@ void AAE::update(int x, int y, double ts, int p)
     if(j < 0) return;
 
     Ne[j].push_back({x, y, ts});
+    if(Ne[j].size() > Nej_max) Ne[j].pop_front();
+
 }
 
 cv::Mat_<double> AAE::getSurface()
@@ -274,6 +277,7 @@ cv::Mat_<double> AAE::getSurface()
         double a_conv = b > 0 ? 1 / sqrt(b) : 0.0;
 
         double a = 0;
+        double c = 0;
         for(int v = (int)Ne[j].size()-1; v > 0; v--) {
             double dt = Ne[j][v].ts - Ne[j][v-1].ts;
             a = a / (1 + a*dt) + 1;
@@ -281,8 +285,9 @@ cv::Mat_<double> AAE::getSurface()
             if(fabs(a - a_conv) / a_conv < 0.02) {
                 break;
             }
+            c++;
         }
-        Ne[j].clear();
+        while(Ne[j].size() > c) Ne[j].pop_front();
     }
     return A;
 }

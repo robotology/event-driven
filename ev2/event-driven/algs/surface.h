@@ -347,13 +347,15 @@ class AAE
 {
 private:
     int bs;
+    int Nej_max;
     cv::Size nbs;
     struct ae_ {int x; int y; double ts;};
     std::vector<std::deque<ae_>> Ne;
     cv::Mat p2Nej;
 
+
 public:
-    void initialise(cv::Size resolution, int bs);
+    void initialise(cv::Size resolution, int bs, int Nej_max = 100e3);
     void update(int x, int y, double ts, int p);
     cv::Mat_<double> getSurface();
 };
