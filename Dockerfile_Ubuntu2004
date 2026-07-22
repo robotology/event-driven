@@ -35,6 +35,23 @@ RUN apt update && apt install -y \
     libcanberra-gtk-module \
     ffmpeg
 
+# Python environment for OpenEB
+RUN apt -y install python3-pip python3-distutils
+RUN apt -y install python3.X-dev  # where X is 8, 9 or 10 depending on your Python version (3.8, 3.9 or 3.10)
+RUN python3 -m pip install pip --upgrade
+RUN python3 -m pip install "opencv-python==4.5.5.64" "sk-video==1.1.10" "fire==0.4.0" "numpy==1.23.4" pandas scipy h5py
+RUN python3 -m pip install jupyter jupyterlab matplotlib "ipywidgets==7.6.5" pytest command_runner
+
+# Install pybind for OpenEB
+RUN cd $CODE_DIR && \
+    wget https://github.com/pybind/pybind11/archive/v2.6.0.zip && \
+    unzip v2.6.0.zip && \
+    cd pybind11-2.6.0 && \
+    mkdir build && cd build && \
+    cmake .. -DPYBIND11_TEST=OFF && \
+    cmake --build . && \
+    cmake --build . --target install
+
 # Suggested dependencies for YARP
 RUN apt update && apt install -y \
     qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev \
