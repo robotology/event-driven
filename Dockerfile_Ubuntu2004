@@ -101,7 +101,7 @@ RUN yarp check
 
 
 # event-driven
-ARG ED_VERSION=main
+ARG ED_VERSION=feat/genx320-integ-docker
 RUN cd $CODE_DIR &&\
     git clone --depth 1 --branch $ED_VERSION https://github.com/robotology/event-driven.git &&\
     cd event-driven &&\
