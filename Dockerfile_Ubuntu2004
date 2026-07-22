@@ -1,5 +1,5 @@
 # base image Ubuntu 20.04
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -52,7 +52,7 @@ RUN apt update && apt install -y \
     gstreamer1.0-libav
 
 # Add OpenEB 3.0.2 and build
-ARG OPENEB_VERSION=3.0.2
+ARG OPENEB_VERSION=4.0.1
 RUN cd $CODE_DIR && \
     git clone --depth 1 --branch $OPENEB_VERSION https://github.com/prophesee-ai/openeb.git && \
     cd openeb && \
