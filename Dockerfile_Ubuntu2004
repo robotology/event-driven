@@ -1,5 +1,5 @@
 # base image Ubuntu 20.04
-FROM ubuntu:jammy
+FROM ubuntu:focal
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -7,11 +7,6 @@ ARG CODE_DIR=/usr/local/src
 
 #basic environment
 RUN apt update && apt install -y \
-    apt-utils \
-    software-properties-common \
-    wget \
-    unzip \
-    curl \
     ca-certificates \
     build-essential \
     git \
@@ -19,38 +14,10 @@ RUN apt update && apt install -y \
     cmake-curses-gui \
     libace-dev \
     libassimp-dev \
-    libglm-dev \
-    libeigen3-dev
-
-# Suggested dependencies for OpenEB 3.0.2
-RUN apt update && apt install -y \
-    libopencv-dev \
-    libgtest-dev \
-    libboost-all-dev \
-    libusb-1.0-0-dev \
-    libeigen3-dev
-RUN apt update && apt install -y \
     libglew-dev \
     libglfw3-dev \
-    libcanberra-gtk-module \
-    ffmpeg
-
-# Python environment for OpenEB
-RUN apt -y install python3-pip python3-distutils
-RUN apt -y install python3.10-dev  # where X is 8, 9 or 10 depending on your Python version (3.8, 3.9 or 3.10)
-RUN python3 -m pip install pip --upgrade
-RUN python3 -m pip install "opencv-python==4.5.5.64" "sk-video==1.1.10" "fire==0.4.0" "numpy==1.23.4" pandas scipy h5py
-RUN python3 -m pip install jupyter jupyterlab matplotlib "ipywidgets==7.6.5" pytest command_runner
-
-# Install pybind for OpenEB
-RUN cd $CODE_DIR && \
-    wget https://github.com/pybind/pybind11/archive/v2.6.0.zip && \
-    unzip v2.6.0.zip && \
-    cd pybind11-2.6.0 && \
-    mkdir build && cd build && \
-    cmake .. -DPYBIND11_TEST=OFF && \
-    cmake --build . && \
-    cmake --build . --target install
+    libglm-dev \
+    libeigen3-dev
 
 # Suggested dependencies for YARP
 RUN apt update && apt install -y \
@@ -68,15 +35,17 @@ RUN apt update && apt install -y \
     gstreamer1.0-plugins-bad \
     gstreamer1.0-libav
 
-# Add OpenEB 3.0.2 and build
-ARG OPENEB_VERSION=4.0.1
-RUN cd $CODE_DIR && \
-    git clone --depth 1 --branch $OPENEB_VERSION https://github.com/prophesee-ai/openeb.git && \
-    cd openeb && \
-    mkdir build && cd build && \
-    cmake .. -DBUILD_TESTING=OFF && \
-    cmake --build . --config Release -- -j `nproc` && \
-    cmake --build . --target install
+# Add Metavision SDK 3.0 in sources.list
+RUN echo "deb [arch=amd64 trusted=yes] https://apt.prophesee.ai/dists/public/b4b3528d/ubuntu focal sdk" >> /etc/apt/sources.list &&\
+    apt update
+
+RUN apt install -y \
+    libcanberra-gtk-module \
+    mesa-utils \
+    ffmpeg \
+    libboost-program-options-dev \
+    libopencv-dev \
+    metavision-sdk
 
 # YCM
 ARG YCM_VERSION=v0.15.2
@@ -101,7 +70,7 @@ RUN yarp check
 
 
 # event-driven
-ARG ED_VERSION=feat/genx320-integ-docker
+ARG ED_VERSION=main
 RUN cd $CODE_DIR &&\
     git clone --depth 1 --branch $ED_VERSION https://github.com/robotology/event-driven.git &&\
     cd event-driven &&\

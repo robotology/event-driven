@@ -2,6 +2,46 @@
 
 A bridge application between Prophesee's x320 camera using the KTH micro interface and YARP
 
-### Usage
+### Docker environment
+1. Build dockerfile to generate docker image. It takes long time.
+```
+docker build  --build-arg UID=$(id -u) --build-arg GID=$(id -g) -f Dockerfile_Ubuntu2204_genx320 -t event-driven:ubuntu22.04-genx320  .
+```
 
-`x320-bridge`
+
+### Usage
+1. Connect GenX320 camera via USB cable.
+2. Confirm that this USB connection is detected by using this command
+```
+lsusb
+```
+You will notice that this USB device is mounted successfully
+```
+Bus XXX Device YYY: ID cafe:4001 TinyUSB TinyUSB Device
+```
+and, you can find mounted path as follows
+```
+ls /dev/ttyACM0
+```
+
+3. Deploy docker container with /dev/ttyACM0 mounted
+```
+docker run --rm -it --privileged --network host -v /tmp/.X11-unix/:/tmp/.X11-unix -v /dev/bus/usb:/dev/bus/usb -e DISPLAY=unix$DISPLAY -v /dev/ttyACM0:/dev/ttyACM0  --name event-driven event-driven:ubuntu22.04-genx320
+```
+By running this command, you can enter docker container.
+
+4. Open another terminal, and enter docker container
+```
+docker exec -it event-driven /bin/bash
+```
+
+5. Run yarpserver in a terminal, and connect genx320 in the other terminal.
+```
+yarpserver &
+```
+```
+x320-bridge
+```
+
+### Specification
+1. Resolution 320x320
