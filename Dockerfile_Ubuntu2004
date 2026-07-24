@@ -41,7 +41,6 @@ RUN apt update && apt -y install python3-pip python3-distutils
 RUN python3 -m pip install --no-cache-dir pip==24.0
 RUN python3 -m pip install --no-cache-dir "opencv-python>=4.5.5.64" "sk-video==1.1.10" "fire==0.4.0" "numpy<=1.21" pandas scipy numba h5py profilehooks pytest
 RUN python3 -m pip install --no-cache-dir jupyter jupyterlab matplotlib "ipywidgets==7.6.5"
-# RUN python3 -m pip install --no-cache-dir "pytorch_lightning==1.5.10" "tqdm==4.63.0" "kornia==0.6.1"
 
 # Install pybind for OpenEB
 RUN cd $CODE_DIR && \
