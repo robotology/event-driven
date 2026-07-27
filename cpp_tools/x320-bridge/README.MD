@@ -50,5 +50,31 @@ yarpserver &
 x320-bridge
 ```
 
+### Windonws: How to mount your GenX320 to WSL2
+1. Open Powershell with administrator privilege
+2. Install `usbipd-win`
+```
+winget install dorssel.usbipd-win
+```
+3. Repnen Powershell and check USB devices
+```
+usbipd list
+```
+You can find the USB serial device with the busid.
+4. Share the USB device
+```
+usbipd bind --busid YOUR_BUSID
+```
+5. Attach the USB device to WSL
+```
+usbipd attach --wsl --busid YOUR_BUSID
+```
+6. WSL: you can find the mounted USB
+```
+lsusb
+or
+ls /dev/ttyACM*
+```
+
 ### Specification
 1. Resolution 320x320
