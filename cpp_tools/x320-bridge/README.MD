@@ -1,12 +1,19 @@
-# atis-bridge
+# x320-bridge
 
 A bridge application between Prophesee's x320 camera using the KTH micro interface and YARP
 
 ### Docker environment
 1. Build dockerfile to generate docker image. It takes long time.
-```
-docker build  --build-arg UID=$(id -u) --build-arg GID=$(id -g) -f Dockerfile_Ubuntu2204_genx320 -t event-driven:ubuntu22.04-genx320  .
-```
+
+    Ubuntu 20.04
+    ```
+    docker build --build-arg UID=$(id -u) --build-arg GID=$(id -g) -f Dockerfile_Ubuntu2004 -t event-driven:ubuntu20.04 .
+    ```
+
+    Ubuntu 22.04
+    ```
+    docker build --build-arg UID=$(id -u) --build-arg GID=$(id -g) -f Dockerfile_Ubuntu2204 -t event-driven:ubuntu22.04 .
+    ```
 
 
 ### Usage
@@ -24,9 +31,9 @@ and, you can find mounted path as follows
 ls /dev/ttyACM0
 ```
 
-3. Deploy docker container with /dev/ttyACM0 mounted
+3. Deploy docker container with /dev/ttyACM0 mounted (To use Ubuntu22.04, please change docker tag name to ubuntu22.04)
 ```
-docker run --rm -it --privileged --network host -v /tmp/.X11-unix/:/tmp/.X11-unix -v /dev/bus/usb:/dev/bus/usb -e DISPLAY=unix$DISPLAY -v /dev/ttyACM0:/dev/ttyACM0  --name event-driven event-driven:ubuntu22.04-genx320
+docker run --rm -it --privileged --network host -v /tmp/.X11-unix/:/tmp/.X11-unix -v /dev/bus/usb:/dev/bus/usb -e DISPLAY=unix$DISPLAY -v /dev/ttyACM0:/dev/ttyACM0  --name event-driven event-driven:ubuntu20.04
 ```
 By running this command, you can enter docker container.
 
@@ -68,7 +75,6 @@ lsusb
 or
 ls /dev/ttyACM*
 ```
-
 
 ### Specification
 1. Resolution 320x320
