@@ -47,16 +47,18 @@ private:
     bool buffer_switching{false};
 
     //data storage
-    ev::packet<ev::AE> buffer1;
-    ev::packet<ev::AE> buffer2;
-    ev::packet<ev::AE> *fill_buffer;
-    ev::packet<ev::AE> *send_buffer;
+    ev::packet<ev::AE> buffer1, buffer2;
+    ev::packet<ev::AE> *fill_buffer, *send_buffer;
     static constexpr void switch_buffer(ev::packet<ev::AE>* &p1, ev::packet<ev::AE>* &p2) {auto t = p2; p2 = p1; p1 = t;};
 
     //other variables
     int counter_packets{0};
     int counter_events{0};
-    static constexpr double period{0.2};
+    int counter_dcmifull{0};
+    int counter_usbdrop{0};
+    int counter_corrupt{0};
+    int counter_misaligned{0};
+    static constexpr double period{1};
 
     typedef struct {
         unsigned int y:9;
@@ -65,6 +67,8 @@ private:
         unsigned int t:12;
         unsigned int sync:1;
     } microXAE;
+    static const int EVENT_CODE_DCMI_OVERRUN=510;
+    static const int EVENT_CODE_DROPPED_PACKET=509;
 
 public:
 
@@ -132,6 +136,8 @@ public:
         device_thread = std::thread([this]{deviceToBuffer();});
         port_thread = std::thread([this]{bufferToPort();});
 
+        //device_thread = std::thread([this]{maxRead();});
+
         
         
         return true;
@@ -140,18 +146,20 @@ public:
     void startX320()
     {
         if(fd > 0) {
-            auto x = ::write(fd, "+\r", 2);
+            auto n = ::write(fd, "+\r", 2);
+            if(n != 2) yWarning() << "start command failed: " << n << " bits written [2]";
         } else {
-            yWarning() << "closed device asked to start";
+            yWarning() << "start command failed: invalid file descriptor";
         }
     }
 
     void stopX320()
     {
         if(fd > 0) {
-            auto x = ::write(fd, "-\r", 2);
+            auto n = ::write(fd, "-\r", 2);
+            if(n != 2) yWarning() << "stop command failed: " << n << " bits written [2]";
         } else {
-            yWarning() << "closed device asked to stop";
+            yWarning() << "stop command failed: invalid file descriptor";
         }
     }
 
@@ -166,6 +174,25 @@ public:
         n = ::read(fd, &x, 1);
         n = ::read(fd, &x, 1);
 
+    }
+
+    void maxRead()
+    {
+        const static int rb_size = 1024*4*32; //max seems to be 1024 (we'll make it bigger and always multiple of 4)
+        std::array<uchar, rb_size> rb;
+
+        while(fd > 0) {
+
+            auto n = ::read(fd, rb.data(), rb_size);
+            if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+                yError() << "Error reading from device";
+                interruptModule();
+                break;
+            }
+            counter_packets++;
+            counter_events += n / 4;
+
+        }
     }
 
     void deviceToBuffer()
@@ -196,7 +223,7 @@ public:
             // }
 
             auto i = 0;
-            while(i < n) {
+            while(i < n-3) {
                 if (rb[i] & 0x80) { // sync bit detected
                     uint32_t word =
                         (static_cast<uint32_t>(rb[i+0]) << 24) |
@@ -206,12 +233,21 @@ public:
                     ae.p = (word >> 18) & 0x1u;
                     ae.x = (word >> 9) & 0x1FFu;
                     ae.y = (word >> 0) & 0x1FFu;
-                    if(ae.x < 320 && ae.y < 320)
+                    if(ae.y == EVENT_CODE_DCMI_OVERRUN) {
+                        counter_dcmifull++;
+                        i += 4;
+                    } else if(ae.y == EVENT_CODE_DROPPED_PACKET) {
+                        counter_usbdrop++;
+                        i += 4;
+                    } else if(ae.x < 320 && ae.y < 320) {
                         fill_buffer->push_back(ae);
-                    // else
-                    //     yWarning() << "invalid event";
-                    i += 4;
+                        i += 4;
+                    } else {
+                        counter_corrupt++;
+                        i += 1;
+                    }
                 } else {
+                    counter_misaligned++;
                     i += 1;
                 }
             }
@@ -315,9 +351,13 @@ public:
     //synchronous thread
     bool updateModule() override
     {
-        yInfo() << counter_packets << "packets and"
-                << (counter_events * 0.001) << "k events sent per second";
-        counter_packets = counter_events = 0;
+        yInfo() << (counter_events * 0.001 / getPeriod()) << "k events/s in"
+                << counter_packets << "YARP packets."
+                << counter_dcmifull << "DCMI overruns and"
+                << counter_usbdrop << "USB drops."
+                << counter_corrupt << "corrupt and"
+                << counter_misaligned << "misalignments";
+        counter_packets = counter_events = counter_dcmifull = counter_usbdrop = counter_corrupt = counter_misaligned = 0;
 
         return fd > 0;
     }   
