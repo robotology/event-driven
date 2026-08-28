@@ -45,6 +45,15 @@ Event-driven libraries provide basic functionality for handling events in a YARP
  * [**x320-bridge**](https://github.com/robotology/event-driven/tree/main/cpp_tools/x320-bridge) - bridge from Prophesee x320 chip using KTH's STM32 USB forwarding
  * [**zynqGrabber**](https://github.com/robotology/event-driven/tree/main/cpp_tools/zynqGrabber) - bridge between zynq-based FPGA sensor interface and YARP
  * [**event video creation**](https://github.com/robotology/event-driven/tree/main/cpp_tools/log2vid) - create nice 3D (x,y,t) videos from data files
+ * [**visualisation and annotation**](https://github.com/event-driven-robotics/mustard-cpp)
+ * [**data format conversion**](https://github.com/event-driven-robotics/bimvee)
+
+## Algorithms
+
+* [**EDOPT: 6-DoF Object Tracking**](https://github.com/event-driven-robotics/EDOPT)
+* [**MoveEnet: Human Pose Estimation**](https://github.com/event-driven-robotics/hpe-core)
+* [**Optical Flow**](https://github.com/event-driven-robotics/event-flow-str)
+* [**Line Tracking**](https://github.com/event-driven-robotics/LEDGE)
 
  
 ## How to Install:
