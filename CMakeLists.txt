@@ -19,6 +19,8 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
 set(CONTEXT_DIR event-driven)
 set(EVENTDRIVEN_LIBRARY event-driven)
@@ -66,6 +68,13 @@ endif()
 find_package(prophesee_core QUIET)
 if(prophesee_core_FOUND)
   message(STATUS "Found prophesee_core: (found version ${prophesee_core_VERSION})")
+endif()
+
+find_package(libcaer)
+
+find_package(dv-processing QUIET)
+if(dv-processing_FOUND)
+  message(STATUS "Found dv-processing: (found version ${dv-processing_VERSION})")
 endif()
 
 #build the library

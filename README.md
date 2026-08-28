@@ -41,6 +41,7 @@ Event-driven libraries provide basic functionality for handling events in a YARP
  * [**calibration**](https://github.com/robotology/event-driven/tree/ev2-dev/cpp_tools/calibration) - estimating the camera intrinsic parameters
  * [**vPreProcess**](https://github.com/robotology/event-driven/tree/ev2-dev/cpp_tools/vPreProcess) - splitting different event-types into separate event-streams, performing filtering, and simple augmentations (flipping etc.)
  * [**atis-bridge**](https://github.com/robotology/event-driven/tree/ev2-dev/cpp_tools/atis3-bridge) - bridge between the Prophesee ATIS cameras and YARP
+ * [**dv-bridge**](https://github.com/robotology/event-driven/tree/ev2-dev/cpp_tools/dv-bridge) - bridge between the Inivation DVXplorer Micro camera and YARP
  * [**zynqGrabber**](https://github.com/robotology/event-driven/tree/ev2-dev/cpp_tools/zynqGrabber) - bridge between zynq-based FPGA sensor interface and YARP
  
 ## Applications
