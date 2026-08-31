@@ -98,6 +98,7 @@ if(VLIB_FORCESLIM)
   set(prophesee_core_FOUND OFF)
 endif()
 
+option(BUILD_ZYNQGRABBER "Build the zynqGrabber module" ON)
 add_subdirectory(cpp_tools)
 
 #install the package

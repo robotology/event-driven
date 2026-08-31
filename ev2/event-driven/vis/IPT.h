@@ -36,6 +36,7 @@ private:
     cv::Mat projection[2];
     cv::Mat rotation[2];
     cv::Mat Q;
+    std::string distortion_model;
 
     cv::Mat point_forward_map[2];
     cv::Mat point_reverse_map[2];
@@ -52,6 +53,8 @@ public:
     vIPT();
 
     const cv::Mat& getQ();
+    const cv::Mat& getK(int cam = 0);
+    const cv::Size& getRes(int cam = 0);
     void setProjectedImageSize(int height, int width);
     bool configure(const std::string &calib_file_path, int size_scaler = 2);
     bool showMapProjections(double seconds = 0);
