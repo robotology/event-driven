@@ -119,7 +119,7 @@ private:
 
     // cv::Mat sae;
     double tolerance{0.125};
-    double refracotry_period{0.003};
+    //double refracotry_period{0.003};
     double dt{0.05};
     size_t N{30};
 

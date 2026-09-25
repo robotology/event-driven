@@ -144,7 +144,7 @@ public:
             signal.wait(lk, [this](return current_ts > previous_ts || isStopping()););
             if(isStopping()) break;
             previous_ts = current_ts;
-            ev::eros.getSurface().copyTo(my_eros);
+            ev::eros.getSurface().convertTo(my_eros, CV_8U, 255);
             lk.unlock();
 
             //further processing

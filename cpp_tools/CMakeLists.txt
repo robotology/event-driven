@@ -1,5 +1,6 @@
 add_subdirectory(zynqGrabber)
 add_subdirectory(hexViewer)
+add_subdirectory(x320-bridge)
 
 #add_subdirectory(binaryDumper)
 #add_subdirectory(qadIMUcal)

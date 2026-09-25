@@ -72,7 +72,7 @@ bool drawerInterface::threadInit()
     if(yarp_publish)
         return image_port.open(name + "/image:o");
     else{
-        cv::namedWindow(name, cv::WINDOW_KEEPRATIO);
+        cv::namedWindow(name, cv::WINDOW_NORMAL);
         cv::resizeWindow(name, 960, (int)(960.0 * img_size.height / (double)img_size.width));
     }
 
@@ -85,9 +85,9 @@ bool drawerInterface::threadInit()
 bool drawerInterfaceAE::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote) 
 {
     this->name = name;
-    srand (time(NULL));
     std::stringstream ss;
-    ss << "/vFramer/" << rand()%10000 << "/AE:i";
+    ss << "/vFramer/" << (int)(yarp::os::Time::now())<< "/AE:i";
+    yarp::os::Time::delay(1);
     this->portName = ss.str();
     this->sourceName = remote;
     this->yarp_publish = yarp_publish;
@@ -103,6 +103,11 @@ void drawerInterfaceAE::connectToRemote()
 {
     if(input.getInputCount() == 0 && !sourceName.empty())
         yarp::os::Network::connect(sourceName, portName, "fast_tcp");
+}
+
+void drawerInterfaceAE::threadRelease()
+{
+    input.stop();
 }
 
 //    GREY   //
@@ -314,8 +319,9 @@ double erosDrawer::updateImage()
     for (auto &v : input)
         EROS_vis.update(v.x, v.y);
 
-    static cv::Mat inter;
-    cv::medianBlur(EROS_vis.getSurface(), inter, 3);
+    cv::Mat inter;
+    EROS_vis.getSurface().convertTo(inter, CV_8U, 255);
+    cv::medianBlur(inter, inter, 3);
     cv::GaussianBlur(inter, inter, {3, 3}, -1);
     cv::normalize(inter, inter, 0, 512, CV_MINMAX);
     cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
@@ -350,7 +356,7 @@ double scarfDrawer::updateImage()
     if(canvas.empty())
         canvas = cv::Mat(img_size, CV_8UC3);
 
-    static cv::Mat inter;
+    cv::Mat inter;
     static std::stringstream ss;
     scarf.getSurface().convertTo(inter, CV_8U, 255);
     inter = 255 - inter;
@@ -407,6 +413,78 @@ double cornerDrawer::updateImage()
 void cornerDrawer::threadRelease()
 {
     cd.stop();
+}
+
+// AEDSAE DRAW //
+// =========== //
+bool aedsaeDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
+{
+    aedsae.initialise({width, height}, deltat, lambda);
+    return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+}
+
+double aedsaeDrawer::updateImage()
+{
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+
+    ev::info inf = input.readAll(false);
+
+    for(auto v = input.begin(); v != input.end(); v++)
+        aedsae.update(v->x, v->y, v.timestamp(), v->p);
+
+    cv::Mat inter;
+    aedsae.getSurface().convertTo(inter, CV_8U, 255.0);
+    cv::cvtColor(inter, canvas, cv::COLOR_GRAY2BGR);
+    return inf.timestamp;
+}
+
+// CHAINSAE DRAW //
+// =========== //
+bool chainsaeDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
+{
+    chainsae.initialise({width, height});
+    return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+}
+
+double chainsaeDrawer::updateImage()
+{
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+
+    ev::info inf = input.readAll(false);
+
+    for(auto v = input.begin(); v != input.end(); v++)
+        chainsae.update(v->x, v->y, v.timestamp(), v->p);
+
+    cv::Mat inter;
+    chainsae.getSurface().convertTo(inter, CV_8U, 255.0);
+    cv::cvtColor(255 - inter, canvas, cv::COLOR_GRAY2BGR);
+    return inf.timestamp;
+}
+
+// AAE DRAW //
+// =========== //
+bool aaeDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)
+{
+    aae.initialise({width, height}, bs);
+    return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
+}
+
+double aaeDrawer::updateImage()
+{
+    if(canvas.empty())
+        canvas = cv::Mat(img_size, CV_8UC3);
+
+    ev::info inf = input.readAll();
+
+    for(auto v = input.begin(); v != input.end(); v++)
+        aae.update(v->x, v->y, v.timestamp(), v->p);
+
+    cv::Mat inter;
+    aae.getSurface().convertTo(inter, CV_8U, 255.0);
+    cv::cvtColor(255 - inter, canvas, cv::COLOR_GRAY2BGR);
+    return inf.timestamp;
 }
 
 // bool flowDrawer::initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote)

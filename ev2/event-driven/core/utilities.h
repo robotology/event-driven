@@ -47,13 +47,13 @@ extern double vtsscaler;
 /// a flag to read if individual event timestamps are enabled
 extern bool ts_status;
 
-static double ticksToSeconds(const unsigned int tick)
+static inline double ticksToSeconds(const unsigned int tick)
 {
     (void)ticksToSeconds;
     return tick * tsscaler;
 }
 
-static unsigned int secondsToTicks(const double seconds)
+static inline unsigned int secondsToTicks(const double seconds)
 {
     (void)secondsToTicks;
     return seconds * vtsscaler;
@@ -71,7 +71,7 @@ static double deltaS(const int current_tick, const int prev_tick)
     return deltaTicks(current_tick, prev_tick) * tsscaler;
 }
 
-static double deltaMS(const int current_tick, const int prev_tick)
+static inline double deltaMS(const int current_tick, const int prev_tick)
 {
     (void)deltaMS;
     return deltaS(current_tick, prev_tick) * 1000.0;

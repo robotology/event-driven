@@ -97,6 +97,9 @@ public:
         if(rf.check("corner")) style = "corner";
         if(rf.check("scarf")) style = "scarf";
         if(rf.check("flow")) style = "flow";
+        if(rf.check("aedsae")) style = "aedsae";
+        if(rf.check("chainsae")) style = "chainsae";
+        if(rf.check("aae")) style = "aae";
 
         std::stringstream remote_id;
         for(int i = 0; i < 10; i++) 
@@ -123,6 +126,9 @@ public:
                                                                      rf.check("U", Value(20)).asInt32(),
                                                                      rf.check("T", Value(0.5)).asFloat64(),
                                                                      rf.check("S", Value(5)).asInt32()));
+            if(style=="aedsae") publishers.push_back(new aedsaeDrawer(rf.check("lambda", Value(0.2)).asFloat64(), rf.check("deltat", Value(0.1)).asFloat64()));
+            if(style=="chainsae") publishers.push_back(new chainsaeDrawer);
+            if(style=="aae") publishers.push_back(new aaeDrawer(rf.check("bs", Value(15)).asInt32()));
 
             if(publishers.back()->initialise(remote, height, width, window_size, yarp_publish, remote))
             {

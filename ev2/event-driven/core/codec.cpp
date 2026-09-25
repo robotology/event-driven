@@ -21,10 +21,11 @@
 const std::string ev::timeStamp::tag = "TS";
 const std::string ev::addressEvent::tag = "AE";
 const std::string ev::encoded::tag="AE";
-const std::string ev::skinAE::tag = "SKE";
+const std::string ev::skinAE::tag = "AE";
 const std::string ev::skinSample::tag = "SKS";
 const std::string ev::flowEvent::tag = "FLOW";
 const std::string ev::gaussianEvent::tag = "GAE";
 const std::string ev::IMUS::tag = "IMU";
 const std::string ev::neuronEvent::tag = "NEU";
 const std::string ev::earEvent::tag = "EAR";
+const std::string ev::PMCortex4C::tag = "PMC4C";

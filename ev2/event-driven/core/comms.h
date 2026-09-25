@@ -162,7 +162,7 @@ public:
         return e;
     }
 
-    int fillFromMemory(char *s, int bytes)
+    int fillFromMemory(const char *s, int bytes)
     {
         n_elements = bytes / sizeof(T);
         buffer.resize(n_elements);
@@ -308,7 +308,7 @@ public:
         using pointer           = T*;
         using reference         = T&;
 
-        iterator() : m_ptr(nullptr) {}
+        iterator() : m_ptr() {}
         void setAsEnd(typename std::list< packet<T>* >::iterator last)
         {
             m_ptr = (**last).end();
@@ -864,7 +864,7 @@ public:
         private:
             int _id{-1};
             double _timestamp{0.0};
-            typename packet<T>::iterator m_ptr{nullptr};
+            typename packet<T>::iterator m_ptr{};
             typename std::list< packet<T> >::iterator packet_it;
             typename std::list< packet<T> >::iterator final;
     };
@@ -968,9 +968,19 @@ public:
 
     double getLength() 
     {
-        return std::prev(data.end())->timestamp() - data.begin()->timestamp();
+        if(data.size())
+            return std::prev(data.end())->timestamp() - data.begin()->timestamp();
+        else
+            return 0.0;
     }
 
+    double getStartTime()
+    {
+        if(data.size())
+            return data.begin()->timestamp();
+        else
+            return 0.0;
+    }
 
 };
 

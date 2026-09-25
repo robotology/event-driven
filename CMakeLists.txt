@@ -90,6 +90,14 @@ endif()
 add_subdirectory(ev2)
 
 #build additional tools
+set(VLIB_FORCESLIM OFF CACHE BOOL "force lightweight build")
+if(VLIB_FORCESLIM)
+  message(STATUS "OFF: applications using opencv and drivers not compiled")
+  set(OpenCV_FOUND OFF)
+  set(MetavisionSDK_FOUND OFF)
+  set(prophesee_core_FOUND OFF)
+endif()
+
 add_subdirectory(cpp_tools)
 
 #install the package
