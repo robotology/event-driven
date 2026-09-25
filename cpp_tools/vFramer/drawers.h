@@ -87,6 +87,7 @@ public:
     blackDrawer(){window_size=0.033;}
 };
 
+#include <list>
 class rtFlowDrawer : public drawerInterfaceAE {
 protected:
     int block_size{40};
@@ -97,12 +98,19 @@ protected:
     int smooth{3};
     double rate{0.0};
 
-    std::thread vt;
+    std::thread vt, et;
     void updateFlowBuffer();
+    void updateEvents();
+    ev::info inf; double packets{0.0}; double proc_time{0.0};
 
     ev::zrtFlow zrt_flow;
     double updateImage() override;
     cv::Mat sample;
+    cv::Mat sample_sparse;
+
+    cv::VideoCapture webcam;
+    cv::VideoWriter saver;
+    std::list<cv::Mat> frames;
 
 public:
     rtFlowDrawer(int blk_sz, int N, int D, int con_upd, double tol, int smooth): block_size(blk_sz), max_n(N), con_d(D), con_upd(con_upd), trip_tol(tol), smooth(smooth), drawerInterfaceAE(){};

@@ -28,7 +28,10 @@ void zrtBlock::snap()
     pxs_snap = pxs_live; //snap the event circular buffer
     is = i; //snap the latest position in circular buffer
     js = j; //snap the oldest position in circular buffer
-    j = i;  //set the oldest position to latest position (i.e. all data used)   
+    j = i;  //set the oldest position to latest position (i.e. all data used) 
+
+    if(is == N) is = 0; //thread "safety" if snapped during i++ command in "add"
+    if(js == N) js = 0; //thread "safety" if snapped during j++ command in "add"
 }
 
 //calculate connections for a single event on the SAE
