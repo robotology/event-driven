@@ -648,6 +648,7 @@ public:
 
     void onStop()
     {
+        port.interrupt();
         port.close();
         //m.unlock();
     }
