@@ -197,21 +197,6 @@ bool rtFlowDrawer::initialise(const std::string &name, int height, int width, do
     sample = cv::Mat(height, width, CV_8UC3);
     vt = std::thread([this]{updateFlowBuffer();});
     et = std::thread([this]{updateEvents();});
-    webcam.open(-1);
-    if(!webcam.isOpened()) {
-        yError() << "Could not open webcam";
-        return false;
-    }
-    webcam.set(cv::CAP_PROP_FRAME_HEIGHT, height/2);
-    webcam.set(cv::CAP_PROP_FRAME_WIDTH, width/2);
-    saver.open("/home/aglover-iit.local/Downloads/flow_demo.mp4",
-               cv::VideoWriter::fourcc('a','v','c','1'),
-               1.0/getPeriod(), {width*2, height}, true);
-    if(!saver.isOpened()) {
-        yError() << "Could not open output video";
-        return false;
-    }
-    yInfo() << webcam.get(cv::CAP_PROP_FRAME_HEIGHT) << webcam.get(cv::CAP_PROP_FRAME_WIDTH);
     return drawerInterfaceAE::initialise(name, height, width, window_size, yarp_publish, remote);
 }
 
@@ -229,10 +214,10 @@ void rtFlowDrawer::updateFlowBuffer()
 
 void rtFlowDrawer::updateEvents()
 {
-    
-    //input.readPacket(true);
     while(true) {
         auto this_inf = input.readAll(true);
+        if(input.isStopping())
+            break;
         
         inf.duration += this_inf.duration*0.3; 
         
@@ -250,14 +235,11 @@ void rtFlowDrawer::updateEvents()
 
 double rtFlowDrawer::updateImage()
 {
-    static cv::Mat wc;
-    webcam >> wc;
     if(canvas.empty())
-        canvas = cv::Mat(cv::Size(img_size.width*2, img_size.height), CV_8UC3);
+        canvas = cv::Mat(cv::Size(img_size.width, img_size.height), CV_8UC3);
 
-    sample_sparse.copyTo(canvas({{0, 0}, img_size}));
+    sample_sparse.copyTo(canvas);
     sample_sparse = white;
-    cv::resize(wc, canvas({img_size.width, 0, img_size.width, img_size.height}), img_size);
 
     static int bar_h = img_size.height/2 - 20;
 
@@ -277,10 +259,6 @@ double rtFlowDrawer::updateImage()
     cv::putText(canvas, "Latency", {35, img_size.height-10}, cv::FONT_HERSHEY_PLAIN, 2.0, {0, 0, 0}, 2, cv::LINE_AA, false);
     for(int i = img_size.height/2+10; i < img_size.height/2+10+bar_h; i+=bar_h/5)
         cv::line(canvas, {10, i}, {30, i}, {0, 0, 0});
-    
-
-    frames.emplace_back(cv::Mat());
-    canvas.copyTo(frames.back());
 
     yInfo() << int(inf.duration * 1.0e6 / packets) << "us|" << int(1.0/rate) << "hz|" << packets << " packets|" << inf.count / inf.duration << "events/second";
     inf.duration *= 0.7;
@@ -293,12 +271,9 @@ double rtFlowDrawer::updateImage()
 
 void rtFlowDrawer::threadRelease()
 {
-    yInfo() << "saving frames";
-    for(auto &f : frames)
-        saver << f;
-    saver.release();
     input.stop();
     vt.join();
+    et.join();
 }
 
 // EROS DRAW //

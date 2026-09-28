@@ -108,10 +108,6 @@ protected:
     cv::Mat sample;
     cv::Mat sample_sparse;
 
-    cv::VideoCapture webcam;
-    cv::VideoWriter saver;
-    std::list<cv::Mat> frames;
-
 public:
     rtFlowDrawer(int blk_sz, int N, int D, int con_upd, double tol, int smooth): block_size(blk_sz), max_n(N), con_d(D), con_upd(con_upd), trip_tol(tol), smooth(smooth), drawerInterfaceAE(){};
     bool initialise(const std::string &name, int height, int width, double window_size, bool yarp_publish, const std::string &remote = "") override;
